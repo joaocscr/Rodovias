@@ -66,7 +66,13 @@ Variantes: Régis Bittencourt (p107) tem campos próprios (macrodrenagem, ilumin
 - p5 linha 21 (Rota Verde Goiás): o texto extraído intercala dados ocultos da linha 1. O correto (conferido na imagem) é 426,20 km | 4,03 | 2,84 | 6,87.
 - Edital do Arco Norte "17/07/2025" e do Norte Catarinense "Agosto/2026" com leilão em nov/2027: provável erro de digitação. Mostrar como está, com aviso.
 
-**Regra:** valor exibido = ficha do projeto se existir; senão p97 (para os 25 leilões); senão p3–5. Toda diferença entre fontes vira um registro em `divergencias` (ver §4.1), mesmo quando a regra decide.
+**Data-base de preços (decisão do usuário).** As fichas usam datas-base diferentes (ex. Rotas Gerais abr/2023, Rota dos Sertões mar/2023, Arco Norte dez/2024, MT/RO e Integração do Sul jan/2025, Transbrasiliana jan/2022). As tabelas p3–5 e p97 estão todas em dez/2024.
+- **Comparador, totais, painel de números e cartão:** capex/opex da tabela em dez/2024 sempre que existir (39 contratos e 25 leilões). Para quem só tem ficha (projetos de 2027 e agendados de 2026 sem linha na tabela), o valor da ficha. Coluna **Data-base** em toda linha.
+- **Ficha do projeto:** os valores da própria ficha, com a data-base dela em destaque. Se houver valor em dez/2024 nas tabelas, ele aparece ao lado ("R$ 6,27 bi em dez/2024, p97").
+- Diferença entre ficha e tabela **com datas-base diferentes** é registrada como nota de data-base, não como divergência. **Com a mesma data-base**, é divergência, com aviso.
+- Campos sem valor de tabela (WACC, TKM, praças etc.) vêm sempre da ficha.
+
+**Regra para os demais campos:** ficha do projeto, se existir; senão p97 (para os 25 leilões); senão p3–5. Toda diferença entre fontes vira um registro em `divergencias` (ver §4.1), mesmo quando a regra decide.
 
 ## 4. Dados
 
@@ -74,9 +80,11 @@ Variantes: Régis Bittencourt (p107) tem campos próprios (macrodrenagem, ilumin
 Pasta `data/roadshow/`, gerada por script de extração e **revisada à mão** (o PDF tem quebras de texto; a revisão é parte do trabalho). Cada número carrega a página de origem.
 
 - `entidades.json`: uma entrada por **concessão ou projeto** (unidade que aparece no mapa e na tabela):
-  - `id` (slug estável, ex. `rotas-gerais`), `nome`, `nome_contrato` (concessionária, quando houver), `brs` (lista), `ufs`, `trecho_texto` (como no PDF), `trecho_cidades` (inicial, final), `estado` (ver §5.1), `ano_programa` (2023–2027 ou null), `tipo` (`nova` | `otimizacao` | `delegada`), `estruturador`, `grupo_vencedor`, `km`, `capex`, `opex`, `capex_vpl`, `opex_vpl`, datas (`leilao`, `edital`, `assinatura`, `assinatura_aditivo`, `inicio_operacao`), `participantes`, `desagio`, `status_texto`, `atualizado_em`, `ficha` (objeto com os campos de §3.1, ou null), `fontes` (mapa campo → página), `divergencias` (`[{campo, exibido, alternativas: [{valor, pagina}], nota}]`), `relaciona` (ids relacionados, ex. contrato vigente que uma otimização substitui).
+  - `id` (slug estável, ex. `rotas-gerais`), `nome`, `nome_contrato` (concessionária, quando houver), `brs` (lista), `ufs`, `trecho_texto` (como no PDF), `trecho_cidades` (inicial, final), `estado` (ver §5.1), `ano_programa` (2023–2027 ou null), `tipo` (`nova` | `otimizacao` | `delegada`), `estruturador`, `grupo_vencedor`, `km`, `capex`, `opex` (base comparável, regra da §3.2), `data_base`, `capex_ficha`, `opex_ficha`, `data_base_ficha`, `capex_vpl`, `opex_vpl`, datas (`leilao`, `edital`, `assinatura`, `assinatura_aditivo`, `inicio_operacao`), `participantes`, `desagio`, `status_texto`, `atualizado_em`, `ficha` (objeto com os campos de §3.1, ou null), `fontes` (mapa campo → página), `divergencias` (`[{campo, exibido, alternativas: [{valor, pagina}], nota}]`), `relaciona` (ids relacionados, ex. contrato vigente que uma otimização substitui).
   - Contratos vigentes que são também um dos 25 leilões do programa são **uma** entidade (ex. EPR Iguaçu = RIPR Lote 6).
-  - Otimizações em estudo para 2027 (Transbrasiliana, Planalto Sul) e as agendadas para 2026 (Arco Norte, Pequi, Régis) são entidades `otimizacao` com `relaciona` apontando para o contrato vigente atual, que continua existindo como entidade própria.
+  - Otimizações em estudo para 2027 (Transbrasiliana, Planalto Sul) e as agendadas para 2026 (Arco Norte, Pequi) são entidades `otimizacao` com `relaciona` apontando para o contrato vigente atual, que continua existindo como entidade própria.
+  - **Régis Bittencourt** já foi leiloada (23/07/2026, p97/p107) e é **uma** entidade: linha 39 da p5, estado "Contrato do programa 2023–26". Os 4 leilões agendados para 2026 são Arco Norte, Pequi, Rota Agro Central (BR-070/174/364 MT/RO) e Rota 2 de Julho.
+  - Rota 2 de Julho substitui a ViaBahia, que não está entre os 39 contratos: `tipo: nova`, com nota citando a p33.
 - `estudos_pos2027.json`: as 27 BRs/UFs da p121 (`{brs, ufs, possivel_2027: bool, pagina}`).
 - `mercado.json`: séries para os gráficos (leilões por ano, participantes 2007–26, concorrentes × deságio, grupos, gestão direta × privada, investimentos, indicadores agregados, diagnóstico), cada série com `fonte` (página).
 - `regulatorio.json`: conteúdo textual estruturado por tema (seções com título, parágrafos curtos e tabelas pequenas) e a tabela das 11 otimizações (p33).
@@ -103,10 +111,11 @@ Testes de dados (pytest) conferem: 39 contratos; 40 projetos do programa (2+7+13
 | Projeto 2027 | 11 entidades de 2027 | Bright Blue, médio, tracejado |
 | Contrato do programa 2023–26 | 25 leilões realizados (inclui 2026 já leiloados) | Deep Blue `#183C80`, grosso |
 | Contrato vigente anterior | Contratos vigentes leiloados antes de 2023 | Deep Blue, médio, com contorno Spacial Grey 35% |
+| Concessão no SNV, fora do RoadShow | trechos com `ds_tipo_ad = Concessão Federal` no SNV que não caem em nenhum dos 39 contratos (ex. Ecosul: BR-116/392/RS) | Deep Blue, fino, com contorno Spacial Grey 35% |
 | Estudo pós-2027 | 27 estudos (BR+UF inteira) | Light Grey `#525254`, pontilhado |
 | Sem concessão | resto da malha | Light Grey, fino, 50% de opacidade |
 
-Prioridade quando um trecho tem mais de um estado: agendado 2026 > projeto 2027 > programa 2023–26 > vigente anterior > pós-2027. (Decisão do designer: o mapa privilegia o que está por vir. Cartão e ficha mostram todas as entidades do trecho.)
+Prioridade quando um trecho tem mais de um estado: agendado 2026 > projeto 2027 > programa 2023–26 > vigente anterior > concessão no SNV fora do RoadShow > pós-2027. (Decisão do designer: um trecho concedido segundo o SNV nunca aparece como "Sem concessão"; o relatório de cobertura lista esses trechos por BR/UF.) (Decisão do designer: o mapa privilegia o que está por vir. Cartão e ficha mostram todas as entidades do trecho.)
 
 O mapa ganha um **seletor de modo de cor**: "Situação física" (estilos da v1) | "Concessões" (estilos acima, **padrão na v2**). A legenda acompanha o modo.
 
@@ -127,7 +136,7 @@ Barra de abas logo abaixo da barra superior (ou integrada a ela): **Mapa | Proje
 
 **Projetos (comparador)**
 - Tabela única com as entidades (contratos vigentes + projetos do programa; estudos pós-2027 numa seção separada abaixo, por não terem números).
-- Colunas padrão: Nome, BRs/UFs, Estado, Data-chave, km, Capex, Opex, Capex/km, WACC, TKM, Deságio, Participantes, Vencedor. Seletor de colunas para incluir qualquer campo numérico da ficha.
+- Colunas padrão: Nome, BRs/UFs, Estado, Data-chave, km, Capex, Opex, Data-base, Capex/km, WACC, TKM, Deságio, Participantes, Vencedor. Seletor de colunas para incluir qualquer campo numérico da ficha.
 - Ordenação por qualquer coluna; filtros por estado, UF, ano do programa, tipo; busca por nome.
 - Linha de totais da seleção (km, capex, opex).
 - Clicar na linha abre a ficha. Ícone "ver no mapa" por linha.
@@ -157,7 +166,7 @@ Barra de abas logo abaixo da barra superior (ou integrada a ela): **Mapa | Proje
 ## 7. Critérios de aceite
 - 39 contratos + 40 projetos do programa + 27 estudos presentes; contagem por ano do programa = 2/7/13/7/11.
 - Toda entidade do programa e todo contrato com `trechos.json` `ok`/`aproximado`, ou `nao_mapeado` com nota; `cobertura.md` gerado.
-- Ficha da Rotas Gerais mostra 734,90 km, capex R$ 7,34 bi, WACC 13,76%, 9 praças a implantar e o gráfico de capex anual; a da Rota dos Sertões mostra o aviso de capex (4,13 na ficha × 6,27 na p97).
+- Ficha da Rotas Gerais mostra 734,90 km, capex R$ 7,34 bi, WACC 13,76%, 9 praças a implantar e o gráfico de capex anual; a da Rota dos Sertões mostra capex de R$ 4,13 bi (data-base mar/2023) com a nota "R$ 6,27 bi em dez/2024, p97", e no comparador ela aparece com 6,27 e data-base dez/2024.
 - Comparador ordena por Capex/km e por Deságio; os totais da seleção batem com a soma das linhas.
 - Modo "Concessões": clicar num trecho da BR-381/MG mostra Nova 381 e Fernão Dias conforme o km; "Ver ficha" abre a ficha certa; "Ver no mapa" volta e enquadra.
 - Abas funcionam com voltar/avançar do navegador em `file://`.
