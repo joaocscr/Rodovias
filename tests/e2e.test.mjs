@@ -247,7 +247,9 @@ test('v2: aviso de divergência mostra páginas', async () => {
 test('v2: ficha de contrato antigo sem undefined/null/NaN', async () => {
   const id = await page.evaluate(() => window.CONC.entidades.find(e => e.estado === 'vigente' && !e.ficha).id);
   await go('#ficha/' + id);
+  assert.equal(await page.isVisible('#ficha-title'), true);
   const t = await page.textContent('#ficha');
+  assert.ok(t.length > 100);
   assert.ok(!/undefined|null|NaN/.test(t), t.slice(0, 200));
   assert.equal(await page.locator('#ficha .fblock h3 + :empty').count(), 0);
 });
@@ -298,8 +300,8 @@ test('v2: comparador com 54 linhas, ordenação, filtro e totais', async () => {
 test('v2: aba Mercado tem gráficos com fonte e tooltip', async () => {
   await go('#mercado');
   assert.ok(await page.locator('#page-mercado svg.chart').count() >= 7);
-  const cards = await page.locator('#page-mercado .ccard').count();
-  assert.equal(await page.locator('#page-mercado .ccard .src', { hasText: 'Fonte:' }).count(), cards);
+  const semFonte = await page.$$eval('#page-mercado .ccard', cs => cs.filter(c => ![...c.querySelectorAll('.src')].some(s => s.textContent.startsWith('Fonte:'))).length);
+  assert.equal(semFonte, 0);
   assert.match(await page.locator('#chart-leiloes rect.cbar title').first().textContent(), /1993: \d+ leilões/);
 });
 
@@ -311,7 +313,7 @@ test('v2: aba Regulatório com índice, otimizações e estudos', async () => {
   const top = await page.evaluate(() => document.getElementById('reg-riscos').getBoundingClientRect().top);
   assert.ok(top < 200, String(top));
   assert.equal(await page.locator('#otimizacoes tbody tr').count(), 11);
-  await page.locator('[data-estudo]:not([disabled])').first().click();
+  await page.locator('#page-regulatorio [data-estudo]:not([disabled])').first().click();
   await page.waitForTimeout(300);
   assert.equal(await page.evaluate(() => location.hash), '#mapa');
   assert.ok(await page.evaluate(() => MapView.highlighted().length) > 0);

@@ -75,7 +75,7 @@ const UI = (() => {
   // Entidades do RoadShow (nome, concessionária, vencedor) vêm antes das sugestões do SNV.
   function searchEntities(q) {
     const nq = Model.normalize(q);
-    if (nq.length < 3 || !conc) return [];
+    if (nq.length < 3 || !conc || /^(br)?[\s-]*\d{1,3}$/.test(nq)) return [];
     return conc.entidades.map((e, i) => ({ e, i }))
       .filter(({ e }) => Model.normalize(`${e.nome} ${e.nome_contrato || ''} ${e.grupo_vencedor || ''}`).includes(nq))
       .slice(0, 6)

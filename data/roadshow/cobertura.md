@@ -5,60 +5,60 @@ Qualidade: `ok` (≤ 5% ou ≤ 10 km), `aproximado` (≤ 20% ou marcado à mão)
 
 | Entidade | Estado | km declarado | km mapeado | Dif. % | Qualidade | Nota |
 |---|---|---:|---:|---:|---|---|
-| Autopista Litoral do Sul | vigente | 405,9 | 0,0 | -100,0 | falha |  |
-| Autopista Planalto Sul | vigente | 412,7 | 0,0 | -100,0 | falha |  |
-| Transbrasiliana | vigente | 321,6 | 0,0 | -100,0 | falha |  |
-| Ecovias Minas Goiás | vigente | 436,6 | 0,0 | -100,0 | falha |  |
-| Concebra | vigente | 211,0 | 0,0 | -100,0 | falha |  |
-| Nova Rota do Oeste | vigente | 850,9 | 0,0 | -100,0 | falha |  |
-| Ecovias Ponte | vigente | 13,2 | 0,0 | -100,0 | falha |  |
-| Via Sul | vigente | 472,0 | 0,0 | -100,0 | falha |  |
-| Ecovias Cerrado | vigente | 437,0 | 0,0 | -100,0 | falha |  |
-| Via Costeira | vigente | 220,4 | 0,0 | -100,0 | falha |  |
-| Ecovias Araguaia | vigente | 850,7 | 0,0 | -100,0 | falha |  |
-| Rio SP | vigente | 625,8 | 0,0 | -100,0 | falha |  |
-| Via Brasil | vigente | 1.009,5 | 0,0 | -100,0 | falha |  |
-| EcoVias Rio Minas | vigente | 726,9 | 0,0 | -100,0 | falha |  |
-| Rodovias Integradas do Paraná – Lote 2 | programa | 604,2 | 0,0 | -100,0 | falha |  |
-| Rodovias Integradas do Paraná – Lote 1 | programa | 473,0 | 0,0 | -100,0 | falha |  |
-| Belo Horizonte – Juiz de Fora | programa | 232,1 | 0,0 | -100,0 | falha |  |
-| Governador Valadares – Belo Horizonte | programa | 303,4 | 0,0 | -100,0 | falha |  |
-| Rota dos Cristais | programa | 594,8 | 0,0 | -100,0 | falha |  |
-| Rota Zebu | programa | 438,9 | 0,0 | -100,0 | falha |  |
-| Rota Verde | programa | 426,2 | 0,0 | -100,0 | falha |  |
-| Rodovias Integradas do Paraná – Lote 6 | programa | 662,1 | 0,0 | -100,0 | falha |  |
-| Rodovias Integradas do Paraná – Lote 3 | programa | 569,8 | 0,0 | -100,0 | falha |  |
-| Rota Agro Norte | programa | 686,7 | 0,0 | -100,0 | falha |  |
-| Motiva Pantanal | programa | 847,2 | 0,0 | -100,0 | falha |  |
-| Ecovias Capixaba | programa | 478,7 | 0,0 | -100,0 | falha |  |
-| Juiz de Fora – Rio de Janeiro | programa | 218,9 | 0,0 | -100,0 | falha |  |
-| Rota da Celulose | programa | 870,3 | 0,0 | -100,0 | falha |  |
-| Ponte Binacional São Borja – Santo Tomé | programa | 15,2 | 0,0 | -100,0 | falha |  |
-| Rota Agro | programa | 490,1 | 0,0 | -100,0 | falha |  |
-| Via Liberdade | programa | 190,1 | 0,0 | -100,0 | falha |  |
-| Rodovias Integradas do Paraná – Lote 4 | programa | 627,5 | 0,0 | -100,0 | falha |  |
-| Rodovias Integradas do Paraná – Lote 5 | programa | 432,8 | 0,0 | -100,0 | falha |  |
-| Rota Sertaneja | programa | 530,6 | 0,0 | -100,0 | falha |  |
-| Autopista Fluminense | programa | 322,1 | 0,0 | -100,0 | falha |  |
-| Autopista Fernão Dias | programa | 569,0 | 0,0 | -100,0 | falha |  |
-| Rotas Gerais | programa | 734,9 | 0,0 | -100,0 | falha |  |
-| Rota dos Sertões | programa | 502,0 | 0,0 | -100,0 | falha |  |
-| Régis Bittencourt | programa | 383,2 | 0,0 | -100,0 | falha |  |
-| Rota Arco Norte | agendado2026 | 1.010,0 | 0,0 | -100,0 | falha |  |
-| Rota do Pequi | agendado2026 | 211,6 | 0,0 | -100,0 | falha |  |
-| Rota Agro Central | agendado2026 | 888,0 | 0,0 | -100,0 | falha |  |
-| Rota 2 de Julho | agendado2026 | 653,3 | 0,0 | -100,0 | falha |  |
-| Rota Integração do Sul | projeto2027 | 674,1 | 0,0 | -100,0 | falha |  |
-| Rota Portuária do Sul | projeto2027 | 456,2 | 0,0 | -100,0 | falha |  |
-| Rota Vale do Itajaí | projeto2027 | 515,2 | 0,0 | -100,0 | falha |  |
-| Rota Meio Oeste Catarinense | projeto2027 | 166,0 | 0,0 | -100,0 | falha |  |
-| Rota Vale do Café | projeto2027 | 204,7 | 0,0 | -100,0 | falha |  |
-| Rodovia Transbrasiliana | projeto2027 | 321,6 | 0,0 | -100,0 | falha |  |
-| Rota Portuária Itaqui | projeto2027 | 441,3 | 0,0 | -100,0 | falha |  |
-| Rota Norte Catarinense | projeto2027 | 170,5 | 0,0 | -100,0 | falha |  |
-| Rota Planalto Sul | projeto2027 | 412,7 | 0,0 | -100,0 | falha |  |
-| Rota do Açu | projeto2027 | 306,3 | 0,0 | -100,0 | falha |  |
-| Rota Centro-Sul Baiano | projeto2027 | 783,2 | 0,0 | -100,0 | falha |  |
+| Autopista Litoral do Sul | vigente | 405,9 | 409,3 | +0,8 | ok | BR-116/PR Contorno Leste de Curitiba (Quatro Barras–entr. BR-476, km 71,1–119,2), BR-376/PR até a divisa SC e BR-101/SC divisa PR/SC–Paulo Lopes (km 0–244,9), mais o Contorno de Florianópolis; todos Concessão Federal no SNV. Corte em 244,9 compartilhado com a Via Costeira (ambas fecham dentro de 2%); a Régis fica com km 0–71,1 e o acesso antigo a Curitiba. |
+| Autopista Planalto Sul | vigente | 412,7 | 406,2 | -1,6 | ok | BR-116 de Curitiba (entr. BR-476, km 119,2) à divisa PR/SC e toda a BR-116/SC até a divisa SC/RS; Concessão Federal no SNV. |
+| Transbrasiliana | vigente | 321,6 | 323,6 | +0,6 | ok | BR-153/SP divisa MG/SP–divisa SP/PR, sem o trecho estadual de Marília (km 230,2–256,0), mais o acesso a Ourinhos; Concessão Federal no SNV. |
+| Ecovias Minas Goiás | vigente | 436,6 | 433,2 | -0,8 | ok | BR-050 Cristalina–divisa GO/MG–Delta (divisa MG/SP); em Uberlândia o eixo urbano (km 65,8–77,2) é Federal e a concessão usa o Rodoanel Ayrton Senna (Anel km 0–22,9, Concessão Federal). |
+| Concebra | vigente | 211,0 | 211,9 | +0,4 | ok | Remanescente atual: BR-060/DF/GO Brasília–Anápolis–Goiânia e BR-153/GO Goiânia–Hidrolândia (entr. GO-219, km 531,3), conforme o mapa da Rota do Pequi; o resto da BR-153/262 foi para a Rota Sertaneja e a BR-262 Betim–Uberaba para a Way-262. Corte em Hidrolândia é inferido. |
+| Nova Rota do Oeste | vigente | 850,9 | 858,9 | +0,9 | ok | BR-163/MT da divisa MS/MT até Sinop (entr. MT-220, km 858,9); Concessão Federal. Corte com a Via Brasil no entr. MT-220. |
+| Ecovias Ponte | vigente | 13,2 | 12,4 | -6,1 | ok | Ponte Rio–Niterói: BR-101/RJ km 322,1–334,5 (acesso Niterói–entr. BR-040). Os acessos curtos nas cabeceiras ficaram de fora. |
+| Via Sul | vigente | 472,0 | 463,0 | -1,9 | ok | BR-101/RS divisa SC–Osório, BR-290 Osório–Porto Alegre (até Ilha do Pavão), BR-386 Carazinho–Canoas e BR-448; Concessão Federal no SNV, sem os dois trechos estaduais da BR-386 (Lajeado/Estrela e Tabaí). |
+| Ecovias Cerrado | vigente | 437,0 | 432,6 | -1,0 | ok | BR-364/GO Jataí (entr. BR-060)–São Simão e BR-365/MG divisa–Uberlândia (acesso oeste); Concessão Federal. O trecho coincidente com o Anel de Uberlândia fica com a Ecovias Minas Goiás. |
+| Via Costeira | vigente | 220,4 | 217,3 | -1,4 | ok | BR-101/SC de Paulo Lopes (km 244,9) à divisa SC/RS; Concessão Federal; corte compartilhado com a Litoral Sul. |
+| Ecovias Araguaia | vigente | 850,7 | 850,7 | +0,0 | ok | BR-153 Aliança do Tocantins–Anápolis (entr. BR-060), BR-080/GO Dois Irmãos–Uruaçu e BR-414/GO Porangatu–Sta Tereza e Dois Irmãos–Anápolis; trechos Concessão Federal; soma exata. |
+| Rio SP | vigente | 625,8 | 664,1 | +6,1 | aproximado | Dutra (BR-116/SP/RJ, Trevo das Margaridas–Marginal Tietê) e Rio-Santos (BR-101/RJ Santa Cruz–divisa e BR-101/SP até Ubatuba/Praia Grande), tudo que o SNV marca como Concessão Federal; a BR-101 do SNV fica ~6% acima do declarado. |
+| Via Brasil | vigente | 1.009,5 | 1.003,3 | -0,6 | ok | BR-163 Sinop (entr. MT-220)–Campo Verde e BR-230/PA Campo Verde–Miritituba, mais os acessos aos portos (Santarenzinho e Itapacurá); Concessão Federal. |
+| EcoVias Rio Minas | vigente | 726,9 | 678,2 | -6,7 | aproximado | BR-116 Gov. Valadares–Além Paraíba–Duque de Caxias (marcos início/fim da EcoRioMinas em Realeza), BR-465 Seropédica–entr. BR-101 e Arco Metropolitano (BR-493) Manilha–Porto de Itaguaí; mais o acesso a Teresópolis. O trecho coincidente com a BR-040 em Duque de Caxias fica com a Nova Estrada Real; o SNV soma ~7% menos que o declarado. |
+| Rodovias Integradas do Paraná – Lote 2 | programa | 604,2 | 225,3 | -62,7 | aproximado | Só a parte federal: BR-277 Paranaguá–Curitiba (até o Contorno Leste) com acessos ao porto e a São José dos Pinhais, BR-153 divisa SP–Joaquim Távora e BR-369 divisa SP–Cornélio Procópio (Concessão Federal). As PR-092/151/239/407/408/411/508/804/855 (~380 km) não estão no SNV federal. |
+| Rodovias Integradas do Paraná – Lote 1 | programa | 473,0 | 369,7 | -21,8 | aproximado | Parte federal: BR-277 Curitiba–Relógio, BR-373 Ponta Grossa–Relógio, BR-376 Ponta Grossa–S. Luís do Purunã e BR-476 Curitiba–Lapa (Concessão Federal), mais o acesso oeste de Curitiba. As PR-418/423/427 não estão no SNV; o corte da BR-277 em Relógio é inferido. BR-376/PR km 464,6–531,7 atribuída ao Lote 3 (PR Vias), conforme a tabela do PER do Lote 3; o Lote 1 inclui ainda rodovias estaduais (PR-418/423/427) fora do SNV federal. |
+| Belo Horizonte – Juiz de Fora | programa | 232,1 | 232,1 | +0,0 | ok | BR-040/MG de BH (entr. BR-356) a Juiz de Fora (entr. antiga União e Indústria, km 775,9): extensão idêntica à declarada; daí à divisa RJ é Nova Estrada Real. |
+| Governador Valadares – Belo Horizonte | programa | 303,4 | 303,0 | -0,1 | ok | BR-381/MG Gov. Valadares (entr. BR-116)–BH (entr. BR-262, km 449,9); o km 420,9–449,9 ainda aparece como Federal no SNV (contrato de 2025). Não sobrepõe a Fernão Dias (a partir de Contagem/Betim). |
+| Rota dos Cristais | programa | 594,8 | 594,8 | +0,0 | ok | BR-040 Cristalina (entr. BR-050)–divisa GO/MG–BH (Av. Cícero Ildefonso, km 533,2); soma idêntica à declarada. |
+| Rota Zebu | programa | 438,9 | 440,6 | +0,4 | ok | BR-262/MG Betim (entr. BR-381)–Uberaba (entr. BR-050); Concessão Federal. O trecho Uberaba–Campo Florido–BR-153 fica com a Rota Sertaneja e o trecho BH–Betim (coincidente com a BR-381) com a Fernão Dias. |
+| Rota Verde | programa | 426,2 | 425,7 | -0,1 | ok | BR-060/GO do acesso sudoeste de Goiânia (km 164,0, após Concebra) ao acesso oeste de Rio Verde (km 393,1) + BR-452/GO Rio Verde–Itumbiara (km 0–196,6); exclui a ponte do Paranaíba coincidente com a BR-153 (Rota Sertaneja). Coincide com os trechos 'Concessão Federal' do SNV. |
+| Rodovias Integradas do Paraná – Lote 6 | programa | 662,1 | 504,5 | -23,8 | aproximado | Parte federal conforme Tabela 1 do PER (edital Lote 6): BR-163 km 123,7–197,6 (Realeza–Cascavel), BR-277 km 303,8 (Relógio/Prudentópolis)–Ponte da Amizade, novo acesso à 2ª ponte e acesso BR-469 à Ponte Tancredo Neves ≈ 519,3 km. Os ~142,8 km restantes são rodovias estaduais (PR-158/180/182/280/483) fora do SNV federal. |
+| Rodovias Integradas do Paraná – Lote 3 | programa | 569,8 | 374,4 | -34,3 | aproximado | Parte federal conforme Tabela 1 do PER Lote 3: BR-369 Arapongas–Apucarana (km 184,5–202,6) e trecho coincidente com a BR-376 até Jandaia do Sul, BR-373 Boa Vista–Ponta Grossa (km 164,0–171,9), BR-376 do acesso I de Mandaguari a São Luiz do Purunã (km 184,7–531,7) e travessia de Mandaguari ≈ 374,4 km. Os ~195,4 km restantes são PR-090/170/323/445 (estaduais, fora do SNV federal). |
+| Rota Agro Norte | programa | 686,7 | 686,7 | +0,0 | ok | BR-364/RO do entr. BR-435 (Vilhena, km 27,6) ao Trevo do Roque em Porto Velho (km 713,6), excluindo a travessia urbana de Ji-Paraná (km 337,3–350,2) substituída pelo Anel Viário de Ji-Paraná (lado conceded); bate exatamente com os trechos 'Concessão Federal' do SNV. |
+| Motiva Pantanal | programa | 847,2 | 845,9 | -0,2 | ok | BR-163/MS inteira, da divisa PR/MS (Ponte Ayrton Senna) à divisa MS/MT (antiga MSVia); inclui trechos coincidentes com BR-267, BR-262 e BR-060. |
+| Ecovias Capixaba | programa | 478,7 | 467,5 | -2,3 | ok | BR-101/ES inteira (divisa BA/ES–divisa ES/RJ) + BR-101/BA do entr. BA-698 (Mucuri) à divisa BA/ES (antiga Eco101). Travessias urbanas municipais da Serra não incluídas. |
+| Juiz de Fora – Rio de Janeiro | programa | 218,9 | 218,6 | -0,1 | ok | BR-040 de Juiz de Fora (Barreira do Triunfo, km 775,9 MG, fim da Via Mineira) ao Trevo das Missões (km 125,3 RJ), incluindo o trecho coincidente com a BR-116 em Duque de Caxias, + BR-495/RJ Itaipava–Teresópolis + acessos concedidos de Duques e Petrópolis. Pista variante da serra (040VRJ) não somada. |
+| Rota da Celulose | programa | 870,3 | 576,3 | -33,8 | aproximado | Parte federal: BR-262/MS Três Lagoas–Campo Grande (km 0–328,2) e BR-267/MS Bataguassu–Nova Alvorada do Sul (km 0–248,1) = 576,3 km, igual ao edital. Os ~294 km restantes são MS-040/338/395 (estaduais delegadas, fora do SNV federal); trechos coincidentes com a BR-163 ficam com a Motiva Pantanal. |
+| Ponte Binacional São Borja – Santo Tomé | programa | 15,2 | 7,5 | -50,7 | aproximado | No SNV só existe o lado brasileiro: acesso da BR-285 (Rodovia da Integração, São Borja) até a fronteira/ponte sobre o rio Uruguai (7,5 km). A ponte e o acesso argentino (até Santo Tomé) não estão no SNV, por isso a extensão declarada de 15,2 km não é atingível (diferença de 7,7 km fica dentro da tolerância de 10 km). Marcado como aproximado: a ponte e o lado argentino não estão no SNV; só o acesso em São Borja (7,5 km) foi mapeado. |
+| Rota Agro | programa | 490,1 | 474,4 | -3,2 | ok | BR-060/GO de Rio Verde (acesso oeste, km 393,1) a Jataí (entr. BR-060/158/364, km 478,3), BR-364/GO de Jataí à divisa GO/MT (km 201,0–387,5) e BR-364/MT da divisa até o entr. BR-163/364 em Rondonópolis (km 0–202,7). BR-364/GO até Jataí é da Ecovias Cerrado; contornos de Jataí não somados. |
+| Via Liberdade | programa | 190,1 | 80,0 | -57,9 | aproximado | Parte federal: BR-356/MG de Nova Lima (fim da coincidência com a BR-040, km 28,0) a Mariana (entr. MG-129/262, km 108,0) ≈ 80 km (edital fala em 83,3 km de BR-356). Os ~107 km restantes são MG-262/329 (estaduais, fora do SNV federal); rodovia delegada ao estado. |
+| Rodovias Integradas do Paraná – Lote 4 | programa | 627,5 | 293,0 | -53,3 | aproximado | Parte federal conforme Tabela 1 do PER Lote 4: BR-272 Francisco Alves–Guaíra (45,3), BR-369 km 88,2 (Cornélio Procópio)–PR-444 Arapongas sem os segmentos estaduais/municipais (74,0), BR-376 Nova Londrina–Mandaguari sem os segmentos urbanos de Maringá/Marialva, + acesso a Nova Londrina, Contorno Norte de Maringá e travessia de Mandaguari ≈ 293,2 km. Os ~334 km restantes são PR-182/272/317/323/444/862/897/986. |
+| Rodovias Integradas do Paraná – Lote 5 | programa | 432,8 | 339,6 | -21,5 | aproximado | Parte federal conforme PER/extrato Lote 5: BR-163 Cascavel–Guaíra e Guaíra–divisa PR/MS (sem o trecho coincidente com a BR-272), BR-369 Campo Mourão–Cascavel, BR-467 em Cascavel = 339,3 km. Os ~93,5 km restantes são PR-158/317/467/977/978 e contorno de Peabiru (estaduais). |
+| Rota Sertaneja | programa | 530,6 | 521,9 | -1,6 | ok | BR-153/GO de Hidrolândia (km 531,3, fim da Concebra) à divisa GO/MG em Itumbiara, BR-153/MG de Araporã à divisa MG/SP (Fronteira) e BR-262/MG de Uberaba (km 794,3, após coincidência com a BR-050) ao entr. BR-153 (Comendador Gomes). |
+| Autopista Fluminense | programa | 322,1 | 322,1 | +0,0 | ok | BR-101/RJ da divisa ES/RJ ao acesso à Ponte Rio–Niterói (km 322,1); a ponte e seus acessos são da Ecovias Ponte. |
+| Autopista Fernão Dias | programa | 569,0 | 568,3 | -0,1 | ok | BR-381 de Contagem/BH (km 469,7, inclui trecho coincidente com a BR-262 até Betim) à divisa MG/SP e BR-381/SP até o entr. BR-116 em São Paulo (km 90,4; o trecho final coincidente com a Dutra fica com a Rio SP), + Contorno de Betim. Nova 381 termina no km 449,9. |
+| Rotas Gerais | programa | 734,9 | 733,9 | -0,1 | ok | BR-251/MG de Montes Claros (entr. BR-251/365, km 545,2) ao entr. BR-116 (acesso sul Tancredo Neves) + BR-116/MG daí até Governador Valadares (entr. BR-116/381/451, km 408,5), incluindo o trecho coincidente BR-116/251; ao sul de GV começa a EcoVias Rio Minas. |
+| Rota dos Sertões | programa | 502,0 | 489,6 | -2,5 | ok | BR-116/PE de Salgueiro (entr. BR-232, km 25,6) à divisa PE/BA e BR-116/BA da divisa a Feira de Santana (entr. BR-116/324, km 423,7), incluindo o trecho coincidente com a BR-324. Contorno de Euclides da Cunha não somado. |
+| Régis Bittencourt | programa | 383,2 | 379,6 | -1,0 | ok | BR-116/SP de Embu/Taboão (km 270,1) à divisa SP/PR e BR-116/PR da divisa ao Rodoanel/Contorno Leste em Quatro Barras (km 71,1), + acesso concedido até o 'FIM DA CONCESSÃO' em Curitiba; o Contorno Leste (km 71,1–119,2) é da Litoral Sul. |
+| Rota Arco Norte | agendado2026 | 1.010,0 | 972,3 | -3,7 | ok | Contrato Via Brasil BR-163/230: BR-163 Sinop (entr. MT-220, km 858,9; fronteira com a Nova Rota do Oeste)–div. MT/PA–Campo Verde e BR-230 Campo Verde–Miritituba ('Concessão Federal'). Acessos portuários de Santarenzinho/Itapacurá não incluídos. Ficha p. 109. |
+| Rota do Pequi | agendado2026 | 211,6 | 213,9 | +1,1 | ok | Contrato Concebra: BR-060 Brasília–Goiânia (Viaduto Aldeia do Vale) e BR-153 Goiânia–Hidrolândia (entr. GO-219, km 533,3). Ficha p. 111. |
+| Rota Agro Central | agendado2026 | 888,0 | 884,7 | -0,4 | ok | BR-364/RO Vilhena (div. MT/RO até entr. BR-364/435, início da concessão de RO), BR-364/MT div. MT/RO–Comodoro–Sapezal, BR-174/MT Comodoro–Cáceres e BR-070/MT Cáceres–Cuiabá (Trevo do Lagarto, Várzea Grande). Mapa p. 113. |
+| Rota 2 de Julho | agendado2026 | 653,3 | 637,4 | -2,4 | ok | BR-324 Salvador–Feira de Santana e BR-116 Feira de Santana–div. BA/MG (antigo contrato ViaBahia); acessos não incluídos. Ficha p. 115. |
+| Rota Integração do Sul | projeto2027 | 674,1 | 678,5 | +0,7 | ok | BR-116 Camaquã–Porto Alegre (fim da concessão ViaSul/Ilha do Pavão, km 276,6–400), BR-290 Porto Alegre–entr. BR-392 (km 98,2–333,5), BR-392 Santana da Boa Vista–Santa Maria (km 199,9–362,2) e BR-158 Santa Maria–entr. BR-285 p/ Panambi (km 158,8–330,4, 'Panambi (Norte)' no texto). Mapa e texto da ficha p. 131. |
+| Rota Portuária do Sul | projeto2027 | 456,2 | 456,9 | +0,2 | ok | Mapa da ficha (p. 133) mostra BR-116 Camaquã–Jaguarão e BR-392 Rio Grande–Santana da Boa Vista, que coincide com a extensão atual 'Concessão Federal' (Ecosul) no SNV; o rótulo 'Pelotas - Santa Maria' não confere com o mapa. |
+| Rota Vale do Itajaí | projeto2027 | 515,2 | 514,8 | -0,1 | ok | BR-470 inteira em SC (Navegantes–div. SC/RS), BR-282 Campos Novos–entr. BR-153 (Vargem Bonita/Irani) e BR-153 entr. BR-282–div. SC/RS. Mapa p. 135; o trecho da BR-153 ao norte da BR-282 fica no Lote 03. |
+| Rota Meio Oeste Catarinense | projeto2027 | 166,0 | 166,7 | +0,4 | ok | BR-282 entr. BR-153–Xanxerê (inclui trecho coincidente BR-282/480), BR-480 até Chapecó (entr. BR-283/480) e BR-153 div. PR/SC–entr. BR-282. Mapa p. 137. |
+| Rota Vale do Café | projeto2027 | 204,7 | 195,1 | -4,7 | ok | BR-393 Além Paraíba (div. MG/RJ, incl. 2,2 km em MG) até entr. BR-116 em Volta Redonda/Barra Mansa (km 298,2) — extensão do contrato atual (Rodovia do Aço). Acesso de Volta Redonda (12,6 km) não incluído. Ficha p. 139. |
+| Rodovia Transbrasiliana | projeto2027 | 321,6 | 321,5 | -0,0 | ok | Extensão 'Concessão Federal' da BR-153/SP (Icém–Ourinhos), excluindo o trecho estadual de Marília (km 230,2–256,0). Ficha p. 141. |
+| Rota Portuária Itaqui | projeto2027 | 441,3 | 422,1 | -4,3 | ok | BR-135 São Luís–Peritoró (inclui coincidente BR-135/316 Cachucha–Peritoró) e BR-316 Peritoró–Timon/div. MA/PI (ponte do Parnaíba, Teresina). Acessos ao Porto do Itaqui não incluídos. Mapa p. 143. |
+| Rota Norte Catarinense | projeto2027 | 170,5 | 170,5 | +0,0 | ok | BR-280 km 0 (São Francisco do Sul) até entr. BR-116 em Mafra (km 170,5), que bate exatamente com os 170,5 km declarados (trecho 'Joinville - Mafra'). Ficha p. 145. |
+| Rota Planalto Sul | projeto2027 | 412,7 | 406,2 | -1,6 | ok | BR-116 Curitiba (entr. BR-116/277/376/476, km 119,2) até div. PR/SC e BR-116/SC inteira até div. SC/RS — 'Concessão Federal' (Autopista Planalto Sul); km 0–119,2 PR é a Régis Bittencourt. Ficha p. 147. |
+| Rota do Açu | projeto2027 | 306,3 | 225,9 | -26,3 | aproximado | BR-356 Muriaé (entr. BR-265/356) até São João da Barra, incluindo o contorno de Itaperuna. O SNV soma ~226 km contra 306,33 km declarados; o mapa da ficha (p. 149) mostra só Muriaé–São João da Barra, então a diferença deve vir de acessos/vias não federais (ex.: acesso ao Porto do Açu) contados no PDF. Ficha em revisão. |
+| Rota Centro-Sul Baiano | projeto2027 | 783,2 | 772,3 | -1,4 | ok | BR-101 entr. BR-101/324 (Feira de Santana) até o início do trecho 'Concessão Federal' (ECO101) em Mucuri, km 938,6. A ficha diz 'div. BA/MG', mas a BR-101 termina na div. BA/ES; ir até a divisa (km 956,1) também ficaria dentro da tolerância. Ficha p. 151. |
 
 ## Concessão no SNV, fora do RoadShow
 
@@ -66,67 +66,17 @@ Trechos com administração `Concessão Federal` no SNV que não caem em nenhum 
 
 | BR/UF | km |
 |---|---:|
-| BR-040/MG | 823,0 |
-| BR-040/RJ | 167,1 |
-| BR-050/GO | 218,5 |
-| BR-050/MG | 214,7 |
-| BR-060/DF | 31,6 |
-| BR-060/GO | 368,5 |
-| BR-060/MS | 80,2 |
-| BR-070/GO | 1,8 |
-| BR-070/MT | 122,1 |
-| BR-080/GO | 97,3 |
-| BR-101/BA | 17,5 |
-| BR-101/ES | 450,0 |
-| BR-101/RJ | 551,4 |
-| BR-101/RS | 95,8 |
-| BR-101/SC | 516,8 |
-| BR-101/SP | 70,0 |
-| BR-116/MG | 405,7 |
-| BR-116/PR | 243,3 |
-| BR-116/RJ | 327,8 |
-| BR-116/RS | 281,6 |
-| BR-116/SC | 310,5 |
-| BR-116/SP | 506,2 |
-| BR-120/MG | 0,4 |
-| BR-153/GO | 648,1 |
-| BR-153/MG | 246,7 |
-| BR-153/PR | 52,5 |
-| BR-153/RS | 34,2 |
-| BR-153/SP | 323,6 |
-| BR-153/TO | 178,9 |
-| BR-154/GO | 15,5 |
-| BR-154/MG | 7,2 |
-| BR-158/MS | 7,7 |
-| BR-158/PR | 10,8 |
-| BR-163/MS | 765,7 |
-| BR-163/MT | 1.017,7 |
-| BR-163/PA | 693,0 |
-| BR-163/PR | 73,9 |
-| BR-230/PA | 47,5 |
-| BR-251/GO | 25,5 |
-| BR-262/MG | 564,4 |
-| BR-262/MS | 320,5 |
-| BR-265/MG | 5,5 |
-| BR-267/MS | 248,1 |
-| BR-277/PR | 766,4 |
-| BR-290/RS | 87,2 |
-| BR-364/GO | 192,7 |
-| BR-364/MG | 9,5 |
-| BR-364/RO | 686,7 |
-| BR-365/MG | 223,2 |
-| BR-369/PR | 275,4 |
-| BR-373/PR | 110,8 |
-| BR-376/PR | 566,4 |
-| BR-381/MG | 734,9 |
-| BR-381/SP | 90,4 |
-| BR-386/RS | 220,2 |
+| BR-040/RJ | 38,3 |
+| BR-070/MT | 18,1 |
+| BR-101/RJ | 8,0 |
+| BR-101/RS | 2,3 |
+| BR-101/SC | 6,0 |
+| BR-101/SP | 0,5 |
+| BR-116/PR | 11,9 |
+| BR-116/RJ | 8,2 |
+| BR-116/RS | 259,9 |
+| BR-265/MG | 0,6 |
+| BR-277/PR | 27,5 |
+| BR-381/MG | 11,6 |
 | BR-392/RS | 197,0 |
-| BR-414/GO | 112,3 |
-| BR-448/RS | 6,2 |
-| BR-452/GO | 181,1 |
-| BR-465/RJ | 22,8 |
 | BR-469/PR | 0,6 |
-| BR-476/PR | 54,0 |
-| BR-493/RJ | 101,6 |
-| BR-495/RJ | 0,1 |

@@ -232,7 +232,7 @@
    {
     "br": "163",
     "uf": "MT",
-    "km_ini": 826.6,
+    "km_ini": 858.9,
     "km_fim": 1121.7
    },
    {
@@ -250,7 +250,7 @@
   ],
   "codigos": [],
   "qualidade": null,
-  "nota": "Contrato Via Brasil BR-163/230: BR-163 Sinop (início da travessia urbana, km 826,6)–div. MT/PA–Campo Verde e BR-230 Campo Verde–Miritituba ('Concessão Federal'). Acessos portuários de Santarenzinho/Itapacurá não incluídos. Ficha p. 109."
+  "nota": "Contrato Via Brasil BR-163/230: BR-163 Sinop (entr. MT-220, km 858,9; fronteira com a Nova Rota do Oeste)–div. MT/PA–Campo Verde e BR-230 Campo Verde–Miritituba ('Concessão Federal'). Acessos portuários de Santarenzinho/Itapacurá não incluídos. Ficha p. 109."
  },
  "rota-do-pequi": {
   "ranges": [
@@ -326,5 +326,898 @@
   "codigos": [],
   "qualidade": null,
   "nota": "BR-324 Salvador–Feira de Santana e BR-116 Feira de Santana–div. BA/MG (antigo contrato ViaBahia); acessos não incluídos. Ficha p. 115."
+ },
+ "autopista-litoral-do-sul": {
+  "ranges": [
+   {
+    "br": "116",
+    "uf": "PR",
+    "km_ini": 71.1,
+    "km_fim": 119.2
+   },
+   {
+    "br": "376",
+    "uf": "PR",
+    "km_ini": 588.5,
+    "km_fim": 669.0
+   },
+   {
+    "br": "101",
+    "uf": "SC",
+    "km_ini": 0.0,
+    "km_fim": 244.9
+   },
+   {
+    "br": "101",
+    "uf": "SC",
+    "km_ini": 0.0,
+    "km_fim": 48.6,
+    "tipo": "Contorno"
+   }
+  ],
+  "qualidade": null,
+  "nota": "BR-116/PR Contorno Leste de Curitiba (Quatro Barras–entr. BR-476, km 71,1–119,2), BR-376/PR até a divisa SC e BR-101/SC divisa PR/SC–Paulo Lopes (km 0–244,9), mais o Contorno de Florianópolis; todos Concessão Federal no SNV. Corte em 244,9 compartilhado com a Via Costeira (ambas fecham dentro de 2%); a Régis fica com km 0–71,1 e o acesso antigo a Curitiba."
+ },
+ "autopista-planalto-sul": {
+  "ranges": [
+   {
+    "br": "116",
+    "uf": "PR",
+    "km_ini": 119.2,
+    "km_fim": 214.9
+   },
+   {
+    "br": "116",
+    "uf": "SC",
+    "km_ini": 0.0,
+    "km_fim": 310.5
+   }
+  ],
+  "qualidade": null,
+  "nota": "BR-116 de Curitiba (entr. BR-476, km 119,2) à divisa PR/SC e toda a BR-116/SC até a divisa SC/RS; Concessão Federal no SNV."
+ },
+ "transbrasiliana": {
+  "ranges": [
+   {
+    "br": "153",
+    "uf": "SP",
+    "km_ini": 0.0,
+    "km_fim": 230.2
+   },
+   {
+    "br": "153",
+    "uf": "SP",
+    "km_ini": 256.0,
+    "km_fim": 347.3
+   }
+  ],
+  "codigos": [
+   "153ASP1005"
+  ],
+  "qualidade": null,
+  "nota": "BR-153/SP divisa MG/SP–divisa SP/PR, sem o trecho estadual de Marília (km 230,2–256,0), mais o acesso a Ourinhos; Concessão Federal no SNV."
+ },
+ "ecovias-minas-goias": {
+  "ranges": [
+   {
+    "br": "050",
+    "uf": "GO",
+    "km_ini": 95.7,
+    "km_fim": 314.2
+   },
+   {
+    "br": "050",
+    "uf": "MG",
+    "km_ini": 0.0,
+    "km_fim": 65.8
+   },
+   {
+    "br": "050",
+    "uf": "MG",
+    "km_ini": 77.2,
+    "km_fim": 206.8
+   },
+   {
+    "br": "050",
+    "uf": "MG",
+    "km_ini": 0.0,
+    "km_fim": 22.9,
+    "tipo": "Anel"
+   }
+  ],
+  "qualidade": null,
+  "nota": "BR-050 Cristalina–divisa GO/MG–Delta (divisa MG/SP); em Uberlândia o eixo urbano (km 65,8–77,2) é Federal e a concessão usa o Rodoanel Ayrton Senna (Anel km 0–22,9, Concessão Federal)."
+ },
+ "concebra": {
+  "ranges": [
+   {
+    "br": "060",
+    "uf": "DF",
+    "km_ini": 0.0,
+    "km_fim": 31.6
+   },
+   {
+    "br": "060",
+    "uf": "GO",
+    "km_ini": 0.0,
+    "km_fim": 139.4
+   },
+   {
+    "br": "153",
+    "uf": "GO",
+    "km_ini": 445.2,
+    "km_fim": 531.3
+   }
+  ],
+  "qualidade": null,
+  "nota": "Remanescente atual: BR-060/DF/GO Brasília–Anápolis–Goiânia e BR-153/GO Goiânia–Hidrolândia (entr. GO-219, km 531,3), conforme o mapa da Rota do Pequi; o resto da BR-153/262 foi para a Rota Sertaneja e a BR-262 Betim–Uberaba para a Way-262. Corte em Hidrolândia é inferido."
+ },
+ "nova-rota-do-oeste": {
+  "ranges": [
+   {
+    "br": "163",
+    "uf": "MT",
+    "km_ini": 0.0,
+    "km_fim": 858.9
+   }
+  ],
+  "qualidade": null,
+  "nota": "BR-163/MT da divisa MS/MT até Sinop (entr. MT-220, km 858,9); Concessão Federal. Corte com a Via Brasil no entr. MT-220."
+ },
+ "ecovias-ponte": {
+  "ranges": [
+   {
+    "br": "101",
+    "uf": "RJ",
+    "km_ini": 322.1,
+    "km_fim": 334.5
+   }
+  ],
+  "qualidade": null,
+  "nota": "Ponte Rio–Niterói: BR-101/RJ km 322,1–334,5 (acesso Niterói–entr. BR-040). Os acessos curtos nas cabeceiras ficaram de fora."
+ },
+ "via-sul": {
+  "ranges": [
+   {
+    "br": "101",
+    "uf": "RS",
+    "km_ini": 0.0,
+    "km_fim": 93.5
+   },
+   {
+    "br": "290",
+    "uf": "RS",
+    "km_ini": 0.0,
+    "km_fim": 98.2
+   },
+   {
+    "br": "386",
+    "uf": "RS",
+    "km_ini": 180.2,
+    "km_fim": 346.1
+   },
+   {
+    "br": "386",
+    "uf": "RS",
+    "km_ini": 351.2,
+    "km_fim": 386.0
+   },
+   {
+    "br": "386",
+    "uf": "RS",
+    "km_ini": 392.0,
+    "km_fim": 445.7
+   },
+   {
+    "br": "448",
+    "uf": "RS",
+    "km_ini": 0.6,
+    "km_fim": 22.3
+   }
+  ],
+  "qualidade": null,
+  "nota": "BR-101/RS divisa SC–Osório, BR-290 Osório–Porto Alegre (até Ilha do Pavão), BR-386 Carazinho–Canoas e BR-448; Concessão Federal no SNV, sem os dois trechos estaduais da BR-386 (Lajeado/Estrela e Tabaí)."
+ },
+ "ecovias-cerrado": {
+  "ranges": [
+   {
+    "br": "364",
+    "uf": "GO",
+    "km_ini": 0.0,
+    "km_fim": 192.7
+   },
+   {
+    "br": "365",
+    "uf": "MG",
+    "km_ini": 628.3,
+    "km_fim": 868.2
+   }
+  ],
+  "qualidade": null,
+  "nota": "BR-364/GO Jataí (entr. BR-060)–São Simão e BR-365/MG divisa–Uberlândia (acesso oeste); Concessão Federal. O trecho coincidente com o Anel de Uberlândia fica com a Ecovias Minas Goiás."
+ },
+ "via-costeira": {
+  "ranges": [
+   {
+    "br": "101",
+    "uf": "SC",
+    "km_ini": 244.9,
+    "km_fim": 462.2
+   }
+  ],
+  "qualidade": null,
+  "nota": "BR-101/SC de Paulo Lopes (km 244,9) à divisa SC/RS; Concessão Federal; corte compartilhado com a Litoral Sul."
+ },
+ "ecovias-araguaia": {
+  "ranges": [
+   {
+    "br": "153",
+    "uf": "TO",
+    "km_ini": 623.0,
+    "km_fim": 801.9
+   },
+   {
+    "br": "153",
+    "uf": "GO",
+    "km_ini": 0.0,
+    "km_fim": 445.2
+   },
+   {
+    "br": "080",
+    "uf": "GO",
+    "km_ini": 94.3,
+    "km_fim": 191.6
+   },
+   {
+    "br": "414",
+    "uf": "GO",
+    "km_ini": 0.0,
+    "km_fim": 38.6
+   },
+   {
+    "br": "414",
+    "uf": "GO",
+    "km_ini": 300.0,
+    "km_fim": 439.6
+   }
+  ],
+  "qualidade": null,
+  "nota": "BR-153 Aliança do Tocantins–Anápolis (entr. BR-060), BR-080/GO Dois Irmãos–Uruaçu e BR-414/GO Porangatu–Sta Tereza e Dois Irmãos–Anápolis; trechos Concessão Federal; soma exata."
+ },
+ "rio-sp": {
+  "ranges": [
+   {
+    "br": "116",
+    "uf": "SP",
+    "km_ini": 0.0,
+    "km_fim": 231.6
+   },
+   {
+    "br": "116",
+    "uf": "RJ",
+    "km_ini": 168.1,
+    "km_fim": 339.6
+   },
+   {
+    "br": "101",
+    "uf": "RJ",
+    "km_ini": 390.1,
+    "km_fim": 599.0
+   },
+   {
+    "br": "101",
+    "uf": "SP",
+    "km_ini": 0.0,
+    "km_fim": 52.1
+   }
+  ],
+  "qualidade": null,
+  "nota": "Dutra (BR-116/SP/RJ, Trevo das Margaridas–Marginal Tietê) e Rio-Santos (BR-101/RJ Santa Cruz–divisa e BR-101/SP até Ubatuba/Praia Grande), tudo que o SNV marca como Concessão Federal; a BR-101 do SNV fica ~6% acima do declarado."
+ },
+ "via-brasil": {
+  "ranges": [
+   {
+    "br": "163",
+    "uf": "MT",
+    "km_ini": 858.9,
+    "km_fim": 1121.7
+   },
+   {
+    "br": "163",
+    "uf": "PA",
+    "km_ini": 0.0,
+    "km_fim": 676.5
+   },
+   {
+    "br": "230",
+    "uf": "PA",
+    "km_ini": 1111.9,
+    "km_fim": 1144.9
+   }
+  ],
+  "codigos": [
+   "163APA1005",
+   "230APA2005"
+  ],
+  "qualidade": null,
+  "nota": "BR-163 Sinop (entr. MT-220)–Campo Verde e BR-230/PA Campo Verde–Miritituba, mais os acessos aos portos (Santarenzinho e Itapacurá); Concessão Federal."
+ },
+ "ecovias-rio-minas": {
+  "ranges": [
+   {
+    "br": "116",
+    "uf": "MG",
+    "km_ini": 408.5,
+    "km_fim": 586.4
+   },
+   {
+    "br": "116",
+    "uf": "MG",
+    "km_ini": 588.8,
+    "km_fim": 816.6
+   },
+   {
+    "br": "116",
+    "uf": "RJ",
+    "km_ini": 2.1,
+    "km_fim": 148.4
+   },
+   {
+    "br": "465",
+    "uf": "RJ",
+    "km_ini": 0.0,
+    "km_fim": 22.8
+   },
+   {
+    "br": "493",
+    "uf": "RJ",
+    "km_ini": 0.0,
+    "km_fim": 123.7
+   }
+  ],
+  "codigos": [
+   "116ARJ1005"
+  ],
+  "qualidade": null,
+  "nota": "BR-116 Gov. Valadares–Além Paraíba–Duque de Caxias (marcos início/fim da EcoRioMinas em Realeza), BR-465 Seropédica–entr. BR-101 e Arco Metropolitano (BR-493) Manilha–Porto de Itaguaí; mais o acesso a Teresópolis. O trecho coincidente com a BR-040 em Duque de Caxias fica com a Nova Estrada Real; o SNV soma ~7% menos que o declarado."
+ },
+ "rodovias-integradas-do-parana-lote-2": {
+  "ranges": [
+   {
+    "br": "277",
+    "uf": "PR",
+    "km_ini": 0.0,
+    "km_fim": 70.4
+   },
+   {
+    "br": "153",
+    "uf": "PR",
+    "km_ini": 0.0,
+    "km_fim": 52.5
+   },
+   {
+    "br": "369",
+    "uf": "PR",
+    "km_ini": 1.0,
+    "km_fim": 51.8
+   },
+   {
+    "br": "369",
+    "uf": "PR",
+    "km_ini": 60.9,
+    "km_fim": 88.2
+   }
+  ],
+  "codigos": [
+   "277APR1005",
+   "277APR2005",
+   "277APR2010",
+   "277APR3005",
+   "277APR3010"
+  ],
+  "qualidade": "aproximado",
+  "nota": "Só a parte federal: BR-277 Paranaguá–Curitiba (até o Contorno Leste) com acessos ao porto e a São José dos Pinhais, BR-153 divisa SP–Joaquim Távora e BR-369 divisa SP–Cornélio Procópio (Concessão Federal). As PR-092/151/239/407/408/411/508/804/855 (~380 km) não estão no SNV federal."
+ },
+ "rodovias-integradas-do-parana-lote-1": {
+  "ranges": [
+   {
+    "br": "277",
+    "uf": "PR",
+    "km_ini": 92.7,
+    "km_fim": 303.8
+   },
+   {
+    "br": "373",
+    "uf": "PR",
+    "km_ini": 183.4,
+    "km_fim": 282.7
+   },
+   {
+    "br": "476",
+    "uf": "PR",
+    "km_ini": 142.8,
+    "km_fim": 197.7
+   }
+  ],
+  "codigos": [
+   "277APR4005"
+  ],
+  "qualidade": "aproximado",
+  "nota": "Parte federal: BR-277 Curitiba–Relógio, BR-373 Ponta Grossa–Relógio, BR-376 Ponta Grossa–S. Luís do Purunã e BR-476 Curitiba–Lapa (Concessão Federal), mais o acesso oeste de Curitiba. As PR-418/423/427 não estão no SNV; o corte da BR-277 em Relógio é inferido. BR-376/PR km 464,6–531,7 atribuída ao Lote 3 (PR Vias), conforme a tabela do PER do Lote 3; o Lote 1 inclui ainda rodovias estaduais (PR-418/423/427) fora do SNV federal."
+ },
+ "belo-horizonte-juiz-de-fora": {
+  "ranges": [
+   {
+    "br": "040",
+    "uf": "MG",
+    "km_ini": 543.8,
+    "km_fim": 775.9
+   }
+  ],
+  "qualidade": null,
+  "nota": "BR-040/MG de BH (entr. BR-356) a Juiz de Fora (entr. antiga União e Indústria, km 775,9): extensão idêntica à declarada; daí à divisa RJ é Nova Estrada Real."
+ },
+ "nova-381": {
+  "ranges": [
+   {
+    "br": "381",
+    "uf": "MG",
+    "km_ini": 146.9,
+    "km_fim": 449.9
+   }
+  ],
+  "qualidade": null,
+  "nota": "BR-381/MG Gov. Valadares (entr. BR-116)–BH (entr. BR-262, km 449,9); o km 420,9–449,9 ainda aparece como Federal no SNV (contrato de 2025). Não sobrepõe a Fernão Dias (a partir de Contagem/Betim)."
+ },
+ "rota-dos-cristais": {
+  "ranges": [
+   {
+    "br": "040",
+    "uf": "GO",
+    "km_ini": 95.7,
+    "km_fim": 157.3
+   },
+   {
+    "br": "040",
+    "uf": "MG",
+    "km_ini": 0.0,
+    "km_fim": 533.2
+   }
+  ],
+  "qualidade": null,
+  "nota": "BR-040 Cristalina (entr. BR-050)–divisa GO/MG–BH (Av. Cícero Ildefonso, km 533,2); soma idêntica à declarada."
+ },
+ "rota-zebu": {
+  "ranges": [
+   {
+    "br": "262",
+    "uf": "MG",
+    "km_ini": 347.9,
+    "km_fim": 788.5
+   }
+  ],
+  "qualidade": null,
+  "nota": "BR-262/MG Betim (entr. BR-381)–Uberaba (entr. BR-050); Concessão Federal. O trecho Uberaba–Campo Florido–BR-153 fica com a Rota Sertaneja e o trecho BH–Betim (coincidente com a BR-381) com a Fernão Dias."
+ },
+ "rota-verde-goias": {
+  "ranges": [
+   {
+    "br": "060",
+    "uf": "GO",
+    "km_ini": 164.0,
+    "km_fim": 393.1
+   },
+   {
+    "br": "452",
+    "uf": "GO",
+    "km_ini": 0.0,
+    "km_fim": 196.6
+   }
+  ],
+  "qualidade": null,
+  "nota": "BR-060/GO do acesso sudoeste de Goiânia (km 164,0, após Concebra) ao acesso oeste de Rio Verde (km 393,1) + BR-452/GO Rio Verde–Itumbiara (km 0–196,6); exclui a ponte do Paranaíba coincidente com a BR-153 (Rota Sertaneja). Coincide com os trechos 'Concessão Federal' do SNV."
+ },
+ "rodovias-integradas-do-parana-lote-6": {
+  "ranges": [
+   {
+    "br": "163",
+    "uf": "PR",
+    "km_ini": 123.7,
+    "km_fim": 197.6
+   },
+   {
+    "br": "277",
+    "uf": "PR",
+    "km_ini": 303.8,
+    "km_fim": 734.4
+   }
+  ],
+  "qualidade": "aproximado",
+  "nota": "Parte federal conforme Tabela 1 do PER (edital Lote 6): BR-163 km 123,7–197,6 (Realeza–Cascavel), BR-277 km 303,8 (Relógio/Prudentópolis)–Ponte da Amizade, novo acesso à 2ª ponte e acesso BR-469 à Ponte Tancredo Neves ≈ 519,3 km. Os ~142,8 km restantes são rodovias estaduais (PR-158/180/182/280/483) fora do SNV federal."
+ },
+ "rodovias-integradas-do-parana-lote-3": {
+  "ranges": [
+   {
+    "br": "369",
+    "uf": "PR",
+    "km_ini": 184.5,
+    "km_fim": 202.6
+   },
+   {
+    "br": "373",
+    "uf": "PR",
+    "km_ini": 164.0,
+    "km_fim": 171.9
+   },
+   {
+    "br": "376",
+    "uf": "PR",
+    "km_ini": 184.7,
+    "km_fim": 531.7
+   }
+  ],
+  "codigos": [
+   "376UPR2015"
+  ],
+  "qualidade": "aproximado",
+  "nota": "Parte federal conforme Tabela 1 do PER Lote 3: BR-369 Arapongas–Apucarana (km 184,5–202,6) e trecho coincidente com a BR-376 até Jandaia do Sul, BR-373 Boa Vista–Ponta Grossa (km 164,0–171,9), BR-376 do acesso I de Mandaguari a São Luiz do Purunã (km 184,7–531,7) e travessia de Mandaguari ≈ 374,4 km. Os ~195,4 km restantes são PR-090/170/323/445 (estaduais, fora do SNV federal)."
+ },
+ "rota-agro-norte": {
+  "ranges": [
+   {
+    "br": "364",
+    "uf": "RO",
+    "km_ini": 27.6,
+    "km_fim": 337.3
+   },
+   {
+    "br": "364",
+    "uf": "RO",
+    "km_ini": 350.2,
+    "km_fim": 713.6
+   },
+   {
+    "br": "364",
+    "uf": "RO",
+    "km_ini": 0.0,
+    "km_fim": 13.6,
+    "tipo": "Anel"
+   }
+  ],
+  "qualidade": null,
+  "nota": "BR-364/RO do entr. BR-435 (Vilhena, km 27,6) ao Trevo do Roque em Porto Velho (km 713,6), excluindo a travessia urbana de Ji-Paraná (km 337,3–350,2) substituída pelo Anel Viário de Ji-Paraná (lado conceded); bate exatamente com os trechos 'Concessão Federal' do SNV."
+ },
+ "motiva-pantanal": {
+  "ranges": [
+   {
+    "br": "163",
+    "uf": "MS",
+    "km_ini": 0.0,
+    "km_fim": 845.9
+   }
+  ],
+  "qualidade": null,
+  "nota": "BR-163/MS inteira, da divisa PR/MS (Ponte Ayrton Senna) à divisa MS/MT (antiga MSVia); inclui trechos coincidentes com BR-267, BR-262 e BR-060."
+ },
+ "ecovias-capixaba": {
+  "ranges": [
+   {
+    "br": "101",
+    "uf": "ES",
+    "km_ini": 0.0,
+    "km_fim": 450.0
+   },
+   {
+    "br": "101",
+    "uf": "BA",
+    "km_ini": 938.6,
+    "km_fim": 956.1
+   }
+  ],
+  "qualidade": null,
+  "nota": "BR-101/ES inteira (divisa BA/ES–divisa ES/RJ) + BR-101/BA do entr. BA-698 (Mucuri) à divisa BA/ES (antiga Eco101). Travessias urbanas municipais da Serra não incluídas."
+ },
+ "juiz-de-fora-rio-de-janeiro": {
+  "ranges": [
+   {
+    "br": "040",
+    "uf": "MG",
+    "km_ini": 775.9,
+    "km_fim": 831.2
+   },
+   {
+    "br": "040",
+    "uf": "RJ",
+    "km_ini": 0.0,
+    "km_fim": 125.3
+   },
+   {
+    "br": "495",
+    "uf": "RJ",
+    "km_ini": 0.0,
+    "km_fim": 34.5
+   }
+  ],
+  "codigos": [
+   "040ARJ2005",
+   "040ARJ3005"
+  ],
+  "qualidade": null,
+  "nota": "BR-040 de Juiz de Fora (Barreira do Triunfo, km 775,9 MG, fim da Via Mineira) ao Trevo das Missões (km 125,3 RJ), incluindo o trecho coincidente com a BR-116 em Duque de Caxias, + BR-495/RJ Itaipava–Teresópolis + acessos concedidos de Duques e Petrópolis. Pista variante da serra (040VRJ) não somada."
+ },
+ "rota-da-celulose": {
+  "ranges": [
+   {
+    "br": "262",
+    "uf": "MS",
+    "km_ini": 0.0,
+    "km_fim": 328.2
+   },
+   {
+    "br": "267",
+    "uf": "MS",
+    "km_ini": 0.0,
+    "km_fim": 248.1
+   }
+  ],
+  "qualidade": "aproximado",
+  "nota": "Parte federal: BR-262/MS Três Lagoas–Campo Grande (km 0–328,2) e BR-267/MS Bataguassu–Nova Alvorada do Sul (km 0–248,1) = 576,3 km, igual ao edital. Os ~294 km restantes são MS-040/338/395 (estaduais delegadas, fora do SNV federal); trechos coincidentes com a BR-163 ficam com a Motiva Pantanal."
+ },
+ "ponte-binacional-sao-borja-santo-tome": {
+  "ranges": [
+   {
+    "br": "285",
+    "uf": "RS",
+    "km_ini": 0.0,
+    "km_fim": 7.5,
+    "tipo": "Acesso"
+   }
+  ],
+  "qualidade": "aproximado",
+  "nota": "No SNV só existe o lado brasileiro: acesso da BR-285 (Rodovia da Integração, São Borja) até a fronteira/ponte sobre o rio Uruguai (7,5 km). A ponte e o acesso argentino (até Santo Tomé) não estão no SNV, por isso a extensão declarada de 15,2 km não é atingível (diferença de 7,7 km fica dentro da tolerância de 10 km). Marcado como aproximado: a ponte e o lado argentino não estão no SNV; só o acesso em São Borja (7,5 km) foi mapeado."
+ },
+ "rota-agro": {
+  "ranges": [
+   {
+    "br": "060",
+    "uf": "GO",
+    "km_ini": 393.1,
+    "km_fim": 478.3
+   },
+   {
+    "br": "364",
+    "uf": "GO",
+    "km_ini": 201.0,
+    "km_fim": 387.5
+   },
+   {
+    "br": "364",
+    "uf": "MT",
+    "km_ini": 0.0,
+    "km_fim": 202.7
+   }
+  ],
+  "qualidade": null,
+  "nota": "BR-060/GO de Rio Verde (acesso oeste, km 393,1) a Jataí (entr. BR-060/158/364, km 478,3), BR-364/GO de Jataí à divisa GO/MT (km 201,0–387,5) e BR-364/MT da divisa até o entr. BR-163/364 em Rondonópolis (km 0–202,7). BR-364/GO até Jataí é da Ecovias Cerrado; contornos de Jataí não somados."
+ },
+ "via-liberdade": {
+  "ranges": [
+   {
+    "br": "356",
+    "uf": "MG",
+    "km_ini": 28.0,
+    "km_fim": 108.0
+   }
+  ],
+  "qualidade": "aproximado",
+  "nota": "Parte federal: BR-356/MG de Nova Lima (fim da coincidência com a BR-040, km 28,0) a Mariana (entr. MG-129/262, km 108,0) ≈ 80 km (edital fala em 83,3 km de BR-356). Os ~107 km restantes são MG-262/329 (estaduais, fora do SNV federal); rodovia delegada ao estado."
+ },
+ "rodovias-integradas-do-parana-lote-4": {
+  "ranges": [
+   {
+    "br": "272",
+    "uf": "PR",
+    "km_ini": 524.7,
+    "km_fim": 570.0
+   },
+   {
+    "br": "369",
+    "uf": "PR",
+    "km_ini": 88.2,
+    "km_fim": 133.4
+   },
+   {
+    "br": "369",
+    "uf": "PR",
+    "km_ini": 146.0,
+    "km_fim": 170.6
+   },
+   {
+    "br": "369",
+    "uf": "PR",
+    "km_ini": 180.5,
+    "km_fim": 184.5
+   },
+   {
+    "br": "376",
+    "uf": "PR",
+    "km_ini": 19.8,
+    "km_fim": 155.9
+   },
+   {
+    "br": "376",
+    "uf": "PR",
+    "km_ini": 165.2,
+    "km_fim": 173.3
+   },
+   {
+    "br": "376",
+    "uf": "PR",
+    "km_ini": 179.7,
+    "km_fim": 184.7
+   }
+  ],
+  "codigos": [
+   "376APR3005",
+   "376CPR1005",
+   "376CPR1010",
+   "376CPR1015",
+   "376CPR1020",
+   "376CPR1025",
+   "376CPR1030",
+   "376UPR2005"
+  ],
+  "qualidade": "aproximado",
+  "nota": "Parte federal conforme Tabela 1 do PER Lote 4: BR-272 Francisco Alves–Guaíra (45,3), BR-369 km 88,2 (Cornélio Procópio)–PR-444 Arapongas sem os segmentos estaduais/municipais (74,0), BR-376 Nova Londrina–Mandaguari sem os segmentos urbanos de Maringá/Marialva, + acesso a Nova Londrina, Contorno Norte de Maringá e travessia de Mandaguari ≈ 293,2 km. Os ~334 km restantes são PR-182/272/317/323/444/862/897/986."
+ },
+ "rodovias-integradas-do-parana-lote-5": {
+  "ranges": [
+   {
+    "br": "163",
+    "uf": "PR",
+    "km_ini": 197.6,
+    "km_fim": 343.9
+   },
+   {
+    "br": "163",
+    "uf": "PR",
+    "km_ini": 345.6,
+    "km_fim": 354.2
+   },
+   {
+    "br": "369",
+    "uf": "PR",
+    "km_ini": 334.8,
+    "km_fim": 509.9
+   },
+   {
+    "br": "467",
+    "uf": "PR",
+    "km_ini": 102.0,
+    "km_fim": 111.6
+   }
+  ],
+  "qualidade": "aproximado",
+  "nota": "Parte federal conforme PER/extrato Lote 5: BR-163 Cascavel–Guaíra e Guaíra–divisa PR/MS (sem o trecho coincidente com a BR-272), BR-369 Campo Mourão–Cascavel, BR-467 em Cascavel = 339,3 km. Os ~93,5 km restantes são PR-158/317/467/977/978 e contorno de Peabiru (estaduais)."
+ },
+ "rota-sertaneja": {
+  "ranges": [
+   {
+    "br": "153",
+    "uf": "GO",
+    "km_ini": 531.3,
+    "km_fim": 703.6
+   },
+   {
+    "br": "153",
+    "uf": "MG",
+    "km_ini": 0.0,
+    "km_fim": 246.7
+   },
+   {
+    "br": "262",
+    "uf": "MG",
+    "km_ini": 794.3,
+    "km_fim": 897.2
+   }
+  ],
+  "qualidade": null,
+  "nota": "BR-153/GO de Hidrolândia (km 531,3, fim da Concebra) à divisa GO/MG em Itumbiara, BR-153/MG de Araporã à divisa MG/SP (Fronteira) e BR-262/MG de Uberaba (km 794,3, após coincidência com a BR-050) ao entr. BR-153 (Comendador Gomes)."
+ },
+ "autopista-fluminense": {
+  "ranges": [
+   {
+    "br": "101",
+    "uf": "RJ",
+    "km_ini": 0.0,
+    "km_fim": 322.1
+   }
+  ],
+  "qualidade": null,
+  "nota": "BR-101/RJ da divisa ES/RJ ao acesso à Ponte Rio–Niterói (km 322,1); a ponte e seus acessos são da Ecovias Ponte."
+ },
+ "fernao-dias": {
+  "ranges": [
+   {
+    "br": "381",
+    "uf": "MG",
+    "km_ini": 469.7,
+    "km_fim": 940.2
+   },
+   {
+    "br": "381",
+    "uf": "SP",
+    "km_ini": 0.0,
+    "km_fim": 90.4
+   },
+   {
+    "br": "381",
+    "uf": "MG",
+    "km_ini": 0.0,
+    "km_fim": 7.4,
+    "tipo": "Contorno"
+   }
+  ],
+  "qualidade": null,
+  "nota": "BR-381 de Contagem/BH (km 469,7, inclui trecho coincidente com a BR-262 até Betim) à divisa MG/SP e BR-381/SP até o entr. BR-116 em São Paulo (km 90,4; o trecho final coincidente com a Dutra fica com a Rio SP), + Contorno de Betim. Nova 381 termina no km 449,9."
+ },
+ "rotas-gerais": {
+  "ranges": [
+   {
+    "br": "251",
+    "uf": "MG",
+    "km_ini": 194.6,
+    "km_fim": 545.2
+   },
+   {
+    "br": "116",
+    "uf": "MG",
+    "km_ini": 25.2,
+    "km_fim": 408.5
+   }
+  ],
+  "qualidade": null,
+  "nota": "BR-251/MG de Montes Claros (entr. BR-251/365, km 545,2) ao entr. BR-116 (acesso sul Tancredo Neves) + BR-116/MG daí até Governador Valadares (entr. BR-116/381/451, km 408,5), incluindo o trecho coincidente BR-116/251; ao sul de GV começa a EcoVias Rio Minas."
+ },
+ "rota-dos-sertoes": {
+  "ranges": [
+   {
+    "br": "116",
+    "uf": "BA",
+    "km_ini": 0.0,
+    "km_fim": 423.7
+   },
+   {
+    "br": "116",
+    "uf": "PE",
+    "km_ini": 25.6,
+    "km_fim": 91.5
+   }
+  ],
+  "qualidade": null,
+  "nota": "BR-116/PE de Salgueiro (entr. BR-232, km 25,6) à divisa PE/BA e BR-116/BA da divisa a Feira de Santana (entr. BR-116/324, km 423,7), incluindo o trecho coincidente com a BR-324. Contorno de Euclides da Cunha não somado."
+ },
+ "regis-bittencourt": {
+  "ranges": [
+   {
+    "br": "116",
+    "uf": "SP",
+    "km_ini": 270.1,
+    "km_fim": 562.1
+   },
+   {
+    "br": "116",
+    "uf": "PR",
+    "km_ini": 0.0,
+    "km_fim": 71.1
+   }
+  ],
+  "codigos": [
+   "116APR1005",
+   "116APR1010",
+   "116APR1015"
+  ],
+  "qualidade": null,
+  "nota": "BR-116/SP de Embu/Taboão (km 270,1) à divisa SP/PR e BR-116/PR da divisa ao Rodoanel/Contorno Leste em Quatro Barras (km 71,1), + acesso concedido até o 'FIM DA CONCESSÃO' em Curitiba; o Contorno Leste (km 71,1–119,2) é da Litoral Sul."
  }
 }
