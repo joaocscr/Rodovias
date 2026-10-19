@@ -42,8 +42,7 @@ const Mercado = (() => {
         ${card('faixas', 'Leilões por faixa de deságio', '2023–26', { key: 'faixas_desagio' })}
         ${card('porN', 'Deságio médio por número de concorrentes', '2023–26', { key: 'desagio_por_n_concorrentes' })}
         ${card('grupos', 'Grupos econômicos: extensão concedida', 'km sob concessão federal por grupo líder', { key: 'grupos' })}
-        ${card('gruposInv', 'Grupos econômicos: investimento', 'Capex e opex contratados por grupo (R$ bi)', { key: 'grupos',
-          legend: Charts.legendHtml([['Capex', Charts.C.deep], ['Opex', Charts.C.bright]]) })}
+        ${card('gruposInv', 'Grupos econômicos: investimento', 'Capex + opex contratados por grupo (R$ bi); passe o mouse para ver o detalhe', { key: 'grupos' })}
         ${card('gestao', 'Malha federal: gestão direta × concedida', 'Extensão em km, 2011–2026', { key: 'gestao',
           legend: Charts.legendHtml([['Concedida', Charts.C.deep], ['Gestão direta', Charts.C.bright]]) })}
         ${card('invest', 'Investimentos públicos × privados', 'R$ bi por ano (orçamento federal × capex + opex privado)', { key: 'investimentos',
@@ -66,7 +65,8 @@ const Mercado = (() => {
     Charts.hbars(box('porN'), m.desagio_por_n_concorrentes.map(x => ({ label: `${x.concorrentes} concorrente${x.concorrentes === 1 ? '' : 's'} (${x.leiloes} leilão${x.leiloes === 1 ? '' : 'ões'})`, value: x.desagio_medio })),
       { unit: '%', format: v => nf1.format(v) + '%' });
     Charts.hbars(box('grupos'), m.grupos.map(g => ({ label: g.grupo, value: g.km })), { unit: 'km', format: v => nf0.format(v), sort: true });
-    Charts.stacked(box('gruposInv'), m.grupos.map(g => ({ label: g.grupo.split(' ')[0], parts: [g.capex, g.opex] })), { names: ['Capex', 'Opex'], unit: 'R$ bi', format: v => nf1.format(v) });
+    Charts.hbars(box('gruposInv'), m.grupos.map(g => ({ label: g.grupo, value: g.capex_opex ?? (g.capex || 0) + (g.opex || 0),
+      detail: `capex ${nf2.format(g.capex)} + opex ${nf2.format(g.opex)}` })), { unit: 'R$ bi', format: v => nf2.format(v), sort: true });
     Charts.lines(box('gestao'), [
       { name: 'Concedida', points: m.gestao.map(g => ({ x: g.ano, y: g.privada_km })) },
       { name: 'Gestão direta', points: m.gestao.map(g => ({ x: g.ano, y: g.direta_km })) },

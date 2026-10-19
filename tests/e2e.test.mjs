@@ -332,6 +332,43 @@ test('v2: troca de aba em menos de 300 ms', async () => {
   await go('#mapa');
 });
 
+test('v2: hash com percent-encoding inválido cai no mapa', async () => {
+  const before = errors.length;
+  await go('#ficha/%E0%A4%A');
+  assert.equal(await page.evaluate(() => location.hash), '#mapa');
+  assert.equal(errors.length, before);
+});
+
+test('v2: ver no mapa vira destaque com chip e pode ser limpo', async () => {
+  await go('#mapa');
+  await page.fill('#search-input', 'Rotas Gerais');
+  await page.waitForSelector('#suggestions li');
+  await page.keyboard.press('Enter');
+  await go('#ficha/rota-dos-sertoes');
+  await page.click('#ficha-map');
+  await page.waitForTimeout(300);
+  assert.match(await page.textContent('#active-search'), /Rota dos Sertões/);
+  await page.click('#clear-search');
+  assert.deepEqual(await page.evaluate(() => MapView.highlighted()), []);
+});
+
+test('v2: total do comparador avisa bases mistas', async () => {
+  await go('#projetos');
+  await page.click('[data-f="estado"][data-v="projeto2027"]');
+  assert.match(await page.textContent('#proj-table tfoot'), /bases mistas/i);
+  await page.click('[data-f="estado"][data-v="projeto2027"]');
+  await page.click('[data-f="estado"][data-v="vigente"]');
+  assert.doesNotMatch(await page.textContent('#proj-table tfoot'), /bases mistas/i);
+  await page.click('[data-f="estado"][data-v="vigente"]');
+});
+
+test('v2: gráfico de investimento por grupo usa o nome completo', async () => {
+  await go('#mercado');
+  const full = await page.evaluate(() => window.CONC.mercado.grupos.map(g => g.grupo));
+  const txt = await page.textContent('#chart-gruposInv');
+  assert.ok(full.filter(n => n.includes(' ')).every(n => txt.includes(n)), 'nomes completos');
+});
+
 test('nenhuma requisição externa', () => assert.deepEqual(external, []));
 
 test('sem erros no console', () => assert.deepEqual(errors, []));

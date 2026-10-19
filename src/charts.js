@@ -62,7 +62,7 @@ const Charts = (() => {
       const v = num(r.value) ? r.value : 0, y = 4 + i * rh, bw = (v / max) * pw;
       body += `<text x="${L - 8}" y="${y + 21}" text-anchor="end" fill="${C.spacial}">${esc(r.label)}</text>` +
         `<rect class="cbar" x="${L}" y="${y + 8}" width="${bw.toFixed(1)}" height="16" rx="2" fill="${r.alt ? C.bright : C.deep}">` +
-        `<title>${esc(r.label)}: ${num(r.value) ? esc(fmt(r.value)) + esc(unit) : '—'}</title></rect>` +
+        `<title>${esc(r.label)}: ${num(r.value) ? esc(fmt(r.value)) + esc(unit) : '—'}${r.detail ? ' (' + esc(r.detail) + ')' : ''}</title></rect>` +
         `<text x="${(L + bw + 8).toFixed(1)}" y="${y + 21}" fill="${C.grey}">${num(r.value) ? esc(fmt(r.value)) : '—'}</text>`;
     });
     return frame(w, h, body, o.title);

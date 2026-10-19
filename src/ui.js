@@ -153,6 +153,17 @@ const UI = (() => {
     renderActiveSearch();
   }
 
+  // "Ver no mapa" de qualquer aba: vira um destaque como o da busca (chip, limpar, Esc).
+  function showOnMap(label, ids, entId = null) {
+    Tabs.go('#mapa');
+    setTimeout(() => {
+      activeSearch = { label, ids, ent: entId };
+      MapView.highlight(ids);
+      MapView.fitTo(ids);
+      renderActiveSearch();
+    }, 50);
+  }
+
   function renderActiveSearch() {
     const el = $('#active-search');
     if (!activeSearch) { el.innerHTML = ''; return; }
@@ -447,5 +458,5 @@ const UI = (() => {
     refresh();
   }
 
-  return { init, refresh, states: () => states };
+  return { init, refresh, showOnMap, states: () => states };
 })();

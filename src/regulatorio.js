@@ -48,9 +48,8 @@ const Regulatorio = (() => {
       document.getElementById('reg-' + a.dataset.sec).scrollIntoView({ behavior: 'smooth', block: 'start' });
     }));
     el.querySelectorAll('[data-estudo]').forEach(b => b.addEventListener('click', () => {
-      const fis = conc.estudos[Number(b.dataset.estudo)].fis;
-      Tabs.go('#mapa');
-      setTimeout(() => { MapView.highlight(fis); MapView.fitTo(fis); }, 50);
+      const s = conc.estudos[Number(b.dataset.estudo)];
+      UI.showOnMap(`Estudo pós-2027 BR-${s.brs.join('/')}/${s.ufs.join('/')}`, s.fis);
     }));
   }
 

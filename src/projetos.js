@@ -62,10 +62,16 @@ const Projetos = (() => {
         <button type="button" data-sort="${c[0]}">${esc(c[1])}${c[0] === sortKey ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}</button></th>`).join('')}<th><span class="visually-hidden">Mapa</span></th></tr></thead>
       <tbody>${list.map(r => `<tr tabindex="0" data-id="${esc(r.id)}">${cs.map(c => `<td class="${c[0] === 'nome' ? 'name' : c[3] ? 'num' : ''}">${cell(r, c)}</td>`).join('')}
         <td><button type="button" class="link-btn" data-map="${r.idx}" ${conc.entFis[r.idx].length ? '' : 'disabled title="Sem trecho mapeado"'}>ver no mapa</button></td></tr>`).join('')}</tbody>
-      <tfoot><tr><td colspan="4" id="proj-total-label">Total da seleção (${nf0.format(t.n)})</td>
+      <tfoot><tr><td colspan="4" id="proj-total-label">Total da seleção (${nf0.format(t.n)})${mixed(list)}</td>
         <td class="num" id="proj-total-km">${nf1.format(t.km)}</td><td class="num" id="proj-total-capex">${nf2.format(t.capex)}</td>
         <td class="num" id="proj-total-opex">${nf2.format(t.opex)}</td><td colspan="${cs.length - 6}"></td></tr></tfoot>`;
     document.getElementById('proj-count').textContent = `${nf0.format(list.length)} de ${nf0.format(rows.length)}`;
+  }
+
+  // Totais com mais de uma data-base de preços somam valores não comparáveis: avisa.
+  function mixed(list) {
+    const bases = [...new Set(list.map(r => r.dataBase).filter(Boolean))];
+    return bases.length > 1 ? ` · <span title="${esc(bases.join(', '))}">bases mistas (${bases.length} datas-base)</span>` : '';
   }
 
   function toolbar() {
@@ -90,10 +96,7 @@ const Projetos = (() => {
         <button type="button" class="link-btn" data-estudo="${i}" ${s.fis.length ? '' : 'disabled'}>ver no mapa</button></li>`).join('')}</ul>`;
   }
 
-  function showMap(fis) {
-    Tabs.go('#mapa');
-    setTimeout(() => { MapView.highlight(fis); MapView.fitTo(fis); }, 50);
-  }
+  const estudoLabel = s => `Estudo pós-2027 BR-${s.brs.join('/')}/${s.ufs.join('/')}`;
 
   function init(data) {
     if (built) return;
@@ -119,9 +122,14 @@ const Projetos = (() => {
         return;
       }
       const mapBtn = ev.target.closest('[data-map]');
-      if (mapBtn) { ev.stopPropagation(); showMap(conc.entFis[Number(mapBtn.dataset.map)]); return; }
+      if (mapBtn) {
+        ev.stopPropagation();
+        const e = conc.entidades[Number(mapBtn.dataset.map)];
+        UI.showOnMap(e.nome, conc.entFis[e.idx], e.id);
+        return;
+      }
       const est = ev.target.closest('[data-estudo]');
-      if (est) { showMap(conc.estudos[Number(est.dataset.estudo)].fis); return; }
+      if (est) { const s = conc.estudos[Number(est.dataset.estudo)]; UI.showOnMap(estudoLabel(s), s.fis); return; }
       const chip = ev.target.closest('[data-f]');
       if (chip) {
         const set = filt[chip.dataset.f], v = chip.dataset.f === 'ano' ? Number(chip.dataset.v) : chip.dataset.v;

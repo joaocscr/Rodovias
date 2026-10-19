@@ -168,8 +168,8 @@ const Ficha = (() => {
 
   function showOnMap(idx) {
     close(true);
-    Tabs.go('#mapa');
-    setTimeout(() => { MapView.fitEntity(idx); MapView.highlightEntity(idx); }, 50);
+    const e = conc.entidades[idx];
+    UI.showOnMap(e.nome, conc.entFis[idx], e.id);
   }
 
   function open(id) {

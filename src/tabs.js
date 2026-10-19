@@ -8,7 +8,12 @@ const Tabs = (() => {
   function parse(hash) {
     const h = (hash || '').replace(/^#/, '');
     const [tab, ...rest] = h.split('/');
-    return { tab, arg: rest.length ? decodeURIComponent(rest.join('/')) : null };
+    if (!rest.length) return { tab, arg: null };
+    try {
+      return { tab, arg: decodeURIComponent(rest.join('/')) };
+    } catch (e) {
+      return { tab: 'invalido', arg: null };  // percent-encoding malformado: o roteador cai no mapa
+    }
   }
 
   function show(tab) {

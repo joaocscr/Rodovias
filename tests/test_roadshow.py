@@ -201,3 +201,11 @@ def test_todas_entidades_mapeadas():
     assert conc["snvOnly"]
     br392 = {j for j, g in enumerate(group_physical(recs)) if recs[g[0]]["vl_br"] == "392" and recs[g[0]]["sg_uf"] == "RS"}
     assert br392 & set(conc["snvOnly"])
+
+
+def test_notas_de_trecho_sem_fontes_externas():
+    # Spec v2: nada de fora do RoadShow na interface (as notas aparecem na ficha).
+    import re
+    for k, v in load_json("trechos.json").items():
+        nota = v.get("nota") or ""
+        assert not re.search(r"\bPER\b|edital|briefing|http|Diário|imprensa", nota, re.I), (k, nota)

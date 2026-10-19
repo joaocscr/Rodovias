@@ -743,7 +743,7 @@
    "277APR4005"
   ],
   "qualidade": "aproximado",
-  "nota": "Parte federal: BR-277 Curitiba–Relógio, BR-373 Ponta Grossa–Relógio, BR-376 Ponta Grossa–S. Luís do Purunã e BR-476 Curitiba–Lapa (Concessão Federal), mais o acesso oeste de Curitiba. As PR-418/423/427 não estão no SNV; o corte da BR-277 em Relógio é inferido. BR-376/PR km 464,6–531,7 atribuída ao Lote 3 (PR Vias), conforme a tabela do PER do Lote 3; o Lote 1 inclui ainda rodovias estaduais (PR-418/423/427) fora do SNV federal."
+  "nota": "Parte federal mapeada no SNV: BR-277 Curitiba–Relógio, BR-373 a partir de Ponta Grossa (Caetano) até Relógio e BR-476 Curitiba–Lapa, mais o acesso oeste de Curitiba. O corte da BR-277 em Relógio é inferido; a BR-376 Ponta Grossa–São Luiz do Purunã e o trecho coincidente BR-373/376/487 em Ponta Grossa ficaram com o Lote 3. A diferença para a extensão do RoadShow são as rodovias estaduais do lote (PR-418/423/427), fora do SNV federal."
  },
  "belo-horizonte-juiz-de-fora": {
   "ranges": [
@@ -833,7 +833,7 @@
    }
   ],
   "qualidade": "aproximado",
-  "nota": "Parte federal conforme Tabela 1 do PER (edital Lote 6): BR-163 km 123,7–197,6 (Realeza–Cascavel), BR-277 km 303,8 (Relógio/Prudentópolis)–Ponte da Amizade, novo acesso à 2ª ponte e acesso BR-469 à Ponte Tancredo Neves ≈ 519,3 km. Os ~142,8 km restantes são rodovias estaduais (PR-158/180/182/280/483) fora do SNV federal."
+  "nota": "Parte federal mapeada no SNV: BR-163 Realeza–Cascavel e BR-277 de Relógio (Prudentópolis) à Ponte da Amizade, com os acessos à 2ª ponte e à Ponte Tancredo Neves (BR-469). A diferença para a extensão do RoadShow são as rodovias estaduais do lote (PR-158/180/182/280/483), fora do SNV federal."
  },
  "rodovias-integradas-do-parana-lote-3": {
   "ranges": [
@@ -860,7 +860,7 @@
    "376UPR2015"
   ],
   "qualidade": "aproximado",
-  "nota": "Parte federal conforme Tabela 1 do PER Lote 3: BR-369 Arapongas–Apucarana (km 184,5–202,6) e trecho coincidente com a BR-376 até Jandaia do Sul, BR-373 Boa Vista–Ponta Grossa (km 164,0–171,9), BR-376 do acesso I de Mandaguari a São Luiz do Purunã (km 184,7–531,7) e travessia de Mandaguari ≈ 374,4 km. Os ~195,4 km restantes são PR-090/170/323/445 (estaduais, fora do SNV federal)."
+  "nota": "Parte federal mapeada no SNV: BR-369 Arapongas–Apucarana e trecho coincidente com a BR-376 até Jandaia do Sul, BR-373 Boa Vista–Ponta Grossa, BR-376 do acesso a Mandaguari até São Luiz do Purunã (incluindo o trecho coincidente BR-373/376/487 em Ponta Grossa) e a travessia de Mandaguari. A diferença para a extensão do RoadShow são as rodovias estaduais do lote (PR-090/170/323/445), fora do SNV federal."
  },
  "rota-agro-norte": {
   "ranges": [
@@ -961,7 +961,7 @@
    }
   ],
   "qualidade": "aproximado",
-  "nota": "Parte federal: BR-262/MS Três Lagoas–Campo Grande (km 0–328,2) e BR-267/MS Bataguassu–Nova Alvorada do Sul (km 0–248,1) = 576,3 km, igual ao edital. Os ~294 km restantes são MS-040/338/395 (estaduais delegadas, fora do SNV federal); trechos coincidentes com a BR-163 ficam com a Motiva Pantanal."
+  "nota": "Parte federal mapeada no SNV: BR-262/MS Três Lagoas–Campo Grande e BR-267/MS Bataguassu–Nova Alvorada do Sul; trechos coincidentes com a BR-163 ficam com a Motiva Pantanal. A diferença para a extensão do RoadShow são as rodovias estaduais delegadas (MS-040/338/395), fora do SNV federal."
  },
  "ponte-binacional-sao-borja-santo-tome": {
   "ranges": [
@@ -974,7 +974,7 @@
    }
   ],
   "qualidade": "aproximado",
-  "nota": "No SNV só existe o lado brasileiro: acesso da BR-285 (Rodovia da Integração, São Borja) até a fronteira/ponte sobre o rio Uruguai (7,5 km). A ponte e o acesso argentino (até Santo Tomé) não estão no SNV, por isso a extensão declarada de 15,2 km não é atingível (diferença de 7,7 km fica dentro da tolerância de 10 km). Marcado como aproximado: a ponte e o lado argentino não estão no SNV; só o acesso em São Borja (7,5 km) foi mapeado."
+  "nota": "Só o acesso da BR-285 em São Borja (7,5 km) está no SNV; a ponte e o lado argentino não estão. Marcado como aproximado."
  },
  "rota-agro": {
   "ranges": [
@@ -1010,7 +1010,7 @@
    }
   ],
   "qualidade": "aproximado",
-  "nota": "Parte federal: BR-356/MG de Nova Lima (fim da coincidência com a BR-040, km 28,0) a Mariana (entr. MG-129/262, km 108,0) ≈ 80 km (edital fala em 83,3 km de BR-356). Os ~107 km restantes são MG-262/329 (estaduais, fora do SNV federal); rodovia delegada ao estado."
+  "nota": "Parte federal mapeada no SNV: BR-356/MG de Nova Lima (fim da coincidência com a BR-040) a Mariana. A diferença para a extensão do RoadShow são as rodovias estaduais do contrato delegado a MG, fora do SNV federal."
  },
  "rodovias-integradas-do-parana-lote-4": {
   "ranges": [
@@ -1068,7 +1068,7 @@
    "376UPR2005"
   ],
   "qualidade": "aproximado",
-  "nota": "Parte federal conforme Tabela 1 do PER Lote 4: BR-272 Francisco Alves–Guaíra (45,3), BR-369 km 88,2 (Cornélio Procópio)–PR-444 Arapongas sem os segmentos estaduais/municipais (74,0), BR-376 Nova Londrina–Mandaguari sem os segmentos urbanos de Maringá/Marialva, + acesso a Nova Londrina, Contorno Norte de Maringá e travessia de Mandaguari ≈ 293,2 km. Os ~334 km restantes são PR-182/272/317/323/444/862/897/986."
+  "nota": "Parte federal mapeada no SNV: BR-272 Francisco Alves–Guaíra, BR-369 Cornélio Procópio–Arapongas (sem segmentos estaduais/municipais) e BR-376 Nova Londrina–Mandaguari (sem os segmentos urbanos de Maringá/Marialva), mais o acesso a Nova Londrina, o Contorno Norte de Maringá e a travessia de Mandaguari. A diferença para a extensão do RoadShow são as rodovias estaduais do lote, fora do SNV federal."
  },
  "rodovias-integradas-do-parana-lote-5": {
   "ranges": [
@@ -1098,7 +1098,7 @@
    }
   ],
   "qualidade": "aproximado",
-  "nota": "Parte federal conforme PER/extrato Lote 5: BR-163 Cascavel–Guaíra e Guaíra–divisa PR/MS (sem o trecho coincidente com a BR-272), BR-369 Campo Mourão–Cascavel, BR-467 em Cascavel = 339,3 km. Os ~93,5 km restantes são PR-158/317/467/977/978 e contorno de Peabiru (estaduais)."
+  "nota": "Parte federal mapeada no SNV: BR-163 Cascavel–Guaíra–divisa PR/MS (sem o trecho coincidente com a BR-272), BR-369 Campo Mourão–Cascavel e BR-467 em Cascavel. A diferença para a extensão do RoadShow são as rodovias estaduais do lote, fora do SNV federal."
  },
  "rota-sertaneja": {
   "ranges": [
