@@ -320,6 +320,18 @@ test('v2: aba Regulatório com índice, otimizações e estudos', async () => {
   await page.evaluate(() => MapView.highlight(null));
 });
 
+test('v2: troca de aba em menos de 300 ms', async () => {
+  await go('#mapa');
+  const ms = await page.evaluate(() => new Promise(resolve => {
+    const t0 = performance.now();
+    location.hash = '#projetos';
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve(performance.now() - t0)));
+  }));
+  assert.equal(await page.isVisible('#page-projetos'), true);
+  assert.ok(ms < 300, `levou ${ms.toFixed(0)} ms`);
+  await go('#mapa');
+});
+
 test('nenhuma requisição externa', () => assert.deepEqual(external, []));
 
 test('sem erros no console', () => assert.deepEqual(errors, []));
