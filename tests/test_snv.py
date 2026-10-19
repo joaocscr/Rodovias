@@ -73,3 +73,32 @@ def test_real_data_totals():
     assert check_group_consistency(recs, groups) == []
     assert any("BRASÍLIA" in r["ds_local_i"] for r in recs)
     assert all(len(r["points"]) >= 1 for r in recs)
+
+
+UFS = {"AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR",
+       "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"}
+
+
+def _coords(geom):
+    polys = geom["coordinates"] if geom["type"] == "MultiPolygon" else [geom["coordinates"]]
+    return [pt for poly in polys for ring in poly for pt in ring]
+
+
+def test_ufs_geojson():
+    import json
+    path = ROOT / "data" / "ufs.geojson"
+    assert path.stat().st_size < 1.5e6
+    fc = json.loads(path.read_text(encoding="utf-8"))
+    assert len(fc["features"]) == 27
+    assert {f["properties"]["sigla"] for f in fc["features"]} == UFS
+    for f in fc["features"]:
+        pts = _coords(f["geometry"])
+        lon, lat = f["properties"]["label"]
+        assert min(p[0] for p in pts) <= lon <= max(p[0] for p in pts)
+        assert min(p[1] for p in pts) <= lat <= max(p[1] for p in pts)
+
+
+def test_vendor_assets():
+    for rel in ["leaflet/leaflet.js", "leaflet/leaflet.css", "fonts/inter-latin-400.woff2",
+                "fonts/inter-latin-600.woff2", "fonts/hind-latin-500.woff2", "fonts/hind-latin-700.woff2"]:
+        assert (ROOT / "vendor" / rel).stat().st_size > 0, rel
