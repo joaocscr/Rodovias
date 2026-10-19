@@ -1,0 +1,303 @@
+[
+  {
+    "brs": [
+      "319"
+    ],
+    "ufs": [
+      "AM"
+    ],
+    "possivel_2027": true,
+    "pagina": 121
+  },
+  {
+    "brs": [
+      "070",
+      "158"
+    ],
+    "ufs": [
+      "MT"
+    ],
+    "possivel_2027": true,
+    "pagina": 121
+  },
+  {
+    "brs": [
+      "020",
+      "242"
+    ],
+    "ufs": [
+      "BA",
+      "DF",
+      "GO",
+      "TO"
+    ],
+    "possivel_2027": true,
+    "pagina": 121
+  },
+  {
+    "brs": [
+      "155",
+      "158"
+    ],
+    "ufs": [
+      "MT",
+      "PA"
+    ],
+    "possivel_2027": false,
+    "pagina": 121
+  },
+  {
+    "brs": [
+      "364"
+    ],
+    "ufs": [
+      "MT"
+    ],
+    "possivel_2027": false,
+    "pagina": 121
+  },
+  {
+    "brs": [
+      "235"
+    ],
+    "ufs": [
+      "MA",
+      "TO"
+    ],
+    "possivel_2027": false,
+    "pagina": 121
+  },
+  {
+    "brs": [
+      "262"
+    ],
+    "ufs": [
+      "MG",
+      "ES"
+    ],
+    "possivel_2027": false,
+    "pagina": 121
+  },
+  {
+    "brs": [
+      "282"
+    ],
+    "ufs": [
+      "SC"
+    ],
+    "possivel_2027": false,
+    "pagina": 121
+  },
+  {
+    "brs": [
+      "285"
+    ],
+    "ufs": [
+      "RS"
+    ],
+    "possivel_2027": false,
+    "pagina": 121
+  },
+  {
+    "brs": [
+      "367"
+    ],
+    "ufs": [
+      "MG"
+    ],
+    "possivel_2027": false,
+    "pagina": 121
+  },
+  {
+    "brs": [
+      "392"
+    ],
+    "ufs": [
+      "RS"
+    ],
+    "possivel_2027": false,
+    "pagina": 121
+  },
+  {
+    "brs": [
+      "438",
+      "486"
+    ],
+    "ufs": [
+      "RS",
+      "SC"
+    ],
+    "possivel_2027": false,
+    "pagina": 121
+  },
+  {
+    "brs": [
+      "040"
+    ],
+    "ufs": [
+      "DF",
+      "GO"
+    ],
+    "possivel_2027": false,
+    "pagina": 121
+  },
+  {
+    "brs": [
+      "020"
+    ],
+    "ufs": [
+      "CE"
+    ],
+    "possivel_2027": false,
+    "pagina": 121
+  },
+  {
+    "brs": [
+      "222"
+    ],
+    "ufs": [
+      "CE"
+    ],
+    "possivel_2027": false,
+    "pagina": 121
+  },
+  {
+    "brs": [
+      "101",
+      "235"
+    ],
+    "ufs": [
+      "BA",
+      "SE"
+    ],
+    "possivel_2027": false,
+    "pagina": 121
+  },
+  {
+    "brs": [
+      "101"
+    ],
+    "ufs": [
+      "SE",
+      "AL",
+      "PE"
+    ],
+    "possivel_2027": false,
+    "pagina": 121
+  },
+  {
+    "brs": [
+      "232"
+    ],
+    "ufs": [
+      "PE"
+    ],
+    "possivel_2027": false,
+    "pagina": 121
+  },
+  {
+    "brs": [
+      "101",
+      "230"
+    ],
+    "ufs": [
+      "PB",
+      "PE"
+    ],
+    "possivel_2027": false,
+    "pagina": 121
+  },
+  {
+    "brs": [
+      "101",
+      "304",
+      "116"
+    ],
+    "ufs": [
+      "PB",
+      "RN",
+      "CE"
+    ],
+    "possivel_2027": false,
+    "pagina": 121
+  },
+  {
+    "brs": [
+      "010"
+    ],
+    "ufs": [
+      "MA",
+      "PA"
+    ],
+    "possivel_2027": false,
+    "pagina": 121
+  },
+  {
+    "brs": [
+      "135"
+    ],
+    "ufs": [
+      "MA"
+    ],
+    "possivel_2027": false,
+    "pagina": 121
+  },
+  {
+    "brs": [
+      "153"
+    ],
+    "ufs": [
+      "PA",
+      "TO"
+    ],
+    "possivel_2027": false,
+    "pagina": 121
+  },
+  {
+    "brs": [
+      "226"
+    ],
+    "ufs": [
+      "PI",
+      "MA",
+      "TO"
+    ],
+    "possivel_2027": false,
+    "pagina": 121
+  },
+  {
+    "brs": [
+      "104"
+    ],
+    "ufs": [
+      "PB",
+      "PE",
+      "AL"
+    ],
+    "possivel_2027": false,
+    "pagina": 121
+  },
+  {
+    "brs": [
+      "116"
+    ],
+    "ufs": [
+      "PB",
+      "CE",
+      "PE"
+    ],
+    "possivel_2027": false,
+    "pagina": 121
+  },
+  {
+    "brs": [
+      "423"
+    ],
+    "ufs": [
+      "PE",
+      "AL"
+    ],
+    "possivel_2027": false,
+    "pagina": 121
+  }
+]

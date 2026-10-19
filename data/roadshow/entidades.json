@@ -1,0 +1,6218 @@
+[
+ {
+  "id": "autopista-litoral-do-sul",
+  "nome": "Autopista Litoral do Sul",
+  "nome_contrato": "Autopista Litoral do Sul",
+  "brs": [
+   "116",
+   "376",
+   "101"
+  ],
+  "ufs": [
+   "PR",
+   "SC"
+  ],
+  "trecho_texto": "BR-116-376/PR e BR-101/SC",
+  "trecho_cidades": null,
+  "estado": "vigente",
+  "ano_programa": null,
+  "tipo": "nova",
+  "estruturador": null,
+  "grupo_vencedor": "Arteris (Antiga OHL)",
+  "km": 405.9,
+  "capex": 6.33,
+  "opex": 5.48,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": null,
+  "edital": null,
+  "assinatura": "2008-02-14",
+  "assinatura_aditivo": null,
+  "inicio_operacao": null,
+  "participantes": null,
+  "participantes_lista": [
+   {
+    "grupo": "Arteris (Antiga OHL)",
+    "desagio": null,
+    "vencedor": true
+   },
+   {
+    "grupo": "Consórcio BRVias",
+    "desagio": 47.34,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio PR/SC",
+    "desagio": 41.53,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio Cowan CBM",
+    "desagio": 29.26,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio Bertin Equipav",
+    "desagio": 34.74,
+    "vencedor": false
+   },
+   {
+    "grupo": "Copel",
+    "desagio": 29.19,
+    "vencedor": false
+   },
+   {
+    "grupo": "Oinco",
+    "desagio": 29.04,
+    "vencedor": false
+   },
+   {
+    "grupo": "CCR",
+    "desagio": 14.05,
+    "vencedor": false
+   },
+   {
+    "grupo": "TPI triunfo participações",
+    "desagio": 29.15,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio Isolux",
+    "desagio": 25.01,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio Rodovias Brasileiras",
+    "desagio": 15.03,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio Coparco",
+    "desagio": 21.93,
+    "vencedor": false
+   },
+   {
+    "grupo": "Bolognesi",
+    "desagio": 22.04,
+    "vencedor": false
+   },
+   {
+    "grupo": "Primav Ecorodovias",
+    "desagio": 11.07,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio Alpha- Federais",
+    "desagio": 7.98,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio AB-Vias",
+    "desagio": 5.48,
+    "vencedor": false
+   },
+   {
+    "grupo": "Galvão Alusa",
+    "desagio": 28.43,
+    "vencedor": false
+   },
+   {
+    "grupo": "CCR",
+    "desagio": 14.05,
+    "vencedor": false
+   }
+  ],
+  "desagio": null,
+  "status_texto": "Contrato vigente. Leilão de 2007 (p11).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 3,
+   "capex": 3,
+   "opex": 3,
+   "linha_p5": 3,
+   "assinatura": 3,
+   "participantes_lista": 11,
+   "grupo_vencedor": 11
+  },
+  "divergencias": [],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 1
+ },
+ {
+  "id": "autopista-planalto-sul",
+  "nome": "Autopista Planalto Sul",
+  "nome_contrato": "Autopista Planalto Sul",
+  "brs": [
+   "116"
+  ],
+  "ufs": [
+   "PR",
+   "SC"
+  ],
+  "trecho_texto": "BR-116/PR/SC",
+  "trecho_cidades": null,
+  "estado": "vigente",
+  "ano_programa": null,
+  "tipo": "nova",
+  "estruturador": null,
+  "grupo_vencedor": "Arteris (Antiga OHL)",
+  "km": 412.7,
+  "capex": 2.24,
+  "opex": 3.26,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": null,
+  "edital": null,
+  "assinatura": "2008-02-14",
+  "assinatura_aditivo": null,
+  "inicio_operacao": null,
+  "participantes": null,
+  "participantes_lista": [
+   {
+    "grupo": "Arteris (Antiga OHL)",
+    "desagio": null,
+    "vencedor": true
+   },
+   {
+    "grupo": "Consórcio Elo",
+    "desagio": 35.19,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio Acciona",
+    "desagio": 27.0,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio Rodovias Brasileiras",
+    "desagio": 26.02,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio Via Nova",
+    "desagio": 18.72,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio J. Malucelli",
+    "desagio": 17.0,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio Qualivias",
+    "desagio": 12.05,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio Bertin Equipav",
+    "desagio": 11.7,
+    "vencedor": false
+   },
+   {
+    "grupo": "TPI Triunfo Participações",
+    "desagio": 10.43,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio Coparco",
+    "desagio": 10.14,
+    "vencedor": false
+   }
+  ],
+  "desagio": null,
+  "status_texto": "Contrato vigente; otimização contratual em estudo, status \"na ANTT\" (p33); prevista na carteira 2027. Leilão de 2007 (p11).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 3,
+   "capex": 3,
+   "opex": 3,
+   "linha_p5": 3,
+   "assinatura": 3,
+   "participantes_lista": 11,
+   "grupo_vencedor": 11
+  },
+  "divergencias": [],
+  "notas_base": [],
+  "relaciona": [
+   "planalto-sul-otimizacao"
+  ],
+  "linha_p5": 2
+ },
+ {
+  "id": "transbrasiliana",
+  "nome": "Transbrasiliana",
+  "nome_contrato": "Transbrasiliana",
+  "brs": [
+   "153"
+  ],
+  "ufs": [
+   "SP"
+  ],
+  "trecho_texto": "BR-153/SP",
+  "trecho_cidades": null,
+  "estado": "vigente",
+  "ano_programa": null,
+  "tipo": "nova",
+  "estruturador": null,
+  "grupo_vencedor": "TPI – Triunfo Participações e Investimentos S. A. (Antigo Consórcio BRVIAS)",
+  "km": 321.6,
+  "capex": 2.53,
+  "opex": 2.31,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": null,
+  "edital": null,
+  "assinatura": "2008-02-14",
+  "assinatura_aditivo": null,
+  "inicio_operacao": null,
+  "participantes": null,
+  "participantes_lista": [
+   {
+    "grupo": "TPI – Triunfo Participações e Investimentos S. A. (Antigo Consórcio BRVIAS)",
+    "desagio": null,
+    "vencedor": true
+   },
+   {
+    "grupo": "Consórcio ACCIONA",
+    "desagio": 27.74,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio Cegems",
+    "desagio": 26.98,
+    "vencedor": false
+   },
+   {
+    "grupo": "Galvão-Alusa",
+    "desagio": 18.76,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio Bertin Equipav",
+    "desagio": 15.16,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio Elo",
+    "desagio": 14.69,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio Isolux",
+    "desagio": 10.09,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio Alpha-Federais",
+    "desagio": 8.0,
+    "vencedor": false
+   },
+   {
+    "grupo": "TPI triunfo participações",
+    "desagio": 5.68,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio Flora Brasil",
+    "desagio": 5.92,
+    "vencedor": false
+   }
+  ],
+  "desagio": null,
+  "status_texto": "Contrato vigente; otimização contratual em estudo, status \"na ANTT\" (p33); prevista na carteira 2027. Leilão de 2007 (p11).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 3,
+   "capex": 3,
+   "opex": 3,
+   "linha_p5": 3,
+   "assinatura": 3,
+   "participantes_lista": 11,
+   "grupo_vencedor": 11
+  },
+  "divergencias": [],
+  "notas_base": [],
+  "relaciona": [
+   "transbrasiliana-otimizacao"
+  ],
+  "linha_p5": 3
+ },
+ {
+  "id": "ecovias-minas-goias",
+  "nome": "Ecovias Minas Goiás",
+  "nome_contrato": "Ecovias Minas Goiás",
+  "brs": [
+   "050"
+  ],
+  "ufs": [
+   "GO",
+   "MG"
+  ],
+  "trecho_texto": "BR-050/GO/MG",
+  "trecho_cidades": null,
+  "estado": "vigente",
+  "ano_programa": null,
+  "tipo": "nova",
+  "estruturador": null,
+  "grupo_vencedor": "Ecorodovias",
+  "km": 436.6,
+  "capex": 6.18,
+  "opex": 4.01,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": null,
+  "edital": null,
+  "assinatura": "2013-12-05",
+  "assinatura_aditivo": null,
+  "inicio_operacao": null,
+  "participantes": null,
+  "participantes_lista": [
+   {
+    "grupo": "Ecorodovias",
+    "desagio": null,
+    "vencedor": true
+   },
+   {
+    "grupo": "Triunfo Participações e investimentos SA",
+    "desagio": 36.98,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio Verdemar",
+    "desagio": 35.64,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio Rodovia do Sertão",
+    "desagio": 35.54,
+    "vencedor": false
+   },
+   {
+    "grupo": "Construtora Queiroz Galvão SA",
+    "desagio": 34.57,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio Odebrecht Transport-Invepar",
+    "desagio": 23.78,
+    "vencedor": false
+   },
+   {
+    "grupo": "Companhia de participações em concessões",
+    "desagio": 13.59,
+    "vencedor": false
+   },
+   {
+    "grupo": "Arteris SA",
+    "desagio": 5.09,
+    "vencedor": false
+   }
+  ],
+  "desagio": null,
+  "status_texto": "Contrato vigente. Leilão de 2013 (p11).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 3,
+   "capex": 3,
+   "opex": 3,
+   "linha_p5": 3,
+   "assinatura": 3,
+   "participantes_lista": 11,
+   "grupo_vencedor": 11
+  },
+  "divergencias": [],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 4
+ },
+ {
+  "id": "concebra",
+  "nome": "Concebra",
+  "nome_contrato": "Concebra",
+  "brs": [
+   "060",
+   "153",
+   "262"
+  ],
+  "ufs": [
+   "DF",
+   "GO",
+   "MG"
+  ],
+  "trecho_texto": "BR-060/153/262/DF/GO/MG",
+  "trecho_cidades": null,
+  "estado": "vigente",
+  "ano_programa": null,
+  "tipo": "nova",
+  "estruturador": null,
+  "grupo_vencedor": "Triunfo Participações e Investimentos - TPI",
+  "km": 211.0,
+  "capex": 2.5,
+  "opex": 2.0,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": null,
+  "edital": null,
+  "assinatura": "2014-01-31",
+  "assinatura_aditivo": null,
+  "inicio_operacao": null,
+  "participantes": null,
+  "participantes_lista": [
+   {
+    "grupo": "Triunfo Participações e Investimentos - TPI",
+    "desagio": null,
+    "vencedor": true
+   },
+   {
+    "grupo": "INVEPAR",
+    "desagio": 42.13,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio Via Capital",
+    "desagio": 41.19,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio Rodovias Federais 2013",
+    "desagio": 37.99,
+    "vencedor": false
+   },
+   {
+    "grupo": "Companhia de Participações em Conceções- CPC",
+    "desagio": 21.41,
+    "vencedor": false
+   }
+  ],
+  "desagio": null,
+  "status_texto": "Contrato vigente; otimização contratual do trecho Pequi (Rota do Pequi) com edital publicado, leilão agendado para 11/12/2026 (p33, p117). Leilão de 2013 (p11).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 3,
+   "capex": 3,
+   "opex": 3,
+   "linha_p5": 3,
+   "assinatura": 3,
+   "participantes_lista": 11,
+   "grupo_vencedor": 11
+  },
+  "divergencias": [],
+  "notas_base": [],
+  "relaciona": [
+   "rota-do-pequi"
+  ],
+  "linha_p5": 5
+ },
+ {
+  "id": "nova-rota-do-oeste",
+  "nome": "Nova Rota do Oeste",
+  "nome_contrato": "Nova Rota do Oeste",
+  "brs": [
+   "163"
+  ],
+  "ufs": [
+   "MT"
+  ],
+  "trecho_texto": "BR-163/MT",
+  "trecho_cidades": null,
+  "estado": "vigente",
+  "ano_programa": null,
+  "tipo": "nova",
+  "estruturador": null,
+  "grupo_vencedor": "Odebrecht Transport",
+  "km": 850.9,
+  "capex": 8.07,
+  "opex": 4.64,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": null,
+  "edital": null,
+  "assinatura": "2014-03-12",
+  "assinatura_aditivo": null,
+  "inicio_operacao": null,
+  "participantes": null,
+  "participantes_lista": [
+   {
+    "grupo": "Odebrecht Transport",
+    "desagio": null,
+    "vencedor": true
+   },
+   {
+    "grupo": "TPI trinfo participações e investimentos S/A",
+    "desagio": 46.0,
+    "vencedor": false
+   },
+   {
+    "grupo": "INVEPAR",
+    "desagio": 43.09,
+    "vencedor": false
+   },
+   {
+    "grupo": "Companhia de participações em concessões- CCR",
+    "desagio": 35.54,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio integração",
+    "desagio": 31.29,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio Rota do Futuro",
+    "desagio": 27.69,
+    "vencedor": false
+   },
+   {
+    "grupo": "Galvão Engenharia S/A",
+    "desagio": 3.0,
+    "vencedor": false
+   }
+  ],
+  "desagio": null,
+  "status_texto": "Otimização contratual (Portaria 848/2023) em execução: prorrogação de 5 anos, sem relicitação (p33). Leilão de 2013 (p13).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 3,
+   "capex": 3,
+   "opex": 3,
+   "linha_p5": 3,
+   "assinatura": 3,
+   "participantes_lista": 13,
+   "grupo_vencedor": 13
+  },
+  "divergencias": [
+   {
+    "campo": "km",
+    "exibido": 850.9,
+    "alternativas": [
+     {
+      "valor": 850,
+      "pagina": 33
+     },
+     {
+      "valor": 858.9,
+      "pagina": 33
+     }
+    ],
+    "nota": "p33: 850 km na tabela e 858,90 km no mapa."
+   }
+  ],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 6
+ },
+ {
+  "id": "ecovias-ponte",
+  "nome": "Ecovias Ponte",
+  "nome_contrato": "Ecovias Ponte",
+  "brs": [
+   "101"
+  ],
+  "ufs": [
+   "RJ"
+  ],
+  "trecho_texto": "BR-101/RJ",
+  "trecho_cidades": null,
+  "estado": "vigente",
+  "ano_programa": null,
+  "tipo": "nova",
+  "estruturador": null,
+  "grupo_vencedor": "Ecorodovias Infraestrutura e Logística S/A",
+  "km": 13.2,
+  "capex": 2.34,
+  "opex": 1.55,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": null,
+  "edital": null,
+  "assinatura": "2015-05-18",
+  "assinatura_aditivo": null,
+  "inicio_operacao": null,
+  "participantes": null,
+  "participantes_lista": [
+   {
+    "grupo": "Ecorodovias Infraestrutura e Logística S/A",
+    "desagio": null,
+    "vencedor": true
+   },
+   {
+    "grupo": "Consórcio Nova Guanabara",
+    "desagio": 35.23,
+    "vencedor": false
+   },
+   {
+    "grupo": "Triunfo partcipações e investimentos - TPI",
+    "desagio": 25.38,
+    "vencedor": false
+   }
+  ],
+  "desagio": null,
+  "status_texto": "Contrato vigente. Leilão de 2015 (p13).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 3,
+   "capex": 3,
+   "opex": 3,
+   "linha_p5": 3,
+   "assinatura": 3,
+   "participantes_lista": 13,
+   "grupo_vencedor": 13
+  },
+  "divergencias": [],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 7
+ },
+ {
+  "id": "via-sul",
+  "nome": "Via Sul",
+  "nome_contrato": "Via Sul",
+  "brs": [
+   "101",
+   "290",
+   "386",
+   "448"
+  ],
+  "ufs": [
+   "RS"
+  ],
+  "trecho_texto": "BR-101/290/386/448/RS",
+  "trecho_cidades": null,
+  "estado": "vigente",
+  "ano_programa": null,
+  "tipo": "nova",
+  "estruturador": null,
+  "grupo_vencedor": "CCR S.A",
+  "km": 472.0,
+  "capex": 11.0,
+  "opex": 7.96,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": null,
+  "edital": null,
+  "assinatura": "2019-01-11",
+  "assinatura_aditivo": null,
+  "inicio_operacao": null,
+  "participantes": null,
+  "participantes_lista": [
+   {
+    "grupo": "CCR S.A",
+    "desagio": null,
+    "vencedor": true
+   },
+   {
+    "grupo": "Consórcio Integrasul",
+    "desagio": 27.2,
+    "vencedor": false
+   },
+   {
+    "grupo": "Eco Rodovias",
+    "desagio": 37.02,
+    "vencedor": false
+   },
+   {
+    "grupo": "Sacyr",
+    "desagio": 27.43,
+    "vencedor": false
+   },
+   {
+    "grupo": "Infraestrutura Brasil Holding II SA",
+    "desagio": 38.73,
+    "vencedor": false
+   }
+  ],
+  "desagio": null,
+  "status_texto": "Contrato vigente. Leilão de 2018 (p13).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 3,
+   "capex": 3,
+   "opex": 3,
+   "linha_p5": 3,
+   "assinatura": 3,
+   "participantes_lista": 13,
+   "grupo_vencedor": 13
+  },
+  "divergencias": [],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 8
+ },
+ {
+  "id": "ecovias-cerrado",
+  "nome": "Ecovias Cerrado",
+  "nome_contrato": "Ecovias Cerrado",
+  "brs": [
+   "364",
+   "365"
+  ],
+  "ufs": [
+   "MG",
+   "GO"
+  ],
+  "trecho_texto": "BR-364/365/MG/GO",
+  "trecho_cidades": null,
+  "estado": "vigente",
+  "ano_programa": null,
+  "tipo": "nova",
+  "estruturador": null,
+  "grupo_vencedor": "Ecorodovias",
+  "km": 437.0,
+  "capex": 3.1,
+  "opex": 3.81,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": null,
+  "edital": null,
+  "assinatura": "2019-12-19",
+  "assinatura_aditivo": null,
+  "inicio_operacao": null,
+  "participantes": null,
+  "participantes_lista": [
+   {
+    "grupo": "Ecorodovias",
+    "desagio": null,
+    "vencedor": true
+   },
+   {
+    "grupo": "Silva & Bertoli Empreendimentos",
+    "desagio": 18.0,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio Way - formado por construtoras que compunham a antiga MGO e pela companhia de logística GLP",
+    "desagio": 17.0,
+    "vencedor": false
+   }
+  ],
+  "desagio": null,
+  "status_texto": "Contrato vigente. Leilão de 2019 (p13).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 3,
+   "capex": 3,
+   "opex": 3,
+   "linha_p5": 3,
+   "assinatura": 3,
+   "participantes_lista": 13,
+   "grupo_vencedor": 13
+  },
+  "divergencias": [],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 9
+ },
+ {
+  "id": "via-costeira",
+  "nome": "Via Costeira",
+  "nome_contrato": "Via Costeira",
+  "brs": [
+   "101"
+  ],
+  "ufs": [
+   "SC"
+  ],
+  "trecho_texto": "BR-101/SC",
+  "trecho_cidades": null,
+  "estado": "vigente",
+  "ano_programa": null,
+  "tipo": "nova",
+  "estruturador": null,
+  "grupo_vencedor": "CCR S.A",
+  "km": 220.42,
+  "capex": 4.58,
+  "opex": 4.78,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": null,
+  "edital": null,
+  "assinatura": "2020-07-06",
+  "assinatura_aditivo": null,
+  "inicio_operacao": null,
+  "participantes": null,
+  "participantes_lista": [
+   {
+    "grupo": "CCR S.A",
+    "desagio": null,
+    "vencedor": true
+   },
+   {
+    "grupo": "Ecorodovias",
+    "desagio": 51.63,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consório Way",
+    "desagio": 16.0,
+    "vencedor": false
+   }
+  ],
+  "desagio": null,
+  "status_texto": "Contrato vigente. Leilão de 2020 (p13).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 3,
+   "capex": 3,
+   "opex": 3,
+   "linha_p5": 3,
+   "assinatura": 3,
+   "participantes_lista": 13,
+   "grupo_vencedor": 13
+  },
+  "divergencias": [],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 10
+ },
+ {
+  "id": "ecovias-araguaia",
+  "nome": "Ecovias Araguaia",
+  "nome_contrato": "Ecovias Araguaia",
+  "brs": [
+   "153",
+   "080",
+   "414"
+  ],
+  "ufs": [
+   "TO",
+   "GO"
+  ],
+  "trecho_texto": "BR-153/080/414/TO/GO",
+  "trecho_cidades": null,
+  "estado": "vigente",
+  "ano_programa": null,
+  "tipo": "nova",
+  "estruturador": null,
+  "grupo_vencedor": "Ecorodovias",
+  "km": 850.7,
+  "capex": 10.62,
+  "opex": 8.44,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": null,
+  "edital": null,
+  "assinatura": "2021-09-29",
+  "assinatura_aditivo": null,
+  "inicio_operacao": null,
+  "participantes": null,
+  "participantes_lista": [
+   {
+    "grupo": "Ecorodovias",
+    "desagio": null,
+    "vencedor": true
+   },
+   {
+    "grupo": "CCR",
+    "desagio": 16.25,
+    "vencedor": false
+   }
+  ],
+  "desagio": null,
+  "status_texto": "Contrato vigente. Leilão de 2021 (p13).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 3,
+   "capex": 3,
+   "opex": 3,
+   "linha_p5": 3,
+   "assinatura": 3,
+   "participantes_lista": 13,
+   "grupo_vencedor": 13
+  },
+  "divergencias": [],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 11
+ },
+ {
+  "id": "rio-sp",
+  "nome": "Rio SP",
+  "nome_contrato": "Rio SP",
+  "brs": [
+   "116",
+   "101"
+  ],
+  "ufs": [
+   "SP",
+   "RJ"
+  ],
+  "trecho_texto": "BR-116/101/SP/RJ",
+  "trecho_cidades": null,
+  "estado": "vigente",
+  "ano_programa": null,
+  "tipo": "nova",
+  "estruturador": null,
+  "grupo_vencedor": "CCR S.A",
+  "km": 625.8,
+  "capex": 20.12,
+  "opex": 14.79,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": null,
+  "edital": null,
+  "assinatura": "2022-01-28",
+  "assinatura_aditivo": null,
+  "inicio_operacao": null,
+  "participantes": null,
+  "participantes_lista": [
+   {
+    "grupo": "CCR S.A",
+    "desagio": null,
+    "vencedor": true
+   },
+   {
+    "grupo": "Ecorodovias",
+    "desagio": 10.6,
+    "vencedor": false
+   }
+  ],
+  "desagio": null,
+  "status_texto": "Contrato vigente. Leilão de 2021 (p13).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 3,
+   "capex": 3,
+   "opex": 3,
+   "linha_p5": 3,
+   "assinatura": 3,
+   "participantes_lista": 13,
+   "grupo_vencedor": 13
+  },
+  "divergencias": [],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 12
+ },
+ {
+  "id": "via-brasil",
+  "nome": "Via Brasil",
+  "nome_contrato": "Via Brasil",
+  "brs": [
+   "163",
+   "230"
+  ],
+  "ufs": [
+   "MT",
+   "PA"
+  ],
+  "trecho_texto": "BR-163/230/MT/PA",
+  "trecho_cidades": null,
+  "estado": "vigente",
+  "ano_programa": null,
+  "tipo": "nova",
+  "estruturador": null,
+  "grupo_vencedor": "Consórcio Via Brasil BR-163 (Conasa Infraestrutura S/A, Zeta Infraestrutura S.A., Construtora Rocha Cavalcante Ltda., Engenharia de Materiais Ltda. e M4 Investimentos Ltda.)",
+  "km": 1009.52,
+  "capex": 2.55,
+  "opex": 1.43,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": null,
+  "edital": null,
+  "assinatura": "2022-04-01",
+  "assinatura_aditivo": null,
+  "inicio_operacao": null,
+  "participantes": null,
+  "participantes_lista": [
+   {
+    "grupo": "Consórcio Via Brasil BR-163 (Conasa Infraestrutura S/A, Zeta Infraestrutura S.A., Construtora Rocha Cavalcante Ltda., Engenharia de Materiais Ltda. e M4 Investimentos Ltda.)",
+    "desagio": null,
+    "vencedor": true
+   }
+  ],
+  "desagio": null,
+  "status_texto": "Contrato vigente; otimização contratual (Rota Arco Norte) com edital publicado, leilão agendado para 12/11/2026 (p33, p117). Leilão de 2021 (p13).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 3,
+   "capex": 3,
+   "opex": 3,
+   "linha_p5": 3,
+   "assinatura": 3,
+   "participantes_lista": 13,
+   "grupo_vencedor": 13
+  },
+  "divergencias": [],
+  "notas_base": [],
+  "relaciona": [
+   "rota-arco-norte"
+  ],
+  "linha_p5": 13
+ },
+ {
+  "id": "ecovias-rio-minas",
+  "nome": "EcoVias Rio Minas",
+  "nome_contrato": "EcoVias Rio Minas",
+  "brs": [
+   "116",
+   "465",
+   "493"
+  ],
+  "ufs": [
+   "RJ",
+   "MG"
+  ],
+  "trecho_texto": "BR-116/465/493/RJ/MG",
+  "trecho_cidades": null,
+  "estado": "vigente",
+  "ano_programa": null,
+  "tipo": "nova",
+  "estruturador": null,
+  "grupo_vencedor": "Ecorodovias",
+  "km": 726.9,
+  "capex": 12.93,
+  "opex": 11.63,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": null,
+  "edital": null,
+  "assinatura": "2022-08-19",
+  "assinatura_aditivo": null,
+  "inicio_operacao": null,
+  "participantes": null,
+  "participantes_lista": [
+   {
+    "grupo": "Ecorodovias",
+    "desagio": null,
+    "vencedor": true
+   },
+   {
+    "grupo": "Ecorodovias",
+    "desagio": 10.6,
+    "vencedor": false
+   }
+  ],
+  "desagio": null,
+  "status_texto": "Contrato vigente. Leilão de 2022 (p13).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 3,
+   "capex": 3,
+   "opex": 3,
+   "linha_p5": 3,
+   "assinatura": 3,
+   "participantes_lista": 13,
+   "grupo_vencedor": 13
+  },
+  "divergencias": [],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 14
+ },
+ {
+  "id": "rodovias-integradas-do-parana-lote-2",
+  "nome": "Rodovias Integradas do Paraná – Lote 2",
+  "nome_contrato": "EPR Litoral Pioneiro",
+  "brs": [
+   "153",
+   "277",
+   "369"
+  ],
+  "ufs": [
+   "PR"
+  ],
+  "trecho_texto": "BR-153/277/369/PR e PR-092/151/239/407/408/411/508/804/855",
+  "trecho_cidades": null,
+  "estado": "programa",
+  "ano_programa": 2023,
+  "tipo": "nova",
+  "estruturador": null,
+  "grupo_vencedor": "Consórcio Infraestrutura PR",
+  "km": 604.16,
+  "capex": 10.78,
+  "opex": 6.45,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": "2023-09-29",
+  "edital": null,
+  "assinatura": "2024-01-30",
+  "assinatura_aditivo": null,
+  "inicio_operacao": "2024-02-28",
+  "participantes": 1,
+  "participantes_lista": [
+   {
+    "grupo": "Consórcio Infraestrutura PR (EPR)",
+    "desagio": 0.08,
+    "vencedor": true
+   }
+  ],
+  "desagio": 0.08,
+  "status_texto": "Leilão realizado em 29/09/2023 (p97); grupo líder: EPR (p23).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 3,
+   "capex": 3,
+   "opex": 3,
+   "linha_p5": 3,
+   "ano_programa": 97,
+   "leilao": 97,
+   "participantes": 97,
+   "grupo_vencedor": 97,
+   "inicio_operacao": 97,
+   "desagio": 97,
+   "assinatura": 97,
+   "participantes_lista": 13
+  },
+  "divergencias": [],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 15
+ },
+ {
+  "id": "rodovias-integradas-do-parana-lote-1",
+  "nome": "Rodovias Integradas do Paraná – Lote 1",
+  "nome_contrato": "Via Araucária",
+  "brs": [
+   "277",
+   "373",
+   "376",
+   "476"
+  ],
+  "ufs": [
+   "PR"
+  ],
+  "trecho_texto": "BR-277/373/376/476/PR e PR-418/423/427",
+  "trecho_cidades": null,
+  "estado": "programa",
+  "ano_programa": 2023,
+  "tipo": "nova",
+  "estruturador": null,
+  "grupo_vencedor": "Infraestrutura Holding XXI S.A.",
+  "km": 473.01,
+  "capex": 7.91,
+  "opex": 5.16,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": "2023-08-25",
+  "edital": null,
+  "assinatura": "2024-01-30",
+  "assinatura_aditivo": null,
+  "inicio_operacao": "2024-02-28",
+  "participantes": 2,
+  "participantes_lista": [
+   {
+    "grupo": "Infraestrutura Holding XXI S.A. (Patria)",
+    "desagio": 18.25,
+    "vencedor": true
+   },
+   {
+    "grupo": "EPR (Equipav)",
+    "desagio": 8.3,
+    "vencedor": false
+   }
+  ],
+  "desagio": 18.25,
+  "status_texto": "Leilão realizado em 25/08/2023 (p97); grupo líder: PATRIA (p23).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 3,
+   "capex": 3,
+   "opex": 3,
+   "linha_p5": 3,
+   "ano_programa": 97,
+   "leilao": 97,
+   "participantes": 97,
+   "grupo_vencedor": 97,
+   "inicio_operacao": 97,
+   "desagio": 97,
+   "assinatura": 97,
+   "participantes_lista": 13
+  },
+  "divergencias": [],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 16
+ },
+ {
+  "id": "belo-horizonte-juiz-de-fora",
+  "nome": "Belo Horizonte – Juiz de Fora",
+  "nome_contrato": "Via Mineira",
+  "brs": [
+   "040"
+  ],
+  "ufs": [
+   "MG"
+  ],
+  "trecho_texto": "BR-040/MG",
+  "trecho_cidades": [
+   "Belo Horizonte",
+   "Juiz de Fora"
+  ],
+  "estado": "programa",
+  "ano_programa": 2024,
+  "tipo": "nova",
+  "estruturador": null,
+  "grupo_vencedor": "Consórcio Infraestrutura MG",
+  "km": 232.1,
+  "capex": 5.04,
+  "opex": 3.65,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": "2024-04-11",
+  "edital": null,
+  "assinatura": "2024-07-04",
+  "assinatura_aditivo": null,
+  "inicio_operacao": "2024-08-06",
+  "participantes": 3,
+  "participantes_lista": [
+   {
+    "grupo": "Consórcio Infraestrutura MG (EPR)",
+    "desagio": 11.21,
+    "vencedor": true
+   },
+   {
+    "grupo": "EPR (Equipav)",
+    "desagio": 8.3,
+    "vencedor": false
+   }
+  ],
+  "desagio": 11.21,
+  "status_texto": "Leilão realizado em 11/04/2024 (p97); grupo líder: EPR (p23).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 3,
+   "capex": 3,
+   "opex": 3,
+   "linha_p5": 3,
+   "ano_programa": 97,
+   "leilao": 97,
+   "participantes": 97,
+   "grupo_vencedor": 97,
+   "inicio_operacao": 97,
+   "desagio": 97,
+   "assinatura": 97,
+   "participantes_lista": 13
+  },
+  "divergencias": [],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 17
+ },
+ {
+  "id": "nova-381",
+  "nome": "Governador Valadares – Belo Horizonte",
+  "nome_contrato": "Nova 381",
+  "brs": [
+   "381"
+  ],
+  "ufs": [
+   "MG"
+  ],
+  "trecho_texto": "BR-381/MG",
+  "trecho_cidades": [
+   "Governador Valadares",
+   "Belo Horizonte"
+  ],
+  "estado": "programa",
+  "ano_programa": 2024,
+  "tipo": "nova",
+  "estruturador": null,
+  "grupo_vencedor": "4UM Investimentos",
+  "km": 303.4,
+  "capex": 5.58,
+  "opex": 3.76,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": "2024-08-29",
+  "edital": null,
+  "assinatura": "2025-01-23",
+  "assinatura_aditivo": null,
+  "inicio_operacao": "2025-02-03",
+  "participantes": 1,
+  "participantes_lista": [
+   {
+    "grupo": "4UM Investimentos (4UM Investimentos)",
+    "desagio": 0.94,
+    "vencedor": true
+   },
+   {
+    "grupo": "Consórcio Opportunity Dinâmico FIP Multiestratégia Investimentos no Exterior",
+    "desagio": 0.1,
+    "vencedor": false
+   }
+  ],
+  "desagio": 0.94,
+  "status_texto": "Leilão realizado em 29/08/2024 (p97); grupo líder: 4UM Fundo de Investimento (p23).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 3,
+   "capex": 3,
+   "opex": 3,
+   "linha_p5": 3,
+   "ano_programa": 97,
+   "leilao": 97,
+   "participantes": 97,
+   "grupo_vencedor": 97,
+   "inicio_operacao": 97,
+   "desagio": 97,
+   "assinatura": 97,
+   "participantes_lista": 13
+  },
+  "divergencias": [
+   {
+    "campo": "participantes_lista",
+    "exibido": 1,
+    "alternativas": [
+     {
+      "valor": 2,
+      "pagina": 13
+     }
+    ],
+    "nota": "p13 lista 2 proponentes (incluindo o vencedor); p97 informa 1 participantes."
+   }
+  ],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 18
+ },
+ {
+  "id": "rota-dos-cristais",
+  "nome": "Rota dos Cristais",
+  "nome_contrato": "Via Cristais",
+  "brs": [
+   "040"
+  ],
+  "ufs": [
+   "GO",
+   "MG"
+  ],
+  "trecho_texto": "BR-040/GO/MG",
+  "trecho_cidades": null,
+  "estado": "programa",
+  "ano_programa": 2024,
+  "tipo": "nova",
+  "estruturador": null,
+  "grupo_vencedor": "VINCI Highways S.A.S",
+  "km": 594.8,
+  "capex": 6.49,
+  "opex": 5.6,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": "2024-09-26",
+  "edital": null,
+  "assinatura": "2025-02-10",
+  "assinatura_aditivo": null,
+  "inicio_operacao": "2025-03-10",
+  "participantes": 4,
+  "participantes_lista": [
+   {
+    "grupo": "VINCI Highways S.A.S (Vinci)",
+    "desagio": 14.32,
+    "vencedor": true
+   },
+   {
+    "grupo": "Consórcio Nova BR-040",
+    "desagio": 9.09,
+    "vencedor": false
+   },
+   {
+    "grupo": "BTG Pactual Infraestrutura",
+    "desagio": 7.5,
+    "vencedor": false
+   },
+   {
+    "grupo": "CCR S.A",
+    "desagio": 1.75,
+    "vencedor": false
+   }
+  ],
+  "desagio": 14.32,
+  "status_texto": "Leilão realizado em 26/09/2024 (p97); grupo líder: VINCI (p23).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 3,
+   "capex": 3,
+   "opex": 3,
+   "linha_p5": 3,
+   "ano_programa": 97,
+   "leilao": 97,
+   "participantes": 97,
+   "grupo_vencedor": 97,
+   "inicio_operacao": 97,
+   "desagio": 97,
+   "assinatura": 97,
+   "participantes_lista": 13
+  },
+  "divergencias": [],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 19
+ },
+ {
+  "id": "rota-zebu",
+  "nome": "Rota Zebu",
+  "nome_contrato": "Way-262",
+  "brs": [
+   "262"
+  ],
+  "ufs": [
+   "MG"
+  ],
+  "trecho_texto": "BR-262/MG",
+  "trecho_cidades": null,
+  "estado": "programa",
+  "ano_programa": 2024,
+  "tipo": "nova",
+  "estruturador": null,
+  "grupo_vencedor": "Rotas do Brasil S.A.",
+  "km": 438.9,
+  "capex": 4.39,
+  "opex": 4.14,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": "2024-10-31",
+  "edital": null,
+  "assinatura": "2025-02-14",
+  "assinatura_aditivo": null,
+  "inicio_operacao": "2025-03-20",
+  "participantes": 2,
+  "participantes_lista": [
+   {
+    "grupo": "Rotas do Brasil S.A. (Way Concessões)",
+    "desagio": 15.3,
+    "vencedor": true
+   },
+   {
+    "grupo": "BTG Pactual Infraestrutura",
+    "desagio": 15.2,
+    "vencedor": false
+   }
+  ],
+  "desagio": 15.3,
+  "status_texto": "Leilão realizado em 31/10/2024 (p97); grupo líder: Way Concessões (p23).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 3,
+   "capex": 3,
+   "opex": 3,
+   "linha_p5": 3,
+   "ano_programa": 97,
+   "leilao": 97,
+   "participantes": 97,
+   "grupo_vencedor": 97,
+   "inicio_operacao": 97,
+   "desagio": 97,
+   "assinatura": 97,
+   "participantes_lista": 13
+  },
+  "divergencias": [],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 20
+ },
+ {
+  "id": "rota-verde-goias",
+  "nome": "Rota Verde",
+  "nome_contrato": "Rota Verde Goiás",
+  "brs": [
+   "060",
+   "452"
+  ],
+  "ufs": [
+   "GO"
+  ],
+  "trecho_texto": "BR-060/452/GO",
+  "trecho_cidades": null,
+  "estado": "programa",
+  "ano_programa": 2024,
+  "tipo": "nova",
+  "estruturador": null,
+  "grupo_vencedor": "Consórcio Rota Verde Goiás",
+  "km": 426.2,
+  "capex": 4.03,
+  "opex": 2.84,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": "2024-12-12",
+  "edital": null,
+  "assinatura": "2025-03-28",
+  "assinatura_aditivo": null,
+  "inicio_operacao": "2025-04-28",
+  "participantes": 4,
+  "participantes_lista": [
+   {
+    "grupo": "Consórcio Rota Verde Goiás (Aviva Fundo de Investimento)",
+    "desagio": 18.07,
+    "vencedor": true
+   },
+   {
+    "grupo": "BTG Pactual Infraestrutura III - Itaú",
+    "desagio": 17.97,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio Rota Cerrado - Guide",
+    "desagio": 10.88,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consorcio Infraestrutura GO",
+    "desagio": 0.9,
+    "vencedor": false
+   }
+  ],
+  "desagio": 18.07,
+  "status_texto": "Leilão realizado em 12/12/2024 (p97); grupo líder: Aviva Fundo de Investimento (p23).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 5,
+   "capex": 5,
+   "opex": 5,
+   "linha_p5": 5,
+   "ano_programa": 97,
+   "leilao": 97,
+   "participantes": 97,
+   "grupo_vencedor": 97,
+   "inicio_operacao": 97,
+   "desagio": 97,
+   "assinatura": 97,
+   "participantes_lista": 15
+  },
+  "divergencias": [],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 21
+ },
+ {
+  "id": "rodovias-integradas-do-parana-lote-6",
+  "nome": "Rodovias Integradas do Paraná – Lote 6",
+  "nome_contrato": "EPR Iguaçu",
+  "brs": [
+   "163",
+   "277"
+  ],
+  "ufs": [
+   "PR"
+  ],
+  "trecho_texto": "BR-163/277PR e PR-158/180/182/280/483",
+  "trecho_cidades": null,
+  "estado": "programa",
+  "ano_programa": 2024,
+  "tipo": "nova",
+  "estruturador": null,
+  "grupo_vencedor": "Consórcio Infraestrutura PR",
+  "km": 662.1,
+  "capex": 12.67,
+  "opex": 7.44,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": "2024-12-19",
+  "edital": null,
+  "assinatura": "2025-04-11",
+  "assinatura_aditivo": null,
+  "inicio_operacao": "2025-05-08",
+  "participantes": 1,
+  "participantes_lista": [
+   {
+    "grupo": "Consórcio Infraestrutura PR (EPR)",
+    "desagio": 0.08,
+    "vencedor": true
+   }
+  ],
+  "desagio": 0.08,
+  "status_texto": "Leilão realizado em 19/12/2024 (p97); grupo líder: EPR (p23).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 5,
+   "capex": 5,
+   "opex": 5,
+   "linha_p5": 5,
+   "ano_programa": 97,
+   "leilao": 97,
+   "participantes": 97,
+   "grupo_vencedor": 97,
+   "inicio_operacao": 97,
+   "desagio": 97,
+   "assinatura": 97,
+   "participantes_lista": 15
+  },
+  "divergencias": [],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 22
+ },
+ {
+  "id": "rodovias-integradas-do-parana-lote-3",
+  "nome": "Rodovias Integradas do Paraná – Lote 3",
+  "nome_contrato": "PR Vias",
+  "brs": [
+   "369",
+   "373",
+   "376"
+  ],
+  "ufs": [
+   "PR"
+  ],
+  "trecho_texto": "BR-369/373/376/PR e PR-090/170/323/445",
+  "trecho_cidades": null,
+  "estado": "programa",
+  "ano_programa": 2024,
+  "tipo": "nova",
+  "estruturador": null,
+  "grupo_vencedor": "CCR S.A.",
+  "km": 569.75,
+  "capex": 9.87,
+  "opex": 6.04,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": "2024-12-12",
+  "edital": null,
+  "assinatura": "2025-04-14",
+  "assinatura_aditivo": null,
+  "inicio_operacao": "2025-05-08",
+  "participantes": 3,
+  "participantes_lista": [
+   {
+    "grupo": "CCR S.A. (Motiva)",
+    "desagio": 26.6,
+    "vencedor": true
+   },
+   {
+    "grupo": "Consorcio Infraestrutura PR (Necton Investimentos)",
+    "desagio": 25.8,
+    "vencedor": false
+   },
+   {
+    "grupo": "INFRA BR V Missouri Holding S.A (Terra Investimentos)",
+    "desagio": 25.2,
+    "vencedor": false
+   }
+  ],
+  "desagio": 26.6,
+  "status_texto": "Leilão realizado em 12/12/2024 (p97); grupo líder: Motiva (p23).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 5,
+   "capex": 5,
+   "opex": 5,
+   "linha_p5": 5,
+   "ano_programa": 97,
+   "leilao": 97,
+   "participantes": 97,
+   "grupo_vencedor": 97,
+   "inicio_operacao": 97,
+   "desagio": 97,
+   "assinatura": 97,
+   "participantes_lista": 15
+  },
+  "divergencias": [
+   {
+    "campo": "capex+opex",
+    "exibido": 15.91,
+    "alternativas": [
+     {
+      "valor": 17.05,
+      "pagina": 5
+     }
+    ],
+    "nota": "Total capex+opex impresso na p5 = 17,05; capex 9,87 + opex 6,04 = 15,91, igual ao total da p97."
+   }
+  ],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 23
+ },
+ {
+  "id": "rota-agro-norte",
+  "nome": "Rota Agro Norte",
+  "nome_contrato": "Nova 364",
+  "brs": [
+   "364"
+  ],
+  "ufs": [
+   "RO"
+  ],
+  "trecho_texto": "BR-364/RO",
+  "trecho_cidades": null,
+  "estado": "programa",
+  "ano_programa": 2025,
+  "tipo": "nova",
+  "estruturador": null,
+  "grupo_vencedor": "4UM-Opportunity",
+  "km": 686.7,
+  "capex": 6.35,
+  "opex": 3.88,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": "2025-02-27",
+  "edital": null,
+  "assinatura": "2025-07-18",
+  "assinatura_aditivo": null,
+  "inicio_operacao": "2025-08-21",
+  "participantes": 1,
+  "participantes_lista": [
+   {
+    "grupo": "4UM-Opportunity (4UM Investimentos)",
+    "desagio": 0.05,
+    "vencedor": true
+   },
+   {
+    "grupo": "EPR (Equipav)",
+    "desagio": 8.3,
+    "vencedor": false
+   }
+  ],
+  "desagio": 0.05,
+  "status_texto": "Leilão realizado em 27/02/2025 (p97); grupo líder: 4UM Fundo de Investimento (p23).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 5,
+   "capex": 5,
+   "opex": 5,
+   "linha_p5": 5,
+   "ano_programa": 97,
+   "leilao": 97,
+   "participantes": 97,
+   "grupo_vencedor": 97,
+   "inicio_operacao": 97,
+   "desagio": 97,
+   "assinatura": 97,
+   "participantes_lista": 15
+  },
+  "divergencias": [
+   {
+    "campo": "participantes_lista",
+    "exibido": 1,
+    "alternativas": [
+     {
+      "valor": 2,
+      "pagina": 15
+     }
+    ],
+    "nota": "p15 lista 2 proponentes (incluindo o vencedor); p97 informa 1 participantes."
+   }
+  ],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 24
+ },
+ {
+  "id": "motiva-pantanal",
+  "nome": "Motiva Pantanal",
+  "nome_contrato": "Motiva Pantanal",
+  "brs": [
+   "163"
+  ],
+  "ufs": [
+   "MS"
+  ],
+  "trecho_texto": "BR-163/MS",
+  "trecho_cidades": null,
+  "estado": "programa",
+  "ano_programa": 2025,
+  "tipo": "otimizacao",
+  "estruturador": null,
+  "grupo_vencedor": "Motiva Infraestrutura de Mobilidade S.A",
+  "km": 847.2,
+  "capex": 9.44,
+  "opex": 7.15,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": "2025-05-22",
+  "edital": null,
+  "assinatura": "2014-03-12",
+  "assinatura_aditivo": "2025-08-01",
+  "inicio_operacao": "2025-09-01",
+  "participantes": 1,
+  "participantes_lista": [
+   {
+    "grupo": "Motiva Infraestrutura de Mobilidade S.A (Motiva)",
+    "desagio": 0.05,
+    "vencedor": true
+   }
+  ],
+  "desagio": 0.05,
+  "status_texto": "Leilão realizado em 22/05/2025 (p97); grupo líder: Motiva (p23).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 5,
+   "capex": 5,
+   "opex": 5,
+   "linha_p5": 5,
+   "ano_programa": 97,
+   "leilao": 97,
+   "participantes": 97,
+   "grupo_vencedor": 97,
+   "inicio_operacao": 97,
+   "desagio": 97,
+   "assinatura": 5,
+   "assinatura_aditivo": 97,
+   "participantes_lista": 15
+  },
+  "divergencias": [],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 25
+ },
+ {
+  "id": "ecovias-capixaba",
+  "nome": "Ecovias Capixaba",
+  "nome_contrato": "Ecovias Capixaba",
+  "brs": [
+   "101"
+  ],
+  "ufs": [
+   "ES",
+   "BA"
+  ],
+  "trecho_texto": "BR-101/ES/BA",
+  "trecho_cidades": null,
+  "estado": "programa",
+  "ano_programa": 2025,
+  "tipo": "otimizacao",
+  "estruturador": null,
+  "grupo_vencedor": "EcoRodovias",
+  "km": 478.7,
+  "capex": 7.06,
+  "opex": 3.31,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": "2025-06-26",
+  "edital": null,
+  "assinatura": "2013-04-17",
+  "assinatura_aditivo": "2025-09-12",
+  "inicio_operacao": "2025-10-12",
+  "participantes": 1,
+  "participantes_lista": [
+   {
+    "grupo": "EcoRodovias (Ecorodovias)",
+    "desagio": 0.05,
+    "vencedor": true
+   }
+  ],
+  "desagio": 0.05,
+  "status_texto": "Leilão realizado em 26/06/2025 (p97); grupo líder: Ecorodovias (p23).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 5,
+   "capex": 5,
+   "opex": 5,
+   "linha_p5": 5,
+   "ano_programa": 97,
+   "leilao": 97,
+   "participantes": 97,
+   "grupo_vencedor": 97,
+   "inicio_operacao": 97,
+   "desagio": 97,
+   "assinatura": 5,
+   "assinatura_aditivo": 97,
+   "participantes_lista": 15
+  },
+  "divergencias": [
+   {
+    "campo": "assinatura_aditivo",
+    "exibido": "2025-09-12",
+    "alternativas": [
+     {
+      "valor": "2025-08-26",
+      "pagina": 5
+     }
+    ],
+    "nota": "Data do termo aditivo: 12/09/2025 (p97) × 26/08/2025 (p5)."
+   },
+   {
+    "campo": "km",
+    "exibido": 478.7,
+    "alternativas": [
+     {
+      "valor": 475.9,
+      "pagina": 33
+     },
+     {
+      "valor": 480.2,
+      "pagina": 33
+     }
+    ],
+    "nota": "Tabela de otimizações da p33 informa 475,9 km; o mapa da mesma página, 480,20 km."
+   }
+  ],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 26
+ },
+ {
+  "id": "juiz-de-fora-rio-de-janeiro",
+  "nome": "Juiz de Fora – Rio de Janeiro",
+  "nome_contrato": "Nova Estrada Real",
+  "brs": [
+   "040",
+   "495"
+  ],
+  "ufs": [
+   "RJ",
+   "MG"
+  ],
+  "trecho_texto": "BR-040/495/RJ/MG",
+  "trecho_cidades": [
+   "Juiz de Fora/MG",
+   "Rio de Janeiro/RJ"
+  ],
+  "estado": "programa",
+  "ano_programa": 2025,
+  "tipo": "nova",
+  "estruturador": null,
+  "grupo_vencedor": "Nova Estrada Real",
+  "km": 218.9,
+  "capex": 5.02,
+  "opex": 3.82,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": "2025-04-30",
+  "edital": null,
+  "assinatura": "2025-10-02",
+  "assinatura_aditivo": null,
+  "inicio_operacao": "2025-11-01",
+  "participantes": 3,
+  "participantes_lista": [
+   {
+    "grupo": "Nova Estrada Real (Construcap; Copasa; Ohla)",
+    "desagio": 14.0,
+    "vencedor": true
+   },
+   {
+    "grupo": "Sacyr",
+    "desagio": 1.0,
+    "vencedor": false
+   },
+   {
+    "grupo": "EPR",
+    "desagio": 3.0,
+    "vencedor": false
+   }
+  ],
+  "desagio": 14.0,
+  "status_texto": "Leilão realizado em 30/04/2025 (p97); grupo líder: Construcap; Copasa; Ohla (p23).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 5,
+   "capex": 5,
+   "opex": 5,
+   "linha_p5": 5,
+   "ano_programa": 97,
+   "leilao": 97,
+   "participantes": 97,
+   "grupo_vencedor": 97,
+   "inicio_operacao": 97,
+   "desagio": 97,
+   "assinatura": 97,
+   "participantes_lista": 15
+  },
+  "divergencias": [],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 27
+ },
+ {
+  "id": "rota-da-celulose",
+  "nome": "Rota da Celulose",
+  "nome_contrato": "Rota da Celulose",
+  "brs": [
+   "262",
+   "267"
+  ],
+  "ufs": [
+   "MS"
+  ],
+  "trecho_texto": "BR-262/267/MS e MS-040/338/395",
+  "trecho_cidades": null,
+  "estado": "programa",
+  "ano_programa": 2025,
+  "tipo": "delegada",
+  "estruturador": null,
+  "grupo_vencedor": "Consórcio Caminhos da Celulose",
+  "km": 870.3,
+  "capex": 6.91,
+  "opex": 3.19,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": "2025-05-08",
+  "edital": null,
+  "assinatura": "2025-11-30",
+  "assinatura_aditivo": null,
+  "inicio_operacao": "2025-12-30",
+  "participantes": 4,
+  "participantes_lista": [
+   {
+    "grupo": "Consórcio Caminhos da Celulose (XP infra V fundo de Investimento)",
+    "desagio": 9.0,
+    "vencedor": true
+   },
+   {
+    "grupo": "Fundos de investimentos BTG",
+    "desagio": null,
+    "vencedor": false
+   },
+   {
+    "grupo": "XP e um consórcio formado por Kinea e Way",
+    "desagio": null,
+    "vencedor": false
+   }
+  ],
+  "desagio": 9.0,
+  "status_texto": "Leilão realizado em 08/05/2025 (p97); grupo líder: XP Infra V Fundo de Investimento (p23).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 5,
+   "capex": 5,
+   "opex": 5,
+   "linha_p5": 5,
+   "ano_programa": 97,
+   "leilao": 97,
+   "participantes": 97,
+   "grupo_vencedor": 97,
+   "inicio_operacao": 97,
+   "desagio": 97,
+   "assinatura": 97,
+   "participantes_lista": 15
+  },
+  "divergencias": [
+   {
+    "campo": "participantes",
+    "exibido": 4,
+    "alternativas": [
+     {
+      "valor": 5,
+      "pagina": 23
+     }
+    ],
+    "nota": "p97 informa 4 participantes; o gráfico de bolinhas da p23 mostra 5."
+   }
+  ],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 28
+ },
+ {
+  "id": "ponte-binacional-sao-borja-santo-tome",
+  "nome": "Ponte Binacional São Borja – Santo Tomé",
+  "nome_contrato": "Ponte Binacional São Borja/BRA - Santo Tomé/ARG",
+  "brs": [
+   "287"
+  ],
+  "ufs": [
+   "RS"
+  ],
+  "trecho_texto": "BR-287/RS - Brasil-Argentina",
+  "trecho_cidades": [
+   "São Borja/BRA",
+   "Santo Tomé/ARG"
+  ],
+  "estado": "programa",
+  "ano_programa": 2025,
+  "tipo": "nova",
+  "estruturador": null,
+  "grupo_vencedor": "CSINFRA",
+  "km": 15.2,
+  "capex": 0.18,
+  "opex": 0.39,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": "2025-07-16",
+  "edital": null,
+  "assinatura": "2025-11-25",
+  "assinatura_aditivo": null,
+  "inicio_operacao": "2025-12-02",
+  "participantes": 3,
+  "participantes_lista": [
+   {
+    "grupo": "CSINFRA (CS Infra S. A.)",
+    "desagio": 0.38,
+    "vencedor": true
+   },
+   {
+    "grupo": "PLUS BYTE SRL (desclassificada)",
+    "desagio": 9.43,
+    "vencedor": false
+   },
+   {
+    "grupo": "Ponta Negra (não admitida)",
+    "desagio": null,
+    "vencedor": false
+   }
+  ],
+  "desagio": 0.38,
+  "status_texto": "Leilão realizado em 16/07/2025 (p97); grupo líder: CS Infra S.A. (p23).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 5,
+   "capex": 5,
+   "opex": 5,
+   "linha_p5": 5,
+   "ano_programa": 97,
+   "leilao": 97,
+   "participantes": 97,
+   "grupo_vencedor": 97,
+   "inicio_operacao": 97,
+   "desagio": 97,
+   "assinatura": 97,
+   "participantes_lista": 15
+  },
+  "divergencias": [],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 29
+ },
+ {
+  "id": "rota-agro",
+  "nome": "Rota Agro",
+  "nome_contrato": "Rota Agro",
+  "brs": [
+   "060",
+   "364"
+  ],
+  "ufs": [
+   "GO",
+   "MT"
+  ],
+  "trecho_texto": "BR-060/364/GO/MT",
+  "trecho_cidades": null,
+  "estado": "programa",
+  "ano_programa": 2025,
+  "tipo": "nova",
+  "estruturador": null,
+  "grupo_vencedor": "Way Concessões S.A.",
+  "km": 490.07,
+  "capex": 4.42,
+  "opex": 2.84,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": "2025-08-14",
+  "edital": null,
+  "assinatura": "2026-03-03",
+  "assinatura_aditivo": null,
+  "inicio_operacao": "2026-04-03",
+  "participantes": 5,
+  "participantes_lista": [
+   {
+    "grupo": "WAY CONCESSÕES S.A.",
+    "desagio": null,
+    "vencedor": true
+   },
+   {
+    "grupo": "EPR PARTICIPAÇÕES S.A.",
+    "desagio": null,
+    "vencedor": false
+   },
+   {
+    "grupo": "CONSÓRCIO ROTA DO CERRADO",
+    "desagio": null,
+    "vencedor": false
+   },
+   {
+    "grupo": "V.F GOMES PARTICIPAÇÕES LTD",
+    "desagio": null,
+    "vencedor": false
+   }
+  ],
+  "desagio": 19.6,
+  "status_texto": "Leilão realizado em 14/08/2025 (p97); grupo líder: Way Concessões (p23).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 5,
+   "capex": 5,
+   "opex": 5,
+   "linha_p5": 5,
+   "ano_programa": 97,
+   "leilao": 97,
+   "participantes": 97,
+   "grupo_vencedor": 97,
+   "inicio_operacao": 97,
+   "desagio": 97,
+   "assinatura": 97,
+   "participantes_lista": 15
+  },
+  "divergencias": [
+   {
+    "campo": "assinatura",
+    "exibido": "2026-03-03",
+    "alternativas": [
+     {
+      "valor": "2025-11-20",
+      "pagina": 5
+     }
+    ],
+    "nota": "Assinatura: 03/03/2026 (p97) × 20/11/2025 (p5)."
+   },
+   {
+    "campo": "participantes",
+    "exibido": 5,
+    "alternativas": [
+     {
+      "valor": 6,
+      "pagina": 23
+     }
+    ],
+    "nota": "p97 informa 5 participantes; o gráfico de bolinhas da p23 mostra 6."
+   }
+  ],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 30
+ },
+ {
+  "id": "via-liberdade",
+  "nome": "Via Liberdade",
+  "nome_contrato": "Via Liberdade",
+  "brs": [
+   "356"
+  ],
+  "ufs": [
+   "MG"
+  ],
+  "trecho_texto": "BR-356/MG e MG-262/329",
+  "trecho_cidades": null,
+  "estado": "programa",
+  "ano_programa": 2025,
+  "tipo": "delegada",
+  "estruturador": null,
+  "grupo_vencedor": "Consórcio Rota da Liberdade",
+  "km": 190.1,
+  "capex": 3.63,
+  "opex": 1.95,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": "2025-09-18",
+  "edital": null,
+  "assinatura": "2026-01-20",
+  "assinatura_aditivo": null,
+  "inicio_operacao": "2026-02-20",
+  "participantes": 2,
+  "participantes_lista": [
+   {
+    "grupo": "Consórcio Rota da Liberdade",
+    "desagio": 13.2,
+    "vencedor": true
+   },
+   {
+    "grupo": "Houer Consultoria e Concessões LTDA",
+    "desagio": 0.02,
+    "vencedor": false
+   }
+  ],
+  "desagio": 13.2,
+  "status_texto": "Leilão realizado em 18/09/2025 (p97); grupo líder: Construtora Metropolitana S.A. (p23).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 5,
+   "capex": 5,
+   "opex": 5,
+   "linha_p5": 5,
+   "ano_programa": 97,
+   "leilao": 97,
+   "participantes": 97,
+   "grupo_vencedor": 97,
+   "inicio_operacao": 97,
+   "desagio": 97,
+   "assinatura": 97,
+   "participantes_lista": 15
+  },
+  "divergencias": [
+   {
+    "campo": "assinatura",
+    "exibido": "2026-01-20",
+    "alternativas": [
+     {
+      "valor": "-",
+      "pagina": 5
+     }
+    ],
+    "nota": "Assinatura: 20/01/2026 (p97) × - (p5)."
+   }
+  ],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 31
+ },
+ {
+  "id": "rodovias-integradas-do-parana-lote-4",
+  "nome": "Rodovias Integradas do Paraná – Lote 4",
+  "nome_contrato": "Rodovias Integradas do Paraná - Lote 4",
+  "brs": [
+   "272",
+   "369",
+   "376"
+  ],
+  "ufs": [
+   "PR"
+  ],
+  "trecho_texto": "BR-272/369/376/PR e PR-182/272/317/323/444/862/897/986",
+  "trecho_cidades": null,
+  "estado": "programa",
+  "ano_programa": 2025,
+  "tipo": "nova",
+  "estruturador": null,
+  "grupo_vencedor": "Consórcio Infraestrutura PR",
+  "km": 627.52,
+  "capex": 10.82,
+  "opex": 7.37,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": "2025-10-23",
+  "edital": null,
+  "assinatura": "2026-02-06",
+  "assinatura_aditivo": null,
+  "inicio_operacao": "2026-03-09",
+  "participantes": 4,
+  "participantes_lista": [
+   {
+    "grupo": "Consórcio Infraestrutura PR",
+    "desagio": 18.52,
+    "vencedor": true
+   },
+   {
+    "grupo": "Mota-Engil Latam Portugal, S.A.",
+    "desagio": 6.23,
+    "vencedor": false
+   },
+   {
+    "grupo": "Motiva Infraestrutura de Mobilidade S.A.",
+    "desagio": 9.14,
+    "vencedor": false
+   },
+   {
+    "grupo": "Reúne Rodovias Holding S.A.",
+    "desagio": 21.2,
+    "vencedor": false
+   }
+  ],
+  "desagio": 21.3,
+  "status_texto": "Leilão realizado em 23/10/2025 (p97); grupo líder: EPR (p23).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 5,
+   "capex": 5,
+   "opex": 5,
+   "linha_p5": 5,
+   "ano_programa": 97,
+   "leilao": 97,
+   "participantes": 97,
+   "grupo_vencedor": 97,
+   "inicio_operacao": 97,
+   "desagio": 97,
+   "assinatura": 97,
+   "participantes_lista": 15
+  },
+  "divergencias": [
+   {
+    "campo": "desagio",
+    "exibido": 21.3,
+    "alternativas": [
+     {
+      "valor": 18.52,
+      "pagina": 15
+     }
+    ],
+    "nota": "Deságio do vencedor: 21,30% (p97) × 18,52% (p15),"
+   }
+  ],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 32
+ },
+ {
+  "id": "rodovias-integradas-do-parana-lote-5",
+  "nome": "Rodovias Integradas do Paraná – Lote 5",
+  "nome_contrato": "Rodovias Integradas do Paraná - Lote 5",
+  "brs": [
+   "163",
+   "368",
+   "467"
+  ],
+  "ufs": [
+   "PR"
+  ],
+  "trecho_texto": "BR-163/368/467/PR e PR-158/317/467/977/978",
+  "trecho_cidades": null,
+  "estado": "programa",
+  "ano_programa": 2025,
+  "tipo": "nova",
+  "estruturador": null,
+  "grupo_vencedor": "Rune Rodovias Holding II S.A. (Grupo Pátria)",
+  "km": 432.77,
+  "capex": 6.68,
+  "opex": 5.18,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": "2025-10-30",
+  "edital": null,
+  "assinatura": "2026-03-16",
+  "assinatura_aditivo": null,
+  "inicio_operacao": "2026-04-16",
+  "participantes": 2,
+  "participantes_lista": [
+   {
+    "grupo": "Reune Rodovias Holding II S.A.",
+    "desagio": 23.83,
+    "vencedor": true
+   },
+   {
+    "grupo": "Way Concessões S.A.",
+    "desagio": 16.7,
+    "vencedor": false
+   }
+  ],
+  "desagio": 21.83,
+  "status_texto": "Leilão realizado em 30/10/2025 (p97); grupo líder: Pátria (p23).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 5,
+   "capex": 5,
+   "opex": 5,
+   "linha_p5": 5,
+   "ano_programa": 97,
+   "leilao": 97,
+   "participantes": 97,
+   "grupo_vencedor": 97,
+   "inicio_operacao": 97,
+   "desagio": 97,
+   "assinatura": 97,
+   "participantes_lista": 15
+  },
+  "divergencias": [
+   {
+    "campo": "assinatura",
+    "exibido": "2026-03-16",
+    "alternativas": [
+     {
+      "valor": "2026-02-06",
+      "pagina": 5
+     }
+    ],
+    "nota": "Assinatura: 16/03/2026 (p97) × 06/02/2026 (p5)."
+   },
+   {
+    "campo": "desagio",
+    "exibido": 21.83,
+    "alternativas": [
+     {
+      "valor": 23.83,
+      "pagina": 15
+     }
+    ],
+    "nota": "Deságio do vencedor: 21,83% (p97) × 23,83% (p15),"
+   },
+   {
+    "campo": "brs",
+    "exibido": [
+     "163",
+     "368",
+     "467"
+    ],
+    "alternativas": [
+     {
+      "valor": [
+       "158",
+       "163",
+       "369",
+       "467"
+      ],
+      "pagina": 23
+     }
+    ],
+    "nota": "p5: BR-163/368/467/PR e PR-158/317/467/977/978; p23: BR-158/163/369/467 e PR-317."
+   }
+  ],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 33
+ },
+ {
+  "id": "rota-sertaneja",
+  "nome": "Rota Sertaneja",
+  "nome_contrato": "Rota Sertaneja",
+  "brs": [
+   "153",
+   "262"
+  ],
+  "ufs": [
+   "GO",
+   "MG"
+  ],
+  "trecho_texto": "BR-153/262/GO/MG",
+  "trecho_cidades": null,
+  "estado": "programa",
+  "ano_programa": 2025,
+  "tipo": "nova",
+  "estruturador": null,
+  "grupo_vencedor": "Way Concessões (Corretora Safra)",
+  "km": 530.6,
+  "capex": 5.53,
+  "opex": 4.95,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": "2025-11-06",
+  "edital": null,
+  "assinatura": "2026-03-03",
+  "assinatura_aditivo": null,
+  "inicio_operacao": "2026-04-03",
+  "participantes": 4,
+  "participantes_lista": [
+   {
+    "grupo": "Consórcio Rota do Cerrado",
+    "desagio": 20.36,
+    "vencedor": false
+   },
+   {
+    "grupo": "Way Concessões S.A.",
+    "desagio": 24.8,
+    "vencedor": true
+   },
+   {
+    "grupo": "Consórcio Caminho do Cerrado",
+    "desagio": 14.0,
+    "vencedor": false
+   },
+   {
+    "grupo": "Vinci Highways do Brasil - Participações S.A.",
+    "desagio": 0.11,
+    "vencedor": false
+   }
+  ],
+  "desagio": 24.8,
+  "status_texto": "Leilão realizado em 06/11/2025 (p97); grupo líder: Way Concessões (p23).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 5,
+   "capex": 5,
+   "opex": 5,
+   "linha_p5": 5,
+   "ano_programa": 97,
+   "leilao": 97,
+   "participantes": 97,
+   "grupo_vencedor": 97,
+   "inicio_operacao": 97,
+   "desagio": 97,
+   "assinatura": 97,
+   "participantes_lista": 15
+  },
+  "divergencias": [
+   {
+    "campo": "assinatura",
+    "exibido": "2026-03-03",
+    "alternativas": [
+     {
+      "valor": "2026-02-20",
+      "pagina": 5
+     }
+    ],
+    "nota": "Assinatura: 03/03/2026 (p97) × 20/02/2026 (p5)."
+   }
+  ],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 34
+ },
+ {
+  "id": "autopista-fluminense",
+  "nome": "Autopista Fluminense",
+  "nome_contrato": "Autopista Fluminense",
+  "brs": [
+   "101"
+  ],
+  "ufs": [
+   "RJ"
+  ],
+  "trecho_texto": "BR-101/RJ",
+  "trecho_cidades": null,
+  "estado": "programa",
+  "ano_programa": 2025,
+  "tipo": "otimizacao",
+  "estruturador": null,
+  "grupo_vencedor": "Ateris SA (Corretora Itaú)",
+  "km": 322.1,
+  "capex": 6.06,
+  "opex": 4.12,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": "2025-11-11",
+  "edital": null,
+  "assinatura": "2008-08-14",
+  "assinatura_aditivo": "2026-03-06",
+  "inicio_operacao": "2026-04-06",
+  "participantes": 1,
+  "participantes_lista": [
+   {
+    "grupo": "Ateris S.A (Corretora Itaú)",
+    "desagio": 0.0,
+    "vencedor": true
+   }
+  ],
+  "desagio": 0.0,
+  "status_texto": "Leilão realizado em 11/11/2025 (p97); grupo líder: Arteris (p23).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 5,
+   "capex": 5,
+   "opex": 5,
+   "linha_p5": 5,
+   "ano_programa": 97,
+   "leilao": 97,
+   "participantes": 97,
+   "grupo_vencedor": 97,
+   "inicio_operacao": 97,
+   "desagio": 97,
+   "assinatura": 5,
+   "assinatura_aditivo": 97,
+   "participantes_lista": 15
+  },
+  "divergencias": [
+   {
+    "campo": "km",
+    "exibido": 322.1,
+    "alternativas": [
+     {
+      "valor": 320.1,
+      "pagina": 33
+     }
+    ],
+    "nota": "Mapa da p33 informa 320,10 km (tabela da p33: 322,1)."
+   }
+  ],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 35
+ },
+ {
+  "id": "fernao-dias",
+  "nome": "Autopista Fernão Dias",
+  "nome_contrato": "Motiva MG/SP",
+  "brs": [
+   "381"
+  ],
+  "ufs": [
+   "MG",
+   "SP"
+  ],
+  "trecho_texto": "BR-381/MG/SP",
+  "trecho_cidades": null,
+  "estado": "programa",
+  "ano_programa": 2025,
+  "tipo": "otimizacao",
+  "estruturador": null,
+  "grupo_vencedor": "Motiva Infraestrutura de Mobilidade S.A (Terra)",
+  "km": 569.0,
+  "capex": 9.5,
+  "opex": 5.4,
+  "data_base": "dez/2024",
+  "capex_ficha": null,
+  "opex_ficha": null,
+  "data_base_ficha": null,
+  "capex_vpl": null,
+  "opex_vpl": null,
+  "leilao": "2025-12-11",
+  "edital": null,
+  "assinatura": "2008-08-14",
+  "assinatura_aditivo": "2026-05-11",
+  "inicio_operacao": "2026-06-11",
+  "participantes": 3,
+  "participantes_lista": [
+   {
+    "grupo": "Arteris S.A",
+    "desagio": 0.0,
+    "vencedor": false
+   },
+   {
+    "grupo": "Motiva",
+    "desagio": 17.05,
+    "vencedor": true
+   },
+   {
+    "grupo": "Infrastrutura MG",
+    "desagio": 11.25,
+    "vencedor": false
+   }
+  ],
+  "desagio": 17.05,
+  "status_texto": "Leilão realizado em 11/12/2025 (p97); grupo líder: Motiva (p23).",
+  "atualizado_em": null,
+  "ficha": null,
+  "cronograma": [],
+  "fontes": {
+   "km": 5,
+   "capex": 5,
+   "opex": 5,
+   "linha_p5": 5,
+   "ano_programa": 97,
+   "leilao": 97,
+   "participantes": 97,
+   "grupo_vencedor": 97,
+   "inicio_operacao": 97,
+   "desagio": 97,
+   "assinatura": 5,
+   "assinatura_aditivo": 97,
+   "participantes_lista": 15
+  },
+  "divergencias": [
+   {
+    "campo": "ufs",
+    "exibido": [
+     "MG",
+     "SP"
+    ],
+    "alternativas": [
+     {
+      "valor": [
+       "MG"
+      ],
+      "pagina": 23
+     }
+    ],
+    "nota": "p5: BR-381/MG/SP; p23 e p15: BR-381/MG."
+   }
+  ],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": 36
+ },
+ {
+  "id": "rotas-gerais",
+  "nome": "Rotas Gerais",
+  "nome_contrato": "Rotas Gerais",
+  "brs": [
+   "116",
+   "251"
+  ],
+  "ufs": [
+   "MG"
+  ],
+  "trecho_texto": "BR-116/251/MG",
+  "trecho_cidades": [
+   "Montes Claros/MG",
+   "Gov. Valadares/MG"
+  ],
+  "estado": "programa",
+  "ano_programa": 2026,
+  "tipo": "nova",
+  "estruturador": "BNDES",
+  "grupo_vencedor": "EcoRodovias Concessões e Ser. S.A. (Mirae Asset)",
+  "km": 734.9,
+  "capex": 7.34,
+  "opex": 5.82,
+  "data_base": "dez/2024",
+  "capex_ficha": 7.34,
+  "opex_ficha": 5.82,
+  "data_base_ficha": "abr/2023",
+  "capex_vpl": 2.97,
+  "opex_vpl": 1.29,
+  "leilao": "2026-03-31",
+  "edital": "2025-12-19",
+  "assinatura": "2026-06-03",
+  "assinatura_aditivo": null,
+  "inicio_operacao": "2026-07-03",
+  "participantes": 3,
+  "participantes_lista": [
+   {
+    "grupo": "Monte Rodovias",
+    "desagio": 0.01,
+    "vencedor": false
+   },
+   {
+    "grupo": "EcoRodovias Concessões e Ser. S.A",
+    "desagio": 19.0,
+    "vencedor": true
+   }
+  ],
+  "desagio": 19.0,
+  "status_texto": "Leilão realizado em 31/03/2026 (p97); grupo líder: Ecorodovias (p23).",
+  "atualizado_em": "2026-03-31",
+  "ficha": {
+   "trecho_inicio": "Montes Claros/MG",
+   "trecho_fim": "Gov. Valadares/MG",
+   "extensao_km": 734.9,
+   "wacc": 13.76,
+   "empregos": 106347,
+   "tkm": 0.126,
+   "carga": "Cargas Gerais Conteinerizáveis (CGC)",
+   "duplicacao_km": 186.59,
+   "faixa_adicional_km": 159.88,
+   "contorno_km": 16.87,
+   "marginais_km": 11.41,
+   "obras_relevantes": "196 Dispositivos e interseções (novos e remodelados); 21 passarelas; e 2 pontos de parada e descanso",
+   "pracas_implantar": 9,
+   "pracas_existentes": 0,
+   "porticos": 0,
+   "capex_km": 9.99,
+   "opex_km": 7.91,
+   "custo_duplicacao_km": 9.48,
+   "custo_manutencao": 0.07,
+   "fluxo_caixa_acum": 12.21,
+   "receita_nominal": 35.92,
+   "receita_vpl": 6.07,
+   "cagr_trafego": 1.71,
+   "capex_receita_vpl": 49,
+   "ciclo_obras": "3º ano ao 10º ano",
+   "garantia_proposta": 61.0,
+   "capital_minimo": 307.0,
+   "garantia_execucao": 303.33,
+   "veq_dia_praca": 21859,
+   "capex_anual": [
+    {
+     "ano": 3,
+     "valor": 734.16
+    },
+    {
+     "ano": 4,
+     "valor": 626.21
+    },
+    {
+     "ano": 5,
+     "valor": 793.51
+    },
+    {
+     "ano": 6,
+     "valor": 624.3
+    },
+    {
+     "ano": 7,
+     "valor": 531.51
+    },
+    {
+     "ano": 8,
+     "valor": 589.97
+    },
+    {
+     "ano": 9,
+     "valor": 465.28
+    },
+    {
+     "ano": 10,
+     "valor": 624.74
+    }
+   ],
+   "data_base": "abr/2023",
+   "extras": []
+  },
+  "cronograma": [
+   {
+    "marco": "Edital",
+    "data": "2025-12-19"
+   },
+   {
+    "marco": "Leilão",
+    "data": "2026-03-31"
+   }
+  ],
+  "fontes": {
+   "km": 5,
+   "capex": 5,
+   "opex": 5,
+   "linha_p5": 5,
+   "ano_programa": 97,
+   "leilao": 97,
+   "participantes": 97,
+   "grupo_vencedor": 97,
+   "inicio_operacao": 97,
+   "desagio": 97,
+   "assinatura": 97,
+   "participantes_lista": 15,
+   "capex_ficha": 103,
+   "opex_ficha": 103,
+   "capex_vpl": 103,
+   "opex_vpl": 103,
+   "atualizado_em": 103,
+   "edital": 103,
+   "cronograma": 117,
+   "ficha.extensao_km": 103,
+   "ficha.wacc": 103,
+   "ficha.empregos": 103,
+   "ficha.tkm": 103,
+   "ficha.duplicacao_km": 103,
+   "ficha.faixa_adicional_km": 103,
+   "ficha.contorno_km": 103,
+   "ficha.marginais_km": 103,
+   "ficha.pracas_implantar": 103,
+   "ficha.pracas_existentes": 103,
+   "ficha.porticos": 103,
+   "ficha.capex_km": 103,
+   "ficha.opex_km": 103,
+   "ficha.custo_duplicacao_km": 103,
+   "ficha.custo_manutencao": 103,
+   "ficha.fluxo_caixa_acum": 103,
+   "ficha.receita_nominal": 103,
+   "ficha.receita_vpl": 103,
+   "ficha.cagr_trafego": 103,
+   "ficha.capex_receita_vpl": 103,
+   "ficha.garantia_proposta": 103,
+   "ficha.capital_minimo": 103,
+   "ficha.garantia_execucao": 103,
+   "ficha.veq_dia_praca": 103,
+   "ficha.capex_anual": 103
+  },
+  "divergencias": [
+   {
+    "campo": "assinatura",
+    "exibido": "2026-06-03",
+    "alternativas": [
+     {
+      "valor": "2026-03-31",
+      "pagina": 5
+     }
+    ],
+    "nota": "Assinatura: 03/06/2026 (p97) × 31/03/2026 (p5). A data da p5 coincide com a data do leilão."
+   }
+  ],
+  "notas_base": [
+   {
+    "campo": "capex",
+    "valor": 7.34,
+    "data_base": "abr/2023",
+    "pagina": 103
+   },
+   {
+    "campo": "opex",
+    "valor": 5.82,
+    "data_base": "abr/2023",
+    "pagina": 103
+   },
+   {
+    "campo": "capex_vpl",
+    "valor": 2.97,
+    "data_base": "abr/2023",
+    "pagina": 103
+   },
+   {
+    "campo": "opex_vpl",
+    "valor": 1.29,
+    "data_base": "abr/2023",
+    "pagina": 103
+   }
+  ],
+  "relaciona": [],
+  "linha_p5": 37
+ },
+ {
+  "id": "rota-dos-sertoes",
+  "nome": "Rota dos Sertões",
+  "nome_contrato": "Rota dos Sertões",
+  "brs": [
+   "116",
+   "324"
+  ],
+  "ufs": [
+   "BA",
+   "PE"
+  ],
+  "trecho_texto": "BR-116/324/BA/PE",
+  "trecho_cidades": [
+   "Feira de Santana/BA",
+   "Salgueiro/PE"
+  ],
+  "estado": "programa",
+  "ano_programa": 2026,
+  "tipo": "nova",
+  "estruturador": "BNDES",
+  "grupo_vencedor": "Consórcio 116 Sertões (Galapagos)",
+  "km": 502.0,
+  "capex": 6.27,
+  "opex": 5.08,
+  "data_base": "dez/2024",
+  "capex_ficha": 4.13,
+  "opex_ficha": 4.4,
+  "data_base_ficha": "mar/2023",
+  "capex_vpl": 1.9,
+  "opex_vpl": 1.11,
+  "leilao": "2026-05-28",
+  "edital": "2026-02-13",
+  "assinatura": "2026-09-11",
+  "assinatura_aditivo": null,
+  "inicio_operacao": "2026-10-11",
+  "participantes": 3,
+  "participantes_lista": [
+   {
+    "grupo": "Consórcio 116 Sertões",
+    "desagio": 19.6,
+    "vencedor": true
+   },
+   {
+    "grupo": "Consórcio Atlas Rodovias",
+    "desagio": 19.5,
+    "vencedor": false
+   }
+  ],
+  "desagio": 19.6,
+  "status_texto": "Leilão realizado em 28/05/2026 (p97); grupo líder: Neo Invest Latam (p23). Assinatura (11/09/2026) e início da operação (11/10/2026) são previsões (p97, \"* Previsão\").",
+  "atualizado_em": "2026-04-14",
+  "ficha": {
+   "trecho_inicio": "Feira de Santana/BA",
+   "trecho_fim": "Salgueiro/PE",
+   "extensao_km": 502.0,
+   "wacc": 12.49,
+   "empregos": 59838,
+   "tkm": 0.095,
+   "carga": "Cargas Gerais Conteinerizáveis (CGC)",
+   "duplicacao_km": 94.21,
+   "faixa_adicional_km": 5.16,
+   "contorno_km": 7.11,
+   "marginais_km": 44.52,
+   "obras_relevantes": "68 dispositivos e interserções (novos e remodelados), 12 passarelas de pedestres (novas) e 1 Ponto de Parada e Descanso",
+   "pracas_implantar": 5,
+   "pracas_existentes": 0,
+   "porticos": 0,
+   "capex_km": 8.23,
+   "opex_km": 8.76,
+   "custo_duplicacao_km": 6.82,
+   "custo_manutencao": 0.06,
+   "fluxo_caixa_acum": 6.28,
+   "receita_nominal": 20.62,
+   "receita_vpl": 4.18,
+   "cagr_trafego": 2.5,
+   "capex_receita_vpl": 45,
+   "ciclo_obras": "3º ano ao 8º ano",
+   "garantia_proposta": 42.0,
+   "capital_minimo": 234.0,
+   "garantia_execucao": 209.0,
+   "veq_dia_praca": 23509,
+   "capex_anual": [
+    {
+     "ano": 3,
+     "valor": 388.79
+    },
+    {
+     "ano": 4,
+     "valor": 563.08
+    },
+    {
+     "ano": 5,
+     "valor": 657.11
+    },
+    {
+     "ano": 6,
+     "valor": 565.3
+    },
+    {
+     "ano": 7,
+     "valor": 207.61
+    },
+    {
+     "ano": 8,
+     "valor": 164.83
+    }
+   ],
+   "data_base": "mar/2023",
+   "extras": []
+  },
+  "cronograma": [
+   {
+    "marco": "TCU",
+    "data": "2025"
+   },
+   {
+    "marco": "Edital",
+    "data": "2026-02-13"
+   },
+   {
+    "marco": "Leilão",
+    "data": "2026-05-28"
+   }
+  ],
+  "fontes": {
+   "km": 5,
+   "capex": 5,
+   "opex": 5,
+   "linha_p5": 5,
+   "ano_programa": 97,
+   "leilao": 97,
+   "participantes": 97,
+   "grupo_vencedor": 97,
+   "inicio_operacao": 97,
+   "desagio": 97,
+   "assinatura": 97,
+   "participantes_lista": 15,
+   "capex_ficha": 105,
+   "opex_ficha": 105,
+   "capex_vpl": 105,
+   "opex_vpl": 105,
+   "atualizado_em": 105,
+   "edital": 105,
+   "cronograma": 117,
+   "ficha.extensao_km": 105,
+   "ficha.wacc": 105,
+   "ficha.empregos": 105,
+   "ficha.tkm": 105,
+   "ficha.duplicacao_km": 105,
+   "ficha.faixa_adicional_km": 105,
+   "ficha.contorno_km": 105,
+   "ficha.marginais_km": 105,
+   "ficha.pracas_implantar": 105,
+   "ficha.pracas_existentes": 105,
+   "ficha.porticos": 105,
+   "ficha.capex_km": 105,
+   "ficha.opex_km": 105,
+   "ficha.custo_duplicacao_km": 105,
+   "ficha.custo_manutencao": 105,
+   "ficha.fluxo_caixa_acum": 105,
+   "ficha.receita_nominal": 105,
+   "ficha.receita_vpl": 105,
+   "ficha.cagr_trafego": 105,
+   "ficha.capex_receita_vpl": 105,
+   "ficha.garantia_proposta": 105,
+   "ficha.capital_minimo": 105,
+   "ficha.garantia_execucao": 105,
+   "ficha.veq_dia_praca": 105,
+   "ficha.capex_anual": 105
+  },
+  "divergencias": [
+   {
+    "campo": "assinatura",
+    "exibido": "2026-09-11",
+    "alternativas": [
+     {
+      "valor": "2026-05-28",
+      "pagina": 5
+     }
+    ],
+    "nota": "Assinatura: 11/09/2026* (p97) × 28/05/2026 (p5). A data da p5 coincide com a data do leilão."
+   }
+  ],
+  "notas_base": [
+   {
+    "campo": "capex",
+    "valor": 4.13,
+    "data_base": "mar/2023",
+    "pagina": 105
+   },
+   {
+    "campo": "opex",
+    "valor": 4.4,
+    "data_base": "mar/2023",
+    "pagina": 105
+   },
+   {
+    "campo": "capex_vpl",
+    "valor": 1.9,
+    "data_base": "mar/2023",
+    "pagina": 105
+   },
+   {
+    "campo": "opex_vpl",
+    "valor": 1.11,
+    "data_base": "mar/2023",
+    "pagina": 105
+   }
+  ],
+  "relaciona": [],
+  "linha_p5": 38
+ },
+ {
+  "id": "regis-bittencourt",
+  "nome": "Régis Bittencourt",
+  "nome_contrato": "Autopista Régis Bittencourt",
+  "brs": [
+   "116"
+  ],
+  "ufs": [
+   "SP",
+   "PR"
+  ],
+  "trecho_texto": "BR-116/SP/PR",
+  "trecho_cidades": [
+   "Curitiba/PR",
+   "São Paulo/SP"
+  ],
+  "estado": "programa",
+  "ano_programa": 2026,
+  "tipo": "otimizacao",
+  "estruturador": "Otimização",
+  "grupo_vencedor": "EPR Participações S.A.",
+  "km": 383.25,
+  "capex": 7.07,
+  "opex": 4.06,
+  "data_base": "dez/2024",
+  "capex_ficha": 7.07,
+  "opex_ficha": 4.06,
+  "data_base_ficha": "abr/2023",
+  "capex_vpl": 4.21,
+  "opex_vpl": 1.81,
+  "leilao": "2026-07-23",
+  "edital": "2026-04-14",
+  "assinatura": "2008-08-14",
+  "assinatura_aditivo": "2026-12-21",
+  "inicio_operacao": "2027-01-21",
+  "participantes": 3,
+  "participantes_lista": [
+   {
+    "grupo": "EPR PARTICIPAÇÕES S.A",
+    "desagio": 22.53,
+    "vencedor": true
+   },
+   {
+    "grupo": "ARTERIS S.A.",
+    "desagio": 0.01,
+    "vencedor": false
+   },
+   {
+    "grupo": "MOTIVA UNFRAESTRUTURA DE MOBILIDADE S.A.",
+    "desagio": 12.1,
+    "vencedor": false
+   },
+   {
+    "grupo": "Consórcio Via dos Sertões",
+    "desagio": 13.1,
+    "vencedor": false
+   }
+  ],
+  "desagio": 22.53,
+  "status_texto": "Leilão realizado em 23/07/2026 (p97); grupo líder: EPR (p23). Assinatura (21/12/2026) e início da operação (21/01/2027) são previsões (p97, \"* Previsão\"). Assinatura do termo aditivo \"21/12/2026*\" na p5 também é previsão. Otimização contratual do contrato de 2008 (Arteris); inclui valor consensuado de saída de R$ 120 milhões ao grupo controlador atual (p107).",
+  "atualizado_em": "2026-04-16",
+  "ficha": {
+   "trecho_inicio": "Curitiba/PR",
+   "trecho_fim": "São Paulo/SP",
+   "extensao_km": 383.25,
+   "wacc": 11.41,
+   "empregos": 102435,
+   "tkm": 0.059,
+   "carga": "Cargas Gerais (CG); Granéis Líquido (GL)",
+   "duplicacao_km": null,
+   "faixa_adicional_km": 68.91,
+   "contorno_km": null,
+   "marginais_km": 32.8,
+   "obras_relevantes": "18 passarelas, 13 melhorias de interseção, 2 melhorias de acesso, 14 pontos de ônibus, 32,8 km de ciclovias, 116 caixas de produtos perigosos, 19 passagens de fauna, 4 macrodrenagem, 91,4 km de iluminação em serra e 27 correções de traçado.",
+   "pracas_implantar": null,
+   "pracas_existentes": null,
+   "porticos": null,
+   "capex_km": 18.49,
+   "opex_km": 10.63,
+   "custo_duplicacao_km": null,
+   "custo_manutencao": 0.14,
+   "fluxo_caixa_acum": 3.16,
+   "receita_nominal": 18.16,
+   "receita_vpl": 7.92,
+   "cagr_trafego": 1.63,
+   "capex_receita_vpl": 53,
+   "ciclo_obras": "1º ano ao 9º ano",
+   "garantia_proposta": 79.25,
+   "capital_minimo": 270.05,
+   "garantia_execucao": 396.0,
+   "veq_dia_praca": 29075,
+   "capex_anual": [
+    {
+     "ano": 1,
+     "valor": 932.46
+    },
+    {
+     "ano": 2,
+     "valor": 773.82
+    },
+    {
+     "ano": 3,
+     "valor": 768.39
+    },
+    {
+     "ano": 4,
+     "valor": 912.17
+    },
+    {
+     "ano": 5,
+     "valor": 936.97
+    },
+    {
+     "ano": 6,
+     "valor": 568.01
+    },
+    {
+     "ano": 7,
+     "valor": 453.64
+    },
+    {
+     "ano": 8,
+     "valor": 372.4
+    },
+    {
+     "ano": 9,
+     "valor": 271.67
+    }
+   ],
+   "data_base": "abr/2023",
+   "extras": [
+    {
+     "rotulo": "Macrodrenagem",
+     "valor": "4 unid."
+    },
+    {
+     "rotulo": "Iluminação em Serra",
+     "valor": "91,4 km"
+    },
+    {
+     "rotulo": "Correções de Traçado",
+     "valor": "27,38 km"
+    },
+    {
+     "rotulo": "Dispositivos",
+     "valor": "8"
+    },
+    {
+     "rotulo": "Túnel",
+     "valor": "2 unid."
+    },
+    {
+     "rotulo": "Custos duplicação (milhões/km)",
+     "valor": "-"
+    },
+    {
+     "rotulo": "Garantia da Proposta (texto original)",
+     "valor": "R$ 79,25,00 milhões"
+    },
+    {
+     "rotulo": "Valor consensuado de saída, a ser pago ao grupo controlador atual, pelo vencedor do Processo Competitivo",
+     "valor": "R$ 120 milhões"
+    }
+   ]
+  },
+  "cronograma": [
+   {
+    "marco": "Consulta Pública",
+    "data": "2025"
+   },
+   {
+    "marco": "Edital",
+    "data": "2026-04-14"
+   },
+   {
+    "marco": "Leilão",
+    "data": "2026-07-23"
+   }
+  ],
+  "fontes": {
+   "km": 5,
+   "capex": 5,
+   "opex": 5,
+   "linha_p5": 5,
+   "ano_programa": 97,
+   "leilao": 97,
+   "participantes": 97,
+   "grupo_vencedor": 97,
+   "inicio_operacao": 97,
+   "desagio": 97,
+   "assinatura": 5,
+   "assinatura_aditivo": 97,
+   "participantes_lista": 15,
+   "capex_ficha": 107,
+   "opex_ficha": 107,
+   "capex_vpl": 107,
+   "opex_vpl": 107,
+   "atualizado_em": 107,
+   "edital": 107,
+   "cronograma": 117,
+   "ficha.extensao_km": 107,
+   "ficha.wacc": 107,
+   "ficha.empregos": 107,
+   "ficha.tkm": 107,
+   "ficha.faixa_adicional_km": 107,
+   "ficha.marginais_km": 107,
+   "ficha.capex_km": 107,
+   "ficha.opex_km": 107,
+   "ficha.custo_manutencao": 107,
+   "ficha.fluxo_caixa_acum": 107,
+   "ficha.receita_nominal": 107,
+   "ficha.receita_vpl": 107,
+   "ficha.cagr_trafego": 107,
+   "ficha.capex_receita_vpl": 107,
+   "ficha.garantia_proposta": 107,
+   "ficha.capital_minimo": 107,
+   "ficha.garantia_execucao": 107,
+   "ficha.veq_dia_praca": 107,
+   "ficha.capex_anual": 107
+  },
+  "divergencias": [
+   {
+    "campo": "participantes_lista",
+    "exibido": 3,
+    "alternativas": [
+     {
+      "valor": 4,
+      "pagina": 15
+     }
+    ],
+    "nota": "p15 lista 4 proponentes (incluindo o vencedor); p97 informa 3 participantes."
+   }
+  ],
+  "notas_base": [
+   {
+    "campo": "capex",
+    "valor": 7.07,
+    "data_base": "abr/2023",
+    "pagina": 107
+   },
+   {
+    "campo": "opex",
+    "valor": 4.06,
+    "data_base": "abr/2023",
+    "pagina": 107
+   },
+   {
+    "campo": "capex_vpl",
+    "valor": 4.21,
+    "data_base": "abr/2023",
+    "pagina": 107
+   },
+   {
+    "campo": "opex_vpl",
+    "valor": 1.81,
+    "data_base": "abr/2023",
+    "pagina": 107
+   }
+  ],
+  "relaciona": [],
+  "linha_p5": 39
+ },
+ {
+  "id": "rota-arco-norte",
+  "nome": "Rota Arco Norte",
+  "nome_contrato": null,
+  "brs": [
+   "163"
+  ],
+  "ufs": [
+   "MT",
+   "PA"
+  ],
+  "trecho_texto": "BR-163/MT/PA",
+  "trecho_cidades": [
+   "Sinop/MT",
+   "Miritituba/PA"
+  ],
+  "estado": "agendado2026",
+  "ano_programa": 2026,
+  "tipo": "otimizacao",
+  "estruturador": "Otimização",
+  "grupo_vencedor": null,
+  "km": 1010.0,
+  "capex": 10.42,
+  "opex": 4.72,
+  "data_base": "dez/2024",
+  "capex_ficha": 10.42,
+  "opex_ficha": 4.72,
+  "data_base_ficha": "dez/2024",
+  "capex_vpl": 4.71,
+  "opex_vpl": 1.64,
+  "leilao": "2026-11-12",
+  "edital": "2025-07-17",
+  "assinatura": null,
+  "assinatura_aditivo": null,
+  "inicio_operacao": null,
+  "participantes": null,
+  "participantes_lista": null,
+  "desagio": null,
+  "status_texto": "Leilão agendado para 12/11/2026 (p109, p117). Otimização contratual do contrato de concessão da BR-163/MT/PA (Via Brasil); na p33, \"Edital publicado\".",
+  "atualizado_em": "2026-07-17",
+  "ficha": {
+   "trecho_inicio": "Sinop/MT",
+   "trecho_fim": "Miritituba/PA",
+   "extensao_km": 1010.0,
+   "wacc": 12.65,
+   "empregos": 150914,
+   "tkm": 0.094,
+   "carga": "Cargas Gerais (CG); Carga Agrícola e Pecuária (CAP)",
+   "duplicacao_km": 245.8,
+   "faixa_adicional_km": 116.7,
+   "contorno_km": null,
+   "marginais_km": 30.64,
+   "obras_relevantes": "Acesso aos Portos de Santarenzinho (19,73 km) e de Itapacura (14,75 km), 15 Rotatórias Alongadas, 2 Remoções de Pontes de Madeira, 23 Viadutos e Pontes, 5 Passarelas, 5 Diamantes, 4 Trombetas, 187 Acessos e 20 Pontos de Ônibus.",
+   "pracas_implantar": null,
+   "pracas_existentes": 3,
+   "porticos": null,
+   "capex_km": 12.33,
+   "opex_km": 5.58,
+   "custo_duplicacao_km": 5.93,
+   "custo_manutencao": 0.09,
+   "fluxo_caixa_acum": 7.12,
+   "receita_nominal": 29.74,
+   "receita_vpl": 8.82,
+   "cagr_trafego": 3.38,
+   "capex_receita_vpl": 53,
+   "ciclo_obras": "1º ano ao 9º ano",
+   "garantia_proposta": 88.0,
+   "capital_minimo": 28.44,
+   "garantia_execucao": 441.0,
+   "veq_dia_praca": 9128,
+   "capex_anual": [
+    {
+     "ano": 1,
+     "valor": 656.51
+    },
+    {
+     "ano": 2,
+     "valor": 854.14
+    },
+    {
+     "ano": 3,
+     "valor": 911.21
+    },
+    {
+     "ano": 4,
+     "valor": 845.48
+    },
+    {
+     "ano": 5,
+     "valor": 795.13
+    },
+    {
+     "ano": 6,
+     "valor": 687.44
+    },
+    {
+     "ano": 7,
+     "valor": 802.58
+    },
+    {
+     "ano": 8,
+     "valor": 784.59
+    },
+    {
+     "ano": 9,
+     "valor": 809.19
+    }
+   ],
+   "data_base": "dez/2024",
+   "extras": [
+    {
+     "rotulo": "Contorno",
+     "valor": "-"
+    },
+    {
+     "rotulo": "Praças a implantar",
+     "valor": "-"
+    },
+    {
+     "rotulo": "Pórticos a implantar",
+     "valor": "-"
+    }
+   ]
+  },
+  "cronograma": [
+   {
+    "marco": "Edital",
+    "data": "2026-07-17"
+   },
+   {
+    "marco": "Leilão",
+    "data": "2026-11-12"
+   }
+  ],
+  "fontes": {
+   "km": 109,
+   "capex": 109,
+   "opex": 109,
+   "leilao": 109,
+   "ano_programa": 117,
+   "capex_ficha": 109,
+   "opex_ficha": 109,
+   "capex_vpl": 109,
+   "opex_vpl": 109,
+   "atualizado_em": 109,
+   "edital": 109,
+   "cronograma": 117,
+   "ficha.extensao_km": 109,
+   "ficha.wacc": 109,
+   "ficha.empregos": 109,
+   "ficha.tkm": 109,
+   "ficha.duplicacao_km": 109,
+   "ficha.faixa_adicional_km": 109,
+   "ficha.marginais_km": 109,
+   "ficha.pracas_existentes": 109,
+   "ficha.capex_km": 109,
+   "ficha.opex_km": 109,
+   "ficha.custo_duplicacao_km": 109,
+   "ficha.custo_manutencao": 109,
+   "ficha.fluxo_caixa_acum": 109,
+   "ficha.receita_nominal": 109,
+   "ficha.receita_vpl": 109,
+   "ficha.cagr_trafego": 109,
+   "ficha.capex_receita_vpl": 109,
+   "ficha.garantia_proposta": 109,
+   "ficha.capital_minimo": 109,
+   "ficha.garantia_execucao": 109,
+   "ficha.veq_dia_praca": 109,
+   "ficha.capex_anual": 109
+  },
+  "divergencias": [
+   {
+    "campo": "edital",
+    "exibido": "2025-07-17",
+    "alternativas": [
+     {
+      "valor": "2026-07-17",
+      "pagina": 117
+     }
+    ],
+    "nota": "A ficha (p109) informa edital em 17/07/2025, com leilão em 12/11/2026; o cronograma da p117 coloca o edital em 17/07 de 2026. Provável erro de digitação na ficha; mantido como está."
+   },
+   {
+    "campo": "km",
+    "exibido": 1010.0,
+    "alternativas": [
+     {
+      "valor": 1009.52,
+      "pagina": 33
+     },
+     {
+      "valor": 1009.0,
+      "pagina": 33
+     }
+    ],
+    "nota": "p33: 1.009,52 km (tabela; mesmo valor do contrato Via Brasil na p3) e 1.009,00 km (mapa)."
+   },
+   {
+    "campo": "capex+opex",
+    "exibido": 15.14,
+    "alternativas": [
+     {
+      "valor": 15.44,
+      "pagina": 33
+     }
+    ],
+    "nota": "Ficha: capex 10,42 + opex 4,72 = 15,14 (dez/2024); tabela de otimizações da p33: 15,44 (data-base não informada na p33)."
+   }
+  ],
+  "notas_base": [],
+  "relaciona": [
+   "via-brasil"
+  ],
+  "linha_p5": null
+ },
+ {
+  "id": "rota-do-pequi",
+  "nome": "Rota do Pequi",
+  "nome_contrato": null,
+  "brs": [
+   "060",
+   "153"
+  ],
+  "ufs": [
+   "DF",
+   "GO"
+  ],
+  "trecho_texto": "BR-060/153/DF/GO",
+  "trecho_cidades": [
+   "Hidrolândia/GO",
+   "Brasília/DF"
+  ],
+  "estado": "agendado2026",
+  "ano_programa": 2026,
+  "tipo": "otimizacao",
+  "estruturador": "Otimização",
+  "grupo_vencedor": null,
+  "km": 211.6,
+  "capex": 4.14,
+  "opex": 3.46,
+  "data_base": "jul/2023",
+  "capex_ficha": 4.14,
+  "opex_ficha": 3.46,
+  "data_base_ficha": "jul/2023",
+  "capex_vpl": 2.02,
+  "opex_vpl": 0.91,
+  "leilao": "2026-12-11",
+  "edital": "2026-09-02",
+  "assinatura": null,
+  "assinatura_aditivo": null,
+  "inicio_operacao": null,
+  "participantes": null,
+  "participantes_lista": null,
+  "desagio": null,
+  "status_texto": "Leilão agendado para 11/12/2026 (p111, p117). Otimização contratual da concessão da BR-060/153/DF/GO (Concebra – Trecho Pequi, p33: \"Edital publicado\").",
+  "atualizado_em": "2025-09-26",
+  "ficha": {
+   "trecho_inicio": "Hidrolândia/GO",
+   "trecho_fim": "Brasília/DF",
+   "extensao_km": 211.6,
+   "wacc": 12.33,
+   "empregos": 59983,
+   "tkm": 0.117,
+   "carga": "Cargas Gerais Conteinerizáveis (CGC)",
+   "duplicacao_km": 0.0,
+   "faixa_adicional_km": 52.9,
+   "contorno_km": 43.52,
+   "marginais_km": 12.08,
+   "obras_relevantes": "5 Trombetas, 10 Diamantes, 1 Trevo Completo, 1 Parclo, 10 Passagens Inferiores, 3 Retornos em X, 9 Retornos em U, 1 Rotatória Alongada, 13 Passarelas, 81 Acessos, 112 Pontos de Ônibus e 5 Passagens de Fauna.",
+   "pracas_implantar": 0,
+   "pracas_existentes": 2,
+   "porticos": 0,
+   "capex_km": 19.56,
+   "opex_km": 16.34,
+   "custo_duplicacao_km": null,
+   "custo_manutencao": 0.05,
+   "fluxo_caixa_acum": 5.6,
+   "receita_nominal": 18.52,
+   "receita_vpl": 4.13,
+   "cagr_trafego": 1.86,
+   "capex_receita_vpl": 49,
+   "ciclo_obras": "1º ano ao 6º ano",
+   "garantia_proposta": null,
+   "capital_minimo": null,
+   "garantia_execucao": null,
+   "veq_dia_praca": 37385,
+   "capex_anual": [
+    {
+     "ano": 1,
+     "valor": 243.68
+    },
+    {
+     "ano": 2,
+     "valor": 140.12
+    },
+    {
+     "ano": 3,
+     "valor": 503.93
+    },
+    {
+     "ano": 4,
+     "valor": 895.55
+    },
+    {
+     "ano": 5,
+     "valor": 741.12
+    },
+    {
+     "ano": 6,
+     "valor": 375.55
+    }
+   ],
+   "data_base": "jul/2023",
+   "extras": [
+    {
+     "rotulo": "Custos duplicação (milhões/km)",
+     "valor": "-"
+    },
+    {
+     "rotulo": "Garantia da Proposta",
+     "valor": "-"
+    },
+    {
+     "rotulo": "Capital Social Mínimo Obrigatório",
+     "valor": "-"
+    },
+    {
+     "rotulo": "Garantia de Execução do Contrato",
+     "valor": "-"
+    }
+   ]
+  },
+  "cronograma": [
+   {
+    "marco": "Edital",
+    "data": "2026-09-02"
+   },
+   {
+    "marco": "Leilão",
+    "data": "2026-12-11"
+   }
+  ],
+  "fontes": {
+   "km": 111,
+   "capex": 111,
+   "opex": 111,
+   "leilao": 111,
+   "ano_programa": 117,
+   "capex_ficha": 111,
+   "opex_ficha": 111,
+   "capex_vpl": 111,
+   "opex_vpl": 111,
+   "atualizado_em": 111,
+   "edital": 111,
+   "cronograma": 117,
+   "ficha.extensao_km": 111,
+   "ficha.wacc": 111,
+   "ficha.empregos": 111,
+   "ficha.tkm": 111,
+   "ficha.duplicacao_km": 111,
+   "ficha.faixa_adicional_km": 111,
+   "ficha.contorno_km": 111,
+   "ficha.marginais_km": 111,
+   "ficha.pracas_implantar": 111,
+   "ficha.pracas_existentes": 111,
+   "ficha.porticos": 111,
+   "ficha.capex_km": 111,
+   "ficha.opex_km": 111,
+   "ficha.custo_manutencao": 111,
+   "ficha.fluxo_caixa_acum": 111,
+   "ficha.receita_nominal": 111,
+   "ficha.receita_vpl": 111,
+   "ficha.cagr_trafego": 111,
+   "ficha.capex_receita_vpl": 111,
+   "ficha.veq_dia_praca": 111,
+   "ficha.capex_anual": 111
+  },
+  "divergencias": [],
+  "notas_base": [
+   {
+    "campo": "capex+opex",
+    "valor": 7.67,
+    "data_base": "não informada (p33)",
+    "pagina": 33
+   }
+  ],
+  "relaciona": [
+   "concebra"
+  ],
+  "linha_p5": null
+ },
+ {
+  "id": "rota-agro-central",
+  "nome": "Rota Agro Central",
+  "nome_contrato": null,
+  "brs": [
+   "070",
+   "174",
+   "364"
+  ],
+  "ufs": [
+   "MT",
+   "RO"
+  ],
+  "trecho_texto": "BR-070/174/364/MT/RO",
+  "trecho_cidades": [
+   "Vilhena/RO",
+   "Cuiabá/MT"
+  ],
+  "estado": "agendado2026",
+  "ano_programa": 2026,
+  "tipo": "nova",
+  "estruturador": "BNDES",
+  "grupo_vencedor": null,
+  "km": 888.0,
+  "capex": 6.13,
+  "opex": 4.29,
+  "data_base": "jan/2025",
+  "capex_ficha": 6.13,
+  "opex_ficha": 4.29,
+  "data_base_ficha": "jan/2025",
+  "capex_vpl": 2.82,
+  "opex_vpl": 1.18,
+  "leilao": "2026-12-17",
+  "edital": "2026-09-04",
+  "assinatura": null,
+  "assinatura_aditivo": null,
+  "inicio_operacao": null,
+  "participantes": null,
+  "participantes_lista": null,
+  "desagio": null,
+  "status_texto": "Leilão agendado para 17/12/2026 (p113, p117).",
+  "atualizado_em": "2025-09-03",
+  "ficha": {
+   "trecho_inicio": "Vilhena/RO",
+   "trecho_fim": "Cuiabá/MT",
+   "extensao_km": 888.0,
+   "wacc": 11.07,
+   "empregos": 89919,
+   "tkm": 0.1576,
+   "carga": "Granéis Sólidos Agrícolas (GSA)",
+   "duplicacao_km": 22.8,
+   "faixa_adicional_km": 162.9,
+   "contorno_km": null,
+   "marginais_km": 12.37,
+   "obras_relevantes": "58 dispositivos e interseções (novos e remodelados) 8 passarelas de pedestres (novas), 20 travessias em nível e 2 Ponto de Parada e Descanso",
+   "pracas_implantar": 0,
+   "pracas_existentes": 7,
+   "porticos": 0,
+   "capex_km": 6.91,
+   "opex_km": 4.84,
+   "custo_duplicacao_km": 13.71,
+   "custo_manutencao": 0.05,
+   "fluxo_caixa_acum": 6.84,
+   "receita_nominal": 23.78,
+   "receita_vpl": 5.56,
+   "cagr_trafego": 1.42,
+   "capex_receita_vpl": 51,
+   "ciclo_obras": "3º ano ao 8º ano",
+   "garantia_proposta": 55.0,
+   "capital_minimo": 419.0,
+   "garantia_execucao": 274.0,
+   "veq_dia_praca": null,
+   "capex_anual": [
+    {
+     "ano": 3,
+     "valor": 595.66
+    },
+    {
+     "ano": 4,
+     "valor": 638.99
+    },
+    {
+     "ano": 5,
+     "valor": 511.25
+    },
+    {
+     "ano": 6,
+     "valor": 669.94
+    },
+    {
+     "ano": 7,
+     "valor": 840.68
+    },
+    {
+     "ano": 8,
+     "valor": 209.39
+    }
+   ],
+   "data_base": "jan/2025",
+   "extras": [
+    {
+     "rotulo": "WACC",
+     "valor": "Atualizado quando publicado o edital"
+    },
+    {
+     "rotulo": "Contorno",
+     "valor": "-"
+    },
+    {
+     "rotulo": "VEQ/dia/praça",
+     "valor": "-"
+    }
+   ]
+  },
+  "cronograma": [
+   {
+    "marco": "TCU",
+    "data": "2025"
+   },
+   {
+    "marco": "Edital",
+    "data": "2026-09-04"
+   },
+   {
+    "marco": "Leilão",
+    "data": "2026-12-17"
+   }
+  ],
+  "fontes": {
+   "km": 113,
+   "capex": 113,
+   "opex": 113,
+   "leilao": 113,
+   "ano_programa": 117,
+   "capex_ficha": 113,
+   "opex_ficha": 113,
+   "capex_vpl": 113,
+   "opex_vpl": 113,
+   "atualizado_em": 113,
+   "edital": 113,
+   "cronograma": 117,
+   "ficha.extensao_km": 113,
+   "ficha.wacc": 113,
+   "ficha.empregos": 113,
+   "ficha.tkm": 113,
+   "ficha.duplicacao_km": 113,
+   "ficha.faixa_adicional_km": 113,
+   "ficha.marginais_km": 113,
+   "ficha.pracas_implantar": 113,
+   "ficha.pracas_existentes": 113,
+   "ficha.porticos": 113,
+   "ficha.capex_km": 113,
+   "ficha.opex_km": 113,
+   "ficha.custo_duplicacao_km": 113,
+   "ficha.custo_manutencao": 113,
+   "ficha.fluxo_caixa_acum": 113,
+   "ficha.receita_nominal": 113,
+   "ficha.receita_vpl": 113,
+   "ficha.cagr_trafego": 113,
+   "ficha.capex_receita_vpl": 113,
+   "ficha.garantia_proposta": 113,
+   "ficha.capital_minimo": 113,
+   "ficha.garantia_execucao": 113,
+   "ficha.capex_anual": 113
+  },
+  "divergencias": [],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": null
+ },
+ {
+  "id": "rota-2-de-julho",
+  "nome": "Rota 2 de Julho",
+  "nome_contrato": null,
+  "brs": [
+   "116",
+   "324"
+  ],
+  "ufs": [
+   "BA"
+  ],
+  "trecho_texto": "BR-116/324/BA",
+  "trecho_cidades": [
+   "Salvador",
+   "Divisa BA/MG"
+  ],
+  "estado": "agendado2026",
+  "ano_programa": 2026,
+  "tipo": "nova",
+  "estruturador": "Infra S.A.",
+  "grupo_vencedor": null,
+  "km": 653.3,
+  "capex": 14.0,
+  "opex": 10.68,
+  "data_base": "out/2024",
+  "capex_ficha": 14.0,
+  "opex_ficha": 10.68,
+  "data_base_ficha": "out/2024",
+  "capex_vpl": 6.57,
+  "opex_vpl": 2.64,
+  "leilao": "2026-12-18",
+  "edital": "2026-09-04",
+  "assinatura": null,
+  "assinatura_aditivo": null,
+  "inicio_operacao": null,
+  "participantes": null,
+  "participantes_lista": null,
+  "desagio": null,
+  "status_texto": "Leilão agendado para 18/12/2026 (p115, p117). Nova concessão decorrente do encerramento da ViaBahia (contrato vigente encerrado; p33), que não consta entre os 39 contratos das pp. 3–5.",
+  "atualizado_em": "2025-11-14",
+  "ficha": {
+   "trecho_inicio": "Salvador",
+   "trecho_fim": "Divisa BA/MG",
+   "extensao_km": 653.3,
+   "wacc": 12.33,
+   "empregos": 202842,
+   "tkm": 0.084,
+   "carga": "Carga Agrícola, Pecuária, Industrial e Petroquímico",
+   "duplicacao_km": 307.75,
+   "faixa_adicional_km": 257.46,
+   "contorno_km": 0.0,
+   "marginais_km": 37.22,
+   "obras_relevantes": "52 passarelas de pedestres (novas e remodeladas); e 3 pontos de parada e descanso",
+   "pracas_implantar": 0,
+   "pracas_existentes": 7,
+   "porticos": 14,
+   "capex_km": 21.43,
+   "opex_km": 16.35,
+   "custo_duplicacao_km": 6.45,
+   "custo_manutencao": 0.17,
+   "fluxo_caixa_acum": 24.52,
+   "receita_nominal": 67.76,
+   "receita_vpl": 13.2,
+   "cagr_trafego": 2.14,
+   "capex_receita_vpl": 50,
+   "ciclo_obras": "3º ano ao 8º ano",
+   "garantia_proposta": 132.0,
+   "capital_minimo": 773.0,
+   "garantia_execucao": 660.0,
+   "veq_dia_praca": 42606,
+   "capex_anual": [
+    {
+     "ano": 3,
+     "valor": 2080.24
+    },
+    {
+     "ano": 4,
+     "valor": 1969.05
+    },
+    {
+     "ano": 5,
+     "valor": 1893.49
+    },
+    {
+     "ano": 6,
+     "valor": 1221.27
+    },
+    {
+     "ano": 7,
+     "valor": 799.04
+    },
+    {
+     "ano": 8,
+     "valor": 988.46
+    }
+   ],
+   "data_base": "out/2024",
+   "extras": [
+    {
+     "rotulo": "Trecho (texto original)",
+     "valor": "Salvador - Feira de Santana - Divisa BA/MG"
+    }
+   ]
+  },
+  "cronograma": [
+   {
+    "marco": "Audiência Pública",
+    "data": "2025"
+   },
+   {
+    "marco": "TCU",
+    "data": "2026-01-30"
+   },
+   {
+    "marco": "Edital",
+    "data": "2026-09-04"
+   },
+   {
+    "marco": "Leilão",
+    "data": "2026-12-18"
+   }
+  ],
+  "fontes": {
+   "km": 115,
+   "capex": 115,
+   "opex": 115,
+   "leilao": 115,
+   "ano_programa": 117,
+   "capex_ficha": 115,
+   "opex_ficha": 115,
+   "capex_vpl": 115,
+   "opex_vpl": 115,
+   "atualizado_em": 115,
+   "edital": 115,
+   "cronograma": 117,
+   "ficha.extensao_km": 115,
+   "ficha.wacc": 115,
+   "ficha.empregos": 115,
+   "ficha.tkm": 115,
+   "ficha.duplicacao_km": 115,
+   "ficha.faixa_adicional_km": 115,
+   "ficha.contorno_km": 115,
+   "ficha.marginais_km": 115,
+   "ficha.pracas_implantar": 115,
+   "ficha.pracas_existentes": 115,
+   "ficha.porticos": 115,
+   "ficha.capex_km": 115,
+   "ficha.opex_km": 115,
+   "ficha.custo_duplicacao_km": 115,
+   "ficha.custo_manutencao": 115,
+   "ficha.fluxo_caixa_acum": 115,
+   "ficha.receita_nominal": 115,
+   "ficha.receita_vpl": 115,
+   "ficha.cagr_trafego": 115,
+   "ficha.capex_receita_vpl": 115,
+   "ficha.garantia_proposta": 115,
+   "ficha.capital_minimo": 115,
+   "ficha.garantia_execucao": 115,
+   "ficha.veq_dia_praca": 115,
+   "ficha.capex_anual": 115
+  },
+  "divergencias": [
+   {
+    "campo": "km",
+    "exibido": 653.3,
+    "alternativas": [
+     {
+      "valor": 653,
+      "pagina": 33
+     },
+     {
+      "valor": 663.0,
+      "pagina": 33
+     }
+    ],
+    "nota": "p33: 653 km na tabela e 663,00 km no mapa."
+   }
+  ],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": null
+ },
+ {
+  "id": "rota-integracao-do-sul",
+  "nome": "Rota Integração do Sul",
+  "nome_contrato": null,
+  "brs": [
+   "116",
+   "158",
+   "290",
+   "392"
+  ],
+  "ufs": [
+   "RS"
+  ],
+  "trecho_texto": "Camaquã - Porto Alegre - Cruz Alta - Sta. Maria - Santana da Boa Vista",
+  "trecho_cidades": [
+   "Camaquã",
+   "Santana da Boa Vista"
+  ],
+  "estado": "projeto2027",
+  "ano_programa": 2027,
+  "tipo": "nova",
+  "estruturador": "BNDES",
+  "grupo_vencedor": null,
+  "km": 674.1,
+  "capex": 6.5,
+  "opex": 4.01,
+  "data_base": "jan/2025",
+  "capex_ficha": 6.5,
+  "opex_ficha": 4.01,
+  "data_base_ficha": "jan/2025",
+  "capex_vpl": 3.24,
+  "opex_vpl": 1.08,
+  "leilao": "2027-06",
+  "edital": "2027-03",
+  "assinatura": null,
+  "assinatura_aditivo": null,
+  "inicio_operacao": null,
+  "participantes": null,
+  "participantes_lista": null,
+  "desagio": null,
+  "status_texto": "Audiência Pública",
+  "atualizado_em": "2026-06-15",
+  "ficha": {
+   "trecho_inicio": "Camaquã",
+   "trecho_fim": "Santana da Boa Vista",
+   "extensao_km": 674.1,
+   "wacc": 11.23,
+   "empregos": 94176,
+   "tkm": 0.135,
+   "carga": "Cargas Gerais Conteinerizáveis (CGC)",
+   "duplicacao_km": null,
+   "faixa_adicional_km": 225.0,
+   "contorno_km": null,
+   "marginais_km": 27.43,
+   "obras_relevantes": "71 dispostivos e interseções (novos e remodelados); 8 passarelas de pedestres (novas); e 1 Ponto de Parada e Descanso",
+   "pracas_implantar": 0,
+   "pracas_existentes": 0,
+   "porticos": null,
+   "capex_km": 9.64,
+   "opex_km": 5.95,
+   "custo_duplicacao_km": null,
+   "custo_manutencao": 0.08,
+   "fluxo_caixa_acum": 8.78,
+   "receita_nominal": 27.05,
+   "receita_vpl": 6.12,
+   "cagr_trafego": 1.8,
+   "capex_receita_vpl": 53,
+   "ciclo_obras": "3º ano ao 8º ano",
+   "garantia_proposta": 61.0,
+   "capital_minimo": 426.12,
+   "garantia_execucao": 306.0,
+   "veq_dia_praca": 16846,
+   "capex_anual": [
+    {
+     "ano": 3,
+     "valor": 978.64
+    },
+    {
+     "ano": 4,
+     "valor": 679.68
+    },
+    {
+     "ano": 5,
+     "valor": 747.64
+    },
+    {
+     "ano": 6,
+     "valor": 415.94
+    },
+    {
+     "ano": 7,
+     "valor": 303.68
+    },
+    {
+     "ano": 8,
+     "valor": 302.62
+    }
+   ],
+   "data_base": "jan/2025",
+   "extras": [
+    {
+     "rotulo": "Pórticos a implantar",
+     "valor": "A definir"
+    }
+   ]
+  },
+  "cronograma": [
+   {
+    "marco": "TCU",
+    "data": "2025"
+   },
+   {
+    "marco": "Edital",
+    "data": "2027-03"
+   },
+   {
+    "marco": "Leilão",
+    "data": "2027-06"
+   }
+  ],
+  "fontes": {
+   "km": 131,
+   "capex": 131,
+   "opex": 131,
+   "capex_ficha": 131,
+   "opex_ficha": 131,
+   "capex_vpl": 131,
+   "opex_vpl": 131,
+   "ficha.extensao_km": 131,
+   "ficha.wacc": 131,
+   "ficha.empregos": 131,
+   "ficha.tkm": 131,
+   "ficha.faixa_adicional_km": 131,
+   "ficha.marginais_km": 131,
+   "ficha.pracas_implantar": 131,
+   "ficha.pracas_existentes": 131,
+   "ficha.capex_km": 131,
+   "ficha.opex_km": 131,
+   "ficha.custo_manutencao": 131,
+   "ficha.fluxo_caixa_acum": 131,
+   "ficha.receita_nominal": 131,
+   "ficha.receita_vpl": 131,
+   "ficha.cagr_trafego": 131,
+   "ficha.capex_receita_vpl": 131,
+   "ficha.garantia_proposta": 131,
+   "ficha.capital_minimo": 131,
+   "ficha.garantia_execucao": 131,
+   "ficha.veq_dia_praca": 131,
+   "ficha.capex_anual": 131,
+   "leilao": 131,
+   "edital": 131,
+   "cronograma": 153
+  },
+  "divergencias": [],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": null
+ },
+ {
+  "id": "rota-portuaria-do-sul",
+  "nome": "Rota Portuária do Sul",
+  "nome_contrato": null,
+  "brs": [
+   "116",
+   "392"
+  ],
+  "ufs": [
+   "RS"
+  ],
+  "trecho_texto": "Pelotas - Santa Maria",
+  "trecho_cidades": [
+   "Pelotas",
+   "Santa Maria"
+  ],
+  "estado": "projeto2027",
+  "ano_programa": 2027,
+  "tipo": "nova",
+  "estruturador": "INFRA S.A.",
+  "grupo_vencedor": null,
+  "km": 456.2,
+  "capex": 6.08,
+  "opex": 5.73,
+  "data_base": "jan/2025",
+  "capex_ficha": 6.08,
+  "opex_ficha": 5.73,
+  "data_base_ficha": "jan/2025",
+  "capex_vpl": 2.51,
+  "opex_vpl": 1.39,
+  "leilao": "2027-06",
+  "edital": "2027-03",
+  "assinatura": null,
+  "assinatura_aditivo": null,
+  "inicio_operacao": null,
+  "participantes": null,
+  "participantes_lista": null,
+  "desagio": null,
+  "status_texto": "Audiência Pública",
+  "atualizado_em": "2026-02-27",
+  "ficha": {
+   "trecho_inicio": "Pelotas",
+   "trecho_fim": "Santa Maria",
+   "extensao_km": 456.2,
+   "wacc": 12.49,
+   "empregos": 88091,
+   "tkm": 0.1007,
+   "carga": "Cargas Gerais Conteinerizáveis (CGC)",
+   "duplicacao_km": 81.21,
+   "faixa_adicional_km": 0,
+   "contorno_km": 0,
+   "marginais_km": 38.58,
+   "obras_relevantes": "64 dispostivos e interseções (novos e remodelados); 39 passarelas de pedestres (novas e remodeladas); e 2 ponto de Parada e Descanso.",
+   "pracas_implantar": 0,
+   "pracas_existentes": 0,
+   "porticos": 5,
+   "capex_km": 13.23,
+   "opex_km": 12.46,
+   "custo_duplicacao_km": 5.16,
+   "custo_manutencao": 0.15,
+   "fluxo_caixa_acum": 10.61,
+   "receita_nominal": 34.44,
+   "receita_vpl": 6.42,
+   "cagr_trafego": 2.86,
+   "capex_receita_vpl": 39,
+   "ciclo_obras": "3º ano ao 7º ano",
+   "garantia_proposta": 64,
+   "capital_minimo": 412,
+   "garantia_execucao": 321,
+   "veq_dia_praca": 10264,
+   "capex_anual": [
+    {
+     "ano": 3,
+     "valor": 659.53
+    },
+    {
+     "ano": 4,
+     "valor": 683.18
+    },
+    {
+     "ano": 5,
+     "valor": 600.9
+    },
+    {
+     "ano": 6,
+     "valor": 633.77
+    },
+    {
+     "ano": 7,
+     "valor": 529.48
+    }
+   ],
+   "data_base": "jan/2025",
+   "extras": []
+  },
+  "cronograma": [
+   {
+    "marco": "AP",
+    "data": "2025"
+   },
+   {
+    "marco": "TCU",
+    "data": "2025"
+   },
+   {
+    "marco": "Edital",
+    "data": "2027-03"
+   },
+   {
+    "marco": "Leilão",
+    "data": "2027-06"
+   }
+  ],
+  "fontes": {
+   "km": 133,
+   "capex": 133,
+   "opex": 133,
+   "capex_ficha": 133,
+   "opex_ficha": 133,
+   "capex_vpl": 133,
+   "opex_vpl": 133,
+   "ficha.extensao_km": 133,
+   "ficha.wacc": 133,
+   "ficha.empregos": 133,
+   "ficha.tkm": 133,
+   "ficha.duplicacao_km": 133,
+   "ficha.faixa_adicional_km": 133,
+   "ficha.contorno_km": 133,
+   "ficha.marginais_km": 133,
+   "ficha.pracas_implantar": 133,
+   "ficha.pracas_existentes": 133,
+   "ficha.porticos": 133,
+   "ficha.capex_km": 133,
+   "ficha.opex_km": 133,
+   "ficha.custo_duplicacao_km": 133,
+   "ficha.custo_manutencao": 133,
+   "ficha.fluxo_caixa_acum": 133,
+   "ficha.receita_nominal": 133,
+   "ficha.receita_vpl": 133,
+   "ficha.cagr_trafego": 133,
+   "ficha.capex_receita_vpl": 133,
+   "ficha.garantia_proposta": 133,
+   "ficha.capital_minimo": 133,
+   "ficha.garantia_execucao": 133,
+   "ficha.veq_dia_praca": 133,
+   "ficha.capex_anual": 133,
+   "leilao": 133,
+   "edital": 133,
+   "cronograma": 153
+  },
+  "divergencias": [],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": null
+ },
+ {
+  "id": "rota-vale-do-itajai",
+  "nome": "Rota Vale do Itajaí",
+  "nome_contrato": null,
+  "brs": [
+   "153",
+   "282",
+   "470"
+  ],
+  "ufs": [
+   "SC"
+  ],
+  "trecho_texto": "BR-153/282/470/SC",
+  "trecho_cidades": null,
+  "estado": "projeto2027",
+  "ano_programa": 2027,
+  "tipo": "nova",
+  "estruturador": "INFRA S.A.",
+  "grupo_vencedor": null,
+  "km": 515.16,
+  "capex": 6.4,
+  "opex": 6.71,
+  "data_base": "jul/2024",
+  "capex_ficha": 6.4,
+  "opex_ficha": 6.71,
+  "data_base_ficha": "jul/2024",
+  "capex_vpl": 2.87,
+  "opex_vpl": 1.62,
+  "leilao": "2027-07",
+  "edital": "2027-04",
+  "assinatura": null,
+  "assinatura_aditivo": null,
+  "inicio_operacao": null,
+  "participantes": null,
+  "participantes_lista": null,
+  "desagio": null,
+  "status_texto": "Audiência Pública",
+  "atualizado_em": "2026-06-02",
+  "ficha": {
+   "trecho_inicio": null,
+   "trecho_fim": null,
+   "extensao_km": 515.16,
+   "wacc": 12.33,
+   "empregos": 92728,
+   "tkm": 0.097,
+   "carga": "Cargas Gerais Conteinerizáveis (CGC)",
+   "duplicacao_km": 50.81,
+   "faixa_adicional_km": 102.6,
+   "contorno_km": null,
+   "marginais_km": 78.81,
+   "obras_relevantes": "111 dispositivos e interseções, 29 passarelas de pedestres (novas e remodeladas) e 2 pontos de parada e descanso para motoristas profissionais",
+   "pracas_implantar": 0,
+   "pracas_existentes": 0,
+   "porticos": 13,
+   "capex_km": 12.41,
+   "opex_km": 13.01,
+   "custo_duplicacao_km": 6.55,
+   "custo_manutencao": 0.12,
+   "fluxo_caixa_acum": 11.61,
+   "receita_nominal": 33.63,
+   "receita_vpl": 6.26,
+   "cagr_trafego": 1.71,
+   "capex_receita_vpl": 46,
+   "ciclo_obras": "3º ano ao 8º ano",
+   "garantia_proposta": 63,
+   "capital_minimo": 473,
+   "garantia_execucao": 337,
+   "veq_dia_praca": 10304,
+   "capex_anual": [
+    {
+     "ano": 3,
+     "valor": 482.82
+    },
+    {
+     "ano": 4,
+     "valor": 533.91
+    },
+    {
+     "ano": 5,
+     "valor": 595.79
+    },
+    {
+     "ano": 6,
+     "valor": 730.53
+    },
+    {
+     "ano": 7,
+     "valor": 558.18
+    },
+    {
+     "ano": 8,
+     "valor": 599.44
+    }
+   ],
+   "data_base": "jul/2024",
+   "extras": [
+    {
+     "rotulo": "Subtítulo",
+     "valor": "Malha Catarinense - Lote 01"
+    }
+   ]
+  },
+  "cronograma": [
+   {
+    "marco": "AP",
+    "data": "2025"
+   },
+   {
+    "marco": "TCU",
+    "data": "2025"
+   },
+   {
+    "marco": "Edital",
+    "data": "2027-04"
+   },
+   {
+    "marco": "Leilão",
+    "data": "2027-07"
+   }
+  ],
+  "fontes": {
+   "km": 135,
+   "capex": 135,
+   "opex": 135,
+   "capex_ficha": 135,
+   "opex_ficha": 135,
+   "capex_vpl": 135,
+   "opex_vpl": 135,
+   "ficha.extensao_km": 135,
+   "ficha.wacc": 135,
+   "ficha.empregos": 135,
+   "ficha.tkm": 135,
+   "ficha.duplicacao_km": 135,
+   "ficha.faixa_adicional_km": 135,
+   "ficha.marginais_km": 135,
+   "ficha.pracas_implantar": 135,
+   "ficha.pracas_existentes": 135,
+   "ficha.porticos": 135,
+   "ficha.capex_km": 135,
+   "ficha.opex_km": 135,
+   "ficha.custo_duplicacao_km": 135,
+   "ficha.custo_manutencao": 135,
+   "ficha.fluxo_caixa_acum": 135,
+   "ficha.receita_nominal": 135,
+   "ficha.receita_vpl": 135,
+   "ficha.cagr_trafego": 135,
+   "ficha.capex_receita_vpl": 135,
+   "ficha.garantia_proposta": 135,
+   "ficha.capital_minimo": 135,
+   "ficha.garantia_execucao": 135,
+   "ficha.veq_dia_praca": 135,
+   "ficha.capex_anual": 135,
+   "leilao": 135,
+   "edital": 135,
+   "cronograma": 153
+  },
+  "divergencias": [
+   {
+    "campo": "nome",
+    "exibido": "Rota Vale do Itajaí",
+    "alternativas": [
+     {
+      "valor": "Rodovias Integradas de Santa Catarina - Lote 01",
+      "pagina": 127
+     }
+    ],
+    "nota": "O mapa da p127 usa o nome do lote; a ficha (p135) e o cronograma (p153) usam o nome da rota."
+   }
+  ],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": null
+ },
+ {
+  "id": "rota-meio-oeste",
+  "nome": "Rota Meio Oeste Catarinense",
+  "nome_contrato": null,
+  "brs": [
+   "153",
+   "282",
+   "480"
+  ],
+  "ufs": [
+   "SC"
+  ],
+  "trecho_texto": "BR-153/282/480/SC",
+  "trecho_cidades": null,
+  "estado": "projeto2027",
+  "ano_programa": 2027,
+  "tipo": "nova",
+  "estruturador": "INFRA S.A.",
+  "grupo_vencedor": null,
+  "km": 166.0,
+  "capex": 2.71,
+  "opex": 3.04,
+  "data_base": "jul/2024",
+  "capex_ficha": 2.71,
+  "opex_ficha": 3.04,
+  "data_base_ficha": "jul/2024",
+  "capex_vpl": 1.35,
+  "opex_vpl": 0.84,
+  "leilao": "2027-07",
+  "edital": "2027-04",
+  "assinatura": null,
+  "assinatura_aditivo": null,
+  "inicio_operacao": null,
+  "participantes": null,
+  "participantes_lista": null,
+  "desagio": null,
+  "status_texto": "Audiência Pública",
+  "atualizado_em": "2026-04-07",
+  "ficha": {
+   "trecho_inicio": null,
+   "trecho_fim": null,
+   "extensao_km": 166.0,
+   "wacc": 11.07,
+   "empregos": 39264,
+   "tkm": 0.099,
+   "carga": "Cargas Gerais Conteinerizáveis (CGC)",
+   "duplicacao_km": 29.36,
+   "faixa_adicional_km": 31.51,
+   "contorno_km": null,
+   "marginais_km": 24.21,
+   "obras_relevantes": "53 dispostivos e interseções (novos e remodelados); 15 passarelas de pedestre; e 1 Ponto de Parada e Descanso",
+   "pracas_implantar": 0,
+   "pracas_existentes": 0,
+   "porticos": 5,
+   "capex_km": 16.33,
+   "opex_km": 18.29,
+   "custo_duplicacao_km": 5.08,
+   "custo_manutencao": 0.15,
+   "fluxo_caixa_acum": 4.67,
+   "receita_nominal": 14.05,
+   "receita_vpl": 3.0,
+   "cagr_trafego": 3.23,
+   "capex_receita_vpl": 45,
+   "ciclo_obras": "3º ano ao 7º ano",
+   "garantia_proposta": 30,
+   "capital_minimo": 282,
+   "garantia_execucao": 162,
+   "veq_dia_praca": 8526,
+   "capex_anual": [
+    {
+     "ano": 3,
+     "valor": 291.5
+    },
+    {
+     "ano": 4,
+     "valor": 334.17
+    },
+    {
+     "ano": 5,
+     "valor": 329.15
+    },
+    {
+     "ano": 6,
+     "valor": 305.83
+    },
+    {
+     "ano": 7,
+     "valor": 244.17
+    }
+   ],
+   "data_base": "jul/2024",
+   "extras": [
+    {
+     "rotulo": "Subtítulo",
+     "valor": "Malha Catarinense - Lote 03"
+    }
+   ]
+  },
+  "cronograma": [
+   {
+    "marco": "AP",
+    "data": "2025"
+   },
+   {
+    "marco": "TCU",
+    "data": "2025"
+   },
+   {
+    "marco": "Edital",
+    "data": "2027-04"
+   },
+   {
+    "marco": "Leilão",
+    "data": "2027-07"
+   }
+  ],
+  "fontes": {
+   "km": 137,
+   "capex": 137,
+   "opex": 137,
+   "capex_ficha": 137,
+   "opex_ficha": 137,
+   "capex_vpl": 137,
+   "opex_vpl": 137,
+   "ficha.extensao_km": 137,
+   "ficha.wacc": 137,
+   "ficha.empregos": 137,
+   "ficha.tkm": 137,
+   "ficha.duplicacao_km": 137,
+   "ficha.faixa_adicional_km": 137,
+   "ficha.marginais_km": 137,
+   "ficha.pracas_implantar": 137,
+   "ficha.pracas_existentes": 137,
+   "ficha.porticos": 137,
+   "ficha.capex_km": 137,
+   "ficha.opex_km": 137,
+   "ficha.custo_duplicacao_km": 137,
+   "ficha.custo_manutencao": 137,
+   "ficha.fluxo_caixa_acum": 137,
+   "ficha.receita_nominal": 137,
+   "ficha.receita_vpl": 137,
+   "ficha.cagr_trafego": 137,
+   "ficha.capex_receita_vpl": 137,
+   "ficha.garantia_proposta": 137,
+   "ficha.capital_minimo": 137,
+   "ficha.garantia_execucao": 137,
+   "ficha.veq_dia_praca": 137,
+   "ficha.capex_anual": 137,
+   "leilao": 137,
+   "edital": 137,
+   "cronograma": 153
+  },
+  "divergencias": [
+   {
+    "campo": "nome",
+    "exibido": "Rota Meio Oeste Catarinense",
+    "alternativas": [
+     {
+      "valor": "Rodovias Integradas de Santa Catarina - Lote 03",
+      "pagina": 127
+     }
+    ],
+    "nota": "O mapa da p127 usa o nome do lote; a ficha (p137) e o cronograma (p153) usam o nome da rota."
+   }
+  ],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": null
+ },
+ {
+  "id": "rota-vale-do-cafe",
+  "nome": "Rota Vale do Café",
+  "nome_contrato": null,
+  "brs": [
+   "393"
+  ],
+  "ufs": [
+   "RJ"
+  ],
+  "trecho_texto": "Barra Mansa/RJ - Além Paraíba/MG",
+  "trecho_cidades": [
+   "Barra Mansa/RJ",
+   "Além Paraíba/MG"
+  ],
+  "estado": "projeto2027",
+  "ano_programa": 2027,
+  "tipo": "nova",
+  "estruturador": "INFRA S.A.",
+  "grupo_vencedor": null,
+  "km": 204.7,
+  "capex": 3.22,
+  "opex": 2.98,
+  "data_base": "abr/2024",
+  "capex_ficha": 3.22,
+  "opex_ficha": 2.98,
+  "data_base_ficha": "abr/2024",
+  "capex_vpl": 1.75,
+  "opex_vpl": 0.75,
+  "leilao": "2027-09",
+  "edital": "2027-06",
+  "assinatura": null,
+  "assinatura_aditivo": null,
+  "inicio_operacao": null,
+  "participantes": null,
+  "participantes_lista": null,
+  "desagio": null,
+  "status_texto": "Estudo aprovado pelo MT, em vias de abertura de AP",
+  "atualizado_em": "2026-09-21",
+  "ficha": {
+   "trecho_inicio": "Barra Mansa/RJ",
+   "trecho_fim": "Além Paraíba/MG",
+   "extensao_km": 204.7,
+   "wacc": 11.07,
+   "empregos": 46654,
+   "tkm": 0.163,
+   "carga": "Cargas Gerais Conteinerizáveis (CGC)",
+   "duplicacao_km": 15.02,
+   "faixa_adicional_km": 6.23,
+   "contorno_km": 18.89,
+   "marginais_km": 2.91,
+   "obras_relevantes": "71 dispostivos e interseções (novos e remodelados) 6 passarelas de pedestres (novas e remodeladas), e 1 ponto de Parada e Descanso.",
+   "pracas_implantar": 0,
+   "pracas_existentes": null,
+   "porticos": 6,
+   "capex_km": 15.74,
+   "opex_km": 13.1,
+   "custo_duplicacao_km": 11.49,
+   "custo_manutencao": 0.12,
+   "fluxo_caixa_acum": 4.83,
+   "receita_nominal": 14.48,
+   "receita_vpl": 3.51,
+   "cagr_trafego": 1.0,
+   "capex_receita_vpl": 50,
+   "ciclo_obras": "2º ano ao 5º ano",
+   "garantia_proposta": 35.13,
+   "capital_minimo": 238.65,
+   "garantia_execucao": 178.83,
+   "veq_dia_praca": 25210,
+   "capex_anual": [
+    {
+     "ano": 3,
+     "valor": 107.71
+    },
+    {
+     "ano": 4,
+     "valor": 611.0
+    },
+    {
+     "ano": 5,
+     "valor": 735.14
+    },
+    {
+     "ano": 6,
+     "valor": 533.01
+    }
+   ],
+   "data_base": "abr/2024",
+   "extras": [
+    {
+     "rotulo": "WACC",
+     "valor": "Atualizado quando publicado o edital"
+    }
+   ]
+  },
+  "cronograma": [
+   {
+    "marco": "AP",
+    "data": "2025"
+   },
+   {
+    "marco": "TCU",
+    "data": "2027-01"
+   },
+   {
+    "marco": "Edital",
+    "data": "2027-06"
+   },
+   {
+    "marco": "Leilão",
+    "data": "2027-09"
+   }
+  ],
+  "fontes": {
+   "km": 139,
+   "capex": 139,
+   "opex": 139,
+   "capex_ficha": 139,
+   "opex_ficha": 139,
+   "capex_vpl": 139,
+   "opex_vpl": 139,
+   "ficha.extensao_km": 139,
+   "ficha.wacc": 139,
+   "ficha.empregos": 139,
+   "ficha.tkm": 139,
+   "ficha.duplicacao_km": 139,
+   "ficha.faixa_adicional_km": 139,
+   "ficha.contorno_km": 139,
+   "ficha.marginais_km": 139,
+   "ficha.pracas_implantar": 139,
+   "ficha.porticos": 139,
+   "ficha.capex_km": 139,
+   "ficha.opex_km": 139,
+   "ficha.custo_duplicacao_km": 139,
+   "ficha.custo_manutencao": 139,
+   "ficha.fluxo_caixa_acum": 139,
+   "ficha.receita_nominal": 139,
+   "ficha.receita_vpl": 139,
+   "ficha.cagr_trafego": 139,
+   "ficha.capex_receita_vpl": 139,
+   "ficha.garantia_proposta": 139,
+   "ficha.capital_minimo": 139,
+   "ficha.garantia_execucao": 139,
+   "ficha.veq_dia_praca": 139,
+   "ficha.capex_anual": 139,
+   "leilao": 139,
+   "edital": 139,
+   "cronograma": 153
+  },
+  "divergencias": [
+   {
+    "campo": "ufs",
+    "exibido": [
+     "RJ"
+    ],
+    "alternativas": [
+     {
+      "valor": [
+       "RJ",
+       "MG"
+      ],
+      "pagina": 139
+     }
+    ],
+    "nota": "Título BR-393/RJ, mas o trecho termina em Além Paraíba/MG (p139)."
+   }
+  ],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": null
+ },
+ {
+  "id": "transbrasiliana-otimizacao",
+  "nome": "Rodovia Transbrasiliana",
+  "nome_contrato": null,
+  "brs": [
+   "153"
+  ],
+  "ufs": [
+   "SP"
+  ],
+  "trecho_texto": "Icém/SP - Ourinhos/SP",
+  "trecho_cidades": [
+   "Icém/SP",
+   "Ourinhos/SP"
+  ],
+  "estado": "projeto2027",
+  "ano_programa": 2027,
+  "tipo": "otimizacao",
+  "estruturador": null,
+  "grupo_vencedor": null,
+  "km": 321.6,
+  "capex": 3.56,
+  "opex": 4.35,
+  "data_base": "jan/2022",
+  "capex_ficha": 3.56,
+  "opex_ficha": 4.35,
+  "data_base_ficha": "jan/2022",
+  "capex_vpl": 1.72,
+  "opex_vpl": 1.67,
+  "leilao": "2027-10",
+  "edital": "2027-07",
+  "assinatura": null,
+  "assinatura_aditivo": null,
+  "inicio_operacao": null,
+  "participantes": null,
+  "participantes_lista": null,
+  "desagio": null,
+  "status_texto": "Depende de acordo entre as partes e aprovação do TCU",
+  "atualizado_em": "2025-09-08",
+  "ficha": {
+   "trecho_inicio": "Icém/SP",
+   "trecho_fim": "Ourinhos/SP",
+   "extensao_km": 321.6,
+   "wacc": 9.21,
+   "empregos": 51609,
+   "tkm": 0.18,
+   "carga": "Cargas Gerais Conteinerizáveis (CGC)",
+   "duplicacao_km": 182.7,
+   "faixa_adicional_km": 23.73,
+   "contorno_km": 0,
+   "marginais_km": 40.84,
+   "obras_relevantes": "4 OAE, 3 Acessos e 11 Interseções, 2 PPD",
+   "pracas_implantar": null,
+   "pracas_existentes": null,
+   "porticos": null,
+   "capex_km": 11.08,
+   "opex_km": 13.52,
+   "custo_duplicacao_km": 5.03,
+   "custo_manutencao": 0.05,
+   "fluxo_caixa_acum": 1.74,
+   "receita_nominal": 11.58,
+   "receita_vpl": 4.27,
+   "cagr_trafego": 1.53,
+   "capex_receita_vpl": 40.2,
+   "ciclo_obras": null,
+   "garantia_proposta": null,
+   "capital_minimo": null,
+   "garantia_execucao": 208,
+   "veq_dia_praca": 17290,
+   "capex_anual": [
+    {
+     "ano": 1,
+     "valor": 356.22
+    },
+    {
+     "ano": 2,
+     "valor": 300.72
+    },
+    {
+     "ano": 3,
+     "valor": 283.9
+    },
+    {
+     "ano": 4,
+     "valor": 141.6
+    },
+    {
+     "ano": 5,
+     "valor": 164.39
+    },
+    {
+     "ano": 6,
+     "valor": 97.54
+    },
+    {
+     "ano": 7,
+     "valor": 79.27
+    },
+    {
+     "ano": 8,
+     "valor": 122.3
+    },
+    {
+     "ano": 9,
+     "valor": 97.46
+    },
+    {
+     "ano": 10,
+     "valor": 205.76
+    }
+   ],
+   "data_base": "jan/2022",
+   "extras": [
+    {
+     "rotulo": "Obs.",
+     "valor": "Ficha em revisão"
+    },
+    {
+     "rotulo": "Tipo",
+     "valor": "OTIMIZAÇÃO CONTRATUAL do contrato de concessão da BR-153/SP"
+    }
+   ]
+  },
+  "cronograma": [
+   {
+    "marco": "TCU",
+    "data": "2025"
+   },
+   {
+    "marco": "Edital",
+    "data": "2027-07"
+   },
+   {
+    "marco": "Leilão",
+    "data": "2027-10"
+   }
+  ],
+  "fontes": {
+   "km": 141,
+   "capex": 141,
+   "opex": 141,
+   "capex_ficha": 141,
+   "opex_ficha": 141,
+   "capex_vpl": 141,
+   "opex_vpl": 141,
+   "ficha.extensao_km": 141,
+   "ficha.wacc": 141,
+   "ficha.empregos": 141,
+   "ficha.tkm": 141,
+   "ficha.duplicacao_km": 141,
+   "ficha.faixa_adicional_km": 141,
+   "ficha.contorno_km": 141,
+   "ficha.marginais_km": 141,
+   "ficha.capex_km": 141,
+   "ficha.opex_km": 141,
+   "ficha.custo_duplicacao_km": 141,
+   "ficha.custo_manutencao": 141,
+   "ficha.fluxo_caixa_acum": 141,
+   "ficha.receita_nominal": 141,
+   "ficha.receita_vpl": 141,
+   "ficha.cagr_trafego": 141,
+   "ficha.capex_receita_vpl": 141,
+   "ficha.garantia_execucao": 141,
+   "ficha.veq_dia_praca": 141,
+   "ficha.capex_anual": 141,
+   "leilao": 141,
+   "edital": 141,
+   "cronograma": 153
+  },
+  "divergencias": [],
+  "notas_base": [],
+  "relaciona": [
+   "transbrasiliana"
+  ],
+  "linha_p5": null
+ },
+ {
+  "id": "rota-portuaria-itaqui",
+  "nome": "Rota Portuária Itaqui",
+  "nome_contrato": null,
+  "brs": [
+   "135",
+   "316"
+  ],
+  "ufs": [
+   "MA"
+  ],
+  "trecho_texto": "São Luis - Teresina",
+  "trecho_cidades": [
+   "São Luís",
+   "Teresina"
+  ],
+  "estado": "projeto2027",
+  "ano_programa": 2027,
+  "tipo": "nova",
+  "estruturador": "INFRA S.A.",
+  "grupo_vencedor": null,
+  "km": 441.29,
+  "capex": 6.25,
+  "opex": 4.7,
+  "data_base": "abr/2025",
+  "capex_ficha": 6.25,
+  "opex_ficha": 4.7,
+  "data_base_ficha": "abr/2025",
+  "capex_vpl": 2.82,
+  "opex_vpl": 1.15,
+  "leilao": "2027-10",
+  "edital": "2027-07",
+  "assinatura": null,
+  "assinatura_aditivo": null,
+  "inicio_operacao": null,
+  "participantes": null,
+  "participantes_lista": null,
+  "desagio": null,
+  "status_texto": "Em estudo",
+  "atualizado_em": "2026-09-29",
+  "ficha": {
+   "trecho_inicio": "São Luís",
+   "trecho_fim": "Teresina",
+   "extensao_km": 441.29,
+   "wacc": 12.49,
+   "empregos": 90554,
+   "tkm": 0.114,
+   "carga": "Cargas Gerais Conteinerizáveis (CGC)",
+   "duplicacao_km": 138.19,
+   "faixa_adicional_km": 31.55,
+   "contorno_km": 0,
+   "marginais_km": 1.93,
+   "obras_relevantes": "177 dispositivos e interseções (novos e remodelados), 38 passarelas (novas e remodeladas) e 2 pontos de parada e descanso",
+   "pracas_implantar": 0,
+   "pracas_existentes": 0,
+   "porticos": 11,
+   "capex_km": 14.16,
+   "opex_km": 10.65,
+   "custo_duplicacao_km": 4.82,
+   "custo_manutencao": 0.14,
+   "fluxo_caixa_acum": 10.0,
+   "receita_nominal": 28.6,
+   "receita_vpl": 5.68,
+   "cagr_trafego": 2.4,
+   "capex_receita_vpl": 50,
+   "ciclo_obras": "3º ao 7º ano",
+   "garantia_proposta": 57,
+   "capital_minimo": 298,
+   "garantia_execucao": 306,
+   "veq_dia_praca": 29213,
+   "capex_anual": [
+    {
+     "ano": 1,
+     "valor": 308.91
+    },
+    {
+     "ano": 2,
+     "valor": 505.34
+    },
+    {
+     "ano": 3,
+     "valor": 740.3
+    },
+    {
+     "ano": 4,
+     "valor": 672.73
+    },
+    {
+     "ano": 5,
+     "valor": 637.54
+    },
+    {
+     "ano": 6,
+     "valor": 658.92
+    },
+    {
+     "ano": 7,
+     "valor": 384.2
+    },
+    {
+     "ano": 8,
+     "valor": 142.1
+    },
+    {
+     "ano": 9,
+     "valor": 121.99
+    },
+    {
+     "ano": 10,
+     "valor": 136.54
+    }
+   ],
+   "data_base": "abr/2025",
+   "extras": []
+  },
+  "cronograma": [
+   {
+    "marco": "AP",
+    "data": "2025"
+   },
+   {
+    "marco": "TCU",
+    "data": "2027-02"
+   },
+   {
+    "marco": "Edital",
+    "data": "2027-07"
+   },
+   {
+    "marco": "Leilão",
+    "data": "2027-10"
+   }
+  ],
+  "fontes": {
+   "km": 143,
+   "capex": 143,
+   "opex": 143,
+   "capex_ficha": 143,
+   "opex_ficha": 143,
+   "capex_vpl": 143,
+   "opex_vpl": 143,
+   "ficha.extensao_km": 143,
+   "ficha.wacc": 143,
+   "ficha.empregos": 143,
+   "ficha.tkm": 143,
+   "ficha.duplicacao_km": 143,
+   "ficha.faixa_adicional_km": 143,
+   "ficha.contorno_km": 143,
+   "ficha.marginais_km": 143,
+   "ficha.pracas_implantar": 143,
+   "ficha.pracas_existentes": 143,
+   "ficha.porticos": 143,
+   "ficha.capex_km": 143,
+   "ficha.opex_km": 143,
+   "ficha.custo_duplicacao_km": 143,
+   "ficha.custo_manutencao": 143,
+   "ficha.fluxo_caixa_acum": 143,
+   "ficha.receita_nominal": 143,
+   "ficha.receita_vpl": 143,
+   "ficha.cagr_trafego": 143,
+   "ficha.capex_receita_vpl": 143,
+   "ficha.garantia_proposta": 143,
+   "ficha.capital_minimo": 143,
+   "ficha.garantia_execucao": 143,
+   "ficha.veq_dia_praca": 143,
+   "ficha.capex_anual": 143,
+   "leilao": 143,
+   "edital": 143,
+   "cronograma": 153
+  },
+  "divergencias": [],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": null
+ },
+ {
+  "id": "rota-norte-catarinense",
+  "nome": "Rota Norte Catarinense",
+  "nome_contrato": null,
+  "brs": [
+   "280"
+  ],
+  "ufs": [
+   "SC"
+  ],
+  "trecho_texto": "Joinville - Mafra/SC",
+  "trecho_cidades": [
+   "Joinville",
+   "Mafra/SC"
+  ],
+  "estado": "projeto2027",
+  "ano_programa": 2027,
+  "tipo": "nova",
+  "estruturador": "INFRA S.A.",
+  "grupo_vencedor": null,
+  "km": 170.5,
+  "capex": 3.26,
+  "opex": 3.38,
+  "data_base": "jul/2024",
+  "capex_ficha": 3.26,
+  "opex_ficha": 3.38,
+  "data_base_ficha": "jul/2024",
+  "capex_vpl": 1.46,
+  "opex_vpl": 0.83,
+  "leilao": "2027-11",
+  "edital": "2026-08",
+  "assinatura": null,
+  "assinatura_aditivo": null,
+  "inicio_operacao": null,
+  "participantes": null,
+  "participantes_lista": null,
+  "desagio": null,
+  "status_texto": "Em Estudo",
+  "atualizado_em": "2026-03-16",
+  "ficha": {
+   "trecho_inicio": "Joinville",
+   "trecho_fim": "Mafra/SC",
+   "extensao_km": 170.5,
+   "wacc": 12.33,
+   "empregos": 47223,
+   "tkm": 0.186,
+   "carga": "Cargas Gerais Conteinerizáveis (CGC)",
+   "duplicacao_km": 48.72,
+   "faixa_adicional_km": 75.31,
+   "contorno_km": 12.73,
+   "marginais_km": 11.15,
+   "obras_relevantes": "36 dispositivos e interseções (novos e remodelados), 20 passarelas (novas e remodeladas) e 1 ponto de parada e descanso",
+   "pracas_implantar": null,
+   "pracas_existentes": null,
+   "porticos": 5,
+   "capex_km": 19.11,
+   "opex_km": 19.84,
+   "custo_duplicacao_km": 6.07,
+   "custo_manutencao": 0.15,
+   "fluxo_caixa_acum": 5.37,
+   "receita_nominal": 16.19,
+   "receita_vpl": 3.09,
+   "cagr_trafego": 2.62,
+   "capex_receita_vpl": 47,
+   "ciclo_obras": "4º ao 8º ano",
+   "garantia_proposta": 30.85,
+   "capital_minimo": 197.38,
+   "garantia_execucao": 154,
+   "veq_dia_praca": 23695,
+   "capex_anual": [
+    {
+     "ano": 4,
+     "valor": 559.25
+    },
+    {
+     "ano": 5,
+     "valor": 265.56
+    },
+    {
+     "ano": 6,
+     "valor": 336.64
+    },
+    {
+     "ano": 7,
+     "valor": 304.24
+    },
+    {
+     "ano": 8,
+     "valor": 485.16
+    }
+   ],
+   "data_base": "jul/2024",
+   "extras": [
+    {
+     "rotulo": "Subtítulo",
+     "valor": "Malha Catarinense - Lote 02"
+    }
+   ]
+  },
+  "cronograma": [
+   {
+    "marco": "AP",
+    "data": "2025"
+   },
+   {
+    "marco": "TCU",
+    "data": "2027-03"
+   },
+   {
+    "marco": "Edital",
+    "data": "2027-08"
+   },
+   {
+    "marco": "Leilão",
+    "data": "2027-11"
+   }
+  ],
+  "fontes": {
+   "km": 145,
+   "capex": 145,
+   "opex": 145,
+   "capex_ficha": 145,
+   "opex_ficha": 145,
+   "capex_vpl": 145,
+   "opex_vpl": 145,
+   "ficha.extensao_km": 145,
+   "ficha.wacc": 145,
+   "ficha.empregos": 145,
+   "ficha.tkm": 145,
+   "ficha.duplicacao_km": 145,
+   "ficha.faixa_adicional_km": 145,
+   "ficha.contorno_km": 145,
+   "ficha.marginais_km": 145,
+   "ficha.porticos": 145,
+   "ficha.capex_km": 145,
+   "ficha.opex_km": 145,
+   "ficha.custo_duplicacao_km": 145,
+   "ficha.custo_manutencao": 145,
+   "ficha.fluxo_caixa_acum": 145,
+   "ficha.receita_nominal": 145,
+   "ficha.receita_vpl": 145,
+   "ficha.cagr_trafego": 145,
+   "ficha.capex_receita_vpl": 145,
+   "ficha.garantia_proposta": 145,
+   "ficha.capital_minimo": 145,
+   "ficha.garantia_execucao": 145,
+   "ficha.veq_dia_praca": 145,
+   "ficha.capex_anual": 145,
+   "leilao": 145,
+   "edital": 145,
+   "cronograma": 153
+  },
+  "divergencias": [
+   {
+    "campo": "nome",
+    "exibido": "Rota Norte Catarinense",
+    "alternativas": [
+     {
+      "valor": "Rodovias Integradas de Santa Catarina - Lote 02",
+      "pagina": 127
+     }
+    ],
+    "nota": "O mapa da p127 usa o nome do lote; a ficha (p145) e o cronograma (p153) usam o nome da rota."
+   },
+   {
+    "campo": "edital",
+    "exibido": "2026-08",
+    "alternativas": [
+     {
+      "valor": "2027-08",
+      "pagina": 153
+     }
+    ],
+    "nota": "A ficha (p145) traz edital \"Agosto/2026\" com leilão em novembro/2027; o cronograma (p153) põe o edital em agosto/2027. Provável erro de digitação; mantido como impresso."
+   }
+  ],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": null
+ },
+ {
+  "id": "planalto-sul-otimizacao",
+  "nome": "Rota Planalto Sul",
+  "nome_contrato": null,
+  "brs": [
+   "116"
+  ],
+  "ufs": [
+   "PR",
+   "SC"
+  ],
+  "trecho_texto": "Curitiba/PR - Div. SC/RS",
+  "trecho_cidades": [
+   "Curitiba/PR",
+   "Div. SC/RS"
+  ],
+  "estado": "projeto2027",
+  "ano_programa": 2027,
+  "tipo": "otimizacao",
+  "estruturador": null,
+  "grupo_vencedor": null,
+  "km": 412.7,
+  "capex": 4.15,
+  "opex": 4.45,
+  "data_base": "mar/2023",
+  "capex_ficha": 4.15,
+  "opex_ficha": 4.45,
+  "data_base_ficha": "mar/2023",
+  "capex_vpl": 1.94,
+  "opex_vpl": 1.43,
+  "leilao": "2027-11",
+  "edital": "2027-08",
+  "assinatura": null,
+  "assinatura_aditivo": null,
+  "inicio_operacao": null,
+  "participantes": null,
+  "participantes_lista": null,
+  "desagio": null,
+  "status_texto": "Depende de acordo entre as partes e aprovação do TCU",
+  "atualizado_em": "2025-09-08",
+  "ficha": {
+   "trecho_inicio": "Curitiba/PR",
+   "trecho_fim": "Div. SC/RS",
+   "extensao_km": 412.7,
+   "wacc": 10.61,
+   "empregos": 60143,
+   "tkm": 0.113,
+   "carga": "Cargas Gerais (CG)",
+   "duplicacao_km": 12.5,
+   "faixa_adicional_km": 13.2,
+   "contorno_km": 0,
+   "marginais_km": 23.6,
+   "obras_relevantes": "9 Retornos em Desnível; 5 Passarelas; 2 Balanças; 1 Ponto de Parada e Descanso",
+   "pracas_implantar": null,
+   "pracas_existentes": null,
+   "porticos": null,
+   "capex_km": 10.06,
+   "opex_km": 11.01,
+   "custo_duplicacao_km": 6.98,
+   "custo_manutencao": 0.07,
+   "fluxo_caixa_acum": 2.59,
+   "receita_nominal": 14.4,
+   "receita_vpl": 4.4,
+   "cagr_trafego": 4.99,
+   "capex_receita_vpl": 44.1,
+   "ciclo_obras": "1º ano ao 15º ano",
+   "garantia_proposta": null,
+   "capital_minimo": null,
+   "garantia_execucao": null,
+   "veq_dia_praca": 18594,
+   "capex_anual": [
+    {
+     "ano": 1,
+     "valor": 135.22
+    },
+    {
+     "ano": 2,
+     "valor": 317.61
+    },
+    {
+     "ano": 3,
+     "valor": 437.57
+    },
+    {
+     "ano": 4,
+     "valor": 443.4
+    },
+    {
+     "ano": 5,
+     "valor": 418.18
+    },
+    {
+     "ano": 6,
+     "valor": 222.07
+    },
+    {
+     "ano": 7,
+     "valor": 144.93
+    },
+    {
+     "ano": 8,
+     "valor": 100.7
+    },
+    {
+     "ano": 9,
+     "valor": 116.33
+    },
+    {
+     "ano": 10,
+     "valor": 159.72
+    }
+   ],
+   "data_base": "mar/2023",
+   "extras": [
+    {
+     "rotulo": "Obs.",
+     "valor": "Ficha em revisão"
+    },
+    {
+     "rotulo": "Tipo",
+     "valor": "OTIMIZAÇÃO CONTRATUAL do contrato de concessão da BR-116/PR/SC"
+    }
+   ]
+  },
+  "cronograma": [
+   {
+    "marco": "TCU",
+    "data": "2025"
+   },
+   {
+    "marco": "Edital",
+    "data": "2027-08"
+   },
+   {
+    "marco": "Leilão",
+    "data": "2027-11"
+   }
+  ],
+  "fontes": {
+   "km": 147,
+   "capex": 147,
+   "opex": 147,
+   "capex_ficha": 147,
+   "opex_ficha": 147,
+   "capex_vpl": 147,
+   "opex_vpl": 147,
+   "ficha.extensao_km": 147,
+   "ficha.wacc": 147,
+   "ficha.empregos": 147,
+   "ficha.tkm": 147,
+   "ficha.duplicacao_km": 147,
+   "ficha.faixa_adicional_km": 147,
+   "ficha.contorno_km": 147,
+   "ficha.marginais_km": 147,
+   "ficha.capex_km": 147,
+   "ficha.opex_km": 147,
+   "ficha.custo_duplicacao_km": 147,
+   "ficha.custo_manutencao": 147,
+   "ficha.fluxo_caixa_acum": 147,
+   "ficha.receita_nominal": 147,
+   "ficha.receita_vpl": 147,
+   "ficha.cagr_trafego": 147,
+   "ficha.capex_receita_vpl": 147,
+   "ficha.veq_dia_praca": 147,
+   "ficha.capex_anual": 147,
+   "leilao": 147,
+   "edital": 147,
+   "cronograma": 153
+  },
+  "divergencias": [],
+  "notas_base": [],
+  "relaciona": [
+   "autopista-planalto-sul"
+  ],
+  "linha_p5": null
+ },
+ {
+  "id": "rota-do-acu",
+  "nome": "Rota do Açu",
+  "nome_contrato": null,
+  "brs": [
+   "356"
+  ],
+  "ufs": [
+   "MG",
+   "RJ"
+  ],
+  "trecho_texto": "Muriaé/MG - São João da Barra/RJ",
+  "trecho_cidades": [
+   "Muriaé/MG",
+   "São João da Barra/RJ"
+  ],
+  "estado": "projeto2027",
+  "ano_programa": 2027,
+  "tipo": "nova",
+  "estruturador": "INFRA S.A.",
+  "grupo_vencedor": null,
+  "km": 306.33,
+  "capex": 2.1,
+  "opex": 1.95,
+  "data_base": "abr/2026",
+  "capex_ficha": 2.1,
+  "opex_ficha": 1.95,
+  "data_base_ficha": "abr/2026",
+  "capex_vpl": 0.92,
+  "opex_vpl": 0.21,
+  "leilao": "2027-12",
+  "edital": "2027-09",
+  "assinatura": null,
+  "assinatura_aditivo": null,
+  "inicio_operacao": null,
+  "participantes": null,
+  "participantes_lista": null,
+  "desagio": null,
+  "status_texto": "Em estudo",
+  "atualizado_em": "2026-10-01",
+  "ficha": {
+   "trecho_inicio": "Muriaé/MG",
+   "trecho_fim": "São João da Barra/RJ",
+   "extensao_km": 306.33,
+   "wacc": 11.07,
+   "empregos": 30426,
+   "tkm": 0.173,
+   "carga": "Cargas Gerais Conteinerizáveis (CGC)",
+   "duplicacao_km": null,
+   "faixa_adicional_km": null,
+   "contorno_km": null,
+   "marginais_km": null,
+   "obras_relevantes": "Melhoria em 224 km de acostamentos, 41 travessias em nível, 6 correção de traçado, Iluminação em 46,55 km e 12 passagens de fauna.",
+   "pracas_implantar": null,
+   "pracas_existentes": null,
+   "porticos": 5,
+   "capex_km": 6.86,
+   "opex_km": 6.37,
+   "custo_duplicacao_km": null,
+   "custo_manutencao": null,
+   "fluxo_caixa_acum": null,
+   "receita_nominal": null,
+   "receita_vpl": null,
+   "cagr_trafego": null,
+   "capex_receita_vpl": null,
+   "ciclo_obras": null,
+   "garantia_proposta": null,
+   "capital_minimo": 75,
+   "garantia_execucao": null,
+   "veq_dia_praca": null,
+   "capex_anual": null,
+   "data_base": "abr/2026",
+   "extras": [
+    {
+     "rotulo": "Obs.",
+     "valor": "Ficha em revisão"
+    }
+   ]
+  },
+  "cronograma": [
+   {
+    "marco": "AP",
+    "data": "2027-01"
+   },
+   {
+    "marco": "TCU",
+    "data": "2027-04"
+   },
+   {
+    "marco": "Edital",
+    "data": "2027-09"
+   },
+   {
+    "marco": "Leilão",
+    "data": "2027-12"
+   }
+  ],
+  "fontes": {
+   "km": 149,
+   "capex": 149,
+   "opex": 149,
+   "capex_ficha": 149,
+   "opex_ficha": 149,
+   "capex_vpl": 149,
+   "opex_vpl": 149,
+   "ficha.extensao_km": 149,
+   "ficha.wacc": 149,
+   "ficha.empregos": 149,
+   "ficha.tkm": 149,
+   "ficha.porticos": 149,
+   "ficha.capex_km": 149,
+   "ficha.opex_km": 149,
+   "ficha.capital_minimo": 149,
+   "leilao": 149,
+   "edital": 149,
+   "cronograma": 153
+  },
+  "divergencias": [
+   {
+    "campo": "ufs",
+    "exibido": [
+     "MG",
+     "RJ"
+    ],
+    "alternativas": [
+     {
+      "valor": [
+       "RJ"
+      ],
+      "pagina": 127
+     }
+    ],
+    "nota": "Título da ficha (p149) e cronograma (p153): BR-356/MG/RJ; mapa da p127: BR-356/RJ. O trecho começa em Muriaé/MG."
+   }
+  ],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": null
+ },
+ {
+  "id": "rota-centro-sul-baiano",
+  "nome": "Rota Centro-Sul Baiano",
+  "nome_contrato": null,
+  "brs": [
+   "101"
+  ],
+  "ufs": [
+   "BA"
+  ],
+  "trecho_texto": "Feira de Santana - div. BA/MG",
+  "trecho_cidades": [
+   "Feira de Santana",
+   "div. BA/MG"
+  ],
+  "estado": "projeto2027",
+  "ano_programa": 2027,
+  "tipo": "nova",
+  "estruturador": "INFRA S.A.",
+  "grupo_vencedor": null,
+  "km": 783.23,
+  "capex": 9.35,
+  "opex": 5.79,
+  "data_base": "ago/2025",
+  "capex_ficha": 9.35,
+  "opex_ficha": 5.79,
+  "data_base_ficha": "ago/2025",
+  "capex_vpl": 3.5,
+  "opex_vpl": 1.33,
+  "leilao": "2027-12",
+  "edital": "2027-09",
+  "assinatura": null,
+  "assinatura_aditivo": null,
+  "inicio_operacao": null,
+  "participantes": null,
+  "participantes_lista": null,
+  "desagio": null,
+  "status_texto": "Em estudo",
+  "atualizado_em": "2026-10-08",
+  "ficha": {
+   "trecho_inicio": "Feira de Santana",
+   "trecho_fim": "div. BA/MG",
+   "extensao_km": 783.23,
+   "wacc": 12.65,
+   "empregos": 113157,
+   "tkm": null,
+   "carga": "Cargas Gerais Conteinerizáveis (CGC)",
+   "duplicacao_km": 75.2,
+   "faixa_adicional_km": 139.97,
+   "contorno_km": null,
+   "marginais_km": null,
+   "obras_relevantes": "9 passagens de fauna e 35 correções de traçado, 4 PPD",
+   "pracas_implantar": null,
+   "pracas_existentes": null,
+   "porticos": 18,
+   "capex_km": 9.97,
+   "opex_km": 6.78,
+   "custo_duplicacao_km": null,
+   "custo_manutencao": null,
+   "fluxo_caixa_acum": null,
+   "receita_nominal": null,
+   "receita_vpl": null,
+   "cagr_trafego": null,
+   "capex_receita_vpl": null,
+   "ciclo_obras": null,
+   "garantia_proposta": null,
+   "capital_minimo": 375,
+   "garantia_execucao": null,
+   "veq_dia_praca": null,
+   "capex_anual": null,
+   "data_base": "ago/2025",
+   "extras": [
+    {
+     "rotulo": "Obs.",
+     "valor": "Ficha em revisão"
+    }
+   ]
+  },
+  "cronograma": [
+   {
+    "marco": "AP",
+    "data": "2027-02"
+   },
+   {
+    "marco": "TCU",
+    "data": "2027-04"
+   },
+   {
+    "marco": "Edital",
+    "data": "2027-09"
+   },
+   {
+    "marco": "Leilão",
+    "data": "2027-12"
+   }
+  ],
+  "fontes": {
+   "km": 151,
+   "capex": 151,
+   "opex": 151,
+   "capex_ficha": 151,
+   "opex_ficha": 151,
+   "capex_vpl": 151,
+   "opex_vpl": 151,
+   "ficha.extensao_km": 151,
+   "ficha.wacc": 151,
+   "ficha.empregos": 151,
+   "ficha.duplicacao_km": 151,
+   "ficha.faixa_adicional_km": 151,
+   "ficha.porticos": 151,
+   "ficha.capex_km": 151,
+   "ficha.opex_km": 151,
+   "ficha.capital_minimo": 151,
+   "leilao": 151,
+   "edital": 151,
+   "cronograma": 153
+  },
+  "divergencias": [
+   {
+    "campo": "km",
+    "exibido": 783.23,
+    "alternativas": [
+     {
+      "valor": 783.6,
+      "pagina": 127
+     }
+    ],
+    "nota": "Extensão da ficha (p151) difere da do mapa da Carteira 2027 (p127)."
+   }
+  ],
+  "notas_base": [],
+  "relaciona": [],
+  "linha_p5": null
+ }
+]
