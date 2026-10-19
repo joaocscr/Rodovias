@@ -13,7 +13,7 @@ needs_raw = pytest.mark.skipif(not RAW.exists(), reason="dado bruto ausente")
 def rec(codigo, desc_coinc, ds_coinc, br="010", **kw):
     r = {"vl_codigo": codigo, "desc_coinc": desc_coinc, "ds_coinc": ds_coinc, "vl_br": br,
          "sg_uf": "DF", "ds_legenda": "Duplicada", "ds_tipo_ad": "Federal", "ds_jurisdi": "Federal",
-         "vl_extensa": 1.0, "points": [(0.0, 0.0), (1.0, 1.0)]}
+         "vl_extensa": 1.0, "points": [(0.0, 0.0), (1.0, sum(map(ord, codigo)) / 1000)]}
     r.update(kw)
     return r
 
@@ -23,6 +23,23 @@ def test_group_coincident():
             rec("020BDF0010", "Coinc", "020BDF0010;010BDF0010", br="020"),
             rec("040BDF0010", "-", "", br="040")]
     assert group_physical(recs) == [[0, 1], [2]]
+
+
+def test_group_principal_without_coinc_flag():
+    # O registro principal vem com desc_coinc "-", mas o mesmo ds_coinc dos secundários.
+    recs = [rec("010BDF0010", "-", "010BDF0010;020BDF0010;030BDF0010", br="010"),
+            rec("020BDF0010", "Coinc", "010BDF0010;020BDF0010;030BDF0010", br="020"),
+            rec("030BDF0010", "Coinc", "010BDF0010;020BDF0010;030BDF0010", br="030")]
+    assert group_physical(recs) == [[0, 1, 2]]
+
+
+def test_group_inconsistent_ds_coinc_merged_by_geometry():
+    line = [(-44.0, -19.0), (-44.1, -19.1)]
+    recs = [rec("050BMG0250", "-", "050BMG0250;455BMG0007", br="050", points=line),
+            rec("455BMG0007", "Coinc", "050BMG0250;050NMG1020;455BMG0007", br="455", points=line),
+            rec("050NMG1020", "Coinc", "050NMG1020;455BMG0007", br="050", points=list(reversed(line))),
+            rec("040BMG0010", "-", "", br="040")]
+    assert sorted(map(sorted, group_physical(recs))) == [[0, 1, 2], [3]]
 
 
 def test_group_sorted_by_br():
@@ -67,9 +84,9 @@ def test_build_payload_shape():
 def test_real_data_totals():
     recs = load_records(str(RAW))
     groups = group_physical(recs)
-    assert len(recs) == 7673 and len(groups) == 7591
+    assert len(recs) == 7673 and len(groups) == 6815
     assert round(sum(r["vl_extensa"] for r in recs), 1) == 131690.7
-    assert round(sum(recs[g[0]]["vl_extensa"] for g in groups), 1) == 131085.2
+    assert round(sum(recs[g[0]]["vl_extensa"] for g in groups), 1) == 122394.9
     assert check_group_consistency(recs, groups) == []
     assert any("BRASÍLIA" in r["ds_local_i"] for r in recs)
     assert all(len(r["points"]) >= 1 for r in recs)
@@ -112,7 +129,7 @@ def test_build_output(tmp_path):
     res = subprocess.run([sys.executable, str(ROOT / "scripts" / "build.py"), "--shp", str(RAW),
                           "--out", str(out)], capture_output=True, text=True)
     assert res.returncode == 0, res.stderr
-    assert "131.085,2" in res.stdout or "131085.2" in res.stdout
+    assert "122.394,9" in res.stdout
     html = out.read_text(encoding="utf-8")
     assert out.stat().st_size < 15e6
     assert "window.SNV=" in html

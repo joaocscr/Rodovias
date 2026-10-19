@@ -69,12 +69,12 @@ O dado bruto (zip de 68 MB) **não** vai para o repositório. Vai para `.gitigno
 
 ### 3.4 Coincidências e totais
 Trechos coincidentes (mesma pista com mais de uma BR) aparecem como registros separados, um por BR, com mesma geometria.
-- **Desenho:** cada geometria física é desenhada uma vez. Agrupar pelo conjunto ordenado de códigos em `ds_coinc` quando `desc_coinc = "Coinc"`; o builder pode complementar com geometria idêntica se achar grupos que essa chave não pega. Um trecho físico está visível se *qualquer* um dos seus registros passa nos filtros.
+- **Desenho:** cada geometria física é desenhada uma vez. Agrupamento por union-find: une os registros citados juntos em `ds_coinc` (o registro principal vem com `desc_coinc = "-"` e os secundários com "Coinc", mas todos compartilham o `ds_coinc`) e os registros com geometria idêntica (mesmos extremos e mesmo número de vértices), o que corrige um caso em MG com `ds_coinc` inconsistente. Um trecho físico está visível se *qualquer* um dos seus registros passa nos filtros.
 - **Regra única de soma (decisão do designer):** a seleção é um conjunto de trechos físicos e **cada trecho físico conta uma vez, sempre**, inclusive com várias BRs selecionadas (BR-020 + BR-030 juntas contam o trecho compartilhado uma vez, que é o km real de estrada). Com uma única BR filtrada, isso já dá a extensão completa daquela BR.
 - **Atributos do grupo:** verificado nos dados que os registros de um mesmo grupo têm situação, administração, UF, jurisdição e extensão idênticos. Qualquer registro serve como "principal"; usar o de menor `vl_br`. O build deve verificar isso de novo e avisar se mudar numa versão futura do SNV.
 - **Painel:** mostrar uma nota curta "Trechos coincidentes contados uma vez" quando aplicável.
 
-Números de referência medidos nesta versão (pela chave acima): 7.673 registros → 7.591 trechos físicos (77 grupos com mais de um registro); Σ `vl_extensa` bruta = 131.690,7 km; deduplicada = 131.085,2 km. Não há um número oficial publicado do DNIT como alvo. A validação é de consistência interna: o build imprime esses dois totais e o HTML sem filtros deve exibir o deduplicado.
+Números de referência medidos nesta versão: 7.673 registros → 6.815 trechos físicos (775 grupos com mais de um registro; os 844 registros "Coinc" têm todos par geométrico); Σ `vl_extensa` bruta = 131.690,7 km; deduplicada = 122.394,9 km. (Uma primeira versão deste documento dizia 7.591 / 131.085,2 km porque só agrupava registros marcados "Coinc" e deixava o principal de fora; corrigido durante a implementação.) Não há um número oficial publicado do DNIT como alvo. A validação é de consistência interna: o build imprime esses dois totais e o HTML sem filtros deve exibir o deduplicado.
 
 ## 4. Interface
 

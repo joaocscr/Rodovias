@@ -31,17 +31,44 @@ def load_records(shp_path):
     return records
 
 
-def _group_key(r):
-    if r.get("desc_coinc") == "Coinc" and r.get("ds_coinc"):
-        return ";".join(sorted(c for c in r["ds_coinc"].split(";") if c))
-    return r["vl_codigo"]
+def _geom_key(points):
+    a, b = (tuple(round(c, 6) for c in points[0]), tuple(round(c, 6) for c in points[-1]))
+    return (min(a, b), max(a, b), len(points))
 
 
 def group_physical(records):
-    groups = {}
+    """Agrupa registros que são o mesmo trecho físico (union-find).
+
+    Une registros citados juntos em `ds_coinc` (o principal vem com desc_coinc "-",
+    os secundários com "Coinc") e registros com geometria idêntica, o que corrige
+    `ds_coinc` inconsistentes entre os registros de um mesmo trecho.
+    """
+    parent = list(range(len(records)))
+
+    def find(i):
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    def union(i, j):
+        ri, rj = find(i), find(j)
+        if ri != rj:
+            parent[max(ri, rj)] = min(ri, rj)
+
+    by_code = {r["vl_codigo"]: i for i, r in enumerate(records)}
+    by_geom = {}
     for i, r in enumerate(records):
-        groups.setdefault(_group_key(r), []).append(i)
-    return [sorted(g, key=lambda i: (records[i]["vl_br"], i)) for g in groups.values()]
+        for code in (r.get("ds_coinc") or "").split(";"):
+            if code in by_code:
+                union(i, by_code[code])
+        if r.get("points"):
+            union(i, by_geom.setdefault(_geom_key(r["points"]), i))
+
+    groups = {}
+    for i in range(len(records)):
+        groups.setdefault(find(i), []).append(i)
+    return [sorted(g, key=lambda i: (records[i]["vl_br"], i)) for _, g in sorted(groups.items())]
 
 
 def check_group_consistency(records, groups):

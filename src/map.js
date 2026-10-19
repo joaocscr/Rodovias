@@ -144,6 +144,8 @@ const MapView = (() => {
   return {
     init, setVisible, highlight, fitTo, fitBrasil,
     onPick(cb) { pickCb = cb; },
+    pick(j) { pickCb(j, lines[j].getBounds().getCenter()); },
+    highlighted() { return hlIds ? [...hlIds] : []; },
     invalidate() { map.invalidateSize(); },
     isVisible(j) { return !!(visible && visible[j]); },
     get map() { return map; },
