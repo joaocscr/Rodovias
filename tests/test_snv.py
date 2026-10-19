@@ -102,3 +102,21 @@ def test_vendor_assets():
     for rel in ["leaflet/leaflet.js", "leaflet/leaflet.css", "fonts/inter-latin-400.woff2",
                 "fonts/inter-latin-600.woff2", "fonts/hind-latin-500.woff2", "fonts/hind-latin-700.woff2"]:
         assert (ROOT / "vendor" / rel).stat().st_size > 0, rel
+
+
+@needs_raw
+def test_build_output(tmp_path):
+    import re
+    import subprocess
+    out = tmp_path / "mapa.html"
+    res = subprocess.run([sys.executable, str(ROOT / "scripts" / "build.py"), "--shp", str(RAW),
+                          "--out", str(out)], capture_output=True, text=True)
+    assert res.returncode == 0, res.stderr
+    assert "131.085,2" in res.stdout or "131085.2" in res.stdout
+    html = out.read_text(encoding="utf-8")
+    assert out.stat().st_size < 15e6
+    assert "window.SNV=" in html
+    markup = re.sub(r"<script>.*?</script>", "", html, flags=re.S)
+    assert not re.search(r"""(src|href)\s*=\s*["']https?:""", markup)
+    assert not re.search(r"""url\(\s*["']?https?:""", html)
+    assert "/*__" not in html
