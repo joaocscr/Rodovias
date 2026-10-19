@@ -3,6 +3,7 @@ const MapView = (() => {
   const BRASIL = [[-34.5, -74.5], [5.8, -32]];
   const DIM = 0.2;
   let map, snv, lines, halos, order, visible, pickCb = () => {}, hlGroup, hlRenderer, hlWanted = null, hlIds = null, ufLayer;
+  let mode = 'fisica', states = null, conc = null, haloRenderer;
 
   function decode(p) {
     const out = [];
@@ -17,8 +18,15 @@ const MapView = (() => {
   function situacaoOf(j) { return snv.dict.situacao[snv.trechos[snv.fis[j].r[0]][Model.FIELD.situacao]]; }
   function admOf(j) { return snv.dict.adm[snv.trechos[snv.fis[j].r[0]][Model.FIELD.adm]]; }
 
-  function styleFor(j, extra = {}) {
+  // Estilo base do físico no modo atual: {color, weight, dash, opacity, z, halo?}
+  function spec(j) {
+    if (mode === 'concessoes' && states) return CONC_STYLES[states[j]] || CONC_STYLES.nenhum;
     const s = lineStyle(situacaoOf(j));
+    return admOf(j) === CONCESSAO ? Object.assign({ halo: HALO }, s) : s;
+  }
+
+  function styleFor(j, extra = {}) {
+    const s = spec(j);
     const f = zoomFactor(map.getZoom());
     const dim = hlIds && !hlIds.has(j) ? DIM : 1;
     return {
@@ -28,9 +36,19 @@ const MapView = (() => {
   }
 
   function haloStyle(j) {
-    const s = lineStyle(situacaoOf(j));
+    const s = spec(j);
     const dim = hlIds && !hlIds.has(j) ? DIM : 1;
-    return { color: HALO.color, opacity: HALO.opacity * dim, weight: (s.weight + HALO.extra) * zoomFactor(map.getZoom()), lineCap: 'round' };
+    return { color: s.halo.color, opacity: s.halo.opacity * dim, weight: (s.weight + s.halo.extra) * zoomFactor(map.getZoom()), lineCap: 'round' };
+  }
+
+  function haloOf(j) {
+    if (!spec(j).halo) return null;
+    if (!halos[j]) halos[j] = L.polyline(lines[j].getLatLngs(), Object.assign({ renderer: haloRenderer, interactive: false }, haloStyle(j)));
+    return halos[j];
+  }
+
+  function computeOrder() {
+    order = snv.fis.map((_, j) => j).sort((a, b) => spec(a).z - spec(b).z || a - b);
   }
 
   // Realce efetivo = pedidos que estão visíveis; sem nenhum visível, nada é esmaecido.
@@ -38,7 +56,7 @@ const MapView = (() => {
     const eff = hlWanted ? [...hlWanted].filter(j => visible[j]) : [];
     hlIds = eff.length ? new Set(eff) : null;
     lines.forEach((l, j) => l.setStyle(styleFor(j)));
-    halos.forEach((h, j) => h.setStyle(haloStyle(j)));
+    halos.forEach((h, j) => { if (h && spec(j).halo) h.setStyle(haloStyle(j)); });
     hlGroup.clearLayers();
     if (!hlIds) return;
     const w = 10 * zoomFactor(map.getZoom());
@@ -62,8 +80,9 @@ const MapView = (() => {
     btn('Brasil', 'Ver o Brasil inteiro', () => fitBrasil(), icon('M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5'));
   }
 
-  function init(el, data, controlsEl) {
+  function init(el, data, controlsEl, opts = {}) {
     snv = data;
+    if (opts.states) { states = opts.states; conc = opts.conc; mode = 'concessoes'; }
     map = L.map(el, {
       zoomControl: false, attributionControl: false, preferCanvas: true,
       minZoom: 3.5, maxZoom: 13, zoomSnap: 0.5, zoomDelta: 0.5, wheelPxPerZoomLevel: 120,
@@ -89,7 +108,7 @@ const MapView = (() => {
     fitBrasil(false);
 
     const roadRenderer = L.canvas({ padding: 0.5, tolerance: 6 });
-    const haloRenderer = L.canvas({ pane: 'halo', padding: 0.5 });
+    haloRenderer = L.canvas({ pane: 'halo', padding: 0.5 });
     lines = []; halos = [];
     snv.fis.forEach((f, j) => {
       const latlngs = decode(f.p);
@@ -98,11 +117,8 @@ const MapView = (() => {
       line.on('mouseout', () => line.setStyle(styleFor(j)));
       line.on('click', e => pickCb(j, e.latlng));
       lines.push(line);
-      if (admOf(j) === CONCESSAO) {
-        halos[j] = L.polyline(latlngs, Object.assign({ renderer: haloRenderer, interactive: false }, haloStyle(j)));
-      }
     });
-    order = snv.fis.map((_, j) => j).sort((a, b) => lineStyle(situacaoOf(a)).z - lineStyle(situacaoOf(b)).z || a - b);
+    computeOrder();
     hlGroup = L.layerGroup().addTo(map);
     hlRenderer = L.canvas({ pane: 'hl', padding: 0.5 });
     map.on('zoomend', applyHighlight);
@@ -119,7 +135,8 @@ const MapView = (() => {
     }
     for (const j of order) {
       if (!vis[j]) continue;
-      if (halos[j]) halos[j].addTo(map);
+      const h = haloOf(j);
+      if (h) h.addTo(map);
       lines[j].addTo(map);
     }
     applyHighlight();
@@ -147,8 +164,20 @@ const MapView = (() => {
     map.fitBounds(ufLayer.getBounds(), { padding: [16, 16], animate });
   }
 
+  function setColorMode(m) {
+    if (m === mode || (m === 'concessoes' && !states)) return;
+    mode = m;
+    computeOrder();
+    setVisible(visible);
+  }
+
+  function entityFis(idx) { return (conc && conc.entFis[idx]) || []; }
+
   return {
-    init, setVisible, highlight, fitTo, fitBrasil,
+    init, setVisible, highlight, fitTo, fitBrasil, setColorMode,
+    colorMode() { return mode; },
+    fitEntity(idx) { fitTo(entityFis(idx)); },
+    highlightEntity(idx) { highlight(entityFis(idx)); },
     onPick(cb) { pickCb = cb; },
     pick(j) { pickCb(j, lines[j].getBounds().getCenter()); },
     highlighted() { return hlIds ? [...hlIds] : []; },

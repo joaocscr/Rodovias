@@ -1,0 +1,58 @@
+// Abas (Mapa | Projetos | Mercado | Regulatório) e ficha, roteadas por #hash (funciona em file://).
+const Tabs = (() => {
+  const TABS = [['mapa', 'Mapa'], ['projetos', 'Projetos'], ['mercado', 'Mercado'], ['regulatorio', 'Regulatório']];
+  const inits = {};
+  const started = new Set();
+  let active = 'mapa', prevHash = '#mapa', fichaValid = () => false;
+
+  function parse(hash) {
+    const h = (hash || '').replace(/^#/, '');
+    const [tab, ...rest] = h.split('/');
+    return { tab, arg: rest.length ? decodeURIComponent(rest.join('/')) : null };
+  }
+
+  function show(tab) {
+    active = tab;
+    document.querySelectorAll('[data-tab]').forEach(s => { s.hidden = s.dataset.tab !== tab; });
+    document.querySelectorAll('.tabs [data-go]').forEach(a => {
+      const on = a.dataset.go === tab;
+      a.classList.toggle('is-active', on);
+      if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
+    if (!started.has(tab) && inits[tab]) { started.add(tab); inits[tab](); }
+    if (tab === 'mapa' && typeof MapView !== 'undefined') setTimeout(() => MapView.invalidate(), 0);
+  }
+
+  function route() {
+    const { tab, arg } = parse(location.hash);
+    if (tab === 'ficha') {
+      if (!arg || !fichaValid(arg)) { location.replace('#mapa'); return; }
+      if (typeof Ficha !== 'undefined') Ficha.open(arg);
+      return;
+    }
+    if (typeof Ficha !== 'undefined') Ficha.close(true);
+    if (!TABS.some(([k]) => k === tab)) {
+      if (location.hash && location.hash !== '#') location.replace('#mapa');
+      show('mapa');
+      return;
+    }
+    prevHash = '#' + tab;
+    show(tab);
+  }
+
+  function init({ isFicha } = {}) {
+    if (isFicha) fichaValid = isFicha;
+    const nav = document.getElementById('tabs');
+    nav.innerHTML = TABS.map(([k, label]) => `<a href="#${k}" data-go="${k}">${label}</a>`).join('');
+    window.addEventListener('hashchange', route);
+    route();
+  }
+
+  return {
+    init, route,
+    on(tab, fn) { inits[tab] = fn; if (active === tab && !started.has(tab) && document.getElementById('tabs').children.length) { started.add(tab); fn(); } },
+    go(r) { if (location.hash === r) route(); else location.hash = r; },
+    back() { location.hash = prevHash; },
+    current() { return Object.assign(parse(location.hash), { active }); },
+  };
+})();

@@ -5,7 +5,7 @@ const Charts = createRequire(import.meta.url)('../src/charts.js');
 
 test('barsSvg: uma barra por item, título com valor exato, só cores da paleta', () => {
   const svg = Charts.barsSvg([{ label: '2023', value: 2 }, { label: '2024', value: 7, alt: true }], { unit: 'leilões', format: v => String(v) });
-  assert.equal((svg.match(/<rect class="bar/g) || []).length, 2);
+  assert.equal((svg.match(/<rect class="cbar/g) || []).length, 2);
   assert.match(svg, /<title>2024: 7 leilões<\/title>/);
   for (const c of svg.match(/#[0-9A-Fa-f]{6}/g) || []) assert.ok(['#183C80', '#0071BB', '#231F20', '#525254', '#F7F7F8'].includes(c.toUpperCase()), c);
 });
@@ -30,5 +30,5 @@ test('linesSvg', () => {
 });
 test('stackedSvg', () => {
   const svg = Charts.stackedSvg([{ label: '2020', parts: [3, 4] }, { label: '2021', parts: [null, 2] }], { names: ['Público', 'Privado'] });
-  assert.equal((svg.match(/<rect class="bar/g) || []).length, 3);
+  assert.equal((svg.match(/<rect class="cbar/g) || []).length, 3);
 });

@@ -1,0 +1,330 @@
+{
+ "rota-integracao-do-sul": {
+  "ranges": [
+   {
+    "br": "116",
+    "uf": "RS",
+    "km_ini": 276.6,
+    "km_fim": 400.0
+   },
+   {
+    "br": "290",
+    "uf": "RS",
+    "km_ini": 98.2,
+    "km_fim": 333.5
+   },
+   {
+    "br": "392",
+    "uf": "RS",
+    "km_ini": 199.9,
+    "km_fim": 362.2
+   },
+   {
+    "br": "158",
+    "uf": "RS",
+    "km_ini": 158.8,
+    "km_fim": 330.4
+   }
+  ],
+  "codigos": [],
+  "qualidade": null,
+  "nota": "BR-116 Camaquã–Porto Alegre (fim da concessão ViaSul/Ilha do Pavão, km 276,6–400), BR-290 Porto Alegre–entr. BR-392 (km 98,2–333,5), BR-392 Santana da Boa Vista–Santa Maria (km 199,9–362,2) e BR-158 Santa Maria–entr. BR-285 p/ Panambi (km 158,8–330,4, 'Panambi (Norte)' no texto). Mapa e texto da ficha p. 131."
+ },
+ "rota-portuaria-do-sul": {
+  "ranges": [
+   {
+    "br": "116",
+    "uf": "RS",
+    "km_ini": 400.0,
+    "km_fim": 659.9
+   },
+   {
+    "br": "392",
+    "uf": "RS",
+    "km_ini": 0.0,
+    "km_fim": 199.9
+   }
+  ],
+  "codigos": [],
+  "qualidade": null,
+  "nota": "Mapa da ficha (p. 133) mostra BR-116 Camaquã–Jaguarão e BR-392 Rio Grande–Santana da Boa Vista, que coincide com a extensão atual 'Concessão Federal' (Ecosul) no SNV; o rótulo 'Pelotas - Santa Maria' não confere com o mapa."
+ },
+ "rota-vale-do-itajai": {
+  "ranges": [
+   {
+    "br": "470",
+    "uf": "SC",
+    "km_ini": 0.0,
+    "km_fim": 356.6
+   },
+   {
+    "br": "282",
+    "uf": "SC",
+    "km_ini": 325.8,
+    "km_fim": 436.4
+   },
+   {
+    "br": "153",
+    "uf": "SC",
+    "km_ini": 59.5,
+    "km_fim": 120.0
+   }
+  ],
+  "codigos": [],
+  "qualidade": null,
+  "nota": "BR-470 inteira em SC (Navegantes–div. SC/RS), BR-282 Campos Novos–entr. BR-153 (Vargem Bonita/Irani) e BR-153 entr. BR-282–div. SC/RS. Mapa p. 135; o trecho da BR-153 ao norte da BR-282 fica no Lote 03."
+ },
+ "rota-meio-oeste": {
+  "ranges": [
+   {
+    "br": "282",
+    "uf": "SC",
+    "km_ini": 436.4,
+    "km_fim": 532.5
+   },
+   {
+    "br": "480",
+    "uf": "SC",
+    "km_ini": 124.8,
+    "km_fim": 135.9
+   },
+   {
+    "br": "153",
+    "uf": "SC",
+    "km_ini": 0.0,
+    "km_fim": 59.5
+   }
+  ],
+  "codigos": [],
+  "qualidade": null,
+  "nota": "BR-282 entr. BR-153–Xanxerê (inclui trecho coincidente BR-282/480), BR-480 até Chapecó (entr. BR-283/480) e BR-153 div. PR/SC–entr. BR-282. Mapa p. 137."
+ },
+ "rota-vale-do-cafe": {
+  "ranges": [
+   {
+    "br": "393",
+    "uf": "RJ",
+    "km_ini": 105.3,
+    "km_fim": 298.2
+   },
+   {
+    "br": "393",
+    "uf": "MG",
+    "km_ini": 45.8,
+    "km_fim": 48.0
+   }
+  ],
+  "codigos": [],
+  "qualidade": null,
+  "nota": "BR-393 Além Paraíba (div. MG/RJ, incl. 2,2 km em MG) até entr. BR-116 em Volta Redonda/Barra Mansa (km 298,2) — extensão do contrato atual (Rodovia do Aço). Acesso de Volta Redonda (12,6 km) não incluído. Ficha p. 139."
+ },
+ "transbrasiliana-otimizacao": {
+  "ranges": [
+   {
+    "br": "153",
+    "uf": "SP",
+    "km_ini": 0.0,
+    "km_fim": 230.2
+   },
+   {
+    "br": "153",
+    "uf": "SP",
+    "km_ini": 256.0,
+    "km_fim": 347.3
+   }
+  ],
+  "codigos": [],
+  "qualidade": null,
+  "nota": "Extensão 'Concessão Federal' da BR-153/SP (Icém–Ourinhos), excluindo o trecho estadual de Marília (km 230,2–256,0). Ficha p. 141."
+ },
+ "rota-portuaria-itaqui": {
+  "ranges": [
+   {
+    "br": "135",
+    "uf": "MA",
+    "km_ini": 0.0,
+    "km_fim": 224.8
+   },
+   {
+    "br": "316",
+    "uf": "MA",
+    "km_ini": 423.7,
+    "km_fim": 621.0
+   }
+  ],
+  "codigos": [],
+  "qualidade": null,
+  "nota": "BR-135 São Luís–Peritoró (inclui coincidente BR-135/316 Cachucha–Peritoró) e BR-316 Peritoró–Timon/div. MA/PI (ponte do Parnaíba, Teresina). Acessos ao Porto do Itaqui não incluídos. Mapa p. 143."
+ },
+ "rota-norte-catarinense": {
+  "ranges": [
+   {
+    "br": "280",
+    "uf": "SC",
+    "km_ini": 0.0,
+    "km_fim": 170.5
+   }
+  ],
+  "codigos": [],
+  "qualidade": null,
+  "nota": "BR-280 km 0 (São Francisco do Sul) até entr. BR-116 em Mafra (km 170,5), que bate exatamente com os 170,5 km declarados (trecho 'Joinville - Mafra'). Ficha p. 145."
+ },
+ "planalto-sul-otimizacao": {
+  "ranges": [
+   {
+    "br": "116",
+    "uf": "PR",
+    "km_ini": 119.2,
+    "km_fim": 214.9
+   },
+   {
+    "br": "116",
+    "uf": "SC",
+    "km_ini": 0.0,
+    "km_fim": 310.5
+   }
+  ],
+  "codigos": [],
+  "qualidade": null,
+  "nota": "BR-116 Curitiba (entr. BR-116/277/376/476, km 119,2) até div. PR/SC e BR-116/SC inteira até div. SC/RS — 'Concessão Federal' (Autopista Planalto Sul); km 0–119,2 PR é a Régis Bittencourt. Ficha p. 147."
+ },
+ "rota-do-acu": {
+  "ranges": [
+   {
+    "br": "356",
+    "uf": "MG",
+    "km_ini": 263.6,
+    "km_fim": 289.3
+   },
+   {
+    "br": "356",
+    "uf": "RJ",
+    "km_ini": 0.0,
+    "km_fim": 187.7
+   },
+   {
+    "br": "356",
+    "uf": "RJ",
+    "km_ini": 0.0,
+    "km_fim": 12.5,
+    "tipo": "Contorno"
+   }
+  ],
+  "codigos": [],
+  "qualidade": "aproximado",
+  "nota": "BR-356 Muriaé (entr. BR-265/356) até São João da Barra, incluindo o contorno de Itaperuna. O SNV soma ~226 km contra 306,33 km declarados; o mapa da ficha (p. 149) mostra só Muriaé–São João da Barra, então a diferença deve vir de acessos/vias não federais (ex.: acesso ao Porto do Açu) contados no PDF. Ficha em revisão."
+ },
+ "rota-centro-sul-baiano": {
+  "ranges": [
+   {
+    "br": "101",
+    "uf": "BA",
+    "km_ini": 166.3,
+    "km_fim": 938.6
+   }
+  ],
+  "codigos": [],
+  "qualidade": null,
+  "nota": "BR-101 entr. BR-101/324 (Feira de Santana) até o início do trecho 'Concessão Federal' (ECO101) em Mucuri, km 938,6. A ficha diz 'div. BA/MG', mas a BR-101 termina na div. BA/ES; ir até a divisa (km 956,1) também ficaria dentro da tolerância. Ficha p. 151."
+ },
+ "rota-arco-norte": {
+  "ranges": [
+   {
+    "br": "163",
+    "uf": "MT",
+    "km_ini": 826.6,
+    "km_fim": 1121.7
+   },
+   {
+    "br": "163",
+    "uf": "PA",
+    "km_ini": 0.0,
+    "km_fim": 676.5
+   },
+   {
+    "br": "230",
+    "uf": "PA",
+    "km_ini": 1111.9,
+    "km_fim": 1144.9
+   }
+  ],
+  "codigos": [],
+  "qualidade": null,
+  "nota": "Contrato Via Brasil BR-163/230: BR-163 Sinop (início da travessia urbana, km 826,6)–div. MT/PA–Campo Verde e BR-230 Campo Verde–Miritituba ('Concessão Federal'). Acessos portuários de Santarenzinho/Itapacurá não incluídos. Ficha p. 109."
+ },
+ "rota-do-pequi": {
+  "ranges": [
+   {
+    "br": "060",
+    "uf": "DF",
+    "km_ini": 0.0,
+    "km_fim": 31.6
+   },
+   {
+    "br": "060",
+    "uf": "GO",
+    "km_ini": 0.0,
+    "km_fim": 139.4
+   },
+   {
+    "br": "153",
+    "uf": "GO",
+    "km_ini": 490.4,
+    "km_fim": 533.3
+   }
+  ],
+  "codigos": [],
+  "qualidade": null,
+  "nota": "Contrato Concebra: BR-060 Brasília–Goiânia (Viaduto Aldeia do Vale) e BR-153 Goiânia–Hidrolândia (entr. GO-219, km 533,3). Ficha p. 111."
+ },
+ "rota-agro-central": {
+  "ranges": [
+   {
+    "br": "364",
+    "uf": "RO",
+    "km_ini": 0.0,
+    "km_fim": 27.6
+   },
+   {
+    "br": "364",
+    "uf": "MT",
+    "km_ini": 1119.9,
+    "km_fim": 1353.2
+   },
+   {
+    "br": "174",
+    "uf": "MT",
+    "km_ini": 91.1,
+    "km_fim": 503.1
+   },
+   {
+    "br": "070",
+    "uf": "MT",
+    "km_ini": 531.6,
+    "km_fim": 743.4
+   }
+  ],
+  "codigos": [],
+  "qualidade": null,
+  "nota": "BR-364/RO Vilhena (div. MT/RO até entr. BR-364/435, início da concessão de RO), BR-364/MT div. MT/RO–Comodoro–Sapezal, BR-174/MT Comodoro–Cáceres e BR-070/MT Cáceres–Cuiabá (Trevo do Lagarto, Várzea Grande). Mapa p. 113."
+ },
+ "rota-2-de-julho": {
+  "ranges": [
+   {
+    "br": "324",
+    "uf": "BA",
+    "km_ini": 513.5,
+    "km_fim": 629.3
+   },
+   {
+    "br": "116",
+    "uf": "BA",
+    "km_ini": 423.7,
+    "km_fim": 945.3
+   }
+  ],
+  "codigos": [],
+  "qualidade": null,
+  "nota": "BR-324 Salvador–Feira de Santana e BR-116 Feira de Santana–div. BA/MG (antigo contrato ViaBahia); acessos não incluídos. Ficha p. 115."
+ }
+}

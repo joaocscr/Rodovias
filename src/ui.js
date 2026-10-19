@@ -28,7 +28,9 @@ const UI = (() => {
   const fmtKmNum = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const F = Model.FIELD, T = Model.T, I_FIS = 15, I_EST = 14, I_UL = 8;
 
+  const ANOS = [2023, 2024, 2025, 2026, 2027];
   let snv, index, filters, showAllUf = false, refreshTimer = null;
+  let conc, states, concFilters;
   let suggestions = [], activeSug = -1, activeSearch = null;
 
   const $ = sel => document.querySelector(sel);
@@ -70,15 +72,27 @@ const UI = (() => {
     input.addEventListener('focus', () => { if (input.value) updateSuggestions(input.value); });
   }
 
+  // Entidades do RoadShow (nome, concessionária, vencedor) vêm antes das sugestões do SNV.
+  function searchEntities(q) {
+    const nq = Model.normalize(q);
+    if (nq.length < 3 || !conc) return [];
+    return conc.entidades.map((e, i) => ({ e, i }))
+      .filter(({ e }) => Model.normalize(`${e.nome} ${e.nome_contrato || ''} ${e.grupo_vencedor || ''}`).includes(nq))
+      .slice(0, 6)
+      .map(({ e, i }) => ({ kind: 'entidade', label: e.nome, sub: `${concLabel(e.estado)} · ${ConcModel.brsUfs(e)}`, iEnt: i }));
+  }
+
+  function concLabel(k) { return (conc.estados.find(x => x.key === k) || {}).label || k; }
+
   function updateSuggestions(q) {
-    suggestions = Model.search(index, q);
+    suggestions = [...searchEntities(q), ...Model.search(index, q)].slice(0, 14);
     activeSug = suggestions.length ? 0 : -1;
     const ul = $('#suggestions');
     if (!q.trim()) { closeSuggestions(); return; }
     ul.innerHTML = suggestions.length
       ? suggestions.map((s, k) => `<li role="option" id="sug-${k}" data-k="${k}" aria-selected="${k === activeSug}">
           <span class="s-label">${esc(s.label)}</span>
-          <span class="s-sub">${s.kind === 'br' ? '<span class="s-kind">Rodovia inteira</span>' : esc(s.sub)}</span></li>`).join('')
+          <span class="s-sub">${s.kind === 'br' ? '<span class="s-kind">Rodovia inteira</span>' : s.kind === 'entidade' ? `<span class="s-kind">${esc(s.sub)}</span>` : esc(s.sub)}</span></li>`).join('')
       : '<li class="s-empty" aria-disabled="true">Nada encontrado</li>';
     ul.hidden = false;
     $('#search-input').setAttribute('aria-expanded', 'true');
@@ -117,6 +131,14 @@ const UI = (() => {
     if (!s) return;
     closeSuggestions();
     let ids;
+    if (s.kind === 'entidade') {
+      ids = conc.entFis[s.iEnt];
+      activeSearch = { label: s.label, ids, ent: conc.entidades[s.iEnt].id };
+      MapView.highlight(ids);
+      MapView.fitTo(ids);
+      renderActiveSearch();
+      return;
+    }
     if (s.kind === 'br') {
       const set = new Set();
       snv.trechos.forEach(t => { if (t[F.br] === s.iBr) set.add(t[I_FIS]); });
@@ -135,6 +157,7 @@ const UI = (() => {
     const el = $('#active-search');
     if (!activeSearch) { el.innerHTML = ''; return; }
     el.innerHTML = `<div class="active-search"><span>Em destaque: ${esc(activeSearch.label)}</span>
+      ${activeSearch.ent ? `<a class="link-btn" href="#ficha/${esc(activeSearch.ent)}">Ver ficha</a>` : ''}
       <button class="icon-btn" type="button" id="clear-search" aria-label="Limpar destaque">${ICON.close}</button></div>`;
     $('#clear-search').addEventListener('click', clearSearch);
   }
@@ -167,7 +190,15 @@ const UI = (() => {
     $('#filters-section').innerHTML = `
       <div class="filters-head"><h2 class="section-title">Filtros</h2>
         <button type="button" class="btn" id="clear-filters" disabled>Limpar filtros</button></div>
-      ${groupsHtml}`;
+      ${concGroupsHtml()}${groupsHtml}`;
+    $('#filters-section').addEventListener('change', e => {
+      const t = e.target;
+      if (!t.dataset.cfilter) return;
+      const set = concFilters[t.dataset.cfilter];
+      const v = t.dataset.cfilter === 'estado' ? t.value : Number(t.value);
+      if (t.checked) set.add(v); else set.delete(v);
+      scheduleRefresh();
+    });
 
     $('#filters-section').addEventListener('change', e => {
       const t = e.target;
@@ -185,19 +216,36 @@ const UI = (() => {
       scheduleRefresh();
     }));
     $('#filters-section').querySelectorAll('[data-finder]').forEach(inp => inp.addEventListener('input', () => {
-      const q = Model.normalize(inp.value).replace(/^br[\s-]*/, '');
+      const q = inp.dataset.finder === 'br' ? Model.normalize(inp.value).replace(/^br[\s-]*/, '') : Model.normalize(inp.value);
       inp.parentElement.querySelectorAll('.check').forEach(l => { l.hidden = q && !l.dataset.text.includes(q); });
     }));
     $('#clear-filters').addEventListener('click', () => {
       filters = Model.emptyFilters();
+      concFilters = ConcModel.emptyConcFilters();
       syncChecks();
       scheduleRefresh(0);
     });
   }
 
+  function concGroupsHtml() {
+    const check = (key, value, label, sw = '', text = label) => `<label class="check" data-text="${esc(Model.normalize(text))}"><input type="checkbox" data-cfilter="${key}" data-label="${esc(label)}" value="${esc(value)}">${sw}<span>${esc(label)}</span></label>`;
+    const group = (key, title, body, extra = '') => `<details class="fgroup" data-group="c-${key}">
+      <summary><span>${title}<span class="count" data-count="c-${key}" hidden></span></span>${ICON.chev}</summary>
+      <div class="fgroup__body">${extra}${body}</div></details>`;
+    const ents = conc.entidades.map((e, i) => ({ e, i })).sort((a, b) => a.e.nome.localeCompare(b.e.nome, 'pt-BR'));
+    return group('estado', 'Estado da concessão', `<div class="checks">${conc.estados.map(s => check('estado', s.key, s.label, concStyleSwatch(s.key, 24))).join('')}</div>`) +
+      group('ent', 'Projeto / contrato', `<div class="checks check-list">${ents.map(({ e, i }) => check('ent', i, e.nome, '', `${e.nome} ${e.nome_contrato || ''}`)).join('')}</div>`,
+        '<input class="mini-input" type="search" data-finder="ent" placeholder="Filtrar projetos" aria-label="Filtrar lista de projetos">') +
+      group('ano', 'Ano do programa', `<div class="checks">${ANOS.map(a => check('ano', a, String(a))).join('')}</div>`);
+  }
+
   function syncChecks() {
     document.querySelectorAll('input[data-filter]').forEach(inp => {
       inp.checked = filters[inp.dataset.filter].has(Number(inp.value));
+    });
+    document.querySelectorAll('input[data-cfilter]').forEach(inp => {
+      const k = inp.dataset.cfilter;
+      inp.checked = concFilters[k].has(k === 'estado' ? inp.value : Number(inp.value));
     });
     document.querySelectorAll('[data-shortcut]').forEach(b => {
       const ids = SIT_SHORTCUTS[Number(b.dataset.shortcut)][1].map(n => snv.dict.situacao.indexOf(n)).filter(i => i >= 0);
@@ -229,6 +277,18 @@ const UI = (() => {
     }).join('')}</ul>`;
   }
 
+  function concBars(list, total) {
+    if (!list.length) return '<p class="empty">Nenhum trecho na seleção.</p>';
+    return `<ul class="bars">${list.map(x => {
+      const pressed = concFilters.estado.has(x.key);
+      return `<li><button type="button" class="bar" data-cbar="${x.key}" aria-pressed="${pressed}" title="${pressed ? 'Remover' : 'Filtrar por'} ${esc(concLabel(x.key))}">
+        <span class="bar__label">${concStyleSwatch(x.key, 24)}<span>${esc(concLabel(x.key))}</span></span>
+        <span class="bar__value">${fmtKmNum.format(x.km)} km</span>
+        <span class="bar__track"><span class="bar__fill" style="width:${total > 0 ? (x.km / total * 100).toFixed(1) : 0}%"></span></span>
+      </button></li>`;
+    }).join('')}</ul>`;
+  }
+
   function renderStats(a) {
     const ufList = showAllUf ? a.porUf : a.porUf.slice(0, UF_TOP);
     const more = a.porUf.length > UF_TOP
@@ -239,11 +299,18 @@ const UI = (() => {
       <div class="kpi"><span class="kpi__value" id="kpi-km">${Model.fmtKm(a.km)}</span>
         <span class="kpi__sub" id="kpi-n">${fmtInt.format(a.n)} ${a.n === 1 ? 'trecho' : 'trechos'}</span></div>
       <p class="note">Extensão oficial do SNV. Trechos coincidentes entre BRs contados uma vez.</p>
+      <h3 class="section-title">Por estado da concessão</h3>${concBars(a.porEstado, a.km)}
       <h3 class="section-title">Por situação</h3>${bars(a.porSituacao, 'situacao')}
       <h3 class="section-title">Por administração</h3>${bars(a.porAdm, 'adm')}
       <h3 class="section-title">Por UF</h3>${bars(ufList, 'uf', 'bars--uf')}${more}`;
     $('#stats-section').querySelectorAll('[data-bar]').forEach(b =>
       b.addEventListener('click', () => toggleFilter(b.dataset.bar, Number(b.dataset.i))));
+    $('#stats-section').querySelectorAll('[data-cbar]').forEach(b => b.addEventListener('click', () => {
+      const k = b.dataset.cbar;
+      if (concFilters.estado.has(k)) concFilters.estado.delete(k); else concFilters.estado.add(k);
+      syncChecks();
+      scheduleRefresh(0);
+    }));
     const t = $('#toggle-uf');
     if (t) t.addEventListener('click', () => { showAllUf = !showAllUf; renderStats(a); });
   }
@@ -253,15 +320,25 @@ const UI = (() => {
     refreshTimer = setTimeout(refresh, delay);
   }
 
-  function refresh() {
+  function visibleMask() {
     const visible = Model.visibleFis(snv, filters);
+    if (concFilters.estado.size || concFilters.ent.size || concFilters.ano.size) {
+      for (let j = 0; j < visible.length; j++) if (visible[j] && !ConcModel.passes(conc, states, j, concFilters)) visible[j] = 0;
+    }
+    return visible;
+  }
+
+  function refresh() {
+    const visible = visibleMask();
     MapView.setVisible(visible);
-    renderStats(Model.aggregate(snv, filters, visible));
+    const a = Model.aggregate(snv, filters, visible);
+    a.porEstado = ConcModel.kmPorEstado(conc, states, visible, snv);
+    renderStats(a);
     let total = 0;
-    for (const g of GROUPS) {
-      const n = filters[g.key].size;
+    const counts = GROUPS.map(g => [g.key, filters[g.key].size]).concat(['estado', 'ent', 'ano'].map(k => ['c-' + k, concFilters[k].size]));
+    for (const [key, n] of counts) {
       total += n;
-      const c = document.querySelector(`[data-count="${g.key}"]`);
+      const c = document.querySelector(`[data-count="${key}"]`);
       c.hidden = n === 0;
       c.textContent = n;
     }
@@ -305,10 +382,23 @@ const UI = (() => {
         ${row('Administração', adm)}
         ${row('Unidade local DNIT', d.ul[main[I_UL]])}
         ${row('Coincide com estadual', main[I_EST])}
-      </dl>${coinc}`;
+      </dl>${concBlock(j)}${coinc}`;
     card.hidden = false;
     $('#card-close').addEventListener('click', closeCard);
     MapView.highlight([...(activeSearch ? activeSearch.ids : []), j]);
+  }
+
+  function concBlock(j) {
+    const ents = ConcModel.entitiesOfFis(conc, j);
+    const st = states[j];
+    const body = ents.length ? ents.map(i => {
+      const e = conc.entidades[i];
+      const chave = ConcModel.dataChave(e);
+      return `<div class="conc-item"><span class="conc-item__name">${concStyleSwatch(e.estado, 24)} ${esc(e.nome)}
+        <span class="conc-item__sub">${esc(concLabel(e.estado))}${chave ? ` · ${e.estado === 'vigente' ? 'assinatura' : 'leilão'} ${esc(ConcModel.fmtData(chave))}` : ''}</span></span>
+        <a class="btn" href="#ficha/${esc(e.id)}">Ver ficha</a></div>`;
+    }).join('') : `<div class="conc-item"><span class="conc-item__name">${concStyleSwatch(st, 24)} ${esc(concLabel(st))}</span></div>`;
+    return `<div class="card__conc"><h3 class="section-title">Concessão</h3>${body}</div>`;
   }
 
   // Fecha o cartão e volta ao realce da busca (ou a nenhum).
@@ -319,11 +409,20 @@ const UI = (() => {
 
   // ---------- Legenda ----------
   function renderLegend() {
-    $('#legend').innerHTML = `<h2 class="section-title">Legenda</h2>
-      ${LEGEND_ITEMS.map(([sit, label]) => `<div class="legend__row">${styleSwatch(sit)}<span>${label}</span></div>`).join('')}
-      <div class="legend__sep"></div>
-      <div class="legend__row">${haloSwatch()}<span>Concessão federal</span></div>
-      <div class="legend__src">Fonte: DNIT · SNV ${esc(snv.versao)}</div>`;
+    const mode = MapView.colorMode();
+    const items = mode === 'concessoes'
+      ? conc.estados.map(x => `<div class="legend__row">${concStyleSwatch(x.key)}<span>${esc(x.label)}</span></div>`).join('')
+      : LEGEND_ITEMS.map(([sit, label]) => `<div class="legend__row">${styleSwatch(sit)}<span>${label}</span></div>`).join('') +
+        `<div class="legend__sep"></div><div class="legend__row">${haloSwatch()}<span>Concessão federal</span></div>`;
+    $('#legend').innerHTML = `<div class="mode-switch" role="group" aria-label="Modo de cor do mapa">
+        <button type="button" data-mode="concessoes" aria-pressed="${mode === 'concessoes'}">Concessões</button>
+        <button type="button" data-mode="fisica" aria-pressed="${mode === 'fisica'}">Situação física</button></div>
+      <h2 class="section-title">Legenda</h2>${items}
+      <div class="legend__src">Fonte: DNIT · SNV ${esc(snv.versao)}${mode === 'concessoes' ? ` · RoadShow ${esc(conc.versaoRoadshow)}` : ''}</div>`;
+    $('#legend').querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => {
+      MapView.setColorMode(b.dataset.mode);
+      renderLegend();
+    }));
   }
 
   function initDrawer() {
@@ -334,8 +433,9 @@ const UI = (() => {
     });
   }
 
-  function init(data, idx) {
+  function init(data, idx, concData) {
     snv = data; index = idx; filters = Model.emptyFilters();
+    conc = concData; states = ConcModel.stateArray(conc, snv.fis.length); concFilters = ConcModel.emptyConcFilters();
     renderSearch();
     renderFilters();
     renderLegend();
@@ -347,5 +447,5 @@ const UI = (() => {
     refresh();
   }
 
-  return { init, refresh };
+  return { init, refresh, states: () => states };
 })();

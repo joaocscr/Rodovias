@@ -42,7 +42,7 @@ const Charts = (() => {
     data.forEach((d, i) => {
       const v = vals[i], x = L + i * bw + bw * 0.15, bh = T + ph - yOf(v);
       const fill = d.alt ? C.bright : C.deep, op = d.alt ? 0.45 : 1;
-      body += `<rect class="bar" x="${x.toFixed(1)}" y="${yOf(v).toFixed(1)}" width="${(bw * 0.7).toFixed(1)}" height="${Math.max(0, bh).toFixed(1)}" rx="2" fill="${fill}" fill-opacity="${op}">` +
+      body += `<rect class="cbar" x="${x.toFixed(1)}" y="${yOf(v).toFixed(1)}" width="${(bw * 0.7).toFixed(1)}" height="${Math.max(0, bh).toFixed(1)}" rx="2" fill="${fill}" fill-opacity="${op}">` +
         `<title>${esc(d.label)}: ${num(d.value) ? esc(fmt(d.value)) + esc(unit) : '—'}</title></rect>`;
       if (i % every === 0) body += `<text x="${(L + i * bw + bw / 2).toFixed(1)}" y="${h - B + 24}" text-anchor="middle" fill="${C.grey}">${esc(d.label)}</text>`;
     });
@@ -61,7 +61,7 @@ const Charts = (() => {
     rows.forEach((r, i) => {
       const v = num(r.value) ? r.value : 0, y = 4 + i * rh, bw = (v / max) * pw;
       body += `<text x="${L - 8}" y="${y + 21}" text-anchor="end" fill="${C.spacial}">${esc(r.label)}</text>` +
-        `<rect class="bar" x="${L}" y="${y + 8}" width="${bw.toFixed(1)}" height="16" rx="2" fill="${r.alt ? C.bright : C.deep}">` +
+        `<rect class="cbar" x="${L}" y="${y + 8}" width="${bw.toFixed(1)}" height="16" rx="2" fill="${r.alt ? C.bright : C.deep}">` +
         `<title>${esc(r.label)}: ${num(r.value) ? esc(fmt(r.value)) + esc(unit) : '—'}</title></rect>` +
         `<text x="${(L + bw + 8).toFixed(1)}" y="${y + 21}" fill="${C.grey}">${num(r.value) ? esc(fmt(r.value)) : '—'}</text>`;
     });
@@ -126,7 +126,7 @@ const Charts = (() => {
       d.parts.forEach((v, k) => {
         if (!num(v) || v <= 0) return;
         const y = yOf(acc + v), hh = yOf(acc) - y;
-        body += `<rect class="bar" x="${(L + i * bw + bw * 0.15).toFixed(1)}" y="${y.toFixed(1)}" width="${(bw * 0.7).toFixed(1)}" height="${hh.toFixed(1)}" fill="${colors[k % 3]}">` +
+        body += `<rect class="cbar" x="${(L + i * bw + bw * 0.15).toFixed(1)}" y="${y.toFixed(1)}" width="${(bw * 0.7).toFixed(1)}" height="${hh.toFixed(1)}" fill="${colors[k % 3]}">` +
           `<title>${esc(d.label)} · ${esc(names[k] || '')}: ${esc(fmt(v))}${esc(unit)}</title></rect>`;
         acc += v;
       });

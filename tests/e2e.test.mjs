@@ -134,6 +134,190 @@ test('cartão usa o registro da BR filtrada e não repete BR', async () => {
   await page.click('#clear-filters');
 });
 
+// ---------- v2: abas, concessões, ficha, comparador, mercado, regulatório ----------
+async function go(hash) {
+  await page.evaluate(h => { location.hash = h; }, hash);
+  await page.waitForTimeout(250);
+}
+
+test('v2: barra com 4 abas e Mapa ativa', async () => {
+  await go('#mapa');
+  assert.deepEqual(await page.$$eval('#tabs a', as => as.map(a => a.textContent)), ['Mapa', 'Projetos', 'Mercado', 'Regulatório']);
+  assert.equal(await page.textContent('#tabs a.is-active'), 'Mapa');
+});
+
+test('v2: voltar restaura a aba anterior', async () => {
+  await go('#mapa'); await go('#projetos');
+  assert.equal(await page.isVisible('#page-projetos'), true);
+  await page.goBack(); await page.waitForTimeout(250);
+  assert.equal(await page.isVisible('#map'), true);
+  assert.equal(await page.isVisible('#page-projetos'), false);
+});
+
+test('v2: hash inválido cai no mapa', async () => {
+  await go('#xyz');
+  assert.equal(await page.evaluate(() => location.hash), '#mapa');
+  await go('#ficha/nao-existe');
+  assert.equal(await page.evaluate(() => location.hash), '#mapa');
+  assert.equal(await page.isVisible('#ficha'), false);
+});
+
+test('v2: modo concessões é o padrão e a legenda lista os estados', async () => {
+  await go('#mapa');
+  assert.equal(await page.evaluate(() => MapView.colorMode()), 'concessoes');
+  assert.match(await page.textContent('#legend'), /Leilão agendado 2026/);
+  await page.click('[data-mode="fisica"]');
+  assert.equal(await page.evaluate(() => MapView.colorMode()), 'fisica');
+  assert.match(await page.textContent('#legend'), /Duplicada/);
+  await page.click('[data-mode="concessoes"]');
+});
+
+test('v2: filtro de estado Projeto 2027 bate com o modelo', async () => {
+  await go('#mapa');
+  await page.click('#clear-filters').catch(() => {});
+  const det = page.locator('details[data-group="c-estado"]');
+  if (!(await det.evaluate(d => d.open))) await det.locator('summary').click();
+  await page.locator('input[data-cfilter="estado"][value="projeto2027"]').check();
+  await page.waitForTimeout(150);
+  const expected = await page.evaluate(() => {
+    const states = UI.states(), cf = ConcModel.emptyConcFilters(); cf.estado.add('projeto2027');
+    const vis = Model.visibleFis(window.SNV, Model.emptyFilters());
+    for (let j = 0; j < vis.length; j++) if (!ConcModel.passes(window.CONC, states, j, cf)) vis[j] = 0;
+    return Model.fmtKm(Model.aggregate(window.SNV, Model.emptyFilters(), vis).km);
+  });
+  assert.notEqual(expected, '0,0 km');
+  assert.equal((await kpi()).trim(), expected);
+  await check('uf', 'AC');
+  await page.waitForTimeout(150);
+  assert.equal((await kpi()).trim(), '0,0 km');
+  assert.ok(!/NaN/.test(await page.textContent('#stats-section')));
+  await page.click('#clear-filters');
+});
+
+test('v2: busca por nome de projeto realça a entidade', async () => {
+  await go('#mapa');
+  await page.fill('#search-input', 'Rotas Gerais');
+  await page.waitForSelector('#suggestions li');
+  assert.match(await page.locator('#suggestions li').first().textContent(), /Rotas Gerais/);
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(150);
+  assert.ok(await page.evaluate(() => MapView.highlighted().length) > 0);
+  await page.click('#clear-search');
+});
+
+test('v2: trecho da Transbrasiliana lista contrato e otimização e leva à ficha', async () => {
+  await go('#mapa');
+  const j = await page.evaluate(() => {
+    const c = window.CONC, a = c.entidades.findIndex(e => e.id === 'transbrasiliana');
+    return c.entFis[a].find(f => (c.fisEnt[f] || []).length >= 2);
+  });
+  await page.evaluate(j => MapView.pick(j), j);
+  await page.waitForSelector('#card:not([hidden])');
+  assert.equal(await page.locator('#card .conc-item').count(), 2);
+  await page.locator('#card .conc-item a').first().click();
+  await page.waitForTimeout(250);
+  assert.match(await page.evaluate(() => location.hash), /^#ficha\//);
+  assert.equal(await page.isVisible('#ficha'), true);
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(150);
+  await page.keyboard.press('Escape');
+});
+
+test('v2: ficha da Rotas Gerais', async () => {
+  await go('#ficha/rotas-gerais');
+  const t = await page.textContent('#ficha');
+  for (const s of ['734,9 km', 'R$ 7,34 bi', '13,76%']) assert.ok(t.includes(s), s);
+  assert.match(t, /Praças a implantar\s*9/);
+  assert.ok(await page.locator('#ficha-capex rect.cbar').count() >= 5);
+});
+
+test('v2: ficha da Rota dos Sertões mostra data-base e valor dez/2024', async () => {
+  await go('#ficha/rota-dos-sertoes');
+  const t = await page.textContent('#ficha');
+  for (const s of ['R$ 4,13 bi', 'mar/2023', 'R$ 6,27 bi em dez/2024']) assert.ok(t.includes(s), s);
+});
+
+test('v2: aviso de divergência mostra páginas', async () => {
+  const id = await page.evaluate(() => window.CONC.entidades.find(e => (e.divergencias || []).length).id);
+  await go('#ficha/' + id);
+  await page.locator('.div-flag').first().click();
+  assert.match(await page.textContent('.popover'), /p\. \d+/);
+});
+
+test('v2: ficha de contrato antigo sem undefined/null/NaN', async () => {
+  const id = await page.evaluate(() => window.CONC.entidades.find(e => e.estado === 'vigente' && !e.ficha).id);
+  await go('#ficha/' + id);
+  const t = await page.textContent('#ficha');
+  assert.ok(!/undefined|null|NaN/.test(t), t.slice(0, 200));
+  assert.equal(await page.locator('#ficha .fblock h3 + :empty').count(), 0);
+});
+
+test('v2: ver no mapa a partir da ficha', async () => {
+  await go('#ficha/rotas-gerais');
+  await page.click('#ficha-map');
+  await page.waitForTimeout(300);
+  assert.equal(await page.evaluate(() => location.hash), '#mapa');
+  assert.ok(await page.evaluate(() => MapView.highlighted().length) > 0);
+  await page.evaluate(() => MapView.highlight(null));
+});
+
+test('v2: Esc fecha a ficha e volta ao hash anterior', async () => {
+  await go('#projetos'); await go('#ficha/rotas-gerais');
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(250);
+  assert.equal(await page.evaluate(() => location.hash), '#projetos');
+  assert.equal(await page.isVisible('#ficha'), false);
+});
+
+test('v2: comparador com 54 linhas, ordenação, filtro e totais', async () => {
+  await go('#projetos');
+  assert.equal(await page.locator('#proj-table tbody tr').count(), 54);
+  await page.click('[data-sort="capexKm"]');
+  let vals = await page.evaluate(() => Projetos.rowsShown().map(r => r.capexKm));
+  const nn = vals.filter(v => v != null);
+  assert.deepEqual(nn, [...nn].sort((a, b) => b - a));
+  assert.ok(vals.slice(nn.length).every(v => v == null));
+  await page.click('[data-sort="desagio"]');
+  vals = await page.evaluate(() => Projetos.rowsShown().map(r => r.desagio).filter(v => v != null));
+  assert.deepEqual(vals, [...vals].sort((a, b) => b - a));
+  await page.click('[data-f="estado"][data-v="projeto2027"]');
+  assert.equal(await page.locator('#proj-table tbody tr').count(), 11);
+  const ok = await page.evaluate(() => {
+    const t = ConcModel.totals(Projetos.rowsShown());
+    return document.getElementById('proj-total-capex').textContent === new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(t.capex);
+  });
+  assert.equal(ok, true);
+  await page.locator('#proj-table tbody tr').first().click();
+  await page.waitForTimeout(250);
+  assert.match(await page.evaluate(() => location.hash), /^#ficha\//);
+  await page.keyboard.press('Escape');
+  await page.click('[data-f="estado"][data-v="projeto2027"]');
+  assert.equal(await page.locator('#estudos-list li').count(), 27);
+});
+
+test('v2: aba Mercado tem gráficos com fonte e tooltip', async () => {
+  await go('#mercado');
+  assert.ok(await page.locator('#page-mercado svg.chart').count() >= 7);
+  const cards = await page.locator('#page-mercado .ccard').count();
+  assert.equal(await page.locator('#page-mercado .ccard .src', { hasText: 'Fonte:' }).count(), cards);
+  assert.match(await page.locator('#chart-leiloes rect.cbar title').first().textContent(), /1993: \d+ leilões/);
+});
+
+test('v2: aba Regulatório com índice, otimizações e estudos', async () => {
+  await go('#regulatorio');
+  assert.equal(await page.locator('.reg__toc a').count(), 8);
+  await page.locator('.reg__toc a', { hasText: 'Matriz de riscos' }).click();
+  await page.waitForTimeout(500);
+  const top = await page.evaluate(() => document.getElementById('reg-riscos').getBoundingClientRect().top);
+  assert.ok(top < 200, String(top));
+  assert.equal(await page.locator('#otimizacoes tbody tr').count(), 11);
+  await page.locator('[data-estudo]:not([disabled])').first().click();
+  await page.waitForTimeout(300);
+  assert.equal(await page.evaluate(() => location.hash), '#mapa');
+  assert.ok(await page.evaluate(() => MapView.highlighted().length) > 0);
+  await page.evaluate(() => MapView.highlight(null));
+});
+
 test('nenhuma requisição externa', () => assert.deepEqual(external, []));
 
 test('sem erros no console', () => assert.deepEqual(errors, []));
