@@ -1,0 +1,2092 @@
+{
+ "fontes": {
+  "leiloes_por_ano": [
+   7,
+   9
+  ],
+  "participantes": [
+   11,
+   13,
+   15,
+   97
+  ],
+  "concorrentes_desagio": [
+   23,
+   25,
+   27,
+   97
+  ],
+  "faixas_desagio": [
+   25,
+   27
+  ],
+  "desagio_por_n_concorrentes": 25,
+  "grupos": [
+   17,
+   19
+  ],
+  "gestao": 37,
+  "investimentos": [
+   41,
+   43,
+   47,
+   49
+  ],
+  "indicadores_40": [
+   51,
+   53,
+   55
+  ],
+  "diagnostico": 29,
+  "concorrencia_2023_26": 21,
+  "programa_por_ano": [
+   95,
+   101,
+   123,
+   125,
+   129
+  ]
+ },
+ "notas": {
+  "leiloes_por_ano": "Gráfico da p7 omite 1998–2006 (marcador '(...)' com valor 0); como a soma 1993–2022 dá 29 (= p9), esses anos foram registrados como 0. 2026 marcado como previsto (projeção ao fim de 2026; 3 leilões realizados até jul/2026 segundo p95/p97). p9: médias 1,0 (1993–2022), 7,14 (2023 até agora, 25 leilões) e 7,25 (2023–2026).",
+  "participantes": "Tabela pp.11–15 não informa o deságio do vencedor; para 2023–2026 'desagio_vencedor' vem da tabela da p97, antes de 2023 é null. Nomes mantidos como na fonte (inclusive grafias como 'Oinco', 'Oiicno'). Entradas idênticas ao vencedor (mesmo nome e deságio da p97) foram retiradas de 'outros' (Rota Agro, Rota Sertaneja, Via Liberdade, Fluminense, Fernão Dias, Rota Gerais, Rota dos Sertões, Régis 2026). Prováveis erros de cópia na fonte: 'EPR (Equipav) (8,30%)' repetido em Lote 1/2023, BR-040/MG/2024 e Rota Agro Norte/2025; 2022 repete a linha de 2021 ('Ecorodovias (10,6%)'); duplicatas em 2007 (AB Vias em Fluminense, CCR em Litoral Sul). Contagens divergem da p97 (ex.: BR-381/MG e Rota Agro Norte listam outro proponente, mas a p97 indica 1 participante; Régis 2026 lista 4 proponentes vs 3 na p97; Lote 5 lista 'Reune Rodovias Holding II' 23,83% como concorrente, mas p97 a dá como vencedora com 21,83%).",
+  "concorrentes_desagio": "Fonte principal p97 (nº de participantes e deságio). p23 (bolinhas) diverge em Rota da Celulose (5 vs 4) e Rota Agro (7 vs 5); adotada a p97, que bate com a distribuição da p25. Média calculada 12,29% (p25/p27: 12,36%), mediana 14,32% (p27: 14,32%). Maior deságio na p97 é 26,60% (Lote 3) contra 25,9% na p27.",
+  "faixas_desagio": "Faixas da p27. Pela p97 só há 1 leilão com 0,00% (Fluminense) e 4 com 0,05%; pela p97 as faixas seriam ≥18%: 10, 10–<18%: 6, >0–<10%: 8, 0%: 1 (a p27 dá 6 e 3, provavelmente contando 0,05%/0,08% como 0%). desagio_por_n_concorrentes vem da p25; as médias da p25 não batem com a p97 (recalculadas: 2 conc. 17,14%; 3 conc. 16,30%; 4 conc. 17,50%; 5 conc. 19,60% vs 17,65/18,47/17,30/19,70 na p25).",
+  "grupos": "p17 (2008–2026, 39 concessões, 19.195 km, R$ 269,3 bi capex, R$ 196,3 bi opex). p19 traz só contagens (inclui 'TPI - Triunfo' com 2 concessões, que na p17 está em 'Outros 6 grupos'); p21 não acrescenta grupos.",
+  "gestao": "p37, km da malha federal pavimentada; pct_concedido conforme rótulos do gráfico.",
+  "investimentos": "Série anual da p43 (rodovias federais): 'publico' = Públicas (OGU), 'privado' = Capex + Opex das concessões, R$ bi, base de preços não informada na p43 (p47 indica valores nominais). 2003–2009 sem barra pública (null); eixo '1995...' sem valor. 2023–2029 previstos. Soma privada 2003–2022 = 115,25 vs 'R$ 129 bi realizado 1995–2022'; soma 2023–2029 = 223,23 vs 'R$ 218 bi'. p41 dá público 2023–2026 = R$ 48,29 bi, enquanto a p43 soma 75,6. p39 (ABDIB, toda a infraestrutura) não foi usada.",
+  "indicadores_40": "pp.51–55. p125 traz 4.400 km de duplicação e 3.701 km de faixa adicional (vs 4.374/3.702 na p51). p53 diz R$ 400 bi, p125 R$ 440 bi.",
+  "diagnostico": "p29. 'valor' = 'R$ X bi de rodovias concedidas' (valor dos contratos); 'invest_executado_acum' = investimentos executados acumulados.",
+  "concorrencia_2023_26": "p21 (29 leilões previstos e realizados 2023–2026, igual à p123). Difere do total dos 25 leilões realizados da p97: 12.198 km, capex R$ 169,04 bi, opex R$ 113,6 bi.",
+  "programa_por_ano": "2023–2025 de p95/p123; 2026 previsto (7 leilões) de p101/p123, realizado até jul/2026 de p95; 2027 de p129 (p125 arredonda). Valores em R$ bi."
+ },
+ "leiloes_por_ano": [
+  {
+   "ano": 1993,
+   "n": 3,
+   "previsto": false
+  },
+  {
+   "ano": 1994,
+   "n": 2,
+   "previsto": false
+  },
+  {
+   "ano": 1995,
+   "n": 0,
+   "previsto": false
+  },
+  {
+   "ano": 1996,
+   "n": 0,
+   "previsto": false
+  },
+  {
+   "ano": 1997,
+   "n": 1,
+   "previsto": false
+  },
+  {
+   "ano": 1998,
+   "n": 0,
+   "previsto": false
+  },
+  {
+   "ano": 1999,
+   "n": 0,
+   "previsto": false
+  },
+  {
+   "ano": 2000,
+   "n": 0,
+   "previsto": false
+  },
+  {
+   "ano": 2001,
+   "n": 0,
+   "previsto": false
+  },
+  {
+   "ano": 2002,
+   "n": 0,
+   "previsto": false
+  },
+  {
+   "ano": 2003,
+   "n": 0,
+   "previsto": false
+  },
+  {
+   "ano": 2004,
+   "n": 0,
+   "previsto": false
+  },
+  {
+   "ano": 2005,
+   "n": 0,
+   "previsto": false
+  },
+  {
+   "ano": 2006,
+   "n": 0,
+   "previsto": false
+  },
+  {
+   "ano": 2007,
+   "n": 7,
+   "previsto": false
+  },
+  {
+   "ano": 2008,
+   "n": 0,
+   "previsto": false
+  },
+  {
+   "ano": 2009,
+   "n": 1,
+   "previsto": false
+  },
+  {
+   "ano": 2010,
+   "n": 0,
+   "previsto": false
+  },
+  {
+   "ano": 2011,
+   "n": 0,
+   "previsto": false
+  },
+  {
+   "ano": 2012,
+   "n": 1,
+   "previsto": false
+  },
+  {
+   "ano": 2013,
+   "n": 5,
+   "previsto": false
+  },
+  {
+   "ano": 2014,
+   "n": 1,
+   "previsto": false
+  },
+  {
+   "ano": 2015,
+   "n": 1,
+   "previsto": false
+  },
+  {
+   "ano": 2016,
+   "n": 0,
+   "previsto": false
+  },
+  {
+   "ano": 2017,
+   "n": 0,
+   "previsto": false
+  },
+  {
+   "ano": 2018,
+   "n": 1,
+   "previsto": false
+  },
+  {
+   "ano": 2019,
+   "n": 1,
+   "previsto": false
+  },
+  {
+   "ano": 2020,
+   "n": 1,
+   "previsto": false
+  },
+  {
+   "ano": 2021,
+   "n": 3,
+   "previsto": false
+  },
+  {
+   "ano": 2022,
+   "n": 1,
+   "previsto": false
+  },
+  {
+   "ano": 2023,
+   "n": 2,
+   "previsto": false
+  },
+  {
+   "ano": 2024,
+   "n": 7,
+   "previsto": false
+  },
+  {
+   "ano": 2025,
+   "n": 13,
+   "previsto": false
+  },
+  {
+   "ano": 2026,
+   "n": 7,
+   "previsto": true
+  },
+  {
+   "ano": 2027,
+   "n": 11,
+   "previsto": true
+  },
+  {
+   "ano": 2028,
+   "n": 9,
+   "previsto": true
+  },
+  {
+   "ano": 2029,
+   "n": 8,
+   "previsto": true
+  },
+  {
+   "ano": 2030,
+   "n": 8,
+   "previsto": true
+  }
+ ],
+ "participantes": [
+  {
+   "ano": 2007,
+   "lote": "Transbrasiliana",
+   "vencedor": "TPI – Triunfo Participações e Investimentos S.A. (antigo Consórcio BRVias)",
+   "desagio_vencedor": null,
+   "outros": [
+    {
+     "grupo": "Consórcio Acciona",
+     "desagio": 27.74
+    },
+    {
+     "grupo": "Consórcio Cegems",
+     "desagio": 26.98
+    },
+    {
+     "grupo": "Galvão-Alusa",
+     "desagio": 18.76
+    },
+    {
+     "grupo": "Consórcio Bertin Equipav",
+     "desagio": 15.16
+    },
+    {
+     "grupo": "Consórcio Elo",
+     "desagio": 14.69
+    },
+    {
+     "grupo": "Consórcio Isolux",
+     "desagio": 10.09
+    },
+    {
+     "grupo": "Consórcio Alpha-Federais",
+     "desagio": 8.0
+    },
+    {
+     "grupo": "TPI Triunfo Participações",
+     "desagio": 5.68
+    },
+    {
+     "grupo": "Consórcio Flora Brasil",
+     "desagio": 5.92
+    }
+   ]
+  },
+  {
+   "ano": 2007,
+   "lote": "Autopista Régis Bittencourt",
+   "vencedor": "Arteris (antiga OHL)",
+   "desagio_vencedor": null,
+   "outros": [
+    {
+     "grupo": "Consórcio BR Vias",
+     "desagio": 42.27
+    },
+    {
+     "grupo": "Consórcio Oicn",
+     "desagio": 30.8
+    },
+    {
+     "grupo": "Consórcio Cowan CBM",
+     "desagio": 30.05
+    },
+    {
+     "grupo": "TPI Triunfo Participações",
+     "desagio": 27.33
+    },
+    {
+     "grupo": "Galvão-Alusa",
+     "desagio": 26.59
+    },
+    {
+     "grupo": "Consórcio Bertin Equipav",
+     "desagio": 25.92
+    },
+    {
+     "grupo": "CCR",
+     "desagio": 20.52
+    },
+    {
+     "grupo": "Primav Ecorodovias",
+     "desagio": 20.33
+    },
+    {
+     "grupo": "Consórcio Isolux",
+     "desagio": 20.14
+    },
+    {
+     "grupo": "CRB Consórcio Rodovias Brasileiras",
+     "desagio": 16.01
+    },
+    {
+     "grupo": "Consórcio AB-Vias",
+     "desagio": 6.85
+    },
+    {
+     "grupo": "Consórcio Qualivias",
+     "desagio": 6.55
+    }
+   ]
+  },
+  {
+   "ano": 2007,
+   "lote": "Autopista Fluminense",
+   "vencedor": "Arteris (antiga OHL)",
+   "desagio_vencedor": null,
+   "outros": [
+    {
+     "grupo": "Consórcio Acciona",
+     "desagio": 29.0
+    },
+    {
+     "grupo": "Consórcio AB Vias",
+     "desagio": 25.99
+    },
+    {
+     "grupo": "Consórcio Qualivias",
+     "desagio": 15.53
+    },
+    {
+     "grupo": "Consórcio AB Vias",
+     "desagio": 25.99
+    },
+    {
+     "grupo": "Consórcio Bertin Equipav",
+     "desagio": 15.08
+    },
+    {
+     "grupo": "Consórcio Isolux",
+     "desagio": 3.39
+    },
+    {
+     "grupo": "TPI Triunfo Participações",
+     "desagio": 17.59
+    },
+    {
+     "grupo": "Consórcio Ivaí",
+     "desagio": 0.0
+    }
+   ]
+  },
+  {
+   "ano": 2007,
+   "lote": "Autopista Litoral Sul",
+   "vencedor": "Arteris (antiga OHL)",
+   "desagio_vencedor": null,
+   "outros": [
+    {
+     "grupo": "Consórcio BRVias",
+     "desagio": 47.34
+    },
+    {
+     "grupo": "Consórcio PR/SC",
+     "desagio": 41.53
+    },
+    {
+     "grupo": "Consórcio Cowan CBM",
+     "desagio": 29.26
+    },
+    {
+     "grupo": "Consórcio Bertin Equipav",
+     "desagio": 34.74
+    },
+    {
+     "grupo": "Copel",
+     "desagio": 29.19
+    },
+    {
+     "grupo": "Oinco",
+     "desagio": 29.04
+    },
+    {
+     "grupo": "CCR",
+     "desagio": 14.05
+    },
+    {
+     "grupo": "Consórcio Rodovias Brasileiras",
+     "desagio": 15.03
+    },
+    {
+     "grupo": "Consórcio Coparco",
+     "desagio": 21.93
+    },
+    {
+     "grupo": "Bolognesi",
+     "desagio": 22.04
+    },
+    {
+     "grupo": "Primav Ecorodovias",
+     "desagio": 11.07
+    },
+    {
+     "grupo": "Consórcio Alpha-Federais",
+     "desagio": 7.98
+    },
+    {
+     "grupo": "Consórcio AB-Vias",
+     "desagio": 5.48
+    },
+    {
+     "grupo": "Galvão-Alusa",
+     "desagio": 28.43
+    },
+    {
+     "grupo": "CCR",
+     "desagio": 14.05
+    }
+   ]
+  },
+  {
+   "ano": 2007,
+   "lote": "Autopista Planalto Sul",
+   "vencedor": "Arteris (antiga OHL)",
+   "desagio_vencedor": null,
+   "outros": [
+    {
+     "grupo": "TPI Triunfo Participações",
+     "desagio": 29.15
+    },
+    {
+     "grupo": "Consórcio Isolux",
+     "desagio": 25.01
+    },
+    {
+     "grupo": "Consórcio Elo",
+     "desagio": 35.19
+    },
+    {
+     "grupo": "Consórcio Acciona",
+     "desagio": 27.0
+    },
+    {
+     "grupo": "Consórcio Rodovias Brasileiras",
+     "desagio": 26.02
+    },
+    {
+     "grupo": "Consórcio Via Nova",
+     "desagio": 18.72
+    },
+    {
+     "grupo": "Consórcio J. Malucelli",
+     "desagio": 17.0
+    },
+    {
+     "grupo": "Consórcio Qualivias",
+     "desagio": 12.05
+    },
+    {
+     "grupo": "Consórcio Bertin Equipav",
+     "desagio": 11.7
+    },
+    {
+     "grupo": "TPI Triunfo Participações",
+     "desagio": 10.43
+    },
+    {
+     "grupo": "Consórcio Coparco",
+     "desagio": 10.14
+    }
+   ]
+  },
+  {
+   "ano": 2007,
+   "lote": "Autopista Fernão Dias",
+   "vencedor": "Arteris (antiga OHL)",
+   "desagio_vencedor": null,
+   "outros": [
+    {
+     "grupo": "Consórcio BRVias",
+     "desagio": 60.12
+    },
+    {
+     "grupo": "Consórcio Acciona",
+     "desagio": 53.13
+    },
+    {
+     "grupo": "Oiicno",
+     "desagio": 42.16
+    },
+    {
+     "grupo": "Consórcio Flora Brasil Torc",
+     "desagio": 37.89
+    },
+    {
+     "grupo": "Consórcio Bertin Equipav",
+     "desagio": 34.29
+    },
+    {
+     "grupo": "Consórcio Qualivias",
+     "desagio": 24.2
+    },
+    {
+     "grupo": "CCR",
+     "desagio": 22.01
+    },
+    {
+     "grupo": "TPI Triunfo Participações",
+     "desagio": 21.94
+    },
+    {
+     "grupo": "Consórcio Isolux",
+     "desagio": 20.0
+    },
+    {
+     "grupo": "Consórcio Rodovias Brasil",
+     "desagio": 17.23
+    },
+    {
+     "grupo": "Consórcio Cegems",
+     "desagio": 17.12
+    },
+    {
+     "grupo": "Consórcio Cowan CBM",
+     "desagio": 16.12
+    },
+    {
+     "grupo": "Consórcio AB-Vias",
+     "desagio": 13.0
+    },
+    {
+     "grupo": "Consórcio Rodovias Brasileiras",
+     "desagio": 3.01
+    }
+   ]
+  },
+  {
+   "ano": 2007,
+   "lote": "Rodovia do Aço",
+   "vencedor": "K-Infra (antigo Consórcio Acciona)",
+   "desagio_vencedor": null,
+   "outros": [
+    {
+     "grupo": "Consórcio Bertin Equipav",
+     "desagio": 4.6
+    },
+    {
+     "grupo": "TPI Triunfo Participações e Investimentos",
+     "desagio": 2.0
+    }
+   ]
+  },
+  {
+   "ano": 2009,
+   "lote": "Via Bahia",
+   "vencedor": "Consórcio RodoBahia",
+   "desagio_vencedor": null,
+   "outros": [
+    {
+     "grupo": "Consórcio Cia Brasileira de Rodovias",
+     "desagio": 2.52
+    }
+   ]
+  },
+  {
+   "ano": 2012,
+   "lote": "ECO101",
+   "vencedor": "Ecorodovias e SBS Engenharia e Construções",
+   "desagio_vencedor": null,
+   "outros": [
+    {
+     "grupo": "Consórcio Rodovia Capixaba",
+     "desagio": 42.08
+    },
+    {
+     "grupo": "TPI Triunfo Participações",
+     "desagio": 36.68
+    },
+    {
+     "grupo": "Consórcio Via Espírito Santo BR-101",
+     "desagio": null
+    },
+    {
+     "grupo": "Consórcio Odebrecht Transport - Invepar",
+     "desagio": 28.1
+    },
+    {
+     "grupo": "Consórcio Integração Sudeste",
+     "desagio": 17.31
+    },
+    {
+     "grupo": "Obrascon Huarte Lain Brasil S.A.",
+     "desagio": 15.82
+    },
+    {
+     "grupo": "Consórcio Itaúna",
+     "desagio": 10.24
+    }
+   ]
+  },
+  {
+   "ano": 2013,
+   "lote": "ECO050",
+   "vencedor": "Ecorodovias",
+   "desagio_vencedor": null,
+   "outros": [
+    {
+     "grupo": "Triunfo Participações e Investimentos S.A.",
+     "desagio": 36.98
+    },
+    {
+     "grupo": "Consórcio Verdemar",
+     "desagio": 35.64
+    },
+    {
+     "grupo": "Consórcio Rodovia do Sertão",
+     "desagio": 35.54
+    },
+    {
+     "grupo": "Construtora Queiroz Galvão S.A.",
+     "desagio": 34.57
+    },
+    {
+     "grupo": "Consórcio Odebrecht Transport-Invepar",
+     "desagio": 23.78
+    },
+    {
+     "grupo": "Companhia de Participações em Concessões",
+     "desagio": 13.59
+    },
+    {
+     "grupo": "Arteris S.A.",
+     "desagio": 5.09
+    }
+   ]
+  },
+  {
+   "ano": 2013,
+   "lote": "CONCEBRA",
+   "vencedor": "Triunfo Participações e Investimentos - TPI",
+   "desagio_vencedor": null,
+   "outros": [
+    {
+     "grupo": "Invepar",
+     "desagio": 42.13
+    },
+    {
+     "grupo": "Consórcio Via Capital",
+     "desagio": 41.19
+    },
+    {
+     "grupo": "Consórcio Rodovias Federais 2013",
+     "desagio": 37.99
+    },
+    {
+     "grupo": "Companhia de Participações em Concessões - CPC",
+     "desagio": 21.41
+    }
+   ]
+  },
+  {
+   "ano": 2013,
+   "lote": "MS Via",
+   "vencedor": "Companhia de Participações em Concessões - CPC",
+   "desagio_vencedor": null,
+   "outros": [
+    {
+     "grupo": "Consórcio Rota do Futuro",
+     "desagio": 44.17
+    },
+    {
+     "grupo": "Consórcio Queiroz Galvão Infraestrutura",
+     "desagio": 41.11
+    },
+    {
+     "grupo": "Invepar",
+     "desagio": 31.0
+    },
+    {
+     "grupo": "Odebrecht Transport S/A",
+     "desagio": 8.5
+    },
+    {
+     "grupo": "Triunfo Participações e Investimentos S/A",
+     "desagio": 2.99
+    }
+   ]
+  },
+  {
+   "ano": 2013,
+   "lote": "Via 040",
+   "vencedor": "Invepar",
+   "desagio_vencedor": null,
+   "outros": [
+    {
+     "grupo": "Consórcio Via Capital",
+     "desagio": 44.63
+    },
+    {
+     "grupo": "Contern Construções e Comércio Ltda",
+     "desagio": 42.9
+    },
+    {
+     "grupo": "Consórcio Integração",
+     "desagio": 29.29
+    },
+    {
+     "grupo": "Consórcio Caminho Novo",
+     "desagio": 23.99
+    },
+    {
+     "grupo": "Companhia de Participações em Concessões - CCR",
+     "desagio": 15.22
+    },
+    {
+     "grupo": "TPI Triunfo Participações e Investimentos S/A",
+     "desagio": 9.98
+    },
+    {
+     "grupo": "Consórcio Queiroz Galvão Infraestrutura",
+     "desagio": 4.99
+    }
+   ]
+  },
+  {
+   "ano": 2013,
+   "lote": "Rota do Oeste",
+   "vencedor": "Odebrecht Transport",
+   "desagio_vencedor": null,
+   "outros": [
+    {
+     "grupo": "TPI Triunfo Participações e Investimentos S/A",
+     "desagio": 46.0
+    },
+    {
+     "grupo": "Invepar",
+     "desagio": 43.09
+    },
+    {
+     "grupo": "Companhia de Participações em Concessões - CCR",
+     "desagio": 35.54
+    },
+    {
+     "grupo": "Consórcio Integração",
+     "desagio": 31.29
+    },
+    {
+     "grupo": "Consórcio Rota do Futuro",
+     "desagio": 27.69
+    },
+    {
+     "grupo": "Galvão Engenharia S/A",
+     "desagio": 3.0
+    }
+   ]
+  },
+  {
+   "ano": 2015,
+   "lote": "EcoPonte",
+   "vencedor": "Ecorodovias Infraestrutura e Logística S/A",
+   "desagio_vencedor": null,
+   "outros": [
+    {
+     "grupo": "Consórcio Nova Guanabara",
+     "desagio": 35.23
+    },
+    {
+     "grupo": "Triunfo Participações e Investimentos - TPI",
+     "desagio": 25.38
+    }
+   ]
+  },
+  {
+   "ano": 2018,
+   "lote": "BR-101/290/386/448/RS",
+   "vencedor": "CCR S.A.",
+   "desagio_vencedor": null,
+   "outros": [
+    {
+     "grupo": "Consórcio Integrasul",
+     "desagio": 27.2
+    },
+    {
+     "grupo": "Eco Rodovias",
+     "desagio": 37.02
+    },
+    {
+     "grupo": "Sacyr",
+     "desagio": 27.43
+    },
+    {
+     "grupo": "Infraestrutura Brasil Holding II S.A.",
+     "desagio": 38.73
+    }
+   ]
+  },
+  {
+   "ano": 2019,
+   "lote": "BR-364/365/MG/GO",
+   "vencedor": "Ecorodovias",
+   "desagio_vencedor": null,
+   "outros": [
+    {
+     "grupo": "Silva & Bertoli Empreendimentos",
+     "desagio": 18.0
+    },
+    {
+     "grupo": "Consórcio Way (construtoras da antiga MGO e GLP)",
+     "desagio": 17.0
+    }
+   ]
+  },
+  {
+   "ano": 2020,
+   "lote": "BR-101/SC",
+   "vencedor": "CCR S.A.",
+   "desagio_vencedor": null,
+   "outros": [
+    {
+     "grupo": "Ecorodovias",
+     "desagio": 51.63
+    },
+    {
+     "grupo": "Consórcio Way",
+     "desagio": 16.0
+    }
+   ]
+  },
+  {
+   "ano": 2021,
+   "lote": "BR-101/116/SP/RJ",
+   "vencedor": "CCR S.A.",
+   "desagio_vencedor": null,
+   "outros": [
+    {
+     "grupo": "Ecorodovias",
+     "desagio": 10.6
+    }
+   ]
+  },
+  {
+   "ano": 2021,
+   "lote": "BR-163/230/MT/PA",
+   "vencedor": "Consórcio Via Brasil BR-163 (Conasa Infraestrutura S/A, Zeta Infraestrutura S.A., Construtora Rocha Cavalcante Ltda., Engenharia de Materiais Ltda. e M4 Investimentos Ltda.)",
+   "desagio_vencedor": null,
+   "outros": []
+  },
+  {
+   "ano": 2021,
+   "lote": "BR-153/080/414/GO/TO",
+   "vencedor": "Ecorodovias",
+   "desagio_vencedor": null,
+   "outros": [
+    {
+     "grupo": "CCR",
+     "desagio": 16.25
+    }
+   ]
+  },
+  {
+   "ano": 2022,
+   "lote": "BR-116/493/465/RJ/MG",
+   "vencedor": "Ecorodovias",
+   "desagio_vencedor": null,
+   "outros": [
+    {
+     "grupo": "Ecorodovias",
+     "desagio": 10.6
+    }
+   ]
+  },
+  {
+   "ano": 2023,
+   "lote": "Lote 1 - BR-277/373/376/476/PR e PR-418/423/427",
+   "vencedor": "Pátria",
+   "desagio_vencedor": 18.25,
+   "outros": [
+    {
+     "grupo": "EPR (Equipav)",
+     "desagio": 8.3
+    }
+   ]
+  },
+  {
+   "ano": 2023,
+   "lote": "Lote 2 - BR-153/277/369/PR e PR-092/151/239/407/408/411/508/804/855",
+   "vencedor": "EPR",
+   "desagio_vencedor": 0.08,
+   "outros": []
+  },
+  {
+   "ano": 2024,
+   "lote": "BR-040/MG",
+   "vencedor": "EPR",
+   "desagio_vencedor": 11.21,
+   "outros": [
+    {
+     "grupo": "EPR (Equipav)",
+     "desagio": 8.3
+    }
+   ]
+  },
+  {
+   "ano": 2024,
+   "lote": "BR-381/MG",
+   "vencedor": "4UM Investimentos",
+   "desagio_vencedor": 0.94,
+   "outros": [
+    {
+     "grupo": "Consórcio Opportunity Dinâmico FIP Multiestratégia Investimentos no Exterior",
+     "desagio": 0.1
+    }
+   ]
+  },
+  {
+   "ano": 2024,
+   "lote": "BR-040/GO/MG",
+   "vencedor": "Vinci",
+   "desagio_vencedor": 14.32,
+   "outros": [
+    {
+     "grupo": "Consórcio Nova BR-040",
+     "desagio": 9.09
+    },
+    {
+     "grupo": "BTG Pactual Infraestrutura",
+     "desagio": 7.5
+    },
+    {
+     "grupo": "CCR S.A.",
+     "desagio": 1.75
+    }
+   ]
+  },
+  {
+   "ano": 2024,
+   "lote": "BR-262/MG",
+   "vencedor": "Way Concessões",
+   "desagio_vencedor": 15.3,
+   "outros": [
+    {
+     "grupo": "BTG Pactual Infraestrutura",
+     "desagio": 15.2
+    }
+   ]
+  },
+  {
+   "ano": 2024,
+   "lote": "Lote 3 - BR-369/373/376/PR e PR-090/170/323/445",
+   "vencedor": "Motiva",
+   "desagio_vencedor": 26.6,
+   "outros": [
+    {
+     "grupo": "Consórcio Infraestrutura PR (Necton Investimentos)",
+     "desagio": 25.8
+    },
+    {
+     "grupo": "INFRA BR V Missouri Holding S.A. (Terra Investimentos)",
+     "desagio": 25.2
+    }
+   ]
+  },
+  {
+   "ano": 2024,
+   "lote": "CN 1 - BR-060/452/GO",
+   "vencedor": "Aviva Fundo de Investimento",
+   "desagio_vencedor": 18.07,
+   "outros": [
+    {
+     "grupo": "BTG Pactual Infraestrutura III - Itaú",
+     "desagio": 17.97
+    },
+    {
+     "grupo": "Consórcio Rota Cerrado - Guide",
+     "desagio": 10.88
+    },
+    {
+     "grupo": "Consórcio Infraestrutura GO",
+     "desagio": 0.9
+    }
+   ]
+  },
+  {
+   "ano": 2024,
+   "lote": "Lote 6 - BR-163/277/PR e PR-158/180/182/280/483",
+   "vencedor": "EPR",
+   "desagio_vencedor": 0.08,
+   "outros": []
+  },
+  {
+   "ano": 2025,
+   "lote": "BR-364/RO - Rota Agro Norte",
+   "vencedor": "4UM Investimentos",
+   "desagio_vencedor": 0.05,
+   "outros": [
+    {
+     "grupo": "EPR (Equipav)",
+     "desagio": 8.3
+    }
+   ]
+  },
+  {
+   "ano": 2025,
+   "lote": "BR-040/495/RJ/MG",
+   "vencedor": "Construcap; Copasa; Ohla",
+   "desagio_vencedor": 14.0,
+   "outros": [
+    {
+     "grupo": "Sacyr",
+     "desagio": 1.0
+    },
+    {
+     "grupo": "EPR",
+     "desagio": 3.0
+    }
+   ]
+  },
+  {
+   "ano": 2025,
+   "lote": "BR-163/MS - MSVIA Otimização",
+   "vencedor": "Motiva",
+   "desagio_vencedor": 0.05,
+   "outros": []
+  },
+  {
+   "ano": 2025,
+   "lote": "BR-262/267/MS e MS-040/338/395 - Rota da Celulose",
+   "vencedor": "XP Infra V Fundo de Investimento",
+   "desagio_vencedor": 9.0,
+   "outros": [
+    {
+     "grupo": "Fundos de investimentos BTG",
+     "desagio": null
+    },
+    {
+     "grupo": "XP e um consórcio formado por Kinea e Way",
+     "desagio": null
+    }
+   ]
+  },
+  {
+   "ano": 2025,
+   "lote": "BR-101/ES/BA Otimização ECO101",
+   "vencedor": "Ecorodovias",
+   "desagio_vencedor": 0.05,
+   "outros": []
+  },
+  {
+   "ano": 2025,
+   "lote": "Ponte Internacional São Borja - São Tomé",
+   "vencedor": "CS Infra S.A.",
+   "desagio_vencedor": 0.38,
+   "outros": [
+    {
+     "grupo": "PLUS BYTE SRL (desclassificada)",
+     "desagio": 9.43
+    },
+    {
+     "grupo": "Ponta Negra (não admitida)",
+     "desagio": null
+    }
+   ]
+  },
+  {
+   "ano": 2025,
+   "lote": "Rota Agro BR-060/364/GO/MT",
+   "vencedor": "Way Concessões",
+   "desagio_vencedor": 19.6,
+   "outros": [
+    {
+     "grupo": "EPR Participações S.A.",
+     "desagio": null
+    },
+    {
+     "grupo": "Consórcio Rota do Cerrado",
+     "desagio": null
+    },
+    {
+     "grupo": "V.F Gomes Participações Ltda",
+     "desagio": null
+    }
+   ]
+  },
+  {
+   "ano": 2025,
+   "lote": "Rodovias Integradas do Paraná - Lote 4",
+   "vencedor": "EPR",
+   "desagio_vencedor": 21.3,
+   "outros": [
+    {
+     "grupo": "Consórcio Infraestrutura PR",
+     "desagio": 18.52
+    },
+    {
+     "grupo": "Mota-Engil Latam Portugal, S.A.",
+     "desagio": 6.23
+    },
+    {
+     "grupo": "Motiva Infraestrutura de Mobilidade S.A.",
+     "desagio": 9.14
+    },
+    {
+     "grupo": "Reúne Rodovias Holding S.A.",
+     "desagio": 21.2
+    }
+   ]
+  },
+  {
+   "ano": 2025,
+   "lote": "Rodovias Integradas do Paraná - Lote 5",
+   "vencedor": "Pátria",
+   "desagio_vencedor": 21.83,
+   "outros": [
+    {
+     "grupo": "Reune Rodovias Holding II S.A.",
+     "desagio": 23.83
+    },
+    {
+     "grupo": "Way Concessões S.A.",
+     "desagio": 16.7
+    }
+   ]
+  },
+  {
+   "ano": 2025,
+   "lote": "Rota Sertaneja",
+   "vencedor": "Way Concessões",
+   "desagio_vencedor": 24.8,
+   "outros": [
+    {
+     "grupo": "Consórcio Rota do Cerrado",
+     "desagio": 20.36
+    },
+    {
+     "grupo": "Consórcio Caminho do Cerrado",
+     "desagio": 14.0
+    },
+    {
+     "grupo": "Vinci Highways do Brasil - Participações S.A.",
+     "desagio": 0.11
+    }
+   ]
+  },
+  {
+   "ano": 2025,
+   "lote": "Via Liberdade - BR-356/MG, MG-262/329",
+   "vencedor": "Construtora Metropolitana S.A.",
+   "desagio_vencedor": 13.2,
+   "outros": [
+    {
+     "grupo": "Houer Consultoria e Concessões Ltda",
+     "desagio": 0.02
+    }
+   ]
+  },
+  {
+   "ano": 2025,
+   "lote": "BR-101/RJ - Otimização Autopista Fluminense",
+   "vencedor": "Arteris",
+   "desagio_vencedor": 0.0,
+   "outros": []
+  },
+  {
+   "ano": 2025,
+   "lote": "Fernão Dias - BR-381/MG - Otimização",
+   "vencedor": "Motiva",
+   "desagio_vencedor": 17.05,
+   "outros": [
+    {
+     "grupo": "Arteris S.A.",
+     "desagio": 0.0
+    },
+    {
+     "grupo": "Infraestrutura MG",
+     "desagio": 11.25
+    }
+   ]
+  },
+  {
+   "ano": 2026,
+   "lote": "Rota Gerais - BR-116/251/MG",
+   "vencedor": "Ecorodovias",
+   "desagio_vencedor": 19.0,
+   "outros": [
+    {
+     "grupo": "Monte Rodovias",
+     "desagio": 0.01
+    }
+   ]
+  },
+  {
+   "ano": 2026,
+   "lote": "BR-116/324/BA/PE - Rota dos Sertões",
+   "vencedor": "Neo Invest Latam",
+   "desagio_vencedor": 19.6,
+   "outros": [
+    {
+     "grupo": "Consórcio Atlas Rodovias",
+     "desagio": 19.5
+    }
+   ]
+  },
+  {
+   "ano": 2026,
+   "lote": "BR-116/PR/SP - Otimização Régis Bittencourt",
+   "vencedor": "EPR",
+   "desagio_vencedor": 22.53,
+   "outros": [
+    {
+     "grupo": "Arteris S.A.",
+     "desagio": 0.01
+    },
+    {
+     "grupo": "Motiva Infraestrutura de Mobilidade S.A.",
+     "desagio": 12.1
+    },
+    {
+     "grupo": "Consórcio Via dos Sertões",
+     "desagio": 13.1
+    }
+   ]
+  }
+ ],
+ "concorrentes_desagio": [
+  {
+   "leilao": "Rodovias Integradas do Paraná - Lote 1",
+   "ano": 2023,
+   "n": 2,
+   "desagio": 18.25
+  },
+  {
+   "leilao": "Rodovias Integradas do Paraná - Lote 2",
+   "ano": 2023,
+   "n": 1,
+   "desagio": 0.08
+  },
+  {
+   "leilao": "Belo Horizonte - Juiz de Fora",
+   "ano": 2024,
+   "n": 3,
+   "desagio": 11.21
+  },
+  {
+   "leilao": "Governador Valadares - Belo Horizonte",
+   "ano": 2024,
+   "n": 1,
+   "desagio": 0.94
+  },
+  {
+   "leilao": "Rota dos Cristais",
+   "ano": 2024,
+   "n": 4,
+   "desagio": 14.32
+  },
+  {
+   "leilao": "Rota Zebu",
+   "ano": 2024,
+   "n": 2,
+   "desagio": 15.3
+  },
+  {
+   "leilao": "Rodovias Integradas do Paraná - Lote 3",
+   "ano": 2024,
+   "n": 3,
+   "desagio": 26.6
+  },
+  {
+   "leilao": "Rota Verde",
+   "ano": 2024,
+   "n": 4,
+   "desagio": 18.07
+  },
+  {
+   "leilao": "Rodovias Integradas do Paraná - Lote 6",
+   "ano": 2024,
+   "n": 1,
+   "desagio": 0.08
+  },
+  {
+   "leilao": "Rota Agro Norte",
+   "ano": 2025,
+   "n": 1,
+   "desagio": 0.05
+  },
+  {
+   "leilao": "Juiz de Fora/MG - Rio de Janeiro/RJ",
+   "ano": 2025,
+   "n": 3,
+   "desagio": 14.0
+  },
+  {
+   "leilao": "Rota da Celulose (delegação a MS)",
+   "ano": 2025,
+   "n": 4,
+   "desagio": 9.0
+  },
+  {
+   "leilao": "Otimização Motiva Pantanal",
+   "ano": 2025,
+   "n": 1,
+   "desagio": 0.05
+  },
+  {
+   "leilao": "Otimização Ecovias Capixaba",
+   "ano": 2025,
+   "n": 1,
+   "desagio": 0.05
+  },
+  {
+   "leilao": "Ponte Binacional São Borja/BRA a Santo Tomé/ARG",
+   "ano": 2025,
+   "n": 3,
+   "desagio": 0.38
+  },
+  {
+   "leilao": "Rota Agro",
+   "ano": 2025,
+   "n": 5,
+   "desagio": 19.6
+  },
+  {
+   "leilao": "Rodovias Integradas do Paraná - Lote 4",
+   "ano": 2025,
+   "n": 4,
+   "desagio": 21.3
+  },
+  {
+   "leilao": "Rodovias Integradas do Paraná - Lote 5",
+   "ano": 2025,
+   "n": 2,
+   "desagio": 21.83
+  },
+  {
+   "leilao": "Rota Sertaneja",
+   "ano": 2025,
+   "n": 4,
+   "desagio": 24.8
+  },
+  {
+   "leilao": "Via Liberdade (delegação a MG)",
+   "ano": 2025,
+   "n": 2,
+   "desagio": 13.2
+  },
+  {
+   "leilao": "Otimização Autopista Fluminense",
+   "ano": 2025,
+   "n": 1,
+   "desagio": 0.0
+  },
+  {
+   "leilao": "Otimização Autopista Fernão Dias",
+   "ano": 2025,
+   "n": 3,
+   "desagio": 17.05
+  },
+  {
+   "leilao": "Rota Gerais",
+   "ano": 2026,
+   "n": 3,
+   "desagio": 19.0
+  },
+  {
+   "leilao": "Rota dos Sertões",
+   "ano": 2026,
+   "n": 3,
+   "desagio": 19.6
+  },
+  {
+   "leilao": "Otimização Autopista Régis Bittencourt",
+   "ano": 2026,
+   "n": 3,
+   "desagio": 22.53
+  }
+ ],
+ "faixas_desagio": [
+  {
+   "faixa": "≥18%",
+   "n": 10
+  },
+  {
+   "faixa": "10% a <18%",
+   "n": 6
+  },
+  {
+   "faixa": ">0% e <10%",
+   "n": 6
+  },
+  {
+   "faixa": "0%",
+   "n": 3
+  }
+ ],
+ "desagio_por_n_concorrentes": [
+  {
+   "concorrentes": 5,
+   "leiloes": 1,
+   "pct_total": 4.0,
+   "desagio_medio": 19.7
+  },
+  {
+   "concorrentes": 4,
+   "leiloes": 5,
+   "pct_total": 20.0,
+   "desagio_medio": 17.3
+  },
+  {
+   "concorrentes": 3,
+   "leiloes": 8,
+   "pct_total": 32.0,
+   "desagio_medio": 18.47
+  },
+  {
+   "concorrentes": 2,
+   "leiloes": 4,
+   "pct_total": 16.0,
+   "desagio_medio": 17.65
+  },
+  {
+   "concorrentes": 1,
+   "leiloes": 7,
+   "pct_total": 28.0,
+   "desagio_medio": 0.18
+  }
+ ],
+ "grupos": [
+  {
+   "grupo": "EcoRodovias",
+   "n_concessoes": 7,
+   "km": 3675.2,
+   "pct_km": 19.15,
+   "capex": 50.22,
+   "opex": 38.87,
+   "capex_opex": 89.09
+  },
+  {
+   "grupo": "Motiva",
+   "n_concessoes": 6,
+   "km": 3304.17,
+   "pct_km": 17.21,
+   "capex": 66.14,
+   "opex": 47.65,
+   "capex_opex": 113.79
+  },
+  {
+   "grupo": "EPR",
+   "n_concessoes": 5,
+   "km": 2509.13,
+   "pct_km": 13.07,
+   "capex": 45.67,
+   "opex": 31.23,
+   "capex_opex": 76.9
+  },
+  {
+   "grupo": "Way Concessões",
+   "n_concessoes": 3,
+   "km": 1459.56,
+   "pct_km": 7.6,
+   "capex": 14.67,
+   "opex": 12.2,
+   "capex_opex": 26.87
+  },
+  {
+   "grupo": "Arteris",
+   "n_concessoes": 3,
+   "km": 1140.7,
+   "pct_km": 5.94,
+   "capex": 14.63,
+   "opex": 12.86,
+   "capex_opex": 27.49
+  },
+  {
+   "grupo": "Conasa",
+   "n_concessoes": 1,
+   "km": 1009.52,
+   "pct_km": 5.26,
+   "capex": 2.55,
+   "opex": 1.43,
+   "capex_opex": 3.98
+  },
+  {
+   "grupo": "4UM Fundo de Investimento",
+   "n_concessoes": 2,
+   "km": 990.1,
+   "pct_km": 5.16,
+   "capex": 12.73,
+   "opex": 8.16,
+   "capex_opex": 20.89
+  },
+  {
+   "grupo": "Pátria",
+   "n_concessoes": 2,
+   "km": 905.78,
+   "pct_km": 4.72,
+   "capex": 16.03,
+   "opex": 11.29,
+   "capex_opex": 27.32
+  },
+  {
+   "grupo": "XP Infra V Fundo de Investimento",
+   "n_concessoes": 1,
+   "km": 870.3,
+   "pct_km": 4.53,
+   "capex": 6.91,
+   "opex": 3.19,
+   "capex_opex": 10.1
+  },
+  {
+   "grupo": "MT Participações e Projetos SA - MTPAR",
+   "n_concessoes": 1,
+   "km": 850.9,
+   "pct_km": 4.43,
+   "capex": 8.07,
+   "opex": 4.64,
+   "capex_opex": 12.71
+  },
+  {
+   "grupo": "VINCI",
+   "n_concessoes": 1,
+   "km": 594.8,
+   "pct_km": 3.1,
+   "capex": 6.86,
+   "opex": 5.91,
+   "capex_opex": 12.77
+  },
+  {
+   "grupo": "Outros 6 grupos",
+   "n_concessoes": 7,
+   "km": 1884.9,
+   "pct_km": 9.82,
+   "capex": 24.82,
+   "opex": 18.9,
+   "capex_opex": 43.72
+  }
+ ],
+ "gestao": [
+  {
+   "ano": 2011,
+   "direta_km": 59341,
+   "privada_km": 4629,
+   "total_km": 63970,
+   "pct_concedido": 7.2
+  },
+  {
+   "ano": 2012,
+   "direta_km": 60091,
+   "privada_km": 4629,
+   "total_km": 64720,
+   "pct_concedido": 7.2
+  },
+  {
+   "ano": 2013,
+   "direta_km": 60291,
+   "privada_km": 4629,
+   "total_km": 64920,
+   "pct_concedido": 7.11
+  },
+  {
+   "ano": 2014,
+   "direta_km": 61165,
+   "privada_km": 5105,
+   "total_km": 66270,
+   "pct_concedido": 7.7
+  },
+  {
+   "ano": 2015,
+   "direta_km": 55537,
+   "privada_km": 9353,
+   "total_km": 64890,
+   "pct_concedido": 14.4
+  },
+  {
+   "ano": 2016,
+   "direta_km": 55497,
+   "privada_km": 9353,
+   "total_km": 64850,
+   "pct_concedido": 14.4
+  },
+  {
+   "ano": 2017,
+   "direta_km": 56257,
+   "privada_km": 9353,
+   "total_km": 65610,
+   "pct_concedido": 14.3
+  },
+  {
+   "ano": 2018,
+   "direta_km": 56138,
+   "privada_km": 9232,
+   "total_km": 65370,
+   "pct_concedido": 14.1
+  },
+  {
+   "ano": 2019,
+   "direta_km": 56278,
+   "privada_km": 9232,
+   "total_km": 65510,
+   "pct_concedido": 14.1
+  },
+  {
+   "ano": 2020,
+   "direta_km": 54316,
+   "privada_km": 9704,
+   "total_km": 64020,
+   "pct_concedido": 15.2
+  },
+  {
+   "ano": 2021,
+   "direta_km": 55369,
+   "privada_km": 10361,
+   "total_km": 65730,
+   "pct_concedido": 15.8
+  },
+  {
+   "ano": 2022,
+   "direta_km": 54096,
+   "privada_km": 13022,
+   "total_km": 66120,
+   "pct_concedido": 17.0
+  },
+  {
+   "ano": 2023,
+   "direta_km": 51926,
+   "privada_km": 14107,
+   "total_km": 66030,
+   "pct_concedido": 21.4
+  },
+  {
+   "ano": 2024,
+   "direta_km": 50566,
+   "privada_km": 15954,
+   "total_km": 66520,
+   "pct_concedido": 24.0
+  },
+  {
+   "ano": 2025,
+   "direta_km": 47991,
+   "privada_km": 18620,
+   "total_km": 66610,
+   "pct_concedido": 27.9
+  },
+  {
+   "ano": 2026,
+   "direta_km": 45960,
+   "privada_km": 20651,
+   "total_km": 66610,
+   "pct_concedido": 31.0
+  }
+ ],
+ "investimentos": [
+  {
+   "ano": 2003,
+   "publico": null,
+   "privado": 1.18,
+   "previsto": false
+  },
+  {
+   "ano": 2004,
+   "publico": null,
+   "privado": 1.48,
+   "previsto": false
+  },
+  {
+   "ano": 2005,
+   "publico": null,
+   "privado": 1.56,
+   "previsto": false
+  },
+  {
+   "ano": 2006,
+   "publico": null,
+   "privado": 1.6,
+   "previsto": false
+  },
+  {
+   "ano": 2007,
+   "publico": null,
+   "privado": 1.61,
+   "previsto": false
+  },
+  {
+   "ano": 2008,
+   "publico": null,
+   "privado": 3.01,
+   "previsto": false
+  },
+  {
+   "ano": 2009,
+   "publico": null,
+   "privado": 6.48,
+   "previsto": false
+  },
+  {
+   "ano": 2010,
+   "publico": 27,
+   "privado": 5.26,
+   "previsto": false
+  },
+  {
+   "ano": 2011,
+   "publico": 21.6,
+   "privado": 5.57,
+   "previsto": false
+  },
+  {
+   "ano": 2012,
+   "publico": 16.7,
+   "privado": 5.98,
+   "previsto": false
+  },
+  {
+   "ano": 2013,
+   "publico": 15.4,
+   "privado": 6.47,
+   "previsto": false
+  },
+  {
+   "ano": 2014,
+   "publico": 15.7,
+   "privado": 12.05,
+   "previsto": false
+  },
+  {
+   "ano": 2015,
+   "publico": 9.5,
+   "privado": 9.91,
+   "previsto": false
+  },
+  {
+   "ano": 2016,
+   "publico": 12.9,
+   "privado": 8.27,
+   "previsto": false
+  },
+  {
+   "ano": 2017,
+   "publico": 11.2,
+   "privado": 7.79,
+   "previsto": false
+  },
+  {
+   "ano": 2018,
+   "publico": 10.2,
+   "privado": 6.95,
+   "previsto": false
+  },
+  {
+   "ano": 2019,
+   "publico": 8.6,
+   "privado": 7.64,
+   "previsto": false
+  },
+  {
+   "ano": 2020,
+   "publico": 8.5,
+   "privado": 6.23,
+   "previsto": false
+  },
+  {
+   "ano": 2021,
+   "publico": 6.8,
+   "privado": 7.02,
+   "previsto": false
+  },
+  {
+   "ano": 2022,
+   "publico": 7,
+   "privado": 9.19,
+   "previsto": false
+  },
+  {
+   "ano": 2023,
+   "publico": 20.4,
+   "privado": 11.38,
+   "previsto": true
+  },
+  {
+   "ano": 2024,
+   "publico": 18.4,
+   "privado": 13.57,
+   "previsto": true
+  },
+  {
+   "ano": 2025,
+   "publico": 18.4,
+   "privado": 19.15,
+   "previsto": true
+  },
+  {
+   "ano": 2026,
+   "publico": 18.4,
+   "privado": 32.59,
+   "previsto": true
+  },
+  {
+   "ano": 2027,
+   "publico": 18.4,
+   "privado": 44.17,
+   "previsto": true
+  },
+  {
+   "ano": 2028,
+   "publico": 18.4,
+   "privado": 47.87,
+   "previsto": true
+  },
+  {
+   "ano": 2029,
+   "publico": 18.4,
+   "privado": 54.5,
+   "previsto": true
+  }
+ ],
+ "indicadores_40": [
+  {
+   "rotulo": "Extensão total dos 40 leilões",
+   "valor": 19416,
+   "unidade": "km"
+  },
+  {
+   "rotulo": "Ampliação de capacidade (duplicação + faixa adicional + contornos)",
+   "valor": 8518,
+   "unidade": "km"
+  },
+  {
+   "rotulo": "Duplicação",
+   "valor": 4374,
+   "unidade": "km"
+  },
+  {
+   "rotulo": "Faixa adicional",
+   "valor": 3702,
+   "unidade": "km"
+  },
+  {
+   "rotulo": "Contornos",
+   "valor": 442,
+   "unidade": "km"
+  },
+  {
+   "rotulo": "Marginais",
+   "valor": 959,
+   "unidade": "km"
+  },
+  {
+   "rotulo": "PPDs (pontos de parada e descanso)",
+   "valor": 68,
+   "unidade": "unidades"
+  },
+  {
+   "rotulo": "Dispositivos em nível",
+   "valor": 662,
+   "unidade": "unidades"
+  },
+  {
+   "rotulo": "Dispositivos em desnível",
+   "valor": 2389,
+   "unidade": "unidades"
+  },
+  {
+   "rotulo": "Passarelas",
+   "valor": 797,
+   "unidade": "unidades"
+  },
+  {
+   "rotulo": "Infraestrutura resiliente",
+   "valor": 9.89,
+   "unidade": "R$ bi"
+  },
+  {
+   "rotulo": "CFTVs",
+   "valor": 11976,
+   "unidade": "unidades"
+  },
+  {
+   "rotulo": "Ambulâncias",
+   "valor": 395,
+   "unidade": "unidades"
+  },
+  {
+   "rotulo": "Guinchos",
+   "valor": 373,
+   "unidade": "unidades"
+  },
+  {
+   "rotulo": "Empregos (diretos, indiretos e efeito-renda)",
+   "valor": 4.5,
+   "unidade": "milhões"
+  },
+  {
+   "rotulo": "Cobertura WiFi e 4G",
+   "valor": 19416,
+   "unidade": "km"
+  },
+  {
+   "rotulo": "ISSQN (arrecadação para estados e municípios)",
+   "valor": 38,
+   "unidade": "R$ bi"
+  },
+  {
+   "rotulo": "Municípios beneficiados",
+   "valor": 616,
+   "unidade": "municípios"
+  },
+  {
+   "rotulo": "Investimentos totais",
+   "valor": 400,
+   "unidade": "R$ bi"
+  },
+  {
+   "rotulo": "Malha com ampliação de capacidade",
+   "valor": 47,
+   "unidade": "%"
+  },
+  {
+   "rotulo": "Dispositivos (nível + desnível + passarelas): 1 a cada",
+   "valor": 5,
+   "unidade": "km"
+  },
+  {
+   "rotulo": "PPD: 1 a cada",
+   "valor": 299,
+   "unidade": "km"
+  },
+  {
+   "rotulo": "CFTV: 1 a cada",
+   "valor": 1.6,
+   "unidade": "km"
+  },
+  {
+   "rotulo": "Ambulância: 1 a cada",
+   "valor": 49,
+   "unidade": "km"
+  },
+  {
+   "rotulo": "Guincho: 1 a cada",
+   "valor": 52,
+   "unidade": "km"
+  },
+  {
+   "rotulo": "Infraestrutura resiliente por km",
+   "valor": 0.51,
+   "unidade": "R$ mi/km"
+  },
+  {
+   "rotulo": "ISSQN por km",
+   "valor": 1.96,
+   "unidade": "R$ mi/km"
+  }
+ ],
+ "diagnostico": [
+  {
+   "ano": 2022,
+   "contratos": 24,
+   "km": 13022,
+   "valor": 198,
+   "invest_executado_acum": 129
+  },
+  {
+   "ano": 2026,
+   "contratos": 41,
+   "km": 20739,
+   "valor": 489,
+   "invest_executado_acum": 170
+  },
+  {
+   "ano": 2027,
+   "contratos": 50,
+   "km": 24459,
+   "valor": 575,
+   "invest_executado_acum": 195
+  },
+  {
+   "ano": 2030,
+   "contratos": 77,
+   "km": 32959,
+   "valor": 770,
+   "invest_executado_acum": 430
+  }
+ ],
+ "concorrencia_2023_26": {
+  "grupos_novos_entrantes": 18,
+  "km": 14962,
+  "capex": 202,
+  "opex": 135,
+  "capex_opex": 337,
+  "empregos_milhoes": 4.0
+ },
+ "programa_por_ano": [
+  {
+   "ano": 2023,
+   "leiloes": 2,
+   "km": 1077,
+   "capex": 18.7,
+   "opex": 11.6,
+   "duplicacao_km": 694,
+   "faixa_km": 349,
+   "previsto": false
+  },
+  {
+   "ano": 2024,
+   "leiloes": 7,
+   "km": 3221,
+   "capex": 48.1,
+   "opex": 33.5,
+   "duplicacao_km": 951,
+   "faixa_km": 789,
+   "previsto": false
+  },
+  {
+   "ano": 2025,
+   "leiloes": 13,
+   "km": 6279,
+   "capex": 81.6,
+   "opex": 53.6,
+   "duplicacao_km": 1331,
+   "faixa_km": 1182,
+   "previsto": false
+  },
+  {
+   "ano": 2026,
+   "leiloes": 7,
+   "km": 4383,
+   "capex": 53.8,
+   "opex": 36.2,
+   "duplicacao_km": 855,
+   "faixa_km": 831,
+   "previsto": true,
+   "realizado_ate_jul_2026": {
+    "leiloes": 3,
+    "km": 1620,
+    "capex": 20.68,
+    "opex": 14.96,
+    "duplicacao_km": 295,
+    "faixa_km": 234
+   }
+  },
+  {
+   "ano": 2027,
+   "leiloes": 11,
+   "km": 4455.68,
+   "capex": 54.87,
+   "opex": 47.82,
+   "duplicacao_km": 569.07,
+   "faixa_km": 550.29,
+   "previsto": true
+  }
+ ]
+}
