@@ -87,3 +87,27 @@ test('clicar num trecho abre o cartão', async () => {
   await page.keyboard.press('Escape');
   assert.equal(await page.locator('#card').isHidden(), true);
 });
+
+test('nenhuma requisição externa', () => assert.deepEqual(external, []));
+
+test('sem erros no console', () => assert.deepEqual(errors, []));
+
+test('fonte Inter embutida carregada', async () => {
+  assert.equal(await page.evaluate(async () => { await document.fonts.ready; return document.fonts.check('16px Inter'); }), true);
+});
+
+test('filtro aplicado em menos de 200 ms', async () => {
+  const before = await kpi();
+  const det = page.locator('details[data-group="uf"]');
+  if (!(await det.evaluate(d => d.open))) await det.locator('summary').click();
+  const ms = await page.evaluate(() => new Promise(resolve => {
+    const target = document.getElementById('stats-section');
+    const input = document.querySelector('input[data-filter="uf"][data-label="MG"]');
+    const t0 = performance.now();
+    new MutationObserver((_, obs) => { obs.disconnect(); resolve(performance.now() - t0); })
+      .observe(target, { childList: true, subtree: true, characterData: true });
+    input.click();
+  }));
+  assert.notEqual(await kpi(), before);
+  assert.ok(ms < 200, `levou ${ms.toFixed(0)} ms`);
+});

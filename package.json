@@ -2,5 +2,8 @@
   "name": "rodovias",
   "private": true,
   "type": "commonjs",
-  "scripts": { "test": "node --test tests/model.test.mjs" }
+  "scripts": {
+    "test": "node --test tests/model.test.mjs",
+    "test:e2e": "NODE_PATH=$(npm root -g) node --test tests/e2e.test.mjs"
+  }
 }
