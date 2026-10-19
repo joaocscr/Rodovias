@@ -65,3 +65,8 @@ test('busca local sem acento', () => {
 test('busca vazia', () => assert.deepEqual(Model.search(idx, '  '), []));
 test('normalize', () => assert.equal(Model.normalize('  São   PAULO '), 'sao paulo'));
 test('fmtKm', () => { assert.equal(Model.fmtKm(131085.2), '131.085,2 km'); assert.equal(Model.fmtKm(0), '0,0 km'); });
+test('busca não repete o mesmo trecho físico', () => {
+  const r = Model.search(idx, 'sobradinho');
+  assert.equal(r.length, 1);
+  assert.equal(r[0].kind, 'local');
+});

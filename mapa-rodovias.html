@@ -975,7 +975,7 @@ window.SNV={"versao":"202607A","dict":{"br":["010","020","030","040","050","060"
 const Model = (() => {
   // Posição de cada campo categórico no registro de `trechos`.
   const FIELD = { br: 1, uf: 2, tipo: 3, situacao: 4, superficie: 5, jurisdicao: 6, adm: 7 };
-  const T = { codigo: 0, kmIni: 9, kmFim: 10, ext: 11, locIni: 12, locFim: 13 };
+  const T = { codigo: 0, kmIni: 9, kmFim: 10, ext: 11, locIni: 12, locFim: 13, fis: 15 };
   const BR_RE = /^\s*(br)?[\s-]*(\d{1,3})\s*$/i;
 
   const fmt1 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -1061,10 +1061,18 @@ const Model = (() => {
       const iBr = snv.dict.br.indexOf(m[2].padStart(3, '0'));
       if (iBr >= 0) out.push({ kind: 'br', label: brLabel(snv, iBr), sub: 'Rodovia inteira', iBr });
     }
+    // Um resultado por trecho físico: coincidentes repetem o mesmo trecho para cada BR.
+    const seen = new Set();
+    const fresh = i => {
+      const j = snv.trechos[i][T.fis];
+      if (seen.has(j)) return false;
+      seen.add(j);
+      return true;
+    };
     const compact = q.replace(/[\s-]/g, '');
     if (compact.length >= 3) {
       for (let i = 0; i < index.codes.length && out.length < limit; i++) {
-        if (index.codes[i].startsWith(compact)) {
+        if (index.codes[i].startsWith(compact) && fresh(i)) {
           out.push({ kind: 'trecho', label: snv.trechos[i][T.codigo], sub: recSub(snv, i), iRec: i });
         }
       }
@@ -1073,7 +1081,7 @@ const Model = (() => {
       for (let i = 0; i < index.locs.length && out.length < limit; i++) {
         const [a, b] = index.locs[i];
         const hitA = a.includes(q), hitB = !hitA && b.includes(q);
-        if (hitA || hitB) {
+        if ((hitA || hitB) && fresh(i)) {
           const t = snv.trechos[i];
           out.push({ kind: 'local', label: hitA ? t[T.locIni] : t[T.locFim], sub: recSub(snv, i), iRec: i });
         }
@@ -1150,7 +1158,7 @@ function haloSwatch(width = 32) {
 const MapView = (() => {
   const BRASIL = [[-34.5, -74.5], [5.8, -32]];
   const DIM = 0.2;
-  let map, snv, lines, halos, order, visible, pickCb = () => {}, hlGroup, hlIds = null, ufLayer;
+  let map, snv, lines, halos, order, visible, pickCb = () => {}, hlGroup, hlRenderer, hlWanted = null, hlIds = null, ufLayer;
 
   function decode(p) {
     const out = [];
@@ -1181,9 +1189,18 @@ const MapView = (() => {
     return { color: HALO.color, opacity: HALO.opacity * dim, weight: (s.weight + HALO.extra) * zoomFactor(map.getZoom()), lineCap: 'round' };
   }
 
-  function restyleAll() {
+  // Realce efetivo = pedidos que estão visíveis; sem nenhum visível, nada é esmaecido.
+  function applyHighlight() {
+    const eff = hlWanted ? [...hlWanted].filter(j => visible[j]) : [];
+    hlIds = eff.length ? new Set(eff) : null;
     lines.forEach((l, j) => l.setStyle(styleFor(j)));
     halos.forEach((h, j) => h.setStyle(haloStyle(j)));
+    hlGroup.clearLayers();
+    if (!hlIds) return;
+    const w = 10 * zoomFactor(map.getZoom());
+    for (const j of hlIds) {
+      L.polyline(lines[j].getLatLngs(), { renderer: hlRenderer, interactive: false, color: COLORS.brightBlue, opacity: 0.3, weight: w, lineCap: 'round' }).addTo(hlGroup);
+    }
   }
 
   function buildControls(el) {
@@ -1243,7 +1260,8 @@ const MapView = (() => {
     });
     order = snv.fis.map((_, j) => j).sort((a, b) => lineStyle(situacaoOf(a)).z - lineStyle(situacaoOf(b)).z || a - b);
     hlGroup = L.layerGroup().addTo(map);
-    map.on('zoomend', restyleAll);
+    hlRenderer = L.canvas({ pane: 'hl', padding: 0.5 });
+    map.on('zoomend', applyHighlight);
     buildControls(controlsEl);
     setVisible(new Uint8Array(snv.fis.length).fill(1));
   }
@@ -1260,18 +1278,12 @@ const MapView = (() => {
       if (halos[j]) halos[j].addTo(map);
       lines[j].addTo(map);
     }
+    applyHighlight();
   }
 
   function highlight(ids) {
-    hlGroup.clearLayers();
-    hlIds = ids && ids.length ? new Set(ids) : null;
-    restyleAll();
-    if (!hlIds) return;
-    const f = zoomFactor(map.getZoom());
-    for (const j of hlIds) {
-      const ll = lines[j].getLatLngs();
-      L.polyline(ll, { pane: 'hl', renderer: L.svg({ pane: 'hl' }), interactive: false, color: COLORS.brightBlue, opacity: 0.3, weight: 10 * f, lineCap: 'round' }).addTo(hlGroup);
-    }
+    hlWanted = ids && ids.length ? new Set(ids) : null;
+    applyHighlight();
   }
 
   function boundsOf(ids) {
@@ -1280,9 +1292,11 @@ const MapView = (() => {
     return b;
   }
 
+  // Enquadra os visíveis; se nenhum estiver visível, enquadra os pedidos mesmo assim.
   function fitTo(ids) {
     if (!ids || !ids.length) return;
-    map.fitBounds(boundsOf(ids), { padding: [64, 64], maxZoom: 11 });
+    const vis = ids.filter(j => visible[j]);
+    map.fitBounds(boundsOf(vis.length ? vis : ids), { padding: [64, 64], maxZoom: 11 });
   }
 
   function fitBrasil(animate = true) {
@@ -1577,16 +1591,18 @@ const UI = (() => {
   function openCard(j, iRecPreferred) {
     const fis = snv.fis[j];
     const recs = fis.r;
-    const main = snv.trechos[iRecPreferred != null && recs.includes(iRecPreferred) ? iRecPreferred : recs[0]];
+    const passing = recs.find(i => Model.recordPasses(snv, i, filters));
+    const iMain = iRecPreferred != null && recs.includes(iRecPreferred) ? iRecPreferred : passing != null ? passing : recs[0];
+    const main = snv.trechos[iMain];
     const d = snv.dict;
-    const brs = recs.map(i => Model.brLabel(snv, snv.trechos[i][F.br]));
+    const brs = [...new Set(recs.map(i => Model.brLabel(snv, snv.trechos[i][F.br])))];
     const sit = d.situacao[main[F.situacao]];
     const adm = d.adm[main[F.adm]];
     const row = (k, v) => v ? `<dt>${k}<\/dt><dd>${esc(v)}<\/dd>` : '';
     const coinc = recs.length > 1
       ? `<div class="card__coinc"><h3 class="section-title">Trecho coincidente<\/h3>${recs.map(i => {
           const t = snv.trechos[i];
-          return `<div>${Model.brLabel(snv, t[F.br])} · km ${fmtKmNum.format(t[T.kmIni])}–${fmtKmNum.format(t[T.kmFim])} · ${esc(t[T.codigo])}<\/div>`;
+          return `<div>${esc(Model.brLabel(snv, t[F.br]))} · km ${fmtKmNum.format(t[T.kmIni])}–${fmtKmNum.format(t[T.kmFim])} · ${esc(t[T.codigo])}<\/div>`;
         }).join('')}<\/div>`
       : '';
     const card = $('#card');
@@ -1609,9 +1625,14 @@ const UI = (() => {
       <\/dl>${coinc}`;
     card.hidden = false;
     $('#card-close').addEventListener('click', closeCard);
+    MapView.highlight([...(activeSearch ? activeSearch.ids : []), j]);
   }
 
-  function closeCard() { $('#card').hidden = true; }
+  // Fecha o cartão e volta ao realce da busca (ou a nenhum).
+  function closeCard() {
+    $('#card').hidden = true;
+    MapView.highlight(activeSearch ? activeSearch.ids : null);
+  }
 
   // ---------- Legenda ----------
   function renderLegend() {

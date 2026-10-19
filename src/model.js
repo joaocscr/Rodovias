@@ -2,7 +2,7 @@
 const Model = (() => {
   // Posição de cada campo categórico no registro de `trechos`.
   const FIELD = { br: 1, uf: 2, tipo: 3, situacao: 4, superficie: 5, jurisdicao: 6, adm: 7 };
-  const T = { codigo: 0, kmIni: 9, kmFim: 10, ext: 11, locIni: 12, locFim: 13 };
+  const T = { codigo: 0, kmIni: 9, kmFim: 10, ext: 11, locIni: 12, locFim: 13, fis: 15 };
   const BR_RE = /^\s*(br)?[\s-]*(\d{1,3})\s*$/i;
 
   const fmt1 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -88,10 +88,18 @@ const Model = (() => {
       const iBr = snv.dict.br.indexOf(m[2].padStart(3, '0'));
       if (iBr >= 0) out.push({ kind: 'br', label: brLabel(snv, iBr), sub: 'Rodovia inteira', iBr });
     }
+    // Um resultado por trecho físico: coincidentes repetem o mesmo trecho para cada BR.
+    const seen = new Set();
+    const fresh = i => {
+      const j = snv.trechos[i][T.fis];
+      if (seen.has(j)) return false;
+      seen.add(j);
+      return true;
+    };
     const compact = q.replace(/[\s-]/g, '');
     if (compact.length >= 3) {
       for (let i = 0; i < index.codes.length && out.length < limit; i++) {
-        if (index.codes[i].startsWith(compact)) {
+        if (index.codes[i].startsWith(compact) && fresh(i)) {
           out.push({ kind: 'trecho', label: snv.trechos[i][T.codigo], sub: recSub(snv, i), iRec: i });
         }
       }
@@ -100,7 +108,7 @@ const Model = (() => {
       for (let i = 0; i < index.locs.length && out.length < limit; i++) {
         const [a, b] = index.locs[i];
         const hitA = a.includes(q), hitB = !hitA && b.includes(q);
-        if (hitA || hitB) {
+        if ((hitA || hitB) && fresh(i)) {
           const t = snv.trechos[i];
           out.push({ kind: 'local', label: hitA ? t[T.locIni] : t[T.locFim], sub: recSub(snv, i), iRec: i });
         }

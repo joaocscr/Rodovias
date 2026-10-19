@@ -2,7 +2,7 @@
 const MapView = (() => {
   const BRASIL = [[-34.5, -74.5], [5.8, -32]];
   const DIM = 0.2;
-  let map, snv, lines, halos, order, visible, pickCb = () => {}, hlGroup, hlIds = null, ufLayer;
+  let map, snv, lines, halos, order, visible, pickCb = () => {}, hlGroup, hlRenderer, hlWanted = null, hlIds = null, ufLayer;
 
   function decode(p) {
     const out = [];
@@ -33,9 +33,18 @@ const MapView = (() => {
     return { color: HALO.color, opacity: HALO.opacity * dim, weight: (s.weight + HALO.extra) * zoomFactor(map.getZoom()), lineCap: 'round' };
   }
 
-  function restyleAll() {
+  // Realce efetivo = pedidos que estão visíveis; sem nenhum visível, nada é esmaecido.
+  function applyHighlight() {
+    const eff = hlWanted ? [...hlWanted].filter(j => visible[j]) : [];
+    hlIds = eff.length ? new Set(eff) : null;
     lines.forEach((l, j) => l.setStyle(styleFor(j)));
     halos.forEach((h, j) => h.setStyle(haloStyle(j)));
+    hlGroup.clearLayers();
+    if (!hlIds) return;
+    const w = 10 * zoomFactor(map.getZoom());
+    for (const j of hlIds) {
+      L.polyline(lines[j].getLatLngs(), { renderer: hlRenderer, interactive: false, color: COLORS.brightBlue, opacity: 0.3, weight: w, lineCap: 'round' }).addTo(hlGroup);
+    }
   }
 
   function buildControls(el) {
@@ -95,7 +104,8 @@ const MapView = (() => {
     });
     order = snv.fis.map((_, j) => j).sort((a, b) => lineStyle(situacaoOf(a)).z - lineStyle(situacaoOf(b)).z || a - b);
     hlGroup = L.layerGroup().addTo(map);
-    map.on('zoomend', restyleAll);
+    hlRenderer = L.canvas({ pane: 'hl', padding: 0.5 });
+    map.on('zoomend', applyHighlight);
     buildControls(controlsEl);
     setVisible(new Uint8Array(snv.fis.length).fill(1));
   }
@@ -112,18 +122,12 @@ const MapView = (() => {
       if (halos[j]) halos[j].addTo(map);
       lines[j].addTo(map);
     }
+    applyHighlight();
   }
 
   function highlight(ids) {
-    hlGroup.clearLayers();
-    hlIds = ids && ids.length ? new Set(ids) : null;
-    restyleAll();
-    if (!hlIds) return;
-    const f = zoomFactor(map.getZoom());
-    for (const j of hlIds) {
-      const ll = lines[j].getLatLngs();
-      L.polyline(ll, { pane: 'hl', renderer: L.svg({ pane: 'hl' }), interactive: false, color: COLORS.brightBlue, opacity: 0.3, weight: 10 * f, lineCap: 'round' }).addTo(hlGroup);
-    }
+    hlWanted = ids && ids.length ? new Set(ids) : null;
+    applyHighlight();
   }
 
   function boundsOf(ids) {
@@ -132,9 +136,11 @@ const MapView = (() => {
     return b;
   }
 
+  // Enquadra os visíveis; se nenhum estiver visível, enquadra os pedidos mesmo assim.
   function fitTo(ids) {
     if (!ids || !ids.length) return;
-    map.fitBounds(boundsOf(ids), { padding: [64, 64], maxZoom: 11 });
+    const vis = ids.filter(j => visible[j]);
+    map.fitBounds(boundsOf(vis.length ? vis : ids), { padding: [64, 64], maxZoom: 11 });
   }
 
   function fitBrasil(animate = true) {

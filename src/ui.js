@@ -274,16 +274,18 @@ const UI = (() => {
   function openCard(j, iRecPreferred) {
     const fis = snv.fis[j];
     const recs = fis.r;
-    const main = snv.trechos[iRecPreferred != null && recs.includes(iRecPreferred) ? iRecPreferred : recs[0]];
+    const passing = recs.find(i => Model.recordPasses(snv, i, filters));
+    const iMain = iRecPreferred != null && recs.includes(iRecPreferred) ? iRecPreferred : passing != null ? passing : recs[0];
+    const main = snv.trechos[iMain];
     const d = snv.dict;
-    const brs = recs.map(i => Model.brLabel(snv, snv.trechos[i][F.br]));
+    const brs = [...new Set(recs.map(i => Model.brLabel(snv, snv.trechos[i][F.br])))];
     const sit = d.situacao[main[F.situacao]];
     const adm = d.adm[main[F.adm]];
     const row = (k, v) => v ? `<dt>${k}</dt><dd>${esc(v)}</dd>` : '';
     const coinc = recs.length > 1
       ? `<div class="card__coinc"><h3 class="section-title">Trecho coincidente</h3>${recs.map(i => {
           const t = snv.trechos[i];
-          return `<div>${Model.brLabel(snv, t[F.br])} · km ${fmtKmNum.format(t[T.kmIni])}–${fmtKmNum.format(t[T.kmFim])} · ${esc(t[T.codigo])}</div>`;
+          return `<div>${esc(Model.brLabel(snv, t[F.br]))} · km ${fmtKmNum.format(t[T.kmIni])}–${fmtKmNum.format(t[T.kmFim])} · ${esc(t[T.codigo])}</div>`;
         }).join('')}</div>`
       : '';
     const card = $('#card');
@@ -306,9 +308,14 @@ const UI = (() => {
       </dl>${coinc}`;
     card.hidden = false;
     $('#card-close').addEventListener('click', closeCard);
+    MapView.highlight([...(activeSearch ? activeSearch.ids : []), j]);
   }
 
-  function closeCard() { $('#card').hidden = true; }
+  // Fecha o cartão e volta ao realce da busca (ou a nenhum).
+  function closeCard() {
+    $('#card').hidden = true;
+    MapView.highlight(activeSearch ? activeSearch.ids : null);
+  }
 
   // ---------- Legenda ----------
   function renderLegend() {

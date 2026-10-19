@@ -88,6 +88,52 @@ test('clicar num trecho abre o cartão', async () => {
   assert.equal(await page.locator('#card').isHidden(), true);
 });
 
+test('realce some com filtro que oculta os trechos realçados', async () => {
+  await page.click('#clear-filters').catch(() => {});
+  await page.fill('#search-input', '116');
+  await page.waitForSelector('#suggestions li');
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(100);
+  const all = await page.evaluate(() => MapView.highlighted().length);
+  await check('uf', 'AC');
+  await page.waitForTimeout(150);
+  const res = await page.evaluate(() => ({
+    hl: MapView.highlighted(),
+    allVisible: MapView.highlighted().every(j => MapView.isVisible(j)),
+  }));
+  assert.ok(res.hl.length < all);
+  assert.equal(res.allVisible, true);
+  await page.click('#clear-filters');
+  await page.click('#clear-search');
+});
+
+test('clique num trecho realça o trecho e fechar remove o realce', async () => {
+  await page.evaluate(() => MapView.pick(5));
+  await page.waitForSelector('#card:not([hidden])');
+  assert.deepEqual(await page.evaluate(() => MapView.highlighted()), [5]);
+  await page.click('#card-close');
+  assert.deepEqual(await page.evaluate(() => MapView.highlighted()), []);
+});
+
+test('cartão usa o registro da BR filtrada e não repete BR', async () => {
+  const info = await page.evaluate(() => {
+    const s = window.SNV;
+    const j = s.fis.findIndex(f => f.r.length > 1);
+    const iRec = s.fis[j].r[1];
+    return { j, br: s.dict.br[s.trechos[iRec][1]], code: s.trechos[iRec][0] };
+  });
+  await check('br', 'BR-' + info.br);
+  await page.waitForTimeout(100);
+  await page.evaluate(j => MapView.pick(j), info.j);
+  await page.waitForSelector('#card:not([hidden])');
+  assert.match(await page.textContent('.card__code'), new RegExp(info.code));
+  const title = await page.textContent('.card__title');
+  const brs = title.match(/BR-\d{3}/g);
+  assert.equal(new Set(brs).size, brs.length);
+  await page.click('#card-close');
+  await page.click('#clear-filters');
+});
+
 test('nenhuma requisição externa', () => assert.deepEqual(external, []));
 
 test('sem erros no console', () => assert.deepEqual(errors, []));
