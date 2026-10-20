@@ -94,7 +94,8 @@ test('aggregateIntel: só visíveis', () => {
 
 test('aggregateIntel: bloco ausente = null', () => {
   const a = IntelModel.aggregateIntel({}, snv, vis);
-  assert.deepEqual(a, { vkm: null, vkmPes: null, kmVmda: null, kmPav: 30, acidAno: null, mortosAno: null, tkm: null, kmCarga: null });
+  assert.deepEqual(a, { vkm: null, vkmPes: null, vkmBasePes: null, kmVmda: null, kmPav: 30, anoVmda: null, pesEstimado: false,
+    acidAno: null, mortosAno: null, tkm: null, kmCarga: null });
 });
 
 test('taxaAcidentes', () => {
@@ -246,7 +247,7 @@ test('fisIntel: números do cartão, coerentes com aggregateIntel', () => {
   // sem INTEL: tudo null
   assert.deepEqual(IntelModel.fisIntel(null, snv, 0),
     { l: null, p: null, tot: null, pctPes: null, acidAno: null, mortosAno: null, taxa: null, gsa: null,
-      vkm: null, acidKmAno: null, cargaTotal: null });
+      vkm: null, acidKmAno: null, cargaTotal: null, t25: null, c25: null, d25: null, ns25: false, pes25: null, ano25: null });
   // veíc·km/dia, acidentes por km por ano e carga total do PNL
   assert.equal(f0.vkm, 1200 * 10);
   close(f0.acidKmAno, 4 / 2 / 10);
@@ -255,6 +256,102 @@ test('fisIntel: números do cartão, coerentes com aggregateIntel', () => {
   assert.equal(IntelModel.fisIntel(ic, snv, 0).cargaTotal, 900);
   assert.equal(IntelModel.fisIntel(ic, snv, 1).cargaTotal, null);
   assert.equal(IntelModel.fisIntel(intel, snv, 0).cargaTotal, null);
+});
+
+// ---------- v3.1, Task 5: VMDa 2025 (total e sentidos por físico; total por linha estadual) ----------
+const v25 = {
+  fonte: [{ nome: 'DNIT — VMDa 2025 (volume médio diário anual modelado, total e por sentido)', periodo: '2025', tipo: 'modelado' }],
+  tipo: 'modelado', ano: 2025,
+  fis: { t: [1500, null, 800, 300], c: [700, null, 400, 150], d: [800, null, 400, 150], ns: [0, 0, 1, 0] },
+  estaduais: { t: [1000, null, 200], ns: [0, 0, 1] },
+};
+const intel25 = { ...intel, vmda2025: v25 };
+
+test('VMDa 2025: Tráfego usa o total 2025; Pesados segue 2023; rótulos com o ano', () => {
+  assert.deepEqual(IntelModel.metricArray(intel25, snv, 'trafego'), [1500, null, 800, 300]);
+  assert.deepEqual(IntelModel.metricArray(intel25, snv, 'pesados'), [200, 300, 0, null]);
+  assert.equal(IntelModel.MODES.trafego.fonte(intel25), 'DNIT, VMDa 2025 (modelado)');
+  assert.equal(IntelModel.MODES.trafego.ref(intel25), 'VMDa 2025, modelado');
+  assert.equal(IntelModel.MODES.pesados.ref(intel25), 'VMDa 2023, modelado');
+  assert.equal(IntelModel.MODES.pesados.fonte(intel25), 'Infra S.A./DNIT, VMDa 2023 (modelado)');
+  // sem o bloco 2025: Tráfego volta ao VMDa 2023 (leves + pesados)
+  assert.equal(IntelModel.MODES.trafego.ref(intel), 'VMDa 2023, modelado');
+  assert.equal(IntelModel.MODES.trafego.fonte(intel), 'Infra S.A./DNIT, VMDa 2023 (modelado)');
+  assert.equal(IntelModel.MODES.trafego.ref({}), '—');
+  // só o bloco 2025 (sem o 2023): Tráfego com 2025, Pesados sem dado
+  const so25 = { vmda2025: v25 };
+  assert.deepEqual(IntelModel.metricArray(so25, snv, 'trafego'), [1500, null, 800, 300]);
+  assert.deepEqual(IntelModel.metricArray(so25, snv, 'pesados'), [null, null, null, null]);
+  // bloco 2025 malformado (sem fis.t) = ausente
+  assert.deepEqual(IntelModel.metricArray({ ...intel, vmda2025: { ano: 2025 } }, snv, 'trafego'), [1200, 2300, 500, null]);
+  assert.equal(IntelModel.v25Of({ vmda2025: { ano: 2025, fis: {} } }), null);
+});
+
+test('VMDa 2025: aggregateIntel soma veíc·km de 2025; pesados = 2025 × participação de pesados 2023 (estimativa)', () => {
+  const a = IntelModel.aggregateIntel(intel25, snv, vis);
+  // físico 1 não tem 2025: fica fora do veíc·km e da cobertura, mesmo com 2023
+  assert.equal(a.vkm, 1500 * 10 + 800 * 0);
+  assert.equal(a.kmVmda, 10);
+  close(a.vkmPes, 1500 * (200 / 1200) * 10);
+  assert.equal(a.vkmBasePes, 1500 * 10);
+  assert.equal(a.anoVmda, 2025);
+  assert.equal(a.pesEstimado, true);
+  const all = IntelModel.aggregateIntel(intel25, snv, Uint8Array.from([1, 1, 1, 1]));
+  // o planejado (PLA) com valor 2025 soma no veíc·km, não na cobertura; sem 2023 não entra nos pesados
+  assert.equal(all.vkm, 15000 + 300 * 5);
+  assert.equal(all.kmVmda, 10);
+  assert.equal(all.vkmBasePes, 15000);
+  // sem 2025: os números de antes (pesados medidos no próprio 2023)
+  const old = IntelModel.aggregateIntel(intel, snv, vis);
+  assert.equal(old.vkmBasePes, old.vkm);
+  assert.equal(old.anoVmda, 2023);
+  assert.equal(old.pesEstimado, false);
+  // só 2025: veíc·km sim, pesados sem dado
+  const so = IntelModel.aggregateIntel({ vmda2025: v25 }, snv, vis);
+  assert.equal(so.vkm, 15000);
+  assert.equal(so.vkmPes, null);
+  assert.equal(so.vkmBasePes, null);
+});
+
+test('VMDa 2025: fisIntel traz total, sentidos, uso restrito e pesados estimados; veíc·km com 2025', () => {
+  const f0 = IntelModel.fisIntel(intel25, snv, 0);
+  assert.deepEqual([f0.t25, f0.c25, f0.d25, f0.ns25], [1500, 700, 800, false]);
+  close(f0.pes25, 1500 * 200 / 1200);
+  assert.equal(f0.vkm, 1500 * 10);
+  assert.equal(f0.ano25, 2025);
+  // o bloco 2023 do cartão fica como estava
+  assert.deepEqual([f0.l, f0.p, f0.tot], [1000, 200, 1200]);
+  close(f0.taxa, IntelModel.taxaAcidentes(4, 2, 1200, 10));
+  const f2 = IntelModel.fisIntel(intel25, snv, 2);
+  assert.equal(f2.ns25, true);
+  assert.equal(f2.pes25, 0);
+  // sem 2025 neste físico: veíc·km null (não mistura anos), 2023 segue no cartão
+  const f1 = IntelModel.fisIntel(intel25, snv, 1);
+  assert.deepEqual([f1.t25, f1.c25, f1.d25, f1.ns25, f1.pes25, f1.vkm], [null, null, null, false, null, null]);
+  assert.equal(f1.tot, 2300);
+  // soma de fisIntel.vkm bate com aggregateIntel
+  const a = IntelModel.aggregateIntel(intel25, snv, vis);
+  let s = 0;
+  for (let j = 0; j < 3; j++) s += IntelModel.fisIntel(intel25, snv, j).vkm || 0;
+  assert.equal(s, a.vkm);
+  // sem o bloco 2025: veíc·km do 2023, campos 2025 nulos
+  const o = IntelModel.fisIntel(intel, snv, 0);
+  assert.deepEqual([o.t25, o.vkm, o.ano25], [null, 1200 * 10, null]);
+});
+
+test('VMDa 2025: estTrafego alinha o total às linhas da malha estadual; tamanho diferente = sem dado', () => {
+  const malha = { campos: ['uf', 'via', 'sre', 'sup', 'km_i', 'km_f', 'ext', 'tipo'],
+    linhas: [['SP', 'SP-1', 'a', 'PAV', 0, 10, 10, 0], ['SP', 'SP-2', 'b', 'PAV', 0, 2.5, 2.5, 0], ['MG', 'MG-3', 'c', 'PAV', 0, 4, 4, 0]], p: [[], [], []] };
+  const it = { estaduais: { malha }, vmda2025: v25 };
+  const e = IntelModel.estTrafego(it);
+  assert.deepEqual(e.t, [1000, null, 200]);
+  assert.deepEqual(e.ext, [10, 2.5, 4]);
+  assert.deepEqual(e.ns, [0, 0, 1]);
+  assert.equal(e.ano, 2025);
+  assert.equal(IntelModel.estTrafego({ estaduais: { malha: { ...malha, p: [[]] } }, vmda2025: v25 }), null);
+  assert.equal(IntelModel.estTrafego({ estaduais: { malha } }), null);
+  assert.equal(IntelModel.estTrafego({ vmda2025: v25 }), null);
+  assert.equal(IntelModel.estTrafego(null), null);
 });
 
 // ---------- Task 10: camadas e cartões de ponto ----------
@@ -554,8 +651,24 @@ const intelT = {
 
 test('trafegoKpis: praças com contagem, VMD somado, % pesados ponderado, veíc·km/dia e PRF por ano', () => {
   const k = IntelModel.trafegoKpis(intelT, snvT);
-  assert.deepEqual(k, { nPracas: 3, vmdTotal: 4500, pctPes: 0.6, vkm: 68000, acidAno: 50, mortosAno: 7 });
-  assert.deepEqual(IntelModel.trafegoKpis({}, snvT), { nPracas: null, vmdTotal: null, pctPes: null, vkm: null, acidAno: null, mortosAno: null });
+  assert.deepEqual(k, { nPracas: 3, vmdTotal: 4500, pctPes: 0.6, vkm: 68000, anoVkm: 2023, vkmEst: null, kmEst: null, kmEstTotal: null,
+    acidAno: 50, mortosAno: 7 });
+  assert.deepEqual(IntelModel.trafegoKpis({}, snvT), { nPracas: null, vmdTotal: null, pctPes: null, vkm: null, anoVkm: null,
+    vkmEst: null, kmEst: null, kmEstTotal: null, acidAno: null, mortosAno: null });
+});
+
+test('trafegoKpis com VMDa 2025: veíc·km/dia federal 2025 e estadual 2025 (Σ total × extensão das linhas estaduais)', () => {
+  const malha = { campos: ['uf', 'via', 'sre', 'sup', 'km_i', 'km_f', 'ext', 'tipo'],
+    linhas: [['SP', 'SP-1', 'a', 'PAV', 0, 10, 10, 0], ['SP', 'SP-2', 'b', 'PAV', 0, 2.5, 2.5, 0], ['MG', 'MG-3', 'c', 'PAV', 0, 4, 4, 0]], p: [[], [], []] };
+  const it = { ...intelT, estaduais: { malha },
+    vmda2025: { ano: 2025, fis: { t: [2000, null, 100, 50], c: [], d: [], ns: [] }, estaduais: { t: [1000, null, 200], ns: [0, 0, 0] } } };
+  const k = IntelModel.trafegoKpis(it, snvT);
+  assert.equal(k.vkm, 2000 * 8 + 100 * 20 + 50 * 5);
+  assert.equal(k.anoVkm, 2025);
+  assert.equal(k.vkmEst, 1000 * 10 + 200 * 4);
+  assert.equal(k.kmEst, 14);
+  assert.equal(k.kmEstTotal, 16.5);
+  assert.equal(k.vkm, IntelModel.aggregateIntel(it, snvT, new Uint8Array(4).fill(1)).vkm);
 });
 
 test('pracasRanking: maiores VMD com índice da linha; sem VMD fica de fora', () => {

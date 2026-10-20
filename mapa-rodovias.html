@@ -1092,6 +1092,10 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 .card__intel .card__grid { border-top: 0; padding: 0; }
 .card__grid dt.card__sub { grid-column: 1 / -1; margin-top: 8px; font-weight: 600; color: var(--color-deep-blue); }
 .card__grid dt.card__sub:first-child { margin-top: 0; }
+/* v3.1: nota de linha inteira no cartão (pesados estimados, uso restrito do VMDa 2025) */
+.card__intel .card__grid dd { white-space: nowrap; }
+.card__grid dd.card__flag { grid-column: 1 / -1; text-align: left; line-height: 24px; color: var(--color-light-grey); font-variant-numeric: normal; white-space: normal; }
+.card__grid dd.card__flag .tag-nv { margin: 0 8px 0 0; }
 
 /* ---------- v3: camadas de sobreposição, fundo municipal e cartões de ponto ---------- */
 .layers > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
@@ -1562,15 +1566,22 @@ const IntelModel = (() => {
   const acidOf = intel => (intel && intel.trafego && intel.trafego.acidentes) || null;
   // Carga só conta como presente com o array GSA (é ele que vira métrica, agregado e cartão).
   const cargaOf = intel => (intel && intel.carga && intel.carga.gsa ? intel.carga : null);
+  // VMDa 2025 (v3.1, DNIT, modelado): total e sentidos por físico, total por linha da malha estadual; sem leves/pesados.
+  // Só conta como presente com o array fis.t. Sem ele, Tráfego e veíc·km voltam ao VMDa 2023 (leves + pesados).
+  const v25Of = intel => (intel && intel.vmda2025 && intel.vmda2025.fis && Array.isArray(intel.vmda2025.fis.t) ? intel.vmda2025 : null);
+  const vmda23Fonte = intel => { const v = vmdaOf(intel); return v ? `Infra S.A./DNIT, VMDa ${v.ano} (modelado)` : DASH; };
+  const vmda23Ref = intel => { const v = vmdaOf(intel); return v ? `VMDa ${v.ano}, modelado` : DASH; };
 
+  // ref: ano e natureza do dado que colore o modo ("VMDa 2025, modelado"), mostrado na legenda.
   const MODES = {
     trafego: {
       label: 'Tráfego', unidade: 'veíc./dia', tipo: 'modelado',
-      fonte: intel => { const v = vmdaOf(intel); return v ? `Infra S.A./DNIT, VMDa ${v.ano} (modelado)` : DASH; },
+      fonte: intel => { const v = v25Of(intel); return v ? `DNIT, VMDa ${v.ano} (modelado)` : vmda23Fonte(intel); },
+      ref: intel => { const v = v25Of(intel); return v ? `VMDa ${v.ano}, modelado` : vmda23Ref(intel); },
     },
     pesados: {
       label: 'Pesados', unidade: 'veíc. pesados/dia', tipo: 'modelado',
-      fonte: intel => { const v = vmdaOf(intel); return v ? `Infra S.A./DNIT, VMDa ${v.ano} (modelado)` : DASH; },
+      fonte: vmda23Fonte, ref: vmda23Ref,
     },
     carga: {
       label: 'Carga agrícola', unidade: 't/ano', tipo: 'modelado',
@@ -1594,6 +1605,11 @@ const IntelModel = (() => {
     const nFis = snv.fis.length;
     const none = () => new Array(nFis).fill(null);
     const out = new Array(nFis);
+    if (mode === 'trafego' && v25Of(intel)) {
+      const t = v25Of(intel).fis.t;
+      for (let j = 0; j < nFis; j++) out[j] = has(t[j]) ? t[j] : null;
+      return out;
+    }
     if (mode === 'trafego' || mode === 'pesados') {
       const v = vmdaOf(intel);
       if (!v) return none();
@@ -1649,12 +1665,31 @@ const IntelModel = (() => {
     return t ? (d[t[I_SUP]] ?? null) : null;
   }
 
+  // Volume total do físico j usado no Tráfego e no veíc·km: VMDa 2025 quando o bloco existe, senão leves + pesados 2023.
+  function volTotal(intel, j) {
+    const v = v25Of(intel);
+    if (v) return has(v.fis.t[j]) ? v.fis.t[j] : null;
+    const vm = vmdaOf(intel);
+    return vm ? sumNullable(vm.l && vm.l[j], vm.p && vm.p[j]) : null;
+  }
+
+  // Participação de pesados no VMDa 2023 do físico j (p ÷ (l + p)); null sem pesados ou com total 0.
+  function sharePes(vm, j) {
+    if (!vm || !vm.p || !has(vm.p[j])) return null;
+    const t = sumNullable(vm.l && vm.l[j], vm.p[j]);
+    return t > 0 ? vm.p[j] / t : null;
+  }
+
   // Somas da seleção. kmPav = km pavimentados visíveis; kmVmda e kmCarga = desses, os que têm dado (cobertura).
+  // veíc·km com o VMDa 2025 quando existe (anoVmda); pesados = volume × participação de pesados 2023 por físico
+  // (pesEstimado = true com 2025: estimativa), somados só onde há participação; vkmBasePes = veíc·km desses físicos
+  // (a % de pesados da seleção é vkmPes ÷ vkmBasePes).
   function aggregateIntel(intel, snv, visible) {
-    const vm = vmdaOf(intel), ac = acidOf(intel), ca = cargaOf(intel);
-    const hasCarga = !!ca, hasMortos = !!(ac && ac.m && ac.m.length);
+    const vm = vmdaOf(intel), v25 = v25Of(intel), ac = acidOf(intel), ca = cargaOf(intel);
+    const hasTraf = !!(vm || v25), hasCarga = !!ca, hasMortos = !!(ac && ac.m && ac.m.length);
     const r = {
-      vkm: vm ? 0 : null, vkmPes: vm ? 0 : null, kmVmda: vm ? 0 : null, kmPav: 0,
+      vkm: hasTraf ? 0 : null, vkmPes: vm ? 0 : null, vkmBasePes: vm ? 0 : null, kmVmda: hasTraf ? 0 : null, kmPav: 0,
+      anoVmda: v25 ? v25.ano : vm ? vm.ano : null, pesEstimado: !!(v25 && vm),
       acidAno: ac && ac.n ? 0 : null, mortosAno: hasMortos ? 0 : null,
       tkm: hasCarga ? 0 : null, kmCarga: hasCarga ? 0 : null,
     };
@@ -1663,12 +1698,17 @@ const IntelModel = (() => {
       if (!visible[j]) continue;
       const ext = snv.fis[j].ext, pav = fisSup(snv, j) === 'PAV';
       if (pav) r.kmPav += ext;
-      if (vm) {
-        const tot = sumNullable(vm.l && vm.l[j], vm.p && vm.p[j]);
+      if (hasTraf) {
+        const tot = volTotal(intel, j);
         if (tot != null) {
           r.vkm += tot * ext;
           if (pav) r.kmVmda += ext;
-          if (has(vm.p && vm.p[j])) r.vkmPes += vm.p[j] * ext;
+          const sh = sharePes(vm, j);
+          if (sh != null) {
+            // sem 2025, os pesados do próprio 2023 (mesma soma de antes, sem arredondar a participação)
+            r.vkmPes += (v25 ? tot * sh : vm.p[j]) * ext;
+            r.vkmBasePes += tot * ext;
+          }
         }
       }
       if (r.acidAno != null && has(ac.n[j])) r.acidAno += ac.n[j] / anos;
@@ -1679,23 +1719,48 @@ const IntelModel = (() => {
   }
 
   // Números de um físico para o cartão; mesmas regras de aggregateIntel (null = sem dado).
+  // l, p, tot, pctPes e taxa: VMDa 2023 (leves/pesados). t25, c25, d25 (sentidos crescente/decrescente do SNV), ns25
+  // (não simulável, uso restrito) e pes25 (= t25 × % de pesados 2023, estimativa): VMDa 2025. vkm usa o volume de
+  // aggregateIntel (2025 quando o bloco existe).
   function fisIntel(intel, snv, j) {
-    const vm = vmdaOf(intel), ac = acidOf(intel), ca = cargaOf(intel);
+    const vm = vmdaOf(intel), v25 = v25Of(intel), ac = acidOf(intel), ca = cargaOf(intel);
     const at = (arr, k) => (arr && has(arr[k]) ? arr[k] : null);
     const l = vm ? at(vm.l, j) : null, p = vm ? at(vm.p, j) : null;
     const tot = sumNullable(l, p);
+    const pctPes = p != null && tot > 0 ? p / tot : null;
+    const t25 = v25 ? at(v25.fis.t, j) : null;
+    const vol = volTotal(intel, j);
     const anos = nAnos(ac);
     const n = ac ? at(ac.n, j) : null, m = ac ? at(ac.m, j) : null, ext = snv.fis[j].ext;
     return {
-      l, p, tot,
-      pctPes: p != null && tot > 0 ? p / tot : null,
+      l, p, tot, pctPes,
       acidAno: n == null ? null : n / anos,
       mortosAno: m == null ? null : m / anos,
       taxa: taxaAcidentes(n, anos, tot, ext),
       gsa: ca ? at(ca.gsa, j) : null,
-      vkm: tot == null || !has(ext) ? null : tot * ext,
+      vkm: vol == null || !has(ext) ? null : vol * ext,
       acidKmAno: n == null || !(ext > 0) ? null : n / anos / ext,
       cargaTotal: ca ? at(ca.total, j) : null,
+      t25,
+      c25: t25 != null ? at(v25.fis.c, j) : null,
+      d25: t25 != null ? at(v25.fis.d, j) : null,
+      ns25: t25 != null && !!(v25.fis.ns && v25.fis.ns[j]),
+      pes25: t25 != null && pctPes != null ? t25 * pctPes : null,
+      ano25: v25 ? v25.ano : null,
+    };
+  }
+
+  // VMDa 2025 das linhas da malha estadual, na ordem de estaduais.malha: {ano, t, ns, ext}; null sem um dos blocos
+  // ou com tamanhos diferentes (o total vale por posição).
+  function estTrafego(intel) {
+    const v = intel && intel.vmda2025, e = v && v.estaduais, m = intel && intel.estaduais && intel.estaduais.malha;
+    if (!e || !Array.isArray(e.t) || !m || !Array.isArray(m.p) || e.t.length !== m.p.length) return null;
+    const iExt = Array.isArray(m.campos) ? m.campos.indexOf('ext') : -1, linhas = Array.isArray(m.linhas) ? m.linhas : [];
+    return {
+      ano: v.ano,
+      t: e.t.map(x => (has(x) && x > 0 ? x : null)),
+      ns: e.t.map((_, i) => (Array.isArray(e.ns) && e.ns[i] ? 1 : 0)),
+      ext: e.t.map((_, i) => (iExt >= 0 && linhas[i] && has(linhas[i][iExt]) ? linhas[i][iExt] : null)),
     };
   }
 
@@ -2169,7 +2234,8 @@ const IntelModel = (() => {
   const pracasRows = intel => rows(anttOf(intel) && anttOf(intel).pracas).map((p, i) => Object.assign(p, { i }));
 
   // KPIs da aba Tráfego: praças com contagem 2025 (VMD > 0), VMD somado, % pesados ponderado pelo VMD,
-  // veíc·km/dia do VMDa em toda a malha e médias anuais da PRF. Bloco ausente = null.
+  // veíc·km/dia do VMDa em toda a malha federal (anoVkm: 2025 ou, sem o bloco, 2023), veíc·km/dia 2025 da malha estadual
+  // (Σ total × extensão; kmEst = km com estimativa de kmEstTotal) e médias anuais da PRF. Bloco ausente = null.
   function trafegoKpis(intel, snv) {
     const pr = anttOf(intel) && anttOf(intel).pracas ? pracasRows(intel) : null;
     const ag = aggregateIntel(intel, snv, new Uint8Array(snv.fis.length).fill(1));
@@ -2182,7 +2248,18 @@ const IntelModel = (() => {
       const base = comPes.reduce((s, p) => s + p.vmd, 0);
       pctPes = base > 0 ? comPes.reduce((s, p) => s + p.pesados, 0) / base : null;
     }
-    return { nPracas, vmdTotal, pctPes, vkm: ag.vkm, acidAno: ag.acidAno, mortosAno: ag.mortosAno };
+    const est = estTrafego(intel);
+    let vkmEst = null, kmEst = null, kmEstTotal = null;
+    if (est) {
+      vkmEst = 0; kmEst = 0; kmEstTotal = 0;
+      est.t.forEach((t, i) => {
+        const ext = est.ext[i];
+        if (!has(ext)) return;
+        kmEstTotal += ext;
+        if (t != null) { vkmEst += t * ext; kmEst += ext; }
+      });
+    }
+    return { nPracas, vmdTotal, pctPes, vkm: ag.vkm, anoVkm: ag.anoVmda, vkmEst, kmEst, kmEstTotal, acidAno: ag.acidAno, mortosAno: ag.mortosAno };
   }
 
   const pracasRanking = (intel, n = 20) => pracasRows(intel).filter(p => has(p.vmd) && p.vmd > 0).sort(desc('vmd')).slice(0, n);
@@ -2389,7 +2466,7 @@ const IntelModel = (() => {
   const fmtVkm = x => scaled(x, [[1, 0, '', ' veíc·km/dia'], [1e6, 1, '', ' mi veíc·km/dia'], [1e9, 1, '', ' bi veíc·km/dia']]);
   const fmtTkm = x => scaled(x, [[1, 0, '', ' t·km/ano'], [1e6, 1, '', ' mi t·km/ano'], [1e9, 1, '', ' bi t·km/ano'], [1e12, 1, '', ' tri t·km/ano']]);
 
-  return { MODES, has, sumNullable, nAnos, vmdaOf, acidOf, cargaOf, fisSup,
+  return { MODES, has, sumNullable, nAnos, vmdaOf, v25Of, acidOf, cargaOf, fisSup, estTrafego,
     rows, metricArray, quantileBreaks, classOf, aggregateIntel, fisIntel, taxaAcidentes, pointsOfFis, decodeTopo,
     rodLabel, decodeLine, estConcLines, distToSegment, pointRadius, lineWeight, PORTO_TIPOS, portoTipo, monthLabel, mesX, xMes, fmtMesX, anosLabel,
     FUNDOS, PRODUTOS, fundoFonte, fundoValues,
@@ -3121,8 +3198,11 @@ const Layers = (() => {
     nw: ['left', [-8, -8]], sw: ['left', [-8, 8]], ne: ['right', [8, -8]], se: ['right', [8, 8]] };
   const POINT_KEYS = ['pracas', 'portos', 'sats', 'obras']; // de cima para baixo (prioridade do clique)
   const HIT_PAD = 3, LINE_TOL = 5;
-  let map = null, intel = null;
-  let pointCb = () => {}, munCb = () => {};
+  // Malha estadual no modo Tráfego (v3.1): linhas com VMDa 2025 na rampa e nas classes do modo (quebras da malha federal,
+  // mesma espessura); sem dado em cinza fino contínuo (o "sem dado" federal é tracejado).
+  const EST_NONE = { color: COLORS.lightGrey, weight: 0.75, opacity: 0.5 };
+  let map = null, intel = null, trafBreaks = null;
+  let pointCb = () => {}, munCb = () => {}, toggleCb = () => {};
   const built = {}, on = {}, rowsCache = {}, fundoCache = {};
   let fundoKey = null, mun = null, sel = null, selGroup = null, selRenderer = null, snv = null;
   let roadPicked = false, down = null, hoverTip = null, hoverRaf = 0;
@@ -3139,7 +3219,8 @@ const Layers = (() => {
   // Definição das camadas: rótulo, disponibilidade, nº de feições e fonte (title do checkbox).
   const DEFS = [
     { key: 'estaduais', label: 'Rodovias estaduais', has: () => !!est(), n: () => est().malha.p.length,
-      fonte: () => `${IM.fonteRef(est().fonte, /./)} · concessões estaduais em magenta com halo (ARTESP, AGERGS e demais agências)` },
+      fonte: () => `${IM.fonteRef(est().fonte, /./)} · concessões estaduais em magenta com halo (ARTESP, AGERGS e demais agências)` +
+        (IM.estTrafego(intel) ? ` · no modo Tráfego, coloridas pelo VMDa ${IM.estTrafego(intel).ano} (DNIT, modelado)` : '') },
     { key: 'pracas', label: 'Praças de pedágio', has: () => !!antt('pracas'), n: () => rowsOf('pracas').filter(hasLatLng).length,
       fonte: () => `${fonteAntt(/Praças de pedágio/)} · VMD 2025, contagem medida; círculo ∝ √VMD` },
     { key: 'sats', label: 'SATs', has: () => !!antt('sats'), n: () => rowsOf('sats').filter(hasLatLng).length,
@@ -3243,9 +3324,10 @@ const Layers = (() => {
     }
     // estaduais: malha em verde fino (pane abaixo das rodovias federais); concessões estaduais em magenta com halo, acima delas
     // (entEst -> feições da malha; entFis -> físicos do SNV; entGeo -> traçado próprio), clicáveis.
-    const e = est();
-    const base = e.malha.p.map(p => IM.decodeLine(p)).filter(l => l.length >= 2);
-    if (base.length) group.addLayer(L.polyline(base, polyOpts(renderer(key), LAYER_STYLES.estaduais)));
+    const e = est(), rend = renderer(key);
+    const dec = e.malha.p.map(p => IM.decodeLine(p)), base = dec.filter(l => l.length >= 2);
+    const malha = base.length ? L.polyline(base, polyOpts(rend, LAYER_STYLES.estaduais)) : null;
+    if (malha) group.addLayer(malha);
     const st = LAYER_STYLES.estConc, rc = renderer('estconc');
     const conc = [], all = [];
     IM.estConcLines(e, snv).forEach((lines, k) => {
@@ -3255,7 +3337,64 @@ const Layers = (() => {
       group.addLayer(L.polyline(all, polyOpts(rc, { color: st.halo, weight: st.weight + st.haloExtra, opacity: st.haloOpacity })));
       group.addLayer(L.polyline(all, polyOpts(rc, st)));
     }
-    return { group, items: [], n: e.malha.p.length, conc, nConc: new Set(conc.map(c => c.k)).size };
+    return { group, items: [], n: e.malha.p.length, conc, nConc: new Set(conc.map(c => c.k)).size, rend, dec, malha, traf: null };
+  }
+
+  // ---------- Malha estadual colorida pelo VMDa 2025 (modo Tráfego) ----------
+  // Uma polyline por classe (sem dado embaixo, classe maior por cima), montada para as quebras atuais.
+  function buildEstTraf(b, breaks) {
+    const et = IM.estTrafego(intel), byClass = new Map();
+    b.dec.forEach((ll, i) => {
+      if (ll.length < 2) return;
+      const c = IM.classOf(et.t[i], breaks);
+      if (!byClass.has(c)) byClass.set(c, []);
+      byClass.get(c).push(ll);
+    });
+    const group = L.layerGroup(), lines = [];
+    let min = Infinity, max = -Infinity, n = 0, semDado = 0;
+    et.t.forEach(v => { if (v != null) { n++; if (v < min) min = v; if (v > max) max = v; } else semDado++; });
+    for (const c of [...byClass.keys()].sort((x, y) => x - y)) {
+      const s = c < 0 ? EST_NONE : quantStyle(c, 'trafego');
+      const pl = L.polyline(byClass.get(c), polyOpts(b.rend, { color: s.color, weight: s.weight, opacity: s.opacity }));
+      group.addLayer(pl);
+      lines.push({ pl, w: s.weight });
+    }
+    const porClasse = Object.fromEntries([...byClass.entries()].map(([c, ls]) => [c, ls.length]));
+    return { group, lines, breaks, ano: et.ano, n, semDado, min: n ? min : null, max: n ? max : null, porClasse };
+  }
+
+  const estTrafWanted = () => !!(trafBreaks && built.estaduais && built.estaduais.dec && IM.estTrafego(intel));
+
+  // Espessura das classes acompanha o zoom, como a malha federal (zoomFactor).
+  function estTrafWeights() {
+    const t = built.estaduais && built.estaduais.traf;
+    if (!t || !map.hasLayer(t.group)) return;
+    const f = zoomFactor(map.getZoom());
+    for (const x of t.lines) x.pl.setStyle({ weight: x.w * f });
+  }
+
+  // Troca a malha verde pelas classes do Tráfego (ou volta ao verde), conforme o modo atual e a camada.
+  function applyEstMode() {
+    const b = built.estaduais;
+    if (!b || !b.dec) return;
+    if (estTrafWanted()) {
+      if (!b.traf || b.traf.breaks !== trafBreaks) {
+        if (b.traf) b.group.removeLayer(b.traf.group);
+        b.traf = buildEstTraf(b, trafBreaks);
+      }
+      if (b.malha) b.group.removeLayer(b.malha);
+      if (!b.group.hasLayer(b.traf.group)) b.group.addLayer(b.traf.group);
+      estTrafWeights();
+    } else {
+      if (b.traf) b.group.removeLayer(b.traf.group);
+      if (b.malha && !b.group.hasLayer(b.malha)) b.group.addLayer(b.malha);
+    }
+  }
+
+  // Quebras do modo Tráfego (as da malha federal) ou null fora dele.
+  function setTrafego(breaks) {
+    trafBreaks = Array.isArray(breaks) ? breaks : null;
+    applyEstMode();
   }
 
   // Rotas: países vizinhos (pane abaixo das UFs; rótulo acima das linhas das rotas, com halo claro); as 5 rotas sobre um contorno claro; hidrovias, cabotagem e
@@ -3320,14 +3459,18 @@ const Layers = (() => {
     if (!d || !d.has()) return 0;
     const want = value === undefined ? !on[key] : !!value;
     const t0 = performance.now();
+    const was = !!on[key];
     if (want) {
       if (!built[key]) built[key] = build(key);
       if (!map.hasLayer(built[key].group)) built[key].group.addTo(map);
     } else if (built[key]) built[key].group.remove();
     on[key] = want;
+    if (key === 'estaduais') applyEstMode();
     if (!want) hideTip();
     if (!want && sel && sel.key === key) clearSelection();
-    return performance.now() - t0;
+    const ms = performance.now() - t0;
+    if (was !== want) toggleCb(key, want);
+    return ms;
   }
 
   // ---------- Fundo municipal ----------
@@ -3544,6 +3687,7 @@ const Layers = (() => {
     }, true);
     el.addEventListener('mousemove', onMove, true);
     el.addEventListener('mouseleave', hideTip);
+    map.on('zoomend', estTrafWeights);
     map.on('click', e => {
       if (roadPicked) { roadPicked = false; return; }
       if (!fundoKey) return;
@@ -3553,7 +3697,17 @@ const Layers = (() => {
   }
 
   return {
-    init, toggle, setFundo, fundoInfo, fundoAvailable, munAt, select, clearSelection, rowsOf,
+    init, toggle, setFundo, fundoInfo, fundoAvailable, munAt, select, clearSelection, rowsOf, setTrafego, EST_NONE,
+    // Malha estadual colorida pelo VMDa no modo Tráfego (camada ligada): {ano, n, semDado, min, max, porClasse} (porClasse:
+    // nº de linhas desenhadas por classe, -1 = sem dado); senão null.
+    estTrafego() {
+      const b = built.estaduais;
+      if (!on.estaduais || !estTrafWanted() || !b.traf) return null;
+      const t = b.traf;
+      return { ano: t.ano, n: t.n, semDado: t.semDado, min: t.min, max: t.max, porClasse: Object.assign({}, t.porClasse) };
+    },
+    // Avisa (key, ligada) quando uma camada liga ou desliga, venha a troca do painel, da ficha ou da aba Tráfego.
+    onToggle(cb) { toggleCb = cb; },
     available() { return DEFS.filter(d => d.has()).map(d => ({ key: d.key, label: d.label, title: d.fonte(), n: d.n() })); },
     isOn(key) { return !!on[key]; },
     fundo() { return fundoKey; },
@@ -4283,22 +4437,30 @@ const Trafego = (() => {
 
   // ---------- Cartões ----------
   function kpisCard() {
-    const k = IM.trafegoKpis(intel, snv), tr = intel.trafego || {}, ac = IM.acidOf(intel), vm = IM.vmdaOf(intel);
+    const k = IM.trafegoKpis(intel, snv), tr = intel.trafego || {}, ac = IM.acidOf(intel), v25 = IM.v25Of(intel);
     const tiles = [];
     if (k.nPracas != null) {
       tiles.push(tile('kpi-pracas', IM.fmtInt(k.nPracas), 'praças com contagem em 2025 (ANTT, medido)'));
       tiles.push(tile('kpi-vmd', IM.fmtInt(k.vmdTotal), 'veíc./dia somados nas praças (VMD 2025, dois sentidos)'));
       tiles.push(tile('kpi-pes', IM.fmtPct(k.pctPes), 'de pesados nas praças, ponderado pelo VMD'));
     }
-    if (vm) tiles.push(tile('kpi-vkm', IM.fmtVkm(k.vkm), `na malha federal (VMDa ${vm.ano}, modelado)`));
+    // veíc·km/dia: VMDa 2025 (DNIT) na malha federal e na estadual; sem o bloco 2025, o federal com o VMDa 2023
+    if (k.vkm != null) tiles.push(tile('kpi-vkm', IM.fmtVkm(k.vkm), `na malha federal (VMDa ${k.anoVkm}, modelado)`));
+    if (k.vkmEst != null) tiles.push(tile('kpi-vkm-est', IM.fmtVkm(k.vkmEst), `nas rodovias estaduais (VMDa ${IM.estTrafego(intel).ano}, modelado)`));
     if (ac) {
       tiles.push(tile('kpi-acid', IM.fmtInt(k.acidAno), `acidentes/ano (PRF ${anosLabel(ac.anos)}, medido)`));
       tiles.push(tile('kpi-mortos', IM.fmtInt(k.mortosAno), `mortos/ano (PRF ${anosLabel(ac.anos)}, medido)`));
     }
     if (!tiles.length) return '';
-    const f = [k.nPracas != null && fontePracas(), vm && fonte(tr, /VMDa/), ac && fonte(tr, /PRF/)].filter(Boolean);
-    return card('t-kpis', 'Tráfego e segurança em números', 'Praças medidas pela ANTT, volume modelado da malha federal e acidentes registrados pela PRF',
-      { wide: true, html: `<div class="kpis">${tiles.join('')}<\/div>`, fonte: f.join('; ') });
+    const fVmda = k.vkm == null && k.vkmEst == null ? null : v25 || k.vkmEst != null ? fonte(intel.vmda2025, /VMDa/) : fonte(tr, /VMDa/);
+    const f = [k.nPracas != null && fontePracas(), fVmda, ac && fonte(tr, /PRF/)].filter(Boolean);
+    const km = x => IM.fmtInt(x);
+    const note = k.vkmEst != null
+      ? `Rodovias estaduais: linhas da malha estadual (pavimentadas e fora das BRs), ${km(k.kmEst)} km com estimativa de ${km(k.kmEstTotal)} km; veíc·km/dia = Σ VMDa × extensão.`
+      : '';
+    return card('t-kpis', 'Tráfego e segurança em números',
+      `Praças medidas pela ANTT, volume modelado da malha federal${k.vkmEst != null ? ' e da estadual' : ''} e acidentes registrados pela PRF`,
+      { wide: true, html: `<div class="kpis">${tiles.join('')}<\/div>`, fonte: f.join('; '), note });
   }
 
   function rankingCard() {
@@ -5176,22 +5338,26 @@ const UI = (() => {
 
   // ---------- Camadas de inteligência (v3) ----------
   const vmdaOf = () => IM.vmdaOf(intel), acidOf = () => IM.acidOf(intel), cargaOf = () => IM.cargaOf(intel);
-  const vmdaRef = () => { const v = vmdaOf(); return v ? `VMDa ${v.ano}` : 'VMDa'; };
   const prfRef = () => { const a = acidOf(); const y = a && IM.anosLabel(a.anos); return y ? `PRF ${y}` : 'PRF'; };
   const pnlRef = () => { const c = cargaOf(); return c ? `${c.cenario || 'PNL 2035'} ${c.ano_base}` : 'PNL 2035'; };
 
   // Bloco do painel "Números da seleção": só soma trechos com dado; cada número explica a fonte no title.
   // Cobertura: km pavimentados com dado sobre os km pavimentados da seleção.
+  // veíc·km com o VMDa 2025 (sem o bloco, 2023); % de pesados com 2025 = estimativa (participação de pesados de 2023).
   function intelStats(ag) {
     if (!ag) return '';
-    const pctPes = ag.vkm > 0 ? ag.vkmPes / ag.vkm : null;
+    const pctPes = ag.vkmBasePes > 0 ? ag.vkmPes / ag.vkmBasePes : null;
+    const ref = ag.anoVmda ? `VMDa ${ag.anoVmda}` : 'VMDa', vm = vmdaOf();
     const tile = (id, value, sub, title) => `<div class="ikpi" title="${esc(title)}">
         <span class="ikpi__value" id="${id}">${esc(value)}<\/span><span class="ikpi__sub">${esc(sub)}<\/span><\/div>`;
     const cov = km => (km != null && ag.kmPav > 0 ? ` · ${fmtKmNum.format(km)} km com dado de ${fmtKmNum.format(ag.kmPav)} km pavimentados` : '');
+    const pesTitle = ag.pesEstimado
+      ? `% de pesados (estimativa) = VMDa ${ag.anoVmda} de cada trecho × participação de pesados no VMDa ${vm.ano} do mesmo trecho, somado e dividido pelo veíc·km dos trechos que têm as duas estimativas (o VMDa ${ag.anoVmda} não separa leves e pesados). Pesados: ${IM.MODES.pesados.fonte(intel)}.`
+      : '% de pesados = veíc·km pesados ÷ veíc·km total.';
     return `<div class="ikpis">
       ${tile('kpi-vkm', IM.fmtVkm(ag.vkm),
-        `${pctPes == null ? '—' : IM.fmtPct(pctPes)} pesados · Tráfego ${vmdaRef()}, estimado${cov(ag.kmVmda)}`,
-        `Soma de VMDa × extensão nos trechos visíveis que têm estimativa; % de pesados = veíc·km pesados ÷ veíc·km total. Cobertura: km pavimentados com estimativa sobre os km pavimentados da seleção. Fonte: ${IM.MODES.trafego.fonte(intel)} — estimativa de modelo, não contagem.`)}
+        `${pctPes == null ? '—' : IM.fmtPct(pctPes)} pesados${ag.pesEstimado ? ` (estimativa: % de ${vm.ano})` : ''} · Tráfego ${ref}, modelado${cov(ag.kmVmda)}`,
+        `Soma de ${ref} × extensão nos trechos visíveis que têm estimativa. ${pesTitle} Cobertura: km pavimentados com estimativa sobre os km pavimentados da seleção. Fonte: ${IM.MODES.trafego.fonte(intel)} — estimativa de modelo, não contagem.`)}
       ${tile('kpi-acid', ag.acidAno == null ? '—' : `${IM.fmtInt(ag.acidAno)} acidentes/ano`,
         `${ag.mortosAno == null ? '—' : IM.fmtInt(ag.mortosAno)} mortos/ano · ${prfRef()}, medido`,
         `Média anual de acidentes e de mortos registrados pela PRF nos trechos visíveis. Fonte: ${IM.MODES.acidentes.fonte(intel)} — contagem medida de ocorrências.`)}
@@ -5203,20 +5369,32 @@ const UI = (() => {
 
   // Bloco "Tráfego e segurança" do cartão (números de IntelModel.fisIntel); omitido se o físico não tem nenhum dado.
   // Trecho planejado (superfície PLA): tráfego e acidentes vêm marcados "trecho planejado no SNV".
+  // VMDa 2025 (DNIT): total, sentidos crescente/decrescente do SNV, pesados estimados (× % de pesados 2023) e veíc·km;
+  // "uso restrito (área urbana)" quando o modelo marca o trecho como não simulável. O VMDa 2023 (leves/pesados) segue abaixo.
   function intelBlock(j) {
-    const vm = vmdaOf(), ac = acidOf(), ca = cargaOf(), f = IM.fisIntel(intel, snv, j);
+    const vm = vmdaOf(), v25 = IM.v25Of(intel), ac = acidOf(), ca = cargaOf(), f = IM.fisIntel(intel, snv, j);
     const pla = IM.fisSup(snv, j) === 'PLA' ? '<span class="tag-nv">trecho planejado no SNV<\/span>' : '';
     const groups = [];
-    const group = (title, rows, tag = '') => {
+    const group = (title, rows, tag = '', extra = '') => {
       const body = rows.filter(([, v]) => v != null).map(([k, v]) => `<dt>${esc(k)}<\/dt><dd>${esc(v)}<\/dd>`).join('');
-      if (body) groups.push(`<dt class="card__sub">${esc(title)}${tag}<\/dt>${body}`);
+      if (body) groups.push(`<dt class="card__sub">${esc(title)}${tag}<\/dt>${body}${extra}`);
     };
     const fmt = (v, fn) => (v == null ? null : fn(v));
+    if (v25) {
+      const restrito = f.ns25 ? '<dd class="card__flag" data-ns="1"><span class="tag-nv">uso restrito (área urbana)<\/span> trecho não simulável no modelo<\/dd>' : '';
+      const pesNota = f.pes25 != null && vm ? `<dd class="card__flag">Pesados (estimativa) = total ${v25.ano} × ${IM.fmtPct(f.pctPes)} de pesados no VMDa ${vm.ano} do trecho.<\/dd>` : '';
+      group(`VMDa ${v25.ano} · modelado, total e por sentido`, [
+        ['Total', f.t25 == null ? '—' : IM.fmtVmd(f.t25)],
+        ['Sentido crescente (SNV)', fmt(f.c25, IM.fmtVmd)], ['Sentido decrescente (SNV)', fmt(f.d25, IM.fmtVmd)],
+        ['Pesados (estimativa)', fmt(f.pes25, IM.fmtVmd)],
+        ['Veículos × extensão', fmt(f.vkm, IM.fmtVkm)],
+      ], pla, pesNota + restrito);
+    }
     if (vm) {
-      group(`VMDa · estimado, ${vm.ano}`, [
+      group(`VMDa · estimado, ${vm.ano} · leves e pesados`, [
         ['Leves', fmt(f.l, IM.fmtVmd)], ['Pesados', fmt(f.p, IM.fmtVmd)],
         ['Total', fmt(f.tot, IM.fmtVmd)], ['% pesados', fmt(f.pctPes, IM.fmtPct)],
-        ['Veículos × extensão', fmt(f.vkm, IM.fmtVkm)],
+        ['Veículos × extensão', v25 ? null : fmt(f.vkm, IM.fmtVkm)],
       ], pla);
     }
     if (ac) {
@@ -5224,7 +5402,7 @@ const UI = (() => {
         ['Acidentes/ano', fmt(f.acidAno, x => IM.fmtDec(x, 1))],
         ['Mortos/ano', fmt(f.mortosAno, x => IM.fmtDec(x, 1))],
         ['Acidentes por km por ano', fmt(f.acidKmAno, x => IM.fmtDec(x, 2))],
-        ['Acidentes por 10⁶ veíc·km', fmt(f.taxa, x => IM.fmtDec(x, 2))],
+        [vm ? `Acidentes por 10⁶ veíc·km (VMDa ${vm.ano})` : 'Acidentes por 10⁶ veíc·km', fmt(f.taxa, x => IM.fmtDec(x, 2))],
       ], pla);
     }
     if (ca) {
@@ -5598,20 +5776,41 @@ const UI = (() => {
   }
 
   // ---------- Legenda ----------
+  // Amostra da malha estadual sem dado no modo Tráfego (cinza fino contínuo; 1 px na amostra para ficar legível).
+  function estNoneSwatch(width = 32) {
+    const s = Layers.EST_NONE;
+    return `<svg class="swatch" width="${width}" height="8" viewBox="0 0 ${width} 8" aria-hidden="true">` +
+      `<line x1="1" y1="4" x2="${width - 1}" y2="4" stroke="${s.color}" stroke-width="1" stroke-opacity="${s.opacity}"/><\/svg>`;
+  }
+
+  // Legenda de um modo quantitativo. Tráfego com a camada de rodovias estaduais ligada: as mesmas classes (quebras da malha
+  // federal) colorem as estaduais; a 1ª e a última faixa passam a cobrir também os valores estaduais.
   function quantLegend(mode) {
     const M = IM.MODES[mode], q = MapView.classes(mode) || { breaks: [], min: null, max: null };
+    const est = mode === 'trafego' ? Layers.estTrafego() : null;
     const fmt = RANGE_FMT[mode];
+    const both = (a, b, fn) => (a == null ? b : b == null ? a : fn(a, b));
+    const min = est ? both(q.min, est.min, Math.min) : q.min, max = est ? both(q.max, est.max, Math.max) : q.max;
     const rows = [];
     if (q.max != null) {
       for (let c = 0; c <= q.breaks.length; c++) {
-        const lo = c === 0 ? q.min : q.breaks[c - 1], hi = c === q.breaks.length ? q.max : q.breaks[c];
+        const lo = c === 0 ? min : q.breaks[c - 1], hi = c === q.breaks.length ? max : q.breaks[c];
         rows.push(`<div class="legend__row" data-class="${c}">${quantSwatch(c, mode)}<span class="legend__range">${esc(fmt(lo))} – ${esc(fmt(hi))}<\/span><\/div>`);
       }
     }
-    rows.push(`<div class="legend__row">${quantSwatch(-1, mode)}<span>Sem dado<\/span><\/div>`);
-    return `<div class="legend__title">${esc(M.label)} <span>${esc(M.unidade)}<\/span><\/div>${rows.join('')}
+    rows.push(`<div class="legend__row">${quantSwatch(-1, mode)}<span>${est ? 'Sem dado (federal)' : 'Sem dado'}<\/span><\/div>`);
+    if (est) rows.push(`<div class="legend__row" data-est-none>${estNoneSwatch()}<span>Sem dado (estadual)<\/span><\/div>`);
+    const ref = M.ref ? M.ref(intel) : '—';
+    return `<div class="legend__title">${esc(M.label)} <span>${esc(M.unidade)}${ref !== '—' ? ` · ${esc(ref)}` : ''}<\/span><\/div>${rows.join('')}
       <div class="legend__tipo">${esc(TIPO_LABEL[M.tipo] || M.tipo)}<\/div>
+      ${est ? `<p class="legend__note" id="legend-est">Inclui rodovias estaduais (VMDa ${esc(String(est.ano))}), nas mesmas classes da malha federal.<\/p>` : ''}
       <div class="legend__src">Fonte: ${esc(M.fonte(intel))}<\/div>`;
+  }
+
+  // Malha estadual nas classes do Tráfego: só no modo Tráfego (as quebras são as da malha federal).
+  function syncEstTrafego() {
+    const q = MapView.colorMode() === 'trafego' ? MapView.classes('trafego') : null;
+    Layers.setTrafego(q && q.max != null ? q.breaks : null);
   }
 
   function renderLegend() {
@@ -5647,6 +5846,7 @@ const UI = (() => {
   // Troca o modo, redesenha a legenda e devolve o foco ao rádio marcado.
   function selectMode(m) {
     MapView.setColorMode(m);
+    syncEstTrafego();
     renderLegend();
     const b = $('#legend [role="radio"][aria-checked="true"]');
     if (b) b.focus();
@@ -5681,6 +5881,9 @@ const UI = (() => {
     MapView.onPick(j => { Layers.notePick(); openCard(j); });
     Layers.onPoint(openPoint);
     Layers.onMun(openMun);
+    // Ligar/desligar as estaduais muda a legenda do Tráfego (estaduais incluídas), venha a troca do painel ou da ficha.
+    Layers.onToggle(key => { if (key === 'estaduais' && QUANT_MODES.includes(MapView.colorMode())) renderLegend(); });
+    syncEstTrafego();
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape' && !$('#card').hidden) closeCard();
     });

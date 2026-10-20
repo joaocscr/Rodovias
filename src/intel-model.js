@@ -17,15 +17,22 @@ const IntelModel = (() => {
   const acidOf = intel => (intel && intel.trafego && intel.trafego.acidentes) || null;
   // Carga só conta como presente com o array GSA (é ele que vira métrica, agregado e cartão).
   const cargaOf = intel => (intel && intel.carga && intel.carga.gsa ? intel.carga : null);
+  // VMDa 2025 (v3.1, DNIT, modelado): total e sentidos por físico, total por linha da malha estadual; sem leves/pesados.
+  // Só conta como presente com o array fis.t. Sem ele, Tráfego e veíc·km voltam ao VMDa 2023 (leves + pesados).
+  const v25Of = intel => (intel && intel.vmda2025 && intel.vmda2025.fis && Array.isArray(intel.vmda2025.fis.t) ? intel.vmda2025 : null);
+  const vmda23Fonte = intel => { const v = vmdaOf(intel); return v ? `Infra S.A./DNIT, VMDa ${v.ano} (modelado)` : DASH; };
+  const vmda23Ref = intel => { const v = vmdaOf(intel); return v ? `VMDa ${v.ano}, modelado` : DASH; };
 
+  // ref: ano e natureza do dado que colore o modo ("VMDa 2025, modelado"), mostrado na legenda.
   const MODES = {
     trafego: {
       label: 'Tráfego', unidade: 'veíc./dia', tipo: 'modelado',
-      fonte: intel => { const v = vmdaOf(intel); return v ? `Infra S.A./DNIT, VMDa ${v.ano} (modelado)` : DASH; },
+      fonte: intel => { const v = v25Of(intel); return v ? `DNIT, VMDa ${v.ano} (modelado)` : vmda23Fonte(intel); },
+      ref: intel => { const v = v25Of(intel); return v ? `VMDa ${v.ano}, modelado` : vmda23Ref(intel); },
     },
     pesados: {
       label: 'Pesados', unidade: 'veíc. pesados/dia', tipo: 'modelado',
-      fonte: intel => { const v = vmdaOf(intel); return v ? `Infra S.A./DNIT, VMDa ${v.ano} (modelado)` : DASH; },
+      fonte: vmda23Fonte, ref: vmda23Ref,
     },
     carga: {
       label: 'Carga agrícola', unidade: 't/ano', tipo: 'modelado',
@@ -49,6 +56,11 @@ const IntelModel = (() => {
     const nFis = snv.fis.length;
     const none = () => new Array(nFis).fill(null);
     const out = new Array(nFis);
+    if (mode === 'trafego' && v25Of(intel)) {
+      const t = v25Of(intel).fis.t;
+      for (let j = 0; j < nFis; j++) out[j] = has(t[j]) ? t[j] : null;
+      return out;
+    }
     if (mode === 'trafego' || mode === 'pesados') {
       const v = vmdaOf(intel);
       if (!v) return none();
@@ -104,12 +116,31 @@ const IntelModel = (() => {
     return t ? (d[t[I_SUP]] ?? null) : null;
   }
 
+  // Volume total do físico j usado no Tráfego e no veíc·km: VMDa 2025 quando o bloco existe, senão leves + pesados 2023.
+  function volTotal(intel, j) {
+    const v = v25Of(intel);
+    if (v) return has(v.fis.t[j]) ? v.fis.t[j] : null;
+    const vm = vmdaOf(intel);
+    return vm ? sumNullable(vm.l && vm.l[j], vm.p && vm.p[j]) : null;
+  }
+
+  // Participação de pesados no VMDa 2023 do físico j (p ÷ (l + p)); null sem pesados ou com total 0.
+  function sharePes(vm, j) {
+    if (!vm || !vm.p || !has(vm.p[j])) return null;
+    const t = sumNullable(vm.l && vm.l[j], vm.p[j]);
+    return t > 0 ? vm.p[j] / t : null;
+  }
+
   // Somas da seleção. kmPav = km pavimentados visíveis; kmVmda e kmCarga = desses, os que têm dado (cobertura).
+  // veíc·km com o VMDa 2025 quando existe (anoVmda); pesados = volume × participação de pesados 2023 por físico
+  // (pesEstimado = true com 2025: estimativa), somados só onde há participação; vkmBasePes = veíc·km desses físicos
+  // (a % de pesados da seleção é vkmPes ÷ vkmBasePes).
   function aggregateIntel(intel, snv, visible) {
-    const vm = vmdaOf(intel), ac = acidOf(intel), ca = cargaOf(intel);
-    const hasCarga = !!ca, hasMortos = !!(ac && ac.m && ac.m.length);
+    const vm = vmdaOf(intel), v25 = v25Of(intel), ac = acidOf(intel), ca = cargaOf(intel);
+    const hasTraf = !!(vm || v25), hasCarga = !!ca, hasMortos = !!(ac && ac.m && ac.m.length);
     const r = {
-      vkm: vm ? 0 : null, vkmPes: vm ? 0 : null, kmVmda: vm ? 0 : null, kmPav: 0,
+      vkm: hasTraf ? 0 : null, vkmPes: vm ? 0 : null, vkmBasePes: vm ? 0 : null, kmVmda: hasTraf ? 0 : null, kmPav: 0,
+      anoVmda: v25 ? v25.ano : vm ? vm.ano : null, pesEstimado: !!(v25 && vm),
       acidAno: ac && ac.n ? 0 : null, mortosAno: hasMortos ? 0 : null,
       tkm: hasCarga ? 0 : null, kmCarga: hasCarga ? 0 : null,
     };
@@ -118,12 +149,17 @@ const IntelModel = (() => {
       if (!visible[j]) continue;
       const ext = snv.fis[j].ext, pav = fisSup(snv, j) === 'PAV';
       if (pav) r.kmPav += ext;
-      if (vm) {
-        const tot = sumNullable(vm.l && vm.l[j], vm.p && vm.p[j]);
+      if (hasTraf) {
+        const tot = volTotal(intel, j);
         if (tot != null) {
           r.vkm += tot * ext;
           if (pav) r.kmVmda += ext;
-          if (has(vm.p && vm.p[j])) r.vkmPes += vm.p[j] * ext;
+          const sh = sharePes(vm, j);
+          if (sh != null) {
+            // sem 2025, os pesados do próprio 2023 (mesma soma de antes, sem arredondar a participação)
+            r.vkmPes += (v25 ? tot * sh : vm.p[j]) * ext;
+            r.vkmBasePes += tot * ext;
+          }
         }
       }
       if (r.acidAno != null && has(ac.n[j])) r.acidAno += ac.n[j] / anos;
@@ -134,23 +170,48 @@ const IntelModel = (() => {
   }
 
   // Números de um físico para o cartão; mesmas regras de aggregateIntel (null = sem dado).
+  // l, p, tot, pctPes e taxa: VMDa 2023 (leves/pesados). t25, c25, d25 (sentidos crescente/decrescente do SNV), ns25
+  // (não simulável, uso restrito) e pes25 (= t25 × % de pesados 2023, estimativa): VMDa 2025. vkm usa o volume de
+  // aggregateIntel (2025 quando o bloco existe).
   function fisIntel(intel, snv, j) {
-    const vm = vmdaOf(intel), ac = acidOf(intel), ca = cargaOf(intel);
+    const vm = vmdaOf(intel), v25 = v25Of(intel), ac = acidOf(intel), ca = cargaOf(intel);
     const at = (arr, k) => (arr && has(arr[k]) ? arr[k] : null);
     const l = vm ? at(vm.l, j) : null, p = vm ? at(vm.p, j) : null;
     const tot = sumNullable(l, p);
+    const pctPes = p != null && tot > 0 ? p / tot : null;
+    const t25 = v25 ? at(v25.fis.t, j) : null;
+    const vol = volTotal(intel, j);
     const anos = nAnos(ac);
     const n = ac ? at(ac.n, j) : null, m = ac ? at(ac.m, j) : null, ext = snv.fis[j].ext;
     return {
-      l, p, tot,
-      pctPes: p != null && tot > 0 ? p / tot : null,
+      l, p, tot, pctPes,
       acidAno: n == null ? null : n / anos,
       mortosAno: m == null ? null : m / anos,
       taxa: taxaAcidentes(n, anos, tot, ext),
       gsa: ca ? at(ca.gsa, j) : null,
-      vkm: tot == null || !has(ext) ? null : tot * ext,
+      vkm: vol == null || !has(ext) ? null : vol * ext,
       acidKmAno: n == null || !(ext > 0) ? null : n / anos / ext,
       cargaTotal: ca ? at(ca.total, j) : null,
+      t25,
+      c25: t25 != null ? at(v25.fis.c, j) : null,
+      d25: t25 != null ? at(v25.fis.d, j) : null,
+      ns25: t25 != null && !!(v25.fis.ns && v25.fis.ns[j]),
+      pes25: t25 != null && pctPes != null ? t25 * pctPes : null,
+      ano25: v25 ? v25.ano : null,
+    };
+  }
+
+  // VMDa 2025 das linhas da malha estadual, na ordem de estaduais.malha: {ano, t, ns, ext}; null sem um dos blocos
+  // ou com tamanhos diferentes (o total vale por posição).
+  function estTrafego(intel) {
+    const v = intel && intel.vmda2025, e = v && v.estaduais, m = intel && intel.estaduais && intel.estaduais.malha;
+    if (!e || !Array.isArray(e.t) || !m || !Array.isArray(m.p) || e.t.length !== m.p.length) return null;
+    const iExt = Array.isArray(m.campos) ? m.campos.indexOf('ext') : -1, linhas = Array.isArray(m.linhas) ? m.linhas : [];
+    return {
+      ano: v.ano,
+      t: e.t.map(x => (has(x) && x > 0 ? x : null)),
+      ns: e.t.map((_, i) => (Array.isArray(e.ns) && e.ns[i] ? 1 : 0)),
+      ext: e.t.map((_, i) => (iExt >= 0 && linhas[i] && has(linhas[i][iExt]) ? linhas[i][iExt] : null)),
     };
   }
 
@@ -624,7 +685,8 @@ const IntelModel = (() => {
   const pracasRows = intel => rows(anttOf(intel) && anttOf(intel).pracas).map((p, i) => Object.assign(p, { i }));
 
   // KPIs da aba Tráfego: praças com contagem 2025 (VMD > 0), VMD somado, % pesados ponderado pelo VMD,
-  // veíc·km/dia do VMDa em toda a malha e médias anuais da PRF. Bloco ausente = null.
+  // veíc·km/dia do VMDa em toda a malha federal (anoVkm: 2025 ou, sem o bloco, 2023), veíc·km/dia 2025 da malha estadual
+  // (Σ total × extensão; kmEst = km com estimativa de kmEstTotal) e médias anuais da PRF. Bloco ausente = null.
   function trafegoKpis(intel, snv) {
     const pr = anttOf(intel) && anttOf(intel).pracas ? pracasRows(intel) : null;
     const ag = aggregateIntel(intel, snv, new Uint8Array(snv.fis.length).fill(1));
@@ -637,7 +699,18 @@ const IntelModel = (() => {
       const base = comPes.reduce((s, p) => s + p.vmd, 0);
       pctPes = base > 0 ? comPes.reduce((s, p) => s + p.pesados, 0) / base : null;
     }
-    return { nPracas, vmdTotal, pctPes, vkm: ag.vkm, acidAno: ag.acidAno, mortosAno: ag.mortosAno };
+    const est = estTrafego(intel);
+    let vkmEst = null, kmEst = null, kmEstTotal = null;
+    if (est) {
+      vkmEst = 0; kmEst = 0; kmEstTotal = 0;
+      est.t.forEach((t, i) => {
+        const ext = est.ext[i];
+        if (!has(ext)) return;
+        kmEstTotal += ext;
+        if (t != null) { vkmEst += t * ext; kmEst += ext; }
+      });
+    }
+    return { nPracas, vmdTotal, pctPes, vkm: ag.vkm, anoVkm: ag.anoVmda, vkmEst, kmEst, kmEstTotal, acidAno: ag.acidAno, mortosAno: ag.mortosAno };
   }
 
   const pracasRanking = (intel, n = 20) => pracasRows(intel).filter(p => has(p.vmd) && p.vmd > 0).sort(desc('vmd')).slice(0, n);
@@ -844,7 +917,7 @@ const IntelModel = (() => {
   const fmtVkm = x => scaled(x, [[1, 0, '', ' veíc·km/dia'], [1e6, 1, '', ' mi veíc·km/dia'], [1e9, 1, '', ' bi veíc·km/dia']]);
   const fmtTkm = x => scaled(x, [[1, 0, '', ' t·km/ano'], [1e6, 1, '', ' mi t·km/ano'], [1e9, 1, '', ' bi t·km/ano'], [1e12, 1, '', ' tri t·km/ano']]);
 
-  return { MODES, has, sumNullable, nAnos, vmdaOf, acidOf, cargaOf, fisSup,
+  return { MODES, has, sumNullable, nAnos, vmdaOf, v25Of, acidOf, cargaOf, fisSup, estTrafego,
     rows, metricArray, quantileBreaks, classOf, aggregateIntel, fisIntel, taxaAcidentes, pointsOfFis, decodeTopo,
     rodLabel, decodeLine, estConcLines, distToSegment, pointRadius, lineWeight, PORTO_TIPOS, portoTipo, monthLabel, mesX, xMes, fmtMesX, anosLabel,
     FUNDOS, PRODUTOS, fundoFonte, fundoValues,

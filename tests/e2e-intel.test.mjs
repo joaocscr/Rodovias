@@ -91,7 +91,12 @@ test('(b, c) modo Tráfego: legenda com 5 faixas, "Sem dado" e "Estimativa de mo
   assert.match(t, /Sem dado/);
   assert.match(t, /Estimativa de modelo/);
   assert.match(t, /veíc\.\/dia/);
-  assert.match(t, /VMDa 2023/);
+  // v3.1: Tráfego colorido pelo VMDa 2025 (DNIT, modelado), com o ano visível no título e na fonte
+  assert.match(await page.textContent('#legend .legend__title'), /VMDa 2025, modelado/);
+  assert.match(await page.textContent('#legend .legend__src'), /DNIT, VMDa 2025 \(modelado\)/);
+  assert.doesNotMatch(t, /VMDa 2023/);
+  // camada de estaduais desligada: a legenda não fala delas
+  assert.doesNotMatch(t, /estaduais/i);
   // faixas "a – b" formatadas, contíguas
   const rows = await page.$$eval('#legend .legend__row[data-class] .legend__range', es => es.map(e => e.textContent));
   for (const r of rows) assert.match(r, /^[\d.,]+ – [\d.,]+$/, r);
@@ -137,10 +142,19 @@ test('(d) KPI de veíc·km com filtro UF = MT bate com o modelo', async () => {
     f.uf.add(window.SNV.dict.uf.indexOf('MT'));
     const mask = Model.visibleFis(window.SNV, f);
     const a = IntelModel.aggregateIntel(window.INTEL, window.SNV, mask);
-    return { vkm: IntelModel.fmtVkm(a.vkm), acid: a.acidAno, tkm: a.tkm };
+    // v3.1: veíc·km = Σ VMDa 2025 × extensão; pesados = 2025 × participação de pesados 2023 (estimativa)
+    let vkm25 = 0;
+    const t = window.INTEL.vmda2025.fis.t;
+    for (let j = 0; j < mask.length; j++) if (mask[j] && t[j] != null) vkm25 += t[j] * window.SNV.fis[j].ext;
+    return { vkm: IntelModel.fmtVkm(a.vkm), acid: a.acidAno, tkm: a.tkm, ano: a.anoVmda, ok25: Math.abs(vkm25 - a.vkm) < 1e-6 * a.vkm,
+      pct: IntelModel.fmtPct(a.vkmPes / a.vkmBasePes) };
   });
   assert.equal((await page.textContent('#kpi-vkm')).trim(), expected.vkm);
   assert.notEqual(expected.vkm, '—');
+  assert.equal(expected.ano, 2025);
+  assert.ok(expected.ok25);
+  const sub = await page.locator('#kpi-vkm').evaluate(e => e.nextElementSibling.textContent);
+  assert.ok(sub.startsWith(`${expected.pct} pesados (estimativa: % de 2023) · Tráfego VMDa 2025, modelado`), sub);
   assert.match(await page.textContent('#kpi-acid'), /\d/);
   assert.match(await page.textContent('#kpi-tkm'), /t·km\/ano/);
   // cobertura sobre os km pavimentados da seleção
@@ -163,8 +177,9 @@ test('(d) KPI de veíc·km com filtro UF = MT bate com o modelo', async () => {
 
 test('(e) cartão de físico com VMDa mostra o bloco "Tráfego e segurança"', async () => {
   const j = await page.evaluate(() => {
-    const v = window.INTEL.trafego.vmda, c = window.INTEL.carga;
-    return window.SNV.fis.findIndex((_, j) => v.l[j] != null && v.p[j] != null && c.gsa[j] > 0);
+    const v = window.INTEL.trafego.vmda, c = window.INTEL.carga, f = window.INTEL.vmda2025.fis;
+    return window.SNV.fis.findIndex((_, j) => v.l[j] != null && v.p[j] != null && v.p[j] > 0 && c.gsa[j] > 0
+      && f.t[j] != null && f.c[j] != null && f.d[j] != null && !f.ns[j] && IntelModel.fisSup(window.SNV, j) === 'PAV');
   });
   assert.ok(j >= 0);
   await page.evaluate(j => MapView.pick(j), j);
@@ -173,6 +188,33 @@ test('(e) cartão de físico com VMDa mostra o bloco "Tráfego e segurança"', a
   assert.match(t, /Tráfego e segurança/);
   assert.match(t, /veíc\.\/dia/);
   assert.match(t, /estimado, 2023/);
+  // v3.1: VMDa 2025 total e por sentido; pesados 2025 rotulados "estimativa"; bloco 2023 leves/pesados mantido
+  const subs = await page.$$eval('#card .card__intel dt.card__sub', ds => ds.map(d => d.textContent));
+  assert.ok(subs.some(s => s === 'VMDa 2025 · modelado, total e por sentido'), subs.join(' | '));
+  assert.ok(subs.some(s => s === 'VMDa · estimado, 2023 · leves e pesados'), subs.join(' | '));
+  const k25 = await page.evaluate(j => {
+    const f = window.INTEL.vmda2025.fis, x = IntelModel.fisIntel(window.INTEL, window.SNV, j);
+    return { t: IntelModel.fmtVmd(f.t[j]), c: IntelModel.fmtVmd(f.c[j]), d: IntelModel.fmtVmd(f.d[j]), pes: IntelModel.fmtVmd(x.pes25),
+      l: IntelModel.fmtVmd(window.INTEL.trafego.vmda.l[j]), p: IntelModel.fmtVmd(window.INTEL.trafego.vmda.p[j]) };
+  }, j);
+  const rows25 = await page.$$eval('#card .card__intel dt.card__sub', ds => {
+    const out = {};
+    let g = null;
+    for (const el of ds[0].parentElement.children) {
+      if (el.matches('dt.card__sub')) g = el.textContent;
+      else if (el.matches('dt')) out[`${g}|${el.textContent}`] = el.nextElementSibling.textContent;
+    }
+    return out;
+  });
+  const G25 = 'VMDa 2025 · modelado, total e por sentido', G23 = 'VMDa · estimado, 2023 · leves e pesados';
+  assert.equal(rows25[`${G25}|Total`], k25.t);
+  assert.equal(rows25[`${G25}|Sentido crescente (SNV)`], k25.c);
+  assert.equal(rows25[`${G25}|Sentido decrescente (SNV)`], k25.d);
+  assert.equal(rows25[`${G25}|Pesados (estimativa)`], k25.pes);
+  assert.equal(rows25[`${G23}|Leves`], k25.l);
+  assert.equal(rows25[`${G23}|Pesados`], k25.p);
+  assert.match(t, /Pesados \(estimativa\) = total 2025 × [\d,]+% de pesados no VMDa 2023 do trecho/);
+  assert.equal(await page.locator('#card .card__flag[data-ns]').count(), 0);
   assert.match(t, /modelo PNL, 2017/);
   assert.match(t, /10⁶ veíc·km/);
   // veíc·km/dia do trecho, acidentes por km por ano e carga total do PNL
@@ -203,6 +245,22 @@ test('cartão de trecho planejado (PLA) marca tráfego e acidentes como "trecho 
   await page.click('#card-close');
 });
 
+test('v3.1: trecho "não simulável" no VMDa 2025 mostra "uso restrito (área urbana)" no cartão', async () => {
+  const j = await page.evaluate(() => {
+    const f = window.INTEL.vmda2025.fis;
+    return window.SNV.fis.findIndex((_, j) => f.ns[j] === 1 && f.t[j] != null);
+  });
+  assert.ok(j >= 0);
+  await page.evaluate(j => MapView.pick(j), j);
+  await page.waitForSelector('#card:not([hidden])');
+  assert.equal(await page.locator('#card .card__flag[data-ns]').count(), 1);
+  assert.match(await page.textContent('#card .card__flag[data-ns]'), /^uso restrito \(área urbana\) trecho não simulável no modelo$/);
+  // o valor é mantido
+  assert.match(await page.textContent('#card .card__intel'), new RegExp(
+    (await page.evaluate(j => IntelModel.fmtVmd(window.INTEL.vmda2025.fis.t[j]), j)).replace(/\./g, '\\.')));
+  await page.click('#card-close');
+});
+
 test('(f) modos Acidentes e Carga mudam a legenda', async () => {
   const trafego = await legend();
   await mode('acidentes');
@@ -219,6 +277,9 @@ test('(f) modos Acidentes e Carga mudam a legenda', async () => {
   assert.match(carga, /PNL/);
   await mode('pesados');
   assert.match(await legend(), /Pesados/);
+  // Pesados segue o VMDa 2023 (leves/pesados), rotulado 2023
+  assert.match(await page.textContent('#legend .legend__title'), /VMDa 2023, modelado/);
+  assert.match(await page.textContent('#legend .legend__src'), /VMDa 2023/);
   assert.equal(await page.evaluate(() => MapView.colorMode()), 'pesados');
 });
 
@@ -997,6 +1058,24 @@ test('(b) Tráfego: ≥ 5 gráficos, "Fonte:" em cada cartão, KPIs do modelo, s
   assert.equal(await page.textContent('#kpi-acid b'), k.acid);
   assert.equal(await page.textContent('#kpi-pes b'), k.pes);
   assert.equal(await page.textContent('#kpi-vkm b'), await page.evaluate(() => IntelModel.fmtVkm(IntelModel.trafegoKpis(window.INTEL, window.SNV).vkm)));
+  // v3.1: veíc·km/dia federal = aggregateIntel (VMDa 2025) em toda a malha; estadual 2025 = Σ total × extensão das linhas
+  const v = await page.evaluate(() => {
+    const all = new Uint8Array(window.SNV.fis.length).fill(1), a = IntelModel.aggregateIntel(window.INTEL, window.SNV, all);
+    const m = window.INTEL.estaduais.malha, iExt = m.campos.indexOf('ext'), t = window.INTEL.vmda2025.estaduais.t;
+    let est = 0;
+    t.forEach((x, i) => { if (x != null && x > 0) est += x * m.linhas[i][iExt]; });
+    return { fed: IntelModel.fmtVkm(a.vkm), est: IntelModel.fmtVkm(est), ano: a.anoVmda };
+  });
+  assert.equal(v.ano, 2025);
+  assert.equal(await page.textContent('#kpi-vkm b'), v.fed);
+  assert.match(await page.textContent('#kpi-vkm span'), /^na malha federal \(VMDa 2025, modelado\)$/);
+  assert.equal(await page.textContent('#kpi-vkm-est b'), v.est);
+  assert.match(await page.textContent('#kpi-vkm-est span'), /^nas rodovias estaduais \(VMDa 2025, modelado\)$/);
+  const kSrc = await page.textContent('#card-t-kpis');
+  assert.match(kSrc, /DNIT — VMDa 2025 .* · 2025 · modelado/);
+  assert.match(kSrc, /Rodovias estaduais: .* km com estimativa de .* km/);
+  // a taxa de acidentes segue com o VMDa 2023 (leves/pesados), rotulada
+  assert.match(await page.textContent('#card-t-taxa'), /÷ VMDa 2023/);
   // períodos das fontes em pt-BR
   assert.match(await page.textContent('#card-t-rank .src:last-child'), /jan\/2024 a ago\/2026/);
   assert.doesNotMatch(await page.textContent('#page-trafego'), /\b\d{4}-(0[1-9]|1[0-2])\b/);
@@ -1422,6 +1501,139 @@ test('sem o bloco rotas: sem grupo no painel, "enquadrar a América do Sul" cai 
   const b0 = await p.evaluate(() => MapView.map.getBounds().toBBoxString());
   await p.evaluate(() => MapView.fitAmericaSul(false));
   assert.equal(await p.evaluate(() => MapView.map.getBounds().toBBoxString()), b0);
+  assert.deepEqual(errs, []);
+  assert.deepEqual(ext, []);
+  await p.context().close();
+});
+
+// ---------- v3.1, Task 5: VMDa 2025 no front ----------
+// Cores das estaduais (camada ligada) e classes desenhadas.
+const estColors = p => p.evaluate(() => (Layers.colorsUsed().estaduais || []).slice().sort());
+
+test('VMDa 2025: no modo Tráfego, as estaduais (camada ligada) usam a rampa e as classes federais; sem dado em cinza fino', async t => {
+  await page.evaluate(() => { location.hash = '#mapa'; });
+  await page.waitForFunction(() => Tabs.current().active === 'mapa');
+  await mode('trafego');
+  await settle(page);
+  const box = layerBox('estaduais');
+  // 1ª vez no modo Tráfego: monta a malha e as classes
+  const ms = await page.evaluate(() => new Promise(resolve => {
+    const t0 = performance.now();
+    document.querySelector('#layers-section input[data-layer="estaduais"]').click();
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve(performance.now() - t0)));
+  }));
+  t.diagnostic(`estaduais no modo Tráfego (1ª vez): ${ms.toFixed(0)} ms`);
+  assert.ok(ms < 600, `levou ${ms.toFixed(0)} ms`);
+  assert.equal(await box.isChecked(), true);
+  const r = await page.evaluate(() => {
+    const et = IntelModel.estTrafego(window.INTEL), br = MapView.classes('trafego').breaks, exp = {};
+    const dec = window.INTEL.estaduais.malha.p.map(IntelModel.decodeLine);
+    et.t.forEach((v, i) => { if (dec[i].length >= 2) { const c = IntelModel.classOf(v, br); exp[c] = (exp[c] || 0) + 1; } });
+    return { got: Layers.estTrafego(), exp, n: et.t.filter(x => x != null).length };
+  });
+  // classes = classOf(VMDa 2025 estadual, quebras federais), linha a linha
+  assert.deepEqual(r.got.porClasse, r.exp);
+  assert.equal(r.got.n, r.n);
+  assert.equal(r.got.ano, 2025);
+  for (let c = 0; c < 5; c++) assert.ok(r.exp[c] > 0, `classe ${c} vazia`);
+  // cores: os 5 passos da rampa do Tráfego, cinza sem dado, concessões estaduais (magenta + halo); sem o verde da malha
+  const T = await page.evaluate(() => RAMPS.trafego.map(c => c.toUpperCase()));
+  const D = await page.evaluate(() => DATA);
+  assert.deepEqual(await estColors(page), [...T, '#525254', D.magenta.toUpperCase(), '#231F20'].sort());
+  // sem dado: cinza fino contínuo (o federal é tracejado)
+  assert.deepEqual(await page.evaluate(() => Layers.EST_NONE), { color: '#525254', weight: 0.75, opacity: 0.5 });
+  // legenda: inclui as estaduais, faixas cobrem também os valores estaduais, linha "Sem dado (estadual)"
+  const lg = await legend();
+  assert.match(lg, /inclui rodovias estaduais \(VMDa 2025\)/i);
+  assert.match(lg, /Sem dado \(federal\)/);
+  assert.match(lg, /Sem dado \(estadual\)/);
+  assert.equal(await page.locator('#legend .legend__row[data-class]').count(), 5);
+  const rows = await page.$$eval('#legend .legend__row[data-class] .legend__range', es => es.map(e => e.textContent));
+  const lim = await page.evaluate(() => {
+    const q = MapView.classes('trafego'), e = Layers.estTrafego();
+    return [IntelModel.fmtInt(Math.min(q.min, e.min)), IntelModel.fmtInt(Math.max(q.max, e.max))];
+  });
+  assert.equal(rows[0].split(' – ')[0], lim[0]);
+  assert.equal(rows[4].split(' – ')[1], lim[1]);
+  assert.equal(await page.getAttribute('#legend [data-est-none] svg line', 'stroke'), '#525254');
+  assert.equal(await page.getAttribute('#legend [data-est-none] svg line', 'stroke-dasharray'), null);
+  // espessura acompanha o zoom como a federal (classe 4 = 6 px × zoomFactor)
+  await page.evaluate(() => { MapView.map.setZoom(7, { animate: false }); });
+  await page.waitForTimeout(100);
+  const w = await page.evaluate(() => {
+    const ws = [];
+    MapView.map.eachLayer(l => {
+      const r = l.options && l.options.renderer;
+      if (l instanceof L.Polyline && r && r.options.pane === 'l-estaduais' && l.options.color === RAMPS.trafego[4]) ws.push(l.options.weight);
+    });
+    return { ws, f: zoomFactor(MapView.map.getZoom()) };
+  });
+  assert.ok(w.ws.length === 1 && Math.abs(w.ws[0] - 6 * w.f) < 1e-9, JSON.stringify(w));
+  await page.evaluate(() => MapView.fitBrasil(false));
+  // outro modo: estaduais voltam ao verde e a legenda não fala delas; de volta ao Tráfego, coloridas de novo
+  await mode('pesados');
+  assert.deepEqual(await estColors(page), [D.green.toUpperCase(), D.magenta.toUpperCase(), '#231F20'].sort());
+  assert.doesNotMatch(await legend(), /estaduais/i);
+  await mode('trafego');
+  assert.ok((await estColors(page)).includes(T[4]));
+  // desligar a camada no modo Tráfego tira as estaduais da legenda; religar volta
+  await box.uncheck();
+  await page.waitForTimeout(50);
+  assert.doesNotMatch(await legend(), /estaduais/i);
+  assert.equal(await page.evaluate(() => Layers.estTrafego()), null);
+  await box.check();
+  await page.waitForTimeout(50);
+  assert.match(await legend(), /inclui rodovias estaduais \(VMDa 2025\)/i);
+  await box.uncheck();
+  await mode('concessoes');
+  assert.deepEqual(errors, []);
+});
+
+test('VMDa 2025: sem o bloco vmda2025 tudo volta ao VMDa 2023, sem erros', async () => {
+  const errs = [], ext = [];
+  const inject = html => {
+    const i = html.indexOf('</script>', html.indexOf('window.INTEL='));
+    return `${html.slice(0, i)};delete window.INTEL.vmda2025;${html.slice(i)}`;
+  };
+  const p = await openPage(errs, ext, inject);
+  assert.equal(await p.evaluate(() => window.INTEL.vmda2025), undefined);
+  // painel: veíc·km do 2023 (leves + pesados), rotulado 2023, pesados sem "estimativa"
+  const a = await p.evaluate(() => {
+    const all = new Uint8Array(window.SNV.fis.length).fill(1), x = IntelModel.aggregateIntel(window.INTEL, window.SNV, all), v = window.INTEL.trafego.vmda;
+    let s = 0;
+    for (let j = 0; j < all.length; j++) { const t = IntelModel.sumNullable(v.l[j], v.p[j]); if (t != null) s += t * window.SNV.fis[j].ext; }
+    return { fmt: IntelModel.fmtVkm(x.vkm), ok: Math.abs(s - x.vkm) < 1e-6 * s, ano: x.anoVmda };
+  });
+  assert.equal(a.ano, 2023);
+  assert.ok(a.ok);
+  assert.equal((await p.textContent('#kpi-vkm')).trim(), a.fmt);
+  const sub = await p.locator('#kpi-vkm').evaluate(e => e.nextElementSibling.textContent);
+  assert.match(sub, /pesados · Tráfego VMDa 2023, modelado/);
+  assert.doesNotMatch(sub, /estimativa/);
+  // modo Tráfego: legenda 2023, estaduais continuam verdes e fora da legenda
+  await p.click('#legend [data-mode="trafego"]');
+  assert.match(await p.textContent('#legend .legend__title'), /VMDa 2023, modelado/);
+  assert.match(await p.textContent('#legend .legend__src'), /Infra S\.A\.\/DNIT, VMDa 2023/);
+  assert.equal(await p.locator('#legend .legend__row[data-class]').count(), 5);
+  await p.locator('#layers-section input[data-layer="estaduais"]').check();
+  await p.waitForTimeout(50);
+  assert.equal(await p.evaluate(() => Layers.estTrafego()), null);
+  assert.ok((await estColors(p)).includes((await p.evaluate(() => DATA.green)).toUpperCase()));
+  assert.doesNotMatch(await p.textContent('#legend'), /estaduais/i);
+  // cartão: sem bloco 2025 nem sentidos; veíc·km no bloco 2023
+  const j = await p.evaluate(() => { const v = window.INTEL.trafego.vmda; return window.SNV.fis.findIndex((_, j) => v.l[j] > 0 && v.p[j] > 0); });
+  await p.evaluate(j => MapView.pick(j), j);
+  await p.waitForSelector('#card:not([hidden])');
+  const t = await p.textContent('#card');
+  assert.doesNotMatch(t, /VMDa 2025|Sentido crescente|uso restrito|estimativa/);
+  assert.match(t, /estimado, 2023/);
+  assert.match(t, /Veículos × extensão/);
+  // aba Tráfego: só o veíc·km federal 2023, sem o estadual
+  await goTab(p, '#trafego');
+  assert.equal(await p.textContent('#kpi-vkm b'), a.fmt);
+  assert.match(await p.textContent('#kpi-vkm span'), /VMDa 2023, modelado/);
+  assert.equal(await p.locator('#kpi-vkm-est').count(), 0);
+  assert.doesNotMatch(await p.textContent('#page-trafego'), /undefined|NaN|VMDa 2025/);
   assert.deepEqual(errs, []);
   assert.deepEqual(ext, []);
   await p.context().close();

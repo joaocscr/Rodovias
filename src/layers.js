@@ -18,8 +18,11 @@ const Layers = (() => {
     nw: ['left', [-8, -8]], sw: ['left', [-8, 8]], ne: ['right', [8, -8]], se: ['right', [8, 8]] };
   const POINT_KEYS = ['pracas', 'portos', 'sats', 'obras']; // de cima para baixo (prioridade do clique)
   const HIT_PAD = 3, LINE_TOL = 5;
-  let map = null, intel = null;
-  let pointCb = () => {}, munCb = () => {};
+  // Malha estadual no modo Tráfego (v3.1): linhas com VMDa 2025 na rampa e nas classes do modo (quebras da malha federal,
+  // mesma espessura); sem dado em cinza fino contínuo (o "sem dado" federal é tracejado).
+  const EST_NONE = { color: COLORS.lightGrey, weight: 0.75, opacity: 0.5 };
+  let map = null, intel = null, trafBreaks = null;
+  let pointCb = () => {}, munCb = () => {}, toggleCb = () => {};
   const built = {}, on = {}, rowsCache = {}, fundoCache = {};
   let fundoKey = null, mun = null, sel = null, selGroup = null, selRenderer = null, snv = null;
   let roadPicked = false, down = null, hoverTip = null, hoverRaf = 0;
@@ -36,7 +39,8 @@ const Layers = (() => {
   // Definição das camadas: rótulo, disponibilidade, nº de feições e fonte (title do checkbox).
   const DEFS = [
     { key: 'estaduais', label: 'Rodovias estaduais', has: () => !!est(), n: () => est().malha.p.length,
-      fonte: () => `${IM.fonteRef(est().fonte, /./)} · concessões estaduais em magenta com halo (ARTESP, AGERGS e demais agências)` },
+      fonte: () => `${IM.fonteRef(est().fonte, /./)} · concessões estaduais em magenta com halo (ARTESP, AGERGS e demais agências)` +
+        (IM.estTrafego(intel) ? ` · no modo Tráfego, coloridas pelo VMDa ${IM.estTrafego(intel).ano} (DNIT, modelado)` : '') },
     { key: 'pracas', label: 'Praças de pedágio', has: () => !!antt('pracas'), n: () => rowsOf('pracas').filter(hasLatLng).length,
       fonte: () => `${fonteAntt(/Praças de pedágio/)} · VMD 2025, contagem medida; círculo ∝ √VMD` },
     { key: 'sats', label: 'SATs', has: () => !!antt('sats'), n: () => rowsOf('sats').filter(hasLatLng).length,
@@ -140,9 +144,10 @@ const Layers = (() => {
     }
     // estaduais: malha em verde fino (pane abaixo das rodovias federais); concessões estaduais em magenta com halo, acima delas
     // (entEst -> feições da malha; entFis -> físicos do SNV; entGeo -> traçado próprio), clicáveis.
-    const e = est();
-    const base = e.malha.p.map(p => IM.decodeLine(p)).filter(l => l.length >= 2);
-    if (base.length) group.addLayer(L.polyline(base, polyOpts(renderer(key), LAYER_STYLES.estaduais)));
+    const e = est(), rend = renderer(key);
+    const dec = e.malha.p.map(p => IM.decodeLine(p)), base = dec.filter(l => l.length >= 2);
+    const malha = base.length ? L.polyline(base, polyOpts(rend, LAYER_STYLES.estaduais)) : null;
+    if (malha) group.addLayer(malha);
     const st = LAYER_STYLES.estConc, rc = renderer('estconc');
     const conc = [], all = [];
     IM.estConcLines(e, snv).forEach((lines, k) => {
@@ -152,7 +157,64 @@ const Layers = (() => {
       group.addLayer(L.polyline(all, polyOpts(rc, { color: st.halo, weight: st.weight + st.haloExtra, opacity: st.haloOpacity })));
       group.addLayer(L.polyline(all, polyOpts(rc, st)));
     }
-    return { group, items: [], n: e.malha.p.length, conc, nConc: new Set(conc.map(c => c.k)).size };
+    return { group, items: [], n: e.malha.p.length, conc, nConc: new Set(conc.map(c => c.k)).size, rend, dec, malha, traf: null };
+  }
+
+  // ---------- Malha estadual colorida pelo VMDa 2025 (modo Tráfego) ----------
+  // Uma polyline por classe (sem dado embaixo, classe maior por cima), montada para as quebras atuais.
+  function buildEstTraf(b, breaks) {
+    const et = IM.estTrafego(intel), byClass = new Map();
+    b.dec.forEach((ll, i) => {
+      if (ll.length < 2) return;
+      const c = IM.classOf(et.t[i], breaks);
+      if (!byClass.has(c)) byClass.set(c, []);
+      byClass.get(c).push(ll);
+    });
+    const group = L.layerGroup(), lines = [];
+    let min = Infinity, max = -Infinity, n = 0, semDado = 0;
+    et.t.forEach(v => { if (v != null) { n++; if (v < min) min = v; if (v > max) max = v; } else semDado++; });
+    for (const c of [...byClass.keys()].sort((x, y) => x - y)) {
+      const s = c < 0 ? EST_NONE : quantStyle(c, 'trafego');
+      const pl = L.polyline(byClass.get(c), polyOpts(b.rend, { color: s.color, weight: s.weight, opacity: s.opacity }));
+      group.addLayer(pl);
+      lines.push({ pl, w: s.weight });
+    }
+    const porClasse = Object.fromEntries([...byClass.entries()].map(([c, ls]) => [c, ls.length]));
+    return { group, lines, breaks, ano: et.ano, n, semDado, min: n ? min : null, max: n ? max : null, porClasse };
+  }
+
+  const estTrafWanted = () => !!(trafBreaks && built.estaduais && built.estaduais.dec && IM.estTrafego(intel));
+
+  // Espessura das classes acompanha o zoom, como a malha federal (zoomFactor).
+  function estTrafWeights() {
+    const t = built.estaduais && built.estaduais.traf;
+    if (!t || !map.hasLayer(t.group)) return;
+    const f = zoomFactor(map.getZoom());
+    for (const x of t.lines) x.pl.setStyle({ weight: x.w * f });
+  }
+
+  // Troca a malha verde pelas classes do Tráfego (ou volta ao verde), conforme o modo atual e a camada.
+  function applyEstMode() {
+    const b = built.estaduais;
+    if (!b || !b.dec) return;
+    if (estTrafWanted()) {
+      if (!b.traf || b.traf.breaks !== trafBreaks) {
+        if (b.traf) b.group.removeLayer(b.traf.group);
+        b.traf = buildEstTraf(b, trafBreaks);
+      }
+      if (b.malha) b.group.removeLayer(b.malha);
+      if (!b.group.hasLayer(b.traf.group)) b.group.addLayer(b.traf.group);
+      estTrafWeights();
+    } else {
+      if (b.traf) b.group.removeLayer(b.traf.group);
+      if (b.malha && !b.group.hasLayer(b.malha)) b.group.addLayer(b.malha);
+    }
+  }
+
+  // Quebras do modo Tráfego (as da malha federal) ou null fora dele.
+  function setTrafego(breaks) {
+    trafBreaks = Array.isArray(breaks) ? breaks : null;
+    applyEstMode();
   }
 
   // Rotas: países vizinhos (pane abaixo das UFs; rótulo acima das linhas das rotas, com halo claro); as 5 rotas sobre um contorno claro; hidrovias, cabotagem e
@@ -217,14 +279,18 @@ const Layers = (() => {
     if (!d || !d.has()) return 0;
     const want = value === undefined ? !on[key] : !!value;
     const t0 = performance.now();
+    const was = !!on[key];
     if (want) {
       if (!built[key]) built[key] = build(key);
       if (!map.hasLayer(built[key].group)) built[key].group.addTo(map);
     } else if (built[key]) built[key].group.remove();
     on[key] = want;
+    if (key === 'estaduais') applyEstMode();
     if (!want) hideTip();
     if (!want && sel && sel.key === key) clearSelection();
-    return performance.now() - t0;
+    const ms = performance.now() - t0;
+    if (was !== want) toggleCb(key, want);
+    return ms;
   }
 
   // ---------- Fundo municipal ----------
@@ -441,6 +507,7 @@ const Layers = (() => {
     }, true);
     el.addEventListener('mousemove', onMove, true);
     el.addEventListener('mouseleave', hideTip);
+    map.on('zoomend', estTrafWeights);
     map.on('click', e => {
       if (roadPicked) { roadPicked = false; return; }
       if (!fundoKey) return;
@@ -450,7 +517,17 @@ const Layers = (() => {
   }
 
   return {
-    init, toggle, setFundo, fundoInfo, fundoAvailable, munAt, select, clearSelection, rowsOf,
+    init, toggle, setFundo, fundoInfo, fundoAvailable, munAt, select, clearSelection, rowsOf, setTrafego, EST_NONE,
+    // Malha estadual colorida pelo VMDa no modo Tráfego (camada ligada): {ano, n, semDado, min, max, porClasse} (porClasse:
+    // nº de linhas desenhadas por classe, -1 = sem dado); senão null.
+    estTrafego() {
+      const b = built.estaduais;
+      if (!on.estaduais || !estTrafWanted() || !b.traf) return null;
+      const t = b.traf;
+      return { ano: t.ano, n: t.n, semDado: t.semDado, min: t.min, max: t.max, porClasse: Object.assign({}, t.porClasse) };
+    },
+    // Avisa (key, ligada) quando uma camada liga ou desliga, venha a troca do painel, da ficha ou da aba Tráfego.
+    onToggle(cb) { toggleCb = cb; },
     available() { return DEFS.filter(d => d.has()).map(d => ({ key: d.key, label: d.label, title: d.fonte(), n: d.n() })); },
     isOn(key) { return !!on[key]; },
     fundo() { return fundoKey; },

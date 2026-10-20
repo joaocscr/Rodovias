@@ -419,6 +419,10 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 .card__intel .card__grid { border-top: 0; padding: 0; }
 .card__grid dt.card__sub { grid-column: 1 / -1; margin-top: 8px; font-weight: 600; color: var(--color-deep-blue); }
 .card__grid dt.card__sub:first-child { margin-top: 0; }
+/* v3.1: nota de linha inteira no cartão (pesados estimados, uso restrito do VMDa 2025) */
+.card__intel .card__grid dd { white-space: nowrap; }
+.card__grid dd.card__flag { grid-column: 1 / -1; text-align: left; line-height: 24px; color: var(--color-light-grey); font-variant-numeric: normal; white-space: normal; }
+.card__grid dd.card__flag .tag-nv { margin: 0 8px 0 0; }
 
 /* ---------- v3: camadas de sobreposição, fundo municipal e cartões de ponto ---------- */
 .layers > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
