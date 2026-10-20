@@ -1,0 +1,101 @@
+[
+ {
+  "dominio": "agro",
+  "descricao": "Malha municipal IBGE, qualidade mínima (TopoJSON)",
+  "url": "https://servicodados.ibge.gov.br/api/v3/malhas/paises/BR?intrarregiao=municipio&qualidade=minima&formato=application/json",
+  "arquivo": "data/raw/graos/malha/br_mun_minima.topojson",
+  "bytes": 1428796,
+  "sha256": "b509836495fa76a9adf620a2a5c57b462b745bbb0613e9d98cc1123d494edc21",
+  "periodo": "malha anterior a 2025 (5.570 municípios)",
+  "licenca": "Dados abertos IBGE: uso livre com citação da fonte",
+  "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "agro",
+  "descricao": "Metadados da malha municipal IBGE (centroides, área)",
+  "url": "https://servicodados.ibge.gov.br/api/v3/malhas/paises/BR/metadados?intrarregiao=municipio",
+  "arquivo": "data/raw/graos/malha/metadados_mun.json",
+  "bytes": 1685039,
+  "sha256": "2ce2914973e5b464ca1c6faa159b4c35e613de01b586a67b5707200759b2bfdd",
+  "periodo": "malha anterior a 2025",
+  "licenca": "Dados abertos IBGE: uso livre com citação da fonte",
+  "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "agro",
+  "descricao": "Lista de municípios IBGE (localidades, nivelado)",
+  "url": "https://servicodados.ibge.gov.br/api/v1/localidades/municipios?view=nivelado",
+  "arquivo": "data/raw/graos/malha/ibge_municipios.json",
+  "bytes": 2372050,
+  "sha256": "77bf68d9f5b1237522bcd28c39b8857725ebb25e913a5b13aa4a740ce67041b4",
+  "periodo": "2025 (5.571 municípios)",
+  "licenca": "Dados abertos IBGE: uso livre com citação da fonte",
+  "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "agro",
+  "descricao": "Malha municipal 2025 de Mato Grosso (shapefile)",
+  "url": "https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2025/UFs/MT/MT_Municipios_2025.zip",
+  "arquivo": "data/raw/graos/malha/MT_Municipios_2025.zip",
+  "bytes": 9476597,
+  "sha256": "86f3cc662ff63c9742f095ba60fa201721f8faf1d9dc4cd3f59c20028cc9b7a0",
+  "periodo": "2025",
+  "licenca": "Dados abertos IBGE: uso livre com citação da fonte",
+  "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "agro",
+  "descricao": "PAM tabela 1612: soja, milho, cana, algodão herbáceo, trigo (t)",
+  "url": "https://apisidra.ibge.gov.br/values/t/1612/n6/all/v/214/p/2025/c81/2713,2711,2696,2689,2716",
+  "arquivo": "data/raw/graos/sidra/pam1612_2025.json",
+  "bytes": 8798133,
+  "sha256": "2172111f4b387cabf2afa155a515f596ff1c883713ffaa30ced567dc710498a5",
+  "periodo": "2025",
+  "licenca": "Dados abertos IBGE: uso livre com citação da fonte",
+  "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "agro",
+  "descricao": "PAM tabela 839: milho 1ª e 2ª safra (t)",
+  "url": "https://apisidra.ibge.gov.br/values/t/839/n6/all/v/214/p/2025/c81/114253,114254",
+  "arquivo": "data/raw/graos/sidra/pam839_2025.json",
+  "bytes": 3565295,
+  "sha256": "6791a643e6442c092d74789e335d7ce7cef519593d0bcb23dc1f9d3339949530",
+  "periodo": "2025",
+  "licenca": "Dados abertos IBGE: uso livre com citação da fonte",
+  "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "agro",
+  "descricao": "PAM tabela 1613: café total, arábica, canéfora (t)",
+  "url": "https://apisidra.ibge.gov.br/values/t/1613/n6/all/v/214/p/2025/c82/2723,31619,31620",
+  "arquivo": "data/raw/graos/sidra/pam1613_2025.json",
+  "bytes": 5346872,
+  "sha256": "70f389bba639c03006cb91458bb05f3615fff6d592d5010cc2aa1bb7923a41cd",
+  "periodo": "2025",
+  "licenca": "Dados abertos IBGE: uso livre com citação da fonte",
+  "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "agro",
+  "descricao": "Pesquisa de Estoques tabela 5459 por município: estabelecimentos e capacidade útil (t)",
+  "url": "https://apisidra.ibge.gov.br/values/t/5459/n6/all/v/152,153/p/last/c166/all/c11278/39324",
+  "arquivo": "data/raw/graos/sidra/est5459_last.json",
+  "bytes": 4080271,
+  "sha256": "51f66f33406011e795e68fed3718477d2a8ff6758c7eb8b27cffc495aeb79722",
+  "periodo": "2º semestre 2025",
+  "licenca": "Dados abertos IBGE: uso livre com citação da fonte",
+  "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "agro",
+  "descricao": "Pesquisa de Estoques tabela 5459, Brasil e UF",
+  "url": "https://apisidra.ibge.gov.br/values/t/5459/n1/all/n3/all/v/152,153/p/last/c166/114630/c11278/39324",
+  "arquivo": "data/raw/graos/sidra/est5459_n1n3.json",
+  "bytes": 20955,
+  "sha256": "1fa5762e09881719e1392ad5d3ee1e289aa2bc2dd717953264804127553f06f9",
+  "periodo": "2º semestre 2025",
+  "licenca": "Dados abertos IBGE: uso livre com citação da fonte",
+  "acesso": "2026-10-20"
+ }
+]
