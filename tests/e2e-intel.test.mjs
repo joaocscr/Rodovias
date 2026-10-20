@@ -826,16 +826,23 @@ test('sem window.INTEL a seção Camadas não quebra', async () => {
 
 // ---------- Task 12: abas Tráfego, Cargas e Fontes ----------
 const TABS7 = ['Mapa', 'Projetos', 'Tráfego', 'Cargas', 'Mercado', 'Regulatório', 'Fontes'];
+// Espera a condição real (aba Mapa exibida, cartão aberto, seleção feita) em vez de um tempo fixo.
+const untilMapCard = (p, extra = 'true') => p.waitForFunction(`location.hash === '#mapa' && Tabs.current().active === 'mapa' && !document.getElementById('card').hidden && (${extra})`);
+async function goTab(p, hash) {
+  await p.evaluate(h => { location.hash = h; }, hash);
+  await p.waitForFunction(h => Tabs.current().active === h.slice(1) && document.querySelector(`#page-${h.slice(1)} .page__inner`), hash);
+}
 
 test('(a) barra de abas com as 7 abas na ordem', async () => {
-  await go('#mapa');
+  await page.evaluate(() => { location.hash = '#mapa'; });
+  await page.waitForFunction(() => Tabs.current().active === 'mapa');
   assert.deepEqual(await page.$$eval('#tabs a', as => as.map(a => a.textContent)), TABS7);
   assert.deepEqual(await page.$$eval('#tabs a', as => as.map(a => a.getAttribute('href'))),
     ['#mapa', '#projetos', '#trafego', '#cargas', '#mercado', '#regulatorio', '#fontes']);
 });
 
 test('(b) Tráfego: ≥ 5 gráficos, "Fonte:" em cada cartão, KPIs do modelo, sem undefined/NaN', async () => {
-  await go('#trafego');
+  await goTab(page, '#trafego');
   assert.equal(await page.isVisible('#page-trafego'), true);
   assert.equal(await page.isVisible('#map'), false);
   assert.ok(await page.locator('#page-trafego svg.chart').count() >= 5);
@@ -850,8 +857,14 @@ test('(b) Tráfego: ≥ 5 gráficos, "Fonte:" em cada cartão, KPIs do modelo, s
   assert.equal(await page.textContent('#kpi-pracas b'), k.n);
   assert.equal(await page.textContent('#kpi-acid b'), k.acid);
   assert.equal(await page.textContent('#kpi-pes b'), k.pes);
+  assert.equal(await page.textContent('#kpi-vkm b'), await page.evaluate(() => IntelModel.fmtVkm(IntelModel.trafegoKpis(window.INTEL, window.SNV).vkm)));
+  // períodos das fontes em pt-BR
+  assert.match(await page.textContent('#card-t-rank .src:last-child'), /jan\/2024 a ago\/2026/);
+  assert.doesNotMatch(await page.textContent('#page-trafego'), /\b\d{4}-(0[1-9]|1[0-2])\b/);
   const t = await page.textContent('#page-trafego');
   assert.doesNotMatch(t, /undefined|NaN/);
+  assert.equal(await page.getAttribute('#chart-t-rank svg.chart', 'role'), 'group');
+  assert.equal(await page.getAttribute('#chart-t-taxa svg.chart', 'role'), 'img');
   assert.match(t, /índice 1999 = 100, rodovias pedagiadas, não é volume/i);
   assert.match(t, /Entram só as \d+ praças/);
   assert.equal(await page.locator('#chart-t-rank .hrow[data-k]').count(), 20);
@@ -863,11 +876,11 @@ test('(b) Tráfego: ≥ 5 gráficos, "Fonte:" em cada cartão, KPIs do modelo, s
 });
 
 test('(b) clicar na 1ª praça do ranking abre o Mapa com a camada Praças e o cartão da praça', async () => {
-  await go('#trafego');
+  await goTab(page, '#trafego');
   const top = await page.evaluate(() => IntelModel.pracasRanking(window.INTEL, 1)[0]);
   assert.equal(await page.getAttribute('#chart-t-rank .hrow[data-k]', 'data-k'), String(top.i));
   await page.click('#chart-t-rank .hrow[data-k] rect.cbar');
-  await page.waitForTimeout(400);
+  await untilMapCard(page, `JSON.stringify(Layers.selected()) === '${JSON.stringify({ key: 'pracas', i: top.i })}'`);
   assert.equal(await page.evaluate(() => location.hash), '#mapa');
   assert.equal(await page.evaluate(() => Layers.isOn('pracas')), true);
   assert.equal(await page.isChecked('#layers-section input[data-layer="pracas"]'), true);
@@ -881,11 +894,11 @@ test('(b) clicar na 1ª praça do ranking abre o Mapa com a camada Praças e o c
 });
 
 test('(b) Enter numa linha do ranking também abre a praça', async () => {
-  await go('#trafego');
+  await goTab(page, '#trafego');
   const second = await page.$$eval('#chart-t-rank .hrow[data-k]', gs => gs[1].dataset.k);
   await page.focus(`#chart-t-rank .hrow[data-k="${second}"]`);
   await page.keyboard.press('Enter');
-  await page.waitForTimeout(400);
+  await untilMapCard(page, `Layers.selected() && Layers.selected().i === ${Number(second)}`);
   assert.equal(await page.evaluate(() => location.hash), '#mapa');
   assert.deepEqual(await page.evaluate(() => Layers.selected()), { key: 'pracas', i: Number(second) });
   await page.click('#card-close');
@@ -893,7 +906,7 @@ test('(b) Enter numa linha do ranking também abre a praça', async () => {
 });
 
 test('(c) Cargas: KPI de soja = fmtT(soma), "Fonte:" em cada cartão, sem undefined/NaN', async () => {
-  await go('#cargas');
+  await goTab(page, '#cargas');
   assert.equal(await page.isVisible('#page-cargas'), true);
   const soja = await page.evaluate(() => IntelModel.fmtT(window.INTEL.agro.produtos.soja.reduce((a, v) => a + (v || 0), 0)));
   assert.equal(await page.textContent('#kpi-soja b'), soja);
@@ -907,10 +920,15 @@ test('(c) Cargas: KPI de soja = fmtT(soma), "Fonte:" em cada cartão, sem undefi
   assert.equal(await page.locator('#pnl-table tbody tr').count(), 15);
   assert.equal(await page.locator('#chart-c-exp-mat tbody tr').count(), 10);
   assert.equal(await page.locator('#chart-c-exp-mat thead th').count(), 9);
+  assert.match(await page.textContent('#kpi-arm'), /sem municípios sob sigilo/);
+  // matriz: nada positivo aparece como 0,00
+  const cells = await page.$$eval('#chart-c-exp-mat tbody td.num', tds => tds.map(t => t.textContent));
+  assert.ok(!cells.includes('0,00'), cells.join(' '));
+  assert.ok(cells.includes('< 0,01'));
 });
 
 test('(c) trocar o produto da exportação muda o gráfico e a matriz', async () => {
-  await go('#cargas');
+  await goTab(page, '#cargas');
   const before = await page.innerHTML('#chart-c-exp-bars');
   assert.equal(await page.inputValue('#exp-sh4'), '1201');
   assert.ok((await page.locator('#exp-sh4 option').count()) >= 10);
@@ -924,7 +942,7 @@ test('(c) trocar o produto da exportação muda o gráfico e a matriz', async ()
 });
 
 test('(c) fretes: ordena por R$/t, filtra UF de origem e marca origem aproximada', async () => {
-  await go('#cargas');
+  await goTab(page, '#cargas');
   const vals = () => page.$$eval('#frete-table tbody tr', trs => trs.map(t => t.dataset.rst).filter(Boolean).map(Number));
   const isSorted = (v, dir) => v.every((x, i) => i === 0 || (dir === 'desc' ? x <= v[i - 1] : x >= v[i - 1]));
   // padrão: R$/t decrescente; clique no cabeçalho inverte
@@ -946,10 +964,10 @@ test('(c) fretes: ordena por R$/t, filtra UF de origem e marca origem aproximada
 });
 
 test('(c) município de soja abre no mapa com o fundo Soja; trecho de carga abre o cartão do trecho', async () => {
-  await go('#cargas');
+  await goTab(page, '#cargas');
   const m = await page.evaluate(() => IntelModel.topMunicipios(window.INTEL, 'soja', 1)[0]);
   await page.click('#chart-c-mun .hrow[data-k] rect.cbar');
-  await page.waitForTimeout(600);
+  await untilMapCard(page, `Layers.selected() && Layers.selected().key === 'mun'`);
   assert.equal(await page.evaluate(() => location.hash), '#mapa');
   assert.equal(await page.evaluate(() => Layers.fundo()), 'soja');
   assert.equal(await page.isChecked('#layers-section input[name="fundo"][value="soja"]'), true);
@@ -960,10 +978,10 @@ test('(c) município de soja abre no mapa com o fundo Soja; trecho de carga abre
   await page.check('#layers-section input[name="fundo"][value=""]');
   assert.equal(await page.evaluate(() => Layers.fundo()), null);
 
-  await go('#cargas');
+  await goTab(page, '#cargas');
   const j = await page.evaluate(() => IntelModel.cargaTop(window.INTEL, window.SNV, 1)[0].j);
   await page.click('#pnl-table tbody tr');
-  await page.waitForTimeout(400);
+  await untilMapCard(page, `MapView.highlighted().includes(${j})`);
   assert.equal(await page.evaluate(() => location.hash), '#mapa');
   assert.equal(await page.isVisible('#card'), true);
   assert.deepEqual(await page.evaluate(() => MapView.highlighted()), [j]);
@@ -973,7 +991,7 @@ test('(c) município de soja abre no mapa com o fundo Soja; trecho de carga abre
 });
 
 test('(d) Fontes: ≥ 30 fontes, ≥ 9 indisponíveis com motivo, bases v1/v2 e explicação medido × modelado', async () => {
-  await go('#fontes');
+  await goTab(page, '#fontes');
   assert.ok(await page.locator('#fontes-table tbody tr').count() >= 30);
   assert.ok(await page.locator('#fontes-indisp-table tbody tr').count() >= 9);
   assert.equal(await page.locator('#fontes-base-table tbody tr').count(), await page.evaluate(() => window.INTEL.fontes.base.length));
@@ -982,6 +1000,11 @@ test('(d) Fontes: ≥ 30 fontes, ≥ 9 indisponíveis com motivo, bases v1/v2 e 
   assert.match(t, /Não disponíveis neste ambiente/);
   assert.match(t, /Bases da v1\/v2/);
   assert.match(t, /20\/10\/2026/);
+  assert.match(t, /jan\/2024 a ago\/2026/);
+  // coluna Período em pt-BR (as notas ficam como na fonte)
+  const periodos = await page.$$eval('#fontes-table tbody tr td:nth-child(3), #fontes-base-table tbody tr td:nth-child(2)', tds => tds.map(t => t.textContent));
+  for (const x of periodos) assert.doesNotMatch(x, /\b\d{4}-(0[1-9]|1[0-2])\b/, x);
+  assert.match(await page.textContent('#fontes-legenda'), /Tipo "—": fonte de apoio/);
   assert.doesNotMatch(t, /undefined|NaN|2026-10-20/);
   const motivos = await page.$$eval('#fontes-indisp-table tbody tr td:nth-child(2)', tds => tds.map(t => t.textContent));
   assert.ok(motivos.every(m => m.length > 5));
@@ -992,11 +1015,12 @@ test('(d) Fontes: ≥ 30 fontes, ≥ 9 indisponíveis com motivo, bases v1/v2 e 
 
 test('(e) hashes inválidos continuam caindo no Mapa', async () => {
   for (const h of ['#xyz', '#trafego/x%zz', '#Fontes']) {
-    await go(h);
-    assert.equal(await page.evaluate(() => location.hash), '#mapa', h);
+    await goTab(page, '#fontes');
+    await page.evaluate(x => { location.hash = x; }, h);
+    await page.waitForFunction(() => location.hash === '#mapa' && Tabs.current().active === 'mapa');
     assert.equal(await page.isVisible('#map'), true);
   }
-  await go('#cargas');
+  await goTab(page, '#cargas');
   assert.equal(await page.isVisible('#page-cargas'), true);
   await go('#mapa');
 });
@@ -1006,8 +1030,7 @@ test('sem window.INTEL as abas Tráfego, Cargas e Fontes degradam sem erros', as
   const p = await openPage(errs, ext, html => html.replace('window.INTEL=', 'window.INTEL_AUSENTE='));
   assert.deepEqual(await p.$$eval('#tabs a', as => as.map(a => a.textContent)), TABS7);
   for (const [h, re] of [['#trafego', /não estão neste arquivo/], ['#cargas', /não estão neste arquivo/], ['#fontes', /não está neste arquivo/]]) {
-    await p.evaluate(x => { location.hash = x; }, h);
-    await p.waitForTimeout(250);
+    await goTab(p, h);
     const t = await p.textContent('#page-' + h.slice(1));
     assert.match(t, re, h);
     assert.doesNotMatch(t, /undefined|NaN/);
@@ -1020,13 +1043,11 @@ test('com só parte dos blocos cada aba mostra só os cartões que têm dado', a
   const errs = [], ext = [];
   const p = await openPage(errs, ext, html => html.replace('window.INTEL=', 'window.INTEL_FULL=').replace('</script>',
     '</script><script>window.INTEL={trafego:window.INTEL_FULL.trafego,agro:window.INTEL_FULL.agro,municipios:window.INTEL_FULL.municipios};</script>'));
-  await p.evaluate(() => { location.hash = '#trafego'; });
-  await p.waitForTimeout(250);
+  await goTab(p, '#trafego');
   const tr = await p.$$eval('#page-trafego .ccard', cs => cs.map(c => c.id));
   assert.ok(!tr.includes('card-t-rank') && !tr.includes('card-t-serie') && tr.includes('card-t-abcr') && tr.includes('card-t-taxa'), tr.join());
   assert.equal(await p.locator('#kpi-pracas').count(), 0);
-  await p.evaluate(() => { location.hash = '#cargas'; });
-  await p.waitForTimeout(250);
+  await goTab(p, '#cargas');
   const ca = await p.$$eval('#page-cargas .ccard', cs => cs.map(c => c.id));
   assert.deepEqual(ca, ['card-c-kpis', 'card-c-uf', 'card-c-mun']);
   assert.doesNotMatch(await p.textContent('#page-cargas') + await p.textContent('#page-trafego'), /undefined|NaN/);

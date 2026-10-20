@@ -60,7 +60,7 @@ const Trafego = (() => {
       tiles.push(tile('kpi-vmd', IM.fmtInt(k.vmdTotal), 'veíc./dia somados nas praças (VMD 2025, dois sentidos)'));
       tiles.push(tile('kpi-pes', IM.fmtPct(k.pctPes), 'de pesados nas praças, ponderado pelo VMD'));
     }
-    if (vm) tiles.push(tile('kpi-vkm', IM.has(k.vkm) ? `${IM.fmtDec(k.vkm / 1e6, 1)} mi` : '—', `veíc·km/dia na malha federal (VMDa ${vm.ano}, modelado)`));
+    if (vm) tiles.push(tile('kpi-vkm', IM.fmtVkm(k.vkm), `na malha federal (VMDa ${vm.ano}, modelado)`));
     if (ac) {
       tiles.push(tile('kpi-acid', IM.fmtInt(k.acidAno), `acidentes/ano (PRF ${anosLabel(ac.anos)}, medido)`));
       tiles.push(tile('kpi-mortos', IM.fmtInt(k.mortosAno), `mortos/ano (PRF ${anosLabel(ac.anos)}, medido)`));
@@ -111,19 +111,11 @@ const Trafego = (() => {
   }
 
   // ---------- Desenho ----------
-  // linesSvg com x = ano + (mês - 1)/12: rótulos do eixo e dicas reescritos como "mmm/aaaa".
-  function monthlyLines(series, o) {
-    return Charts.linesSvg(series, o)
-      .replace(/(text-anchor="middle" fill="[^"]+">)(\d{4}(?:\.\d+)?)(<\/text>)/g, (_, a, x, b) => `${a}${IM.monthLabel(ymOfX(Number(x)))}${b}`)
-      .replace(/<title>(\S+) (\d{4}(?:\.\d+)?):/g, (_, n, x) => `<title>${n} ${IM.monthLabel(ymOfX(Number(x)))}:`)
-      .replace(/ r="4" fill=/g, ' r="2.5" fill='); // 120 meses: pontos menores (a dica continua em cada ponto)
-  }
-
   function draw(s) {
     const rk = box('t-rank');
     if (rk) {
       const list = IM.pracasRanking(intel, 20);
-      rk.innerHTML = IM.hstackSvg(list.map(p => ({ k: p.i, label: `${p.nome} · ${IM.rodLabel(p.br, p.uf)}${p.uf ? `/${p.uf}` : ''}`, parts: [p.leves, p.pesados, p.moto],
+      rk.innerHTML = Charts.hstackSvg(list.map(p => ({ k: p.i, label: `${p.nome} · ${IM.rodLabel(p.br, p.uf)}${p.uf ? `/${p.uf}` : ''}`, parts: [p.leves, p.pesados, p.moto],
         detail: `VMD ${IM.fmtInt(p.vmd)}` })), { width: width(rk), labelWidth: 280, names: ['Leves', 'Pesados', 'Motos'], colors: [Charts.C.deep, Charts.C.bright, Charts.C.grey],
         format: v => IM.fmtInt(v), unit: 'veíc./dia', clickable: true, title: 'As 20 praças de maior VMD em 2025' });
       onRows(rk, openPraca);
@@ -131,16 +123,16 @@ const Trafego = (() => {
     const se = box('t-serie');
     if (se) {
       const lab = m => { const { y, m: mm } = ym(m); return `${MES[mm - 1]}/${String(y).slice(-2)}`; };
-      se.innerHTML = Charts.stackedSvg(s.meses.map((m, k) => ({ label: lab(m), parts: [s.l[k] / 1000, s.p[k] / 1000] })),
-        { width: width(se), names: ['Leves', 'Pesados'], unit: 'mil veíc./dia', format: v => IM.fmtInt(v), title: 'Tráfego mensal nas praças' })
-        .replace(/<title>(\w{3})\/(\d{2}) ·/g, (_, m, y) => `<title>${m}/20${y} ·`);
+      se.innerHTML = Charts.stackedSvg(s.meses.map((m, k) => ({ label: lab(m), tip: IM.monthLabel(m), parts: [s.l[k] / 1000, s.p[k] / 1000] })),
+        { width: width(se), names: ['Leves', 'Pesados'], unit: 'mil veíc./dia', format: v => IM.fmtInt(v), title: 'Tráfego mensal nas praças' });
     }
     const a = intel.trafego && intel.trafego.abcr;
     const ab = box('t-abcr');
     if (ab) {
       const pts = key => a.meses.map((m, k) => ({ x: xOfYm(m), y: a[key] ? a[key][k] : null }));
-      ab.innerHTML = monthlyLines([{ name: 'Leves', points: pts('leves') }, { name: 'Pesados', points: pts('pesados') }, { name: 'Total', points: pts('total'), dash: true }],
-        { width: width(ab), format: v => IM.fmtDec(v, 1), title: 'Índice ABCR' });
+      // x = ano + (mês - 1)/12, rotulado como "mmm/aaaa"; 120 meses: pontos menores (a dica continua em cada ponto)
+      ab.innerHTML = Charts.linesSvg([{ name: 'Leves', points: pts('leves') }, { name: 'Pesados', points: pts('pesados') }, { name: 'Total', points: pts('total'), dash: true }],
+        { width: width(ab), format: v => IM.fmtDec(v, 1), formatX: x => IM.monthLabel(ymOfX(x)), r: 2.5, title: 'Índice ABCR' });
     }
     const sz = box('t-saz');
     if (sz) {
@@ -151,7 +143,7 @@ const Trafego = (() => {
     if (ua && um) {
       const list = IM.acidentesPorUf(intel, snv);
       const one = (el, key, color, name) => {
-        el.innerHTML = IM.hstackSvg(list.map(u => ({ label: u.uf, parts: [u[key]] })),
+        el.innerHTML = Charts.hstackSvg(list.map(u => ({ label: u.uf, parts: [u[key]] })),
           { width: width(el), rh: 24, labelWidth: 48, names: [name], colors: [color], format: x => IM.fmtInt(x), title: name });
       };
       one(ua, 'acidAno', Charts.C.deep, 'Acidentes/ano');
@@ -159,7 +151,7 @@ const Trafego = (() => {
     }
     const tx = box('t-taxa');
     if (tx) {
-      tx.innerHTML = IM.hstackSvg(IM.taxaPorBrUf(intel, snv, { minKm: 10, n: 15 }).map(r => ({ label: `${r.br}/${r.uf}`, parts: [r.taxa],
+      tx.innerHTML = Charts.hstackSvg(IM.taxaPorBrUf(intel, snv, { minKm: 10, n: 15 }).map(r => ({ label: `${r.br}/${r.uf}`, parts: [r.taxa],
         detail: `${IM.fmtDec(r.km, 1)} km com VMDa · ${IM.fmtDec(r.acidAno, 1)} acidentes/ano` })),
         { width: width(tx), labelWidth: 120, names: ['Taxa'], colors: [Charts.C.deep], format: x => IM.fmtDec(x, 2), unit: 'por 10⁶ veíc·km', title: 'Taxa de acidentes por BR/UF' });
     }

@@ -469,8 +469,17 @@ const IntelModel = (() => {
     if (!f) return DASH;
     const ok = t => t === 'medido' || t === 'modelado';
     const tipo = ok(f.tipo) ? f.tipo : ok(block.tipo) ? block.tipo : ok(tipoPadrao) ? tipoPadrao : null;
-    return `${f.nome}${f.periodo ? ` · ${f.periodo}` : ''}${tipo ? ` · ${tipo}` : ''}`;
+    return `${f.nome}${f.periodo ? ` · ${fmtPeriodo(f.periodo)}` : ''}${tipo ? ` · ${tipo}` : ''}`;
   }
+
+  // Período de fonte em pt-BR: cada "AAAA-MM" (mês válido, isolado) vira "mmm/aaaa"; "2010-2025" e datas ficam como estão.
+  function fmtPeriodo(p) {
+    if (p == null || p === '') return DASH;
+    return String(p).replace(/\b(\d{4})-(0[1-9]|1[0-2])\b/g, (_, y, m) => monthLabel(`${y}-${m}`));
+  }
+
+  // t -> Mt com 2 casas; valor positivo que arredondaria para 0,00 vira "< 0,01".
+  const fmtMt = t => (!has(t) ? DASH : t > 0 && t < 5000 ? '< 0,01' : nf(2).format(t / 1e6));
 
   const pracasRows = intel => rows(anttOf(intel) && anttOf(intel).pracas).map((p, i) => Object.assign(p, { i }));
 
@@ -662,38 +671,6 @@ const IntelModel = (() => {
     return { fontes: f.fontes, indisponiveis: Array.isArray(f.indisponiveis) ? f.indisponiveis : [], base: Array.isArray(f.base) ? f.base : [] };
   }
 
-  // Barras horizontais empilhadas em SVG (string): uma linha por item, partes nas cores dadas, valor total à direita.
-  // clickable: cada linha vira <g role="button" tabindex="0" data-k="..."> para o clique / Enter da aba.
-  const PALETTE = ['#183C80', '#0071BB', '#525254'];
-  const escX = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  function hstackSvg(data, o = {}) {
-    const w = o.width || 640, rh = o.rh || 32, bh = Math.min(16, rh - 8);
-    const frame = (h, body, aria) => `<svg class="chart" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="${escX(aria || '')}" font-family="Inter, sans-serif" font-size="14">${body}</svg>`;
-    if (!data.length) return frame(120, `<text x="${w / 2}" y="60" text-anchor="middle" fill="${PALETTE[2]}">Sem dados</text>`, 'Sem dados');
-    const fmt = o.format || (v => f1.format(v)), unit = o.unit ? ` ${o.unit}` : '', names = o.names || [], colors = o.colors || PALETTE;
-    const L = o.labelWidth || Math.min(240, w * 0.4), R = o.valueWidth || 112, pw = Math.max(40, w - L - R);
-    const sums = data.map(d => d.parts.reduce((a, v) => a + (has(v) && v > 0 ? v : 0), 0));
-    const max = Math.max(...sums, 0) || 1, maxCh = Math.max(4, Math.floor((L - 8) / 7.5));
-    const cut = s => (s.length > maxCh ? `${s.slice(0, maxCh - 1)}…` : s);
-    const body = data.map((d, i) => {
-      const y = 4 + i * rh, ty = y + rh / 2 + 5, label = String(d.label);
-      let x = L, rects = '';
-      d.parts.forEach((v, k) => {
-        if (!(has(v) && v > 0)) return;
-        const bw = (v / max) * pw;
-        rects += `<rect class="cbar" x="${x.toFixed(1)}" y="${(y + (rh - bh) / 2).toFixed(1)}" width="${bw.toFixed(1)}" height="${bh}" fill="${colors[k % colors.length]}">` +
-          `<title>${escX(label)}${names[k] ? ` · ${escX(names[k])}` : ''}: ${escX(fmt(v))}${escX(unit)}${d.detail ? ` (${escX(d.detail)})` : ''}</title></rect>`;
-        x += bw;
-      });
-      const val = sums[i] > 0 ? fmt(sums[i]) : DASH;
-      const attrs = o.clickable ? ` data-k="${escX(d.k)}" role="button" tabindex="0" aria-label="${escX(`${label}: ${val}${unit}`)}"` : '';
-      return `<g class="hrow"${attrs}><rect x="0" y="${y}" width="${w}" height="${rh}" fill="${PALETTE[1]}" fill-opacity="0" class="hrow__bg"/>` +
-        `<text x="${L - 8}" y="${ty}" text-anchor="end" fill="#231F20">${escX(cut(label))}</text>${rects}` +
-        `<text x="${(x + 8).toFixed(1)}" y="${ty}" fill="${PALETTE[2]}">${escX(val)}</text></g>`;
-    }).join('');
-    return frame(data.length * rh + 8, body, o.title);
-  }
-
   // Escolhe a unidade depois de arredondar: 999.600 t vira "1,0 Mt", não "1.000 mil t".
   const round = (v, d) => Math.round(v * 10 ** d) / 10 ** d;
   function scaled(x, units) {
@@ -723,7 +700,7 @@ const IntelModel = (() => {
     EST_ESTADOS, estaduaisRows, byEsfera, estIndex, trechosLabel,
     trafegoKpis, pracasRanking, pracasSerie, abcrSazonal, acidentesPorUf, taxaPorBrUf,
     cargasKpis, producaoPorUf, topMunicipios, exportProdutos, exportPorUrf, exportMatriz, siadePares, fretesRows, cargaTop,
-    fmtDia, fontesData, hstackSvg, fonteTipo,
+    fmtDia, fontesData, fonteTipo, fmtPeriodo, fmtMt,
     fmtInt, fmtDec, fmtVmd, fmtT, fmtPct, fmtBRL, fmtVkm, fmtTkm };
 })();
 

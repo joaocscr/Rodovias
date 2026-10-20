@@ -21,7 +21,6 @@ const Cargas = (() => {
   const tile = (id, value, label) => `<div class="kpi-tile" id="${id}"><b>${esc(value)}</b><span>${esc(label)}</span></div>`;
   const box = id => document.getElementById('chart-' + id);
   const width = el => Math.max(320, (el && el.clientWidth) || 640);
-  const mt = t => (IM.has(t) ? IM.fmtDec(t / 1e6, 2) : '—');
   const agro = () => intel.agro || null, mm = () => intel.multimodal || null;
   const pam = () => fonte(agro(), /PAM/), est = () => fonte(agro(), /Estoques/);
 
@@ -63,7 +62,7 @@ const Cargas = (() => {
       tiles.push(tile('kpi-soja', IM.fmtT(k.soja), `de soja em ${a.ano} (PAM)`));
       tiles.push(tile('kpi-milho', IM.fmtT(k.milho), `de milho em ${a.ano}, 1ª + 2ª safra (PAM)`));
       tiles.push(tile('kpi-cana', IM.fmtT(k.cana), `de cana-de-açúcar em ${a.ano} (PAM)`));
-      if (a.armazenagem) tiles.push(tile('kpi-arm', IM.fmtT(k.cap), `de capacidade de armazenagem, ${a.armazenagem.periodo}`));
+      if (a.armazenagem) tiles.push(tile('kpi-arm', IM.fmtT(k.cap), `de capacidade de armazenagem, ${a.armazenagem.periodo} (sem municípios sob sigilo)`));
     }
     const e = mm() && mm().exportacao;
     if (k.expSoja != null) tiles.push(tile('kpi-exp-soja', IM.fmtT(k.expSoja), `de soja exportada em ${e.ano} (Comex Stat)`));
@@ -127,12 +126,12 @@ const Cargas = (() => {
     const bars = document.getElementById('chart-c-exp-bars'), mat = document.getElementById('chart-c-exp-mat');
     if (!bars) return;
     const nome = (IM.exportProdutos(intel).find(p => p.sh4 === sh4) || {}).nome || sh4;
-    bars.innerHTML = IM.hstackSvg(IM.exportPorUrf(intel, sh4, 12).map(u => ({ label: u.urf, parts: [u.t] })),
+    bars.innerHTML = Charts.hstackSvg(IM.exportPorUrf(intel, sh4, 12).map(u => ({ label: u.urf, parts: [u.t] })),
       { width: width(bars), labelWidth: 280, names: [nome], colors: [Charts.C.deep], format: v => IM.fmtT(v), title: `Exportação de ${nome} por URF` });
     bars.dataset.sh4 = sh4;
     const m = IM.exportMatriz(intel, sh4, 10, 8);
     mat.innerHTML = `<table class="grid grid--static"><thead><tr><th>UF</th>${m.urfs.map(u => `<th class="num">${esc(u)}</th>`).join('')}</tr></thead><tbody>${
-      m.ufs.map((uf, a) => `<tr><td>${esc(uf)}</td>${m.m[a].map(v => `<td class="num">${v == null ? '—' : mt(v)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+      m.ufs.map((uf, a) => `<tr><td>${esc(uf)}</td>${m.m[a].map(v => `<td class="num">${IM.fmtMt(v)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
   }
 
   function drawFretes() {
@@ -162,20 +161,20 @@ const Cargas = (() => {
     if (us && um) {
       const list = IM.producaoPorUf(intel);
       const top = f => [...list].sort((a, b) => f(b) - f(a)).slice(0, 15);
-      us.innerHTML = IM.hstackSvg(top(u => u.soja).map(u => ({ label: u.uf, parts: [u.soja] })),
+      us.innerHTML = Charts.hstackSvg(top(u => u.soja).map(u => ({ label: u.uf, parts: [u.soja] })),
         { width: width(us), rh: 24, labelWidth: 48, names: ['Soja'], colors: [Charts.C.deep], format: v => IM.fmtT(v), title: 'Soja por UF' });
-      um.innerHTML = IM.hstackSvg(top(u => u.milho1 + u.milho2).map(u => ({ label: u.uf, parts: [u.milho1, u.milho2] })),
+      um.innerHTML = Charts.hstackSvg(top(u => u.milho1 + u.milho2).map(u => ({ label: u.uf, parts: [u.milho1, u.milho2] })),
         { width: width(um), rh: 24, labelWidth: 48, names: ['1ª safra', '2ª safra'], colors: [Charts.C.deep, Charts.C.bright], format: v => IM.fmtT(v), title: 'Milho por UF' });
     }
     const mu = box('c-mun');
     if (mu) {
-      mu.innerHTML = IM.hstackSvg(IM.topMunicipios(intel, 'soja', 20).map(m => ({ k: m.k, label: `${m.nome}/${m.uf}`, parts: [m.v] })),
+      mu.innerHTML = Charts.hstackSvg(IM.topMunicipios(intel, 'soja', 20).map(m => ({ k: m.k, label: `${m.nome}/${m.uf}`, parts: [m.v] })),
         { width: width(mu), labelWidth: 220, names: ['Soja'], colors: [Charts.C.deep], format: v => IM.fmtT(v), clickable: true, title: 'Maiores municípios produtores de soja' });
       onRows(mu, openMun);
     }
     const si = box('c-siade');
     if (si) {
-      si.innerHTML = IM.hstackSvg(IM.siadePares(intel, GRAOS, 15).map(p => ({ label: `${p.o}/${p.uo} → ${p.d}/${p.ud}`, parts: p.parts })),
+      si.innerHTML = Charts.hstackSvg(IM.siadePares(intel, GRAOS, 15).map(p => ({ label: `${p.o}/${p.uo} → ${p.d}/${p.ud}`, parts: p.parts })),
         { width: width(si), labelWidth: 300, names: GRAOS, colors: [Charts.C.deep, Charts.C.bright], format: v => IM.fmtT(v), title: 'Fluxos ferroviários de grãos' });
     }
     drawExp();

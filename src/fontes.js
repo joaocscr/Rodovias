@@ -29,18 +29,19 @@ const Fontes = (() => {
       return;
     }
     const fontes = tabela('fontes-table', d.fontes, [
-      ['Bloco', r => txt(BLOCO[r.bloco] || r.bloco)], ['Fonte', r => link(r.url, r.nome), 'wrap fontes-nome'], ['Período', r => txt(r.periodo), 'wrap'],
+      ['Bloco', r => txt(BLOCO[r.bloco] || r.bloco)], ['Fonte', r => link(r.url, r.nome), 'wrap fontes-nome'], ['Período', r => esc(IM.fmtPeriodo(r.periodo)), 'wrap'],
       ['Acesso', r => esc(IM.fmtDia(r.acesso))], ['Licença', r => txt(r.licenca), 'wrap'], ['Tipo', r => txt(TIPO[r.tipo] || null)], ['Nota', r => txt(r.nota), 'wrap fontes-nota-col'],
     ]);
     const base = d.base.length ? `<h2 class="fontes-h2" id="fontes-base">Bases da v1/v2</h2>
       <p class="page__src">Malha federal (SNV) e programa de concessões (RoadShow), congelados no arquivo desde as primeiras versões.</p>
-      ${tabela('fontes-base-table', d.base, [['Fonte', r => link(r.url, r.nome), 'wrap fontes-nome'], ['Período', r => txt(r.periodo), 'wrap'],
+      ${tabela('fontes-base-table', d.base, [['Fonte', r => link(r.url, r.nome), 'wrap fontes-nome'], ['Período', r => esc(IM.fmtPeriodo(r.periodo)), 'wrap'],
         ['Acesso', r => esc(IM.fmtDia(r.acesso))], ['Licença', r => txt(r.licenca), 'wrap'], ['Nota', r => txt(r.nota), 'wrap fontes-nota-col']])}` : '';
     const indisp = d.indisponiveis.length ? `<h2 class="fontes-h2" id="fontes-indisp">Não disponíveis neste ambiente</h2>
       <p class="page__src">Fontes procuradas que não responderam ou não têm arquivo aberto; o que foi usado no lugar está no motivo.</p>
       ${tabela('fontes-indisp-table', d.indisponiveis, [['Fonte', r => link(r.url, r.nome), 'wrap fontes-nome'], ['Motivo', r => txt(r.motivo), 'wrap fontes-nota-col']])}` : '';
     el.innerHTML = `<div class="page__inner">${head}
-      <h2 class="fontes-h2" id="fontes-lista">Fontes da v3 <span class="page__src">(${IM.fmtInt(d.fontes.length)})</span></h2>${fontes}${base}${indisp}</div>`;
+      <h2 class="fontes-h2" id="fontes-lista">Fontes da v3 <span class="page__src">(${IM.fmtInt(d.fontes.length)})</span></h2>${fontes}
+      ${d.fontes.some(r => !TIPO[r.tipo]) ? '<p class="page__src fontes-legenda" id="fontes-legenda">Tipo "—": fonte de apoio (cadastro, carteira ou notícia), que não traz número medido nem modelado próprio.</p>' : ''}${base}${indisp}</div>`;
   }
 
   function init(intel) {

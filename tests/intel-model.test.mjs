@@ -654,23 +654,6 @@ test('fmtDia e fontesData: dd/mm/aaaa e listas com padrão vazio', () => {
   assert.equal(IntelModel.fontesData({}), null);
 });
 
-test('hstackSvg: barras horizontais empilhadas, linhas clicáveis com data-k, título e proporção', () => {
-  const svg = IntelModel.hstackSvg([{ label: 'A <x>', parts: [30, 10], k: 5 }, { label: 'B', parts: [10, null], k: 7 }],
-    { width: 600, names: ['Leves', 'Pesados'], colors: ['#183C80', '#0071BB'], format: v => String(v), unit: 'veíc./dia', clickable: true, labelWidth: 200 });
-  assert.equal((svg.match(/class="hrow"/g) || []).length, 2);
-  assert.match(svg, /data-k="5"/);
-  assert.match(svg, /data-k="7"/);
-  assert.match(svg, /role="button" tabindex="0"/);
-  assert.match(svg, /A &lt;x&gt; · Leves: 30 veíc\.\/dia/);
-  assert.doesNotMatch(svg, /NaN|undefined/);
-  const w = [...svg.matchAll(/<rect class="cbar"[^>]*width="([\d.]+)"/g)].map(m => Number(m[1]));
-  assert.equal(w.length, 3);
-  close(w[0] / w[1], 3, 0.01);
-  close(w[0] / w[2], 3, 0.01);
-  const plain = IntelModel.hstackSvg([{ label: 'A', parts: [1] }]);
-  assert.doesNotMatch(plain, /role="button"/);
-  assert.match(IntelModel.hstackSvg([]), /Sem dados/);
-});
 
 test('fonteTipo: "nome · período · medido|modelado" (tipo da fonte ou do bloco)', () => {
   const b = { tipo: 'medido', fonte: [{ nome: 'ANTT — Praças', periodo: '2025' }, { nome: 'VMDa', periodo: '2023', tipo: 'modelado' }] };
@@ -682,4 +665,24 @@ test('fonteTipo: "nome · período · medido|modelado" (tipo da fonte ou do bloc
   // tipo explícito quando nem a fonte nem o bloco o têm (ex.: antt.pracas.tipo)
   assert.equal(IntelModel.fonteTipo({ fonte: [{ nome: 'ANTT', periodo: '2025' }] }, /ANTT/, 'medido'), 'ANTT · 2025 · medido');
   assert.equal(IntelModel.fonteTipo(b, /VMDa/, 'medido'), 'VMDa · 2023 · modelado');
+  // período AAAA-MM em pt-BR
+  assert.equal(IntelModel.fonteTipo({ tipo: 'medido', fonte: [{ nome: 'P', periodo: '2024-01 a 2026-08' }] }, /P/), 'P · jan/2024 a ago/2026 · medido');
+});
+
+test('fmtPeriodo: AAAA-MM vira mmm/aaaa; anos, intervalos de anos e datas ficam como estão', () => {
+  assert.equal(IntelModel.fmtPeriodo('2016-10 a 2026-09'), 'out/2016 a set/2026');
+  assert.equal(IntelModel.fmtPeriodo('2024-01 a 2026-08'), 'jan/2024 a ago/2026');
+  assert.equal(IntelModel.fmtPeriodo('2010-2025'), '2010-2025');
+  assert.equal(IntelModel.fmtPeriodo('planejamentos 2023-2026'), 'planejamentos 2023-2026');
+  assert.equal(IntelModel.fmtPeriodo('2024-13'), '2024-13');
+  assert.equal(IntelModel.fmtPeriodo('14/10/2026'), '14/10/2026');
+  assert.equal(IntelModel.fmtPeriodo(null), '—');
+});
+
+test('fmtMt: t em Mt com 2 casas; abaixo de 0,005 Mt vira "< 0,01"; ausente = —', () => {
+  assert.equal(IntelModel.fmtMt(14784148.77), '14,78');
+  assert.equal(IntelModel.fmtMt(5000), '0,01');
+  assert.equal(IntelModel.fmtMt(1560.652), '< 0,01');
+  assert.equal(IntelModel.fmtMt(0), '0,00');
+  assert.equal(IntelModel.fmtMt(null), '—');
 });

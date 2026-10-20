@@ -511,6 +511,12 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 .fontes-table td.fontes-nota-col { min-width: 320px; color: var(--color-light-grey); }
 .fontes-table a.link-btn { padding: 0; text-align: left; }
 .page__inner > .table-wrap + .fontes-h2 { margin-top: 40px; }
-@media (max-width: 1500px) { .topbar__sub { display: none; } }
-@media (max-width: 1180px) { .tabs { gap: 0; } .tabs a { padding: 0 8px; } }
+/* 7 abas: o subtítulo encolhe com reticências (só some na regra da v2, ≤ 900 px); abas mais justas abaixo de 1600 px */
+.topbar__titles { flex: 1 1 auto; overflow: hidden; }
+.topbar__title { flex: none; }
+.topbar__sub { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.tabs { flex: none; }
+.fontes-legenda { margin: 8px 0 0; }
+@media (max-width: 1600px) { .tabs a { padding: 0 8px; } }
+@media (max-width: 1180px) { .tabs { gap: 0; } }
 @media (max-width: 900px) { .duo { grid-template-columns: 1fr; } }
