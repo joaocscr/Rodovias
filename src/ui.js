@@ -698,10 +698,10 @@ const UI = (() => {
     if (q.max != null) {
       for (let c = 0; c <= q.breaks.length; c++) {
         const lo = c === 0 ? q.min : q.breaks[c - 1], hi = c === q.breaks.length ? q.max : q.breaks[c];
-        rows.push(`<div class="legend__row" data-class="${c}">${quantSwatch(c)}<span class="legend__range">${esc(fmt(lo))} – ${esc(fmt(hi))}</span></div>`);
+        rows.push(`<div class="legend__row" data-class="${c}">${quantSwatch(c, mode)}<span class="legend__range">${esc(fmt(lo))} – ${esc(fmt(hi))}</span></div>`);
       }
     }
-    rows.push(`<div class="legend__row">${quantSwatch(-1)}<span>Sem dado</span></div>`);
+    rows.push(`<div class="legend__row">${quantSwatch(-1, mode)}<span>Sem dado</span></div>`);
     return `<div class="legend__title">${esc(M.label)} <span>${esc(M.unidade)}</span></div>${rows.join('')}
       <div class="legend__tipo">${esc(TIPO_LABEL[M.tipo] || M.tipo)}</div>
       <div class="legend__src">Fonte: ${esc(M.fonte(intel))}</div>`;
@@ -753,8 +753,18 @@ const UI = (() => {
     });
   }
 
+  // Regras de CSS geradas dos tokens de dado (styles-map.js), para não repetir hex em styles.css.
+  function injectTokenCss() {
+    if (document.getElementById('data-tokens')) return;
+    const st = document.createElement('style');
+    st.id = 'data-tokens';
+    st.textContent = dataTokenCss();
+    document.head.appendChild(st);
+  }
+
   function init(data, idx, concData, intelData = null) {
     snv = data; index = idx; filters = Model.emptyFilters(); intel = intelData;
+    injectTokenCss();
     conc = concData; states = ConcModel.stateArray(conc, snv.fis.length); concFilters = ConcModel.emptyConcFilters();
     renderSearch();
     renderLayers();

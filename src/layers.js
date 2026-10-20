@@ -24,7 +24,7 @@ const Layers = (() => {
   // Definição das camadas: rótulo, disponibilidade, nº de feições e fonte (title do checkbox).
   const DEFS = [
     { key: 'estaduais', label: 'Rodovias estaduais', has: () => !!est(), n: () => est().malha.p.length,
-      fonte: () => `${IM.fonteRef(est().fonte, /./)} · concessões estaduais em azul com halo (ARTESP, AGERGS e demais agências)` },
+      fonte: () => `${IM.fonteRef(est().fonte, /./)} · concessões estaduais em magenta com halo (ARTESP, AGERGS e demais agências)` },
     { key: 'pracas', label: 'Praças de pedágio', has: () => !!antt('pracas'), n: () => rowsOf('pracas').filter(hasLatLng).length,
       fonte: () => `${fonteAntt(/Praças de pedágio/)} · VMD 2025, contagem medida; círculo ∝ √VMD` },
     { key: 'sats', label: 'SATs', has: () => !!antt('sats'), n: () => rowsOf('sats').filter(hasLatLng).length,
@@ -123,7 +123,7 @@ const Layers = (() => {
       }
       return { group, items: [], n: fl.length };
     }
-    // estaduais: malha em cinza (pane abaixo das rodovias federais); concessões estaduais em Bright Blue com halo, acima delas
+    // estaduais: malha em verde fino (pane abaixo das rodovias federais); concessões estaduais em magenta com halo, acima delas
     // (entEst -> feições da malha; entFis -> físicos do SNV; entGeo -> traçado próprio), clicáveis.
     const e = est();
     const base = e.malha.p.map(p => IM.decodeLine(p)).filter(l => l.length >= 2);
@@ -381,5 +381,20 @@ const Layers = (() => {
     onPoint(cb) { pointCb = cb; },
     onMun(cb) { munCb = cb; },
     selected() { return sel; },
+    // Para teste: cores (maiúsculas) de traço e preenchimento das feições desenhadas por camada ligada (inclui a seleção).
+    colorsUsed() {
+      const out = {};
+      const add = (k, c) => { if (c) (out[k] = out[k] || new Set()).add(String(c).toUpperCase()); };
+      const walk = (k, g) => g.eachLayer(l => {
+        if (l.eachLayer) { walk(k, l); return; }
+        const o = l.options || {};
+        if (o.stroke !== false) add(k, o.color);
+        if (o.fill !== false && (o.fillColor || l instanceof L.Polygon || l instanceof L.CircleMarker)) add(k, o.fillColor || o.color);
+      });
+      for (const [k, b] of Object.entries(built)) if (on[k] && b) walk(k, b.group);
+      if (mun && map.hasLayer(mun.group)) walk('mun', mun.group);
+      if (selGroup) walk('selecao', selGroup);
+      return Object.fromEntries(Object.entries(out).map(([k, v]) => [k, [...v]]));
+    },
   };
 })();

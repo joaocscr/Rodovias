@@ -41,7 +41,7 @@ const MapView = (() => {
   // Estilo base do físico no modo atual: {color, weight, dash, opacity, z, halo?}
   function spec(j) {
     if (mode === 'concessoes' && states) return CONC_STYLES[states[j]] || CONC_STYLES.nenhum;
-    if (isQuant(mode)) return quantStyle(classes(mode).cls[j]);
+    if (isQuant(mode)) return quantStyle(classes(mode).cls[j], mode);
     const s = lineStyle(situacaoOf(j));
     return admOf(j) === CONCESSAO ? Object.assign({ halo: HALO }, s) : s;
   }
@@ -203,6 +203,13 @@ const MapView = (() => {
     colorMode() { return mode; },
     classes,
     classesCached(m) { return !!quant[m]; },
+    // Para teste: cores (maiúsculas) das linhas visíveis no modo atual, com o nº de físicos de cada uma.
+    lineColors() {
+      const n = {};
+      lines.forEach((l, j) => { if (visible[j]) { const c = String(l.options.color).toUpperCase(); n[c] = (n[c] || 0) + 1; } });
+      halos.forEach((h, j) => { if (h && visible[j] && map.hasLayer(h)) { const c = String(h.options.color).toUpperCase(); n[c] = (n[c] || 0) + 1; } });
+      return n;
+    },
     haloCount() { return halos.filter(h => h && map.hasLayer(h)).length; },
     fitEntity(idx) { fitTo(entityFis(idx)); },
     highlightEntity(idx) { highlight(entityFis(idx)); },

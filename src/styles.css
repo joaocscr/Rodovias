@@ -483,6 +483,12 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 }
 #pipe-counts { margin-bottom: 16px; }
 #pipe-counts .chip b { margin-left: 4px; font-variant-numeric: tabular-nums; }
+/* Ponto colorido por status (cor gerada dos tokens PIPE_STATUS de styles-map.js; o texto do status continua no chip). */
+#pipe-counts .chip { display: inline-flex; align-items: center; }
+#pipe-counts .chip[data-pstatus]::before {
+  content: ""; flex: none; width: 10px; height: 10px; margin-right: 8px; border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--color-snow-white);
+}
 .pipeline .table-wrap { max-height: calc(100vh - 240px); }
 .pipe-obs { margin-top: 8px; font-weight: 400; color: var(--color-spacial-grey); }
 .pipe-obs > summary { display: inline-flex; align-items: center; min-height: 24px; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--color-bright-blue); }

@@ -97,6 +97,10 @@ test('(b, c) modo Tráfego: legenda com 5 faixas, "Sem dado" e "Estimativa de mo
   for (const r of rows) assert.match(r, /^[\d.,]+ – [\d.,]+$/, r);
   for (let i = 1; i < rows.length; i++) assert.equal(rows[i].split(' – ')[0], rows[i - 1].split(' – ')[1]);
   assert.ok(!/NaN|undefined|null/.test(t));
+  // v3.1: amostras da legenda na rampa azul do Tráfego, claro → escuro, cor sólida; "Sem dado" em cinza tracejado
+  const sw = await page.$$eval('#legend .legend__row[data-class] svg line', ls => ls.map(l => [l.getAttribute('stroke'), l.getAttribute('stroke-opacity')]));
+  assert.deepEqual(sw, (await page.evaluate(() => RAMPS.trafego)).map(c => [c, '1']));
+  assert.equal(await page.getAttribute('#legend .legend__row:not([data-class]) svg line', 'stroke'), '#525254');
 });
 
 test('modos quantitativos: classes por quantil, sem halo, classe maior por cima', async () => {
@@ -108,12 +112,18 @@ test('modos quantitativos: classes por quantil, sem halo, classe maior por cima'
   assert.deepEqual(r.breaks, r.expected);
   assert.equal(r.breaks.length, 4);
   assert.equal(r.halos, 0);
-  const st = await page.evaluate(() => ({ q: QUANT_STYLES, none: QUANT_NONE }));
-  assert.deepEqual(st.q.map(x => [x.color, x.opacity]),
-    [['#0071BB', 0.45], ['#0071BB', 0.7], ['#183C80', 0.75], ['#183C80', 0.9], ['#183C80', 1]]);
-  assert.equal(st.q[0].weight, 1.5);
-  assert.equal(st.q[4].weight, 6);
-  assert.ok(st.q.every((x, i) => i === 0 || (x.weight > st.q[i - 1].weight && x.z > st.q[i - 1].z)));
+  // v3.1: cor sólida por classe, da rampa do modo (claro → escuro), espessura crescente
+  const st = await page.evaluate(() => ({ q: QUANT_MODES.map(m => [0, 1, 2, 3, 4].map(c => quantStyle(c, m))), ramps: RAMPS, none: QUANT_NONE }));
+  assert.deepEqual(st.ramps.trafego, ['#6da7ec', '#3987e5', '#256abf', '#184f95', '#0d366b']);
+  assert.deepEqual(st.ramps.pesados, ['#9895ff', '#7c6ef7', '#6250d6', '#4a30b6', '#360396']);
+  assert.deepEqual(st.ramps.carga, ['#fb7744', '#da5821', '#b43f00', '#8a2e00', '#621e00']);
+  assert.deepEqual(st.ramps.acidentes, ['#ff6f69', '#e34948', '#c1252c', '#9a0016', '#6e000c']);
+  for (const [k, q] of ['trafego', 'pesados', 'carga', 'acidentes'].map((m, k) => [m, st.q[k]])) {
+    assert.deepEqual(q.map(x => [x.color, x.opacity]), st.ramps[k].map(c => [c, 1]), k);
+    assert.equal(q[0].weight, 1.5);
+    assert.equal(q[4].weight, 6);
+    assert.ok(q.every((x, i) => i === 0 || (x.weight > q[i - 1].weight && x.z > q[i - 1].z)));
+  }
   assert.deepEqual(st.none, { color: '#525254', weight: 1, dash: '2 4', opacity: 0.5, z: 0 });
 });
 
@@ -302,7 +312,7 @@ test('(f) Rodovias estaduais só aparece com INTEL.estaduais; concessões estadu
   assert.equal(await layerBox('estaduais').count(), has ? 1 : 0);
   if (!has) assert.doesNotMatch(await page.textContent('#layers-section'), /Rodovias estaduais/);
   const st = await page.evaluate(() => LAYER_STYLES.estConc);
-  assert.deepEqual([st.color, st.weight, st.halo, st.haloOpacity, st.haloExtra], ['#0071BB', 3, '#231F20', 0.35, 3]);
+  assert.deepEqual([st.color, st.weight, st.halo, st.haloOpacity, st.haloExtra], ['#e87ba4', 3, '#231F20', 0.35, 3]);
   if (has) {
     // entidades só com entFis (ex.: Rota de Santa Maria) também têm geometria
     const r = await page.evaluate(() => {
@@ -852,6 +862,12 @@ test('(e, f) Pipeline: ≥ 60 linhas por data prevista, filtros, contagem por st
   const counts = await page.evaluate(() => IntelModel.pipelineCounts(window.INTEL.pipeline.itens, window.INTEL.pipeline.status));
   const top = await page.textContent('#pipe-counts');
   for (const c of counts) assert.ok(top.includes(`${c.label} ${c.n}`), `${c.label} ${c.n}`);
+  // v3.1: cada status com ponto colorido do token PIPE_STATUS, além do texto
+  const rgb = h => `rgb(${[1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)).join(', ')})`;
+  const dots = await page.$$eval('#pipe-counts [data-pstatus]', bs => bs.map(b => [b.dataset.pstatus, getComputedStyle(b, '::before').backgroundColor]));
+  const pipeTok = await page.evaluate(() => PIPE_STATUS);
+  assert.ok(dots.length >= 5);
+  for (const [k, bg] of dots) assert.equal(bg, rgb(pipeTok[k]), k);
   // filtro de esfera e de status
   await page.selectOption('#pipe-esfera', 'estadual');
   const nE = await page.evaluate(() => window.INTEL.pipeline.itens.filter(i => i.esfera === 'estadual').length);
@@ -1203,6 +1219,37 @@ test('com só parte dos blocos cada aba mostra só os cartões que têm dado', a
   assert.doesNotMatch(await p.textContent('#page-cargas') + await p.textContent('#page-trafego'), /undefined|NaN/);
   assert.deepEqual(errs, []);
   await p.context().close();
+});
+
+// ---------- v3.1, Task 3: paleta de dados estendida ----------
+test('paleta: nenhuma cor de dado fora dos tokens; modos na rampa do modo; camadas na cor documentada', async () => {
+  await page.evaluate(() => { location.hash = '#mapa'; });
+  await page.waitForFunction(() => Tabs.current().active === 'mapa');
+  const tokens = new Set(await page.evaluate(() => DATA_TOKENS));
+  assert.ok(tokens.has('#183C80') && tokens.has('#2A78D6') && tokens.has('#0D366B'));
+  for (const m of ['concessoes', 'fisica', 'trafego', 'pesados', 'carga', 'acidentes']) {
+    await mode(m);
+    const used = await page.evaluate(() => MapView.lineColors());
+    for (const c of Object.keys(used)) assert.ok(tokens.has(c), `${m}: ${c}`);
+    if (['trafego', 'pesados', 'carga', 'acidentes'].includes(m)) {
+      const ramp = await page.evaluate(m => RAMPS[m].map(c => c.toUpperCase()), m);
+      // só os 5 passos da rampa + cinza "sem dado"; os 5 passos presentes
+      assert.deepEqual(Object.keys(used).filter(c => c !== '#525254').sort(), [...ramp].sort(), m);
+    }
+  }
+  await mode('concessoes');
+  const keys = await page.$$eval('#layers-section input[data-layer]', is => is.map(i => i.dataset.layer));
+  for (const k of keys) await setLayer(page, k, true);
+  const used = await page.evaluate(() => Layers.colorsUsed());
+  for (const [k, cs] of Object.entries(used)) for (const c of cs) assert.ok(tokens.has(c), `${k}: ${c}`);
+  const D = await page.evaluate(() => Object.fromEntries(Object.entries(DATA).map(([k, v]) => [k, v.toUpperCase()])));
+  const expect = { ferrovias: [D.yellow], portos: [D.violet, '#F7F7F8'], siade: [D.red], sats: [D.aqua], obras: [D.orange],
+    estaduais: [D.green, D.magenta, '#231F20'], pracas: ['#0071BB', '#F7F7F8'] };
+  for (const [k, cs] of Object.entries(expect)) {
+    if (!keys.includes(k)) continue;
+    assert.deepEqual([...used[k]].sort(), [...cs].sort(), k);
+  }
+  for (const k of keys) await setLayer(page, k, false);
 });
 
 test('nenhuma requisição externa', () => assert.deepEqual(external, []));
