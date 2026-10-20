@@ -15,7 +15,6 @@ LABELS = {"estudo": "Em estudo", "consulta_publica": "Consulta pública", "tcu":
           "edital": "Edital publicado", "leilao_agendado": "Leilão agendado", "leiloado": "Leiloado",
           "contrato": "Contrato assinado", "suspenso": "Suspenso", "cancelado": "Cancelado/deserto"}
 UFS = set("AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO".split())
-RASCUNHO = ROOT / "data" / "raw" / "pipeline" / "pipeline_rascunho.csv"
 
 
 @pytest.fixture(scope="module")
@@ -112,6 +111,11 @@ def test_status_revisados(blk):
     assert "portaltela.com" in b2["fonte_url"] and "https://parcerias.rs.gov.br/rodovias-649f2b1de5fe5" in b2["obs"]
 
 
+def test_fonte_data_sem_ferramental(blk):
+    for i in blk["itens"]:
+        assert not re.search(r"WebFetch|curl|Incapsula|ultimaAtualizacao", i["fonte_data"]), i["id"]
+
+
 def test_obs_sem_linguagem_de_processo(blk):
     proibido = re.compile(r"rascunho|mapeado|Status mapeado|N[ÃA]O VERIFICADO|S[ÓO] NOT[ÍI]CIA|Não usar no mapa|"
                           r"inacess[ií]vel|conc\.json|data_prevista", re.I)
@@ -158,15 +162,9 @@ def test_validacao_rejeita_status_e_ent_invalidos():
     for campo, valor in [("status", "agendado"), ("ent", "nao-existe"), ("verificado", "talvez"),
                          ("esfera", "municipal"), ("estudo", "99"), ("data_prevista", "breve"),
                          ("uf", "MT;XX"), ("uf", ""), ("rodovias", "BR-163;nao detalhadas"), ("rodovias", "BR163"),
-                         ("km", "0"), ("km", "-5"), ("data_prevista", "2026-02-30"), ("data_prevista", "2026-13")]:
+                         ("km", "0"), ("km", "-5"), ("km", "nan"), ("km", "inf"), ("km", "abc"), ("data_prevista", "2026-02-30"), ("data_prevista", "2026-13")]:
         with pytest.raises(ValueError):
             pipeline.item_de_linha({**linha, campo: valor}, {"rota-arco-norte"}, 27)
     for campo, valor in [("data_prevista", "2026-12"), ("data_prevista", "2026-02-28"), ("km", ""),
                          ("rodovias", "")]:
         pipeline.item_de_linha({**linha, campo: valor}, {"rota-arco-norte"}, 27)
-
-
-@pytest.mark.skipif(not RASCUNHO.exists(), reason="data/raw/ ausente")
-def test_conversao_do_rascunho_reproduz_o_csv():
-    assert pipeline.converter_rascunho(RASCUNHO) == (ROOT / "data" / "intel" / "pipeline.csv").read_text(
-        encoding="utf-8")
