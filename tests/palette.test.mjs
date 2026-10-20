@@ -200,3 +200,29 @@ test('malha estadual no modo Tráfego: espessura × 0,55 da federal; sem dado (e
   assert.ok(S.EST_NONE.weight < S.QUANT_NONE.weight);
   assert.ok(new Set(S.DATA_TOKENS).has(S.EST_NONE.color.toUpperCase()));
 });
+
+test('rotas × camadas temáticas: os 5 pares de mesmo hex documentados; com as rotas ligadas essas camadas esmaecem (× 0,35)', async () => {
+  const L = S.LAYER_STYLES, R = S.ROTAS;
+  // pares rota × camada com o mesmo hex (docs/paleta.md, "Rotas × camadas temáticas")
+  const pares = { r1: ['ferrovias', L.ferrovias.color], r2: ['portos', L.portos.fillColor], r3: ['estaduais', L.estaduais.color],
+    r4: ['siade', L.siade.color], r5: ['sats', L.sats.color] };
+  for (const [r, [k, c]] of Object.entries(pares)) {
+    assert.equal(R[r], c, `${r} × ${k}`);
+    assert.ok(S.ROTAS_DIM.layers.includes(k), `${k} fora de ROTAS_DIM`);
+  }
+  // nenhum outro par de mesmo hex entre rotas e camadas
+  const same = [];
+  for (const [r, c] of Object.entries(R)) {
+    for (const [k, s] of Object.entries(L)) if ([s.color, s.fillColor].some(x => x && x.toLowerCase() === c.toLowerCase())) same.push(`${r}=${k}`);
+  }
+  assert.deepEqual(same.sort(), ['r1=ferrovias', 'r2=portos', 'r3=estaduais', 'r4=siade', 'r5=sats']);
+  // regra: o mesmo fator da malha federal, em todas as camadas de linha e ponto (estaduais inclui concessões e malha do Tráfego)
+  assert.equal(S.ROTAS_DIM.factor, 0.35);
+  assert.deepEqual([...S.ROTAS_DIM.layers].sort(), ['estaduais', 'ferrovias', 'obras', 'portos', 'pracas', 'sats', 'siade']);
+  // e a regra é aplicada: a malha federal usa ROTAS_DIM.factor e a camada de sobreposição esmaece ROTAS_DIM.layers
+  const fs = await import('node:fs');
+  const src = f => fs.readFileSync(new URL(`../src/${f}`, import.meta.url), 'utf8');
+  assert.match(src('map.js'), /BASE_DIM = ROTAS_DIM\.factor/);
+  assert.match(src('layers.js'), /new Set\(ROTAS_DIM\.layers\)/);
+  assert.match(src('layers.js'), /on\.rotas \? ROTAS_DIM\.factor : 1/);
+});

@@ -54,6 +54,20 @@ O trecho em estudos não repete o "Leito natural" da malha federal (Light Grey `
 
 Com a camada de rotas ligada, a malha federal fica esmaecida (opacidade × 0,35) e volta ao normal quando a camada é desligada; as rotas ficam em primeiro plano sem mudar as cores da malha.
 
+### Rotas × camadas temáticas (`ROTAS_DIM`)
+
+As cores das rotas foram aprovadas na spec (§4) e ficam como estão, mas cada uma é o mesmo hex de uma camada temática:
+
+| Rota | Hex | Camada com o mesmo hex |
+|---|---|---|
+| 1 · Ilha das Guianas | `#eda100` | Ferrovias em operação |
+| 2 · Amazônica | `#6250d6` | Portos e ETCs |
+| 3 · Quadrante Rondon | `#008300` | Malha estadual |
+| 4 · Bioceânica de Capricórnio | `#e34948` | Fluxos ferroviários de grãos (SIADE) |
+| 5 · Bioceânica do Sul | `#1baf7a` | SATs |
+
+Mitigação: enquanto a camada de rotas está ligada, as camadas temáticas de linha e ponto — malha e concessões estaduais (inclusive a malha colorida pelo VMDa no modo Tráfego), ferrovias, SIADE, portos, SATs, obras e praças (`ROTAS_DIM.layers`) — ficam com opacidade × 0,35 (`ROTAS_DIM.factor`, o mesmo fator da malha federal) e voltam à opacidade original quando as rotas são desligadas. A camada ligada com as rotas já ligadas também nasce esmaecida; a espessura não muda (a malha estadual no Tráfego continua × 0,55 da federal). Ficam fora o fundo municipal (preenchimento, não linha) e o contorno de seleção. Assim, uma rota a 3 px, opaca e com contorno Snow White, não se confunde com a camada de mesmo hex, que fica clara e por baixo; e cada rota tem rótulo direto. O teste de paleta lista os cinco pares e confere a regra; o e2e confere opacidade ≤ 0,35 da federal e de cada camada com as rotas ligadas.
+
 Países vizinhos (`ROTAS_PAIS`): preenchimento Snow White `#F7F7F8` e borda Light Grey `#525254` (1 px, opacidade 0,6), cores da interface, com o nome do país (ou a sigla ISO quando o país tem menos de 5° de largura: Guiana, Suriname, Guiana Francesa) em Light Grey, acima das linhas das rotas e com halo Snow White; no mapa o rótulo sai do polo de inacessibilidade para o ponto livre mais próximo das linhas das rotas.
 
 ## Rampas dos modos quantitativos (`RAMPS`)

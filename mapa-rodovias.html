@@ -2513,6 +2513,10 @@ const DATA = {
 const DATA_SLOTS = [DATA.blue, DATA.orange, DATA.aqua, DATA.yellow, DATA.magenta, DATA.green, DATA.violet, DATA.red];
 // Rotas de Integração Sul-Americana (validadas all-pairs; WARN de CVD aceito com rótulo direto + traço).
 const ROTAS = { r1: DATA.yellow, r2: DATA.violet, r3: DATA.green, r4: DATA.red, r5: DATA.aqua };
+// Cada rota repete o hex de uma camada temática (Rota 1 = ferrovias, 2 = portos, 3 = malha estadual, 4 = SIADE, 5 = SATs;
+// docs/paleta.md). Com as Rotas ligadas, a malha federal e as camadas temáticas de linha e ponto ficam a opacidade × factor
+// (estaduais = malha, concessões estaduais e malha colorida pelo Tráfego) e voltam ao normal quando as Rotas desligam.
+const ROTAS_DIM = { factor: 0.35, layers: ['estaduais', 'ferrovias', 'siade', 'portos', 'sats', 'obras', 'pracas'] };
 // Rampas ordinais de 5 passos (claro → escuro), um tom por modo quantitativo. Mesma escada de OKLCH L
 // (0,717 · 0,622 · 0,527 · 0,433 · 0,338) nas quatro; azul = passos 300/400/500/600/700 da rampa documentada;
 // as outras mantêm o matiz OKLCH do slot categórico (laranja 40,6°, vermelho 24,9°, violeta 283,4°).
@@ -2731,7 +2735,7 @@ function dataTokenCss() {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { COLORS, DATA, DATA_SLOTS, ROTAS, RAMPS, ROTAS_EXTRA, ROTA_LINHA, ROTAS_PAIS, PIPE_STATUS, QUANT_MODES, QUANT_STYLES, QUANT_NONE,
+  module.exports = { COLORS, DATA, DATA_SLOTS, ROTAS, ROTAS_DIM, RAMPS, ROTAS_EXTRA, ROTA_LINHA, ROTAS_PAIS, PIPE_STATUS, QUANT_MODES, QUANT_STYLES, QUANT_NONE,
     EST_TRAF, EST_NONE,
     LAYER_STYLES, LINE_STYLES, CONC_STYLES, DATA_TOKENS, quantStyle, quantSwatch, layerSwatch, rotaSwatch, rotaExtraSwatch, rotasSwatch, dataTokenCss };
 }
@@ -2925,8 +2929,9 @@ if (typeof module !== 'undefined') module.exports = Charts;
 const MapView = (() => {
   const BRASIL = [[-34.5, -74.5], [5.8, -32]];
   const DIM = 0.2;
-  // Malha federal esmaecida enquanto as Rotas de Integração estão ligadas (as rotas ficam em primeiro plano).
-  const BASE_DIM = 0.35;
+  // Malha federal esmaecida enquanto as Rotas de Integração estão ligadas (as rotas ficam em primeiro plano); o mesmo fator
+  // vale para as camadas temáticas (Layers, ROTAS_DIM).
+  const BASE_DIM = ROTAS_DIM.factor;
   // Colunas das legendas sobre o mapa (largura 320 + margem 16): legendas de camada à esquerda, "Cor das rodovias" à direita.
   const LEGEND_COL = 336;
   let baseDim = 1;
@@ -3126,13 +3131,18 @@ const MapView = (() => {
   // retorna cedo enquanto _animatingZoom é true). Ex.: desligar e religar as rotas em seguida. Aqui o último enquadramento
   // pedido espera o 'zoomend'. Depende do campo interno _animatingZoom do Leaflet 1.9.4 (vendor/leaflet, versão fixada);
   // rever ao atualizar o Leaflet.
+  // done (opcional): chamado no 'moveend' do próprio enquadramento (vista final, rótulos já reposicionados).
   let pendingFit = null;
-  function fitSafe(bounds, opts) {
-    if (!map._animatingZoom) { map.fitBounds(bounds, opts); return; }
+  function fitSafe(bounds, opts, done) {
+    if (!map._animatingZoom) {
+      if (done) map.once('moveend', done);
+      map.fitBounds(bounds, opts);
+      return;
+    }
     const waiting = !!pendingFit;
-    pendingFit = [bounds, opts];
+    pendingFit = [bounds, opts, done];
     if (waiting) return;
-    map.once('zoomend', () => { const f = pendingFit; pendingFit = null; fitSafe(f[0], f[1]); });
+    map.once('zoomend', () => { const f = pendingFit; pendingFit = null; fitSafe(f[0], f[1], f[2]); });
   }
 
   function fitBrasil(animate = true) {
@@ -3143,13 +3153,14 @@ const MapView = (() => {
   // Reserva as duas colunas de legenda quando isso ainda deixa zoom ≥ 4; senão (tela estreita) reserva só o necessário
   // para os rótulos a oeste e para a legenda da direita, que fica embaixo (as legendas ocupam só a parte de baixo do mapa,
   // onde o continente é mais estreito).
-  function fitAmericaSul(animate = true) {
+  // done (opcional): chamado quando o enquadramento termina (ver fitSafe).
+  function fitAmericaSul(animate = true, done = null) {
     if (!rotasFit) { fitBrasil(animate); return; }
     // embaixo, 96 px a mais: as legendas ficam na parte de baixo e o rótulo da Rota 5 sai para o sul
     const full = { paddingTopLeft: [LEGEND_COL, 16], paddingBottomRight: [LEGEND_COL, 112] };
     const zFull = map.getBoundsZoom(rotasFit, false, L.point(2 * LEGEND_COL, 128));
     const opts = zFull >= 4 ? full : { paddingTopLeft: [224, 16], paddingBottomRight: [288, 112] };
-    fitSafe(rotasFit, Object.assign({ animate }, opts));
+    fitSafe(rotasFit, Object.assign({ animate }, opts), done);
   }
 
   // Esmaece (ou restaura) a malha federal inteira, mantendo modo, filtros e realce.
@@ -3212,6 +3223,8 @@ const Layers = (() => {
   const ROTA_LADO = { r1: 'n', r2: 'w', r3: 'w', r4: 'nw', r5: 's' };
   // Rótulo de país: o dado guarda o polo de inacessibilidade; no mapa, o rótulo vai para o ponto livre mais próximo das linhas
   // das rotas (IntelModel.paisLabelPoint), com a caixa do texto medida no zoom do enquadramento (≈ 11,4 px por grau no zoom 4).
+  // Mantida fixa: medir no zoom real de telas menores (3,5, ≈ 8 px/°) aumenta a caixa e empurra Bolívia, Colômbia e Guiana para
+  // cima dos rótulos vizinhos (paisLabelPoint não evita outros rótulos); nessas telas a legenda das rotas começa recolhida (ui.js).
   const PX_GRAU = 11.4, pais_hw = t => (t.length * 4.3 + 6) / PX_GRAU, PAIS_HH = 12 / PX_GRAU;
   const LADO_DIR = { n: ['top', [0, -8]], s: ['bottom', [0, 8]], e: ['right', [8, 0]], w: ['left', [-8, 0]],
     nw: ['left', [-8, -8]], sw: ['left', [-8, 8]], ne: ['right', [8, -8]], se: ['right', [8, 8]] };
@@ -3253,7 +3266,8 @@ const Layers = (() => {
     { key: 'siade', label: 'Fluxos ferroviários de grãos', has: () => !!(mm('siade') && mm('siade').length), n: () => mm('siade').length,
       fonte: () => `${fonteMm(/SIADE/)} · origem → destino, espessura ∝ toneladas` },
     { key: 'rotas', label: 'Rotas de Integração Sul-Americana', has: () => !!rotas(), n: () => rotas().rotas.length,
-      fonte: () => `${IM.fonteRef(rotas().fonte, /Apresentação/)} · traçado esquemático; descrição e obras dos relatórios 2023–2025 do MPO` },
+      fonte: () => `${IM.fonteRef(rotas().fonte, /Apresentação/)} · traçado esquemático e obras (slides da apresentação de 01/07/2026); ` +
+        'descrição das rotas dos relatórios 2024 e 2025 do MPO' },
   ];
   const def = key => DEFS.find(d => d.key === key) || null;
   const hasLatLng = r => finite(r.lat) && finite(r.lon);
@@ -3409,6 +3423,27 @@ const Layers = (() => {
       if (b.traf) b.group.removeLayer(b.traf.group);
       if (b.malha && !b.group.hasLayer(b.malha)) b.group.addLayer(b.malha);
     }
+    applyDim('estaduais');
+  }
+
+  // ---------- Esmaecer as camadas temáticas com as Rotas ligadas (ROTAS_DIM) ----------
+  // Cada rota repete o hex de uma camada temática; com as Rotas ligadas, as camadas de ROTAS_DIM.layers que estão no mapa
+  // ficam com opacidade × ROTAS_DIM.factor (o mesmo da malha federal), sempre a partir da opacidade original de cada feição
+  // (guardada na 1ª vez), de modo que religar, reconstruir ou trocar a malha estadual de modo não acumula nem perde o fator.
+  const DIM_KEYS = new Set(ROTAS_DIM.layers), dimBase = new WeakMap();
+  function dimGroup(g, f) {
+    g.eachLayer(l => {
+      if (l.eachLayer) { dimGroup(l, f); return; }
+      if (!(l instanceof L.Path)) return;
+      if (!dimBase.has(l)) dimBase.set(l, { opacity: l.options.opacity, fillOpacity: l.options.fillOpacity });
+      const b = dimBase.get(l), s = {};
+      if (b.opacity != null) s.opacity = b.opacity * f;
+      if (b.fillOpacity != null) s.fillOpacity = b.fillOpacity * f;
+      l.setStyle(s);
+    });
+  }
+  function applyDim(key) {
+    if (DIM_KEYS.has(key) && on[key] && built[key]) dimGroup(built[key].group, on.rotas ? ROTAS_DIM.factor : 1);
   }
 
   // Quebras do modo Tráfego (as da malha federal) ou null fora dele.
@@ -3486,10 +3521,14 @@ const Layers = (() => {
     } else if (built[key]) built[key].group.remove();
     on[key] = want;
     if (key === 'estaduais') applyEstMode();
+    else if (key === 'rotas') DIM_KEYS.forEach(applyDim);
+    else if (want) applyDim(key);
     if (!want) hideTip();
-    if (!want && sel && sel.key === key) clearSelection();
+    // Seleção que some com a camada (a concessão estadual pertence à camada "Rodovias estaduais"): limpa e avisa (a UI fecha o cartão).
+    const lost = !want && sel && (sel.key === key || (key === 'estaduais' && sel.key === 'estconc')) ? sel : null;
+    if (lost) clearSelection();
     const ms = performance.now() - t0;
-    if (was !== want) toggleCb(key, want);
+    if (was !== want) toggleCb(key, want, lost);
     return ms;
   }
 
@@ -3726,8 +3765,21 @@ const Layers = (() => {
       const t = b.traf;
       return { ano: t.ano, n: t.n, semDado: t.semDado, min: t.min, max: t.max, porClasse: Object.assign({}, t.porClasse) };
     },
-    // Avisa (key, ligada) quando uma camada liga ou desliga, venha a troca do painel, da ficha ou da aba Tráfego.
+    // Avisa (key, ligada, seleção perdida | null) quando uma camada liga ou desliga, venha a troca do painel, da ficha ou da aba Tráfego.
     onToggle(cb) { toggleCb = cb; },
+    // Para teste: maior opacidade efetiva (traço ou preenchimento) por camada de ROTAS_DIM ligada; com as Rotas ligadas, ≤ ROTAS_DIM.factor.
+    maxOpacity() {
+      const out = {};
+      const walk = (k, g) => g.eachLayer(l => {
+        if (l.eachLayer) { walk(k, l); return; }
+        if (!(l instanceof L.Path)) return;
+        const o = l.options;
+        const m = Math.max(o.stroke !== false ? o.opacity : 0, o.fill ? o.fillOpacity : 0);
+        out[k] = Math.max(out[k] || 0, m);
+      });
+      for (const k of DIM_KEYS) if (on[k] && built[k]) walk(k, built[k].group);
+      return out;
+    },
     available() { return DEFS.filter(d => d.has()).map(d => ({ key: d.key, label: d.label, title: d.fonte(), n: d.n() })); },
     isOn(key) { return !!on[key]; },
     fundo() { return fundoKey; },
@@ -5407,7 +5459,7 @@ const UI = (() => {
     if (v25) {
       const restrito = f.ns25 ? '<dd class="card__flag" data-ns="1"><span class="tag-nv">uso restrito (área urbana)<\/span> trecho não simulável no modelo<\/dd>' : '';
       const pesNota = f.pes25 != null && vm ? `<dd class="card__flag">Pesados (estimativa) = total ${v25.ano} × ${IM.fmtPct(f.pctPes)} de pesados no VMDa ${vm.ano} do trecho.<\/dd>` : '';
-      group(`VMDa ${v25.ano} · modelado, total e por sentido`, [
+      group(`VMDa ${v25.ano} · modelado · total e por sentido`, [
         ['Total', f.t25 == null ? '—' : IM.fmtVmd(f.t25)],
         ['Sentido crescente (SNV)', fmt(f.c25, IM.fmtVmd)], ['Sentido decrescente (SNV)', fmt(f.d25, IM.fmtVmd)],
         ['Pesados (estimativa)', fmt(f.pes25, IM.fmtVmd)],
@@ -5415,7 +5467,7 @@ const UI = (() => {
       ], pla, pesNota + restrito);
     }
     if (vm) {
-      group(`VMDa · estimado, ${vm.ano} · leves e pesados`, [
+      group(`VMDa ${vm.ano} · modelado · leves e pesados`, [
         ['Leves', fmt(f.l, IM.fmtVmd)], ['Pesados', fmt(f.p, IM.fmtVmd)],
         ['Total', fmt(f.tot, IM.fmtVmd)], ['% pesados', fmt(f.pctPes, IM.fmtPct)],
         ['Veículos × extensão', v25 ? null : fmt(f.vkm, IM.fmtVkm)],
@@ -5511,8 +5563,21 @@ const UI = (() => {
     if (!want && sel && sel.key === 'rotas') closeCard();
     Layers.toggle('rotas', want);
     MapView.setBaseDim(Layers.isOn('rotas'));
-    if (want) MapView.fitAmericaSul(); else MapView.fitBrasil();
     renderRotasLegend();
+    if (want) MapView.fitAmericaSul(true, fitRotasLegend); else MapView.fitBrasil();
+  }
+
+  // Ao fim do enquadramento das rotas: se um rótulo direto de rota caiu sob a legenda das rotas (mapa estreito, p. ex.
+  // 1366 × 768, onde o zoom mínimo deixa a Rota 4 na altura da legenda), a legenda começa recolhida; o leitor pode abri-la.
+  function fitRotasLegend() {
+    const el = document.getElementById('rotas-legend'), det = el && el.querySelector('details');
+    if (!det || el.hidden || !det.open || !Layers.isOn('rotas')) return;
+    const b = el.getBoundingClientRect();
+    const sob = [...document.querySelectorAll('.leaflet-tooltip.rota-label')].some(l => {
+      const r = l.getBoundingClientRect();
+      return r.left < b.right && b.left < r.right && r.top < b.bottom && b.top < r.bottom;
+    });
+    if (sob) det.open = false;
   }
 
   function renderRotasLegend() {
@@ -5906,7 +5971,11 @@ const UI = (() => {
     Layers.onPoint(openPoint);
     Layers.onMun(openMun);
     // Ligar/desligar as estaduais muda a legenda do Tráfego (estaduais incluídas), venha a troca do painel ou da ficha.
-    Layers.onToggle(key => { if (key === 'estaduais' && QUANT_MODES.includes(MapView.colorMode())) renderLegend(); });
+    // Desligar a camada da feição aberta no cartão (ex.: concessão estadual ao desligar "Rodovias estaduais") fecha o cartão.
+    Layers.onToggle((key, on, lost) => {
+      if (lost && !$('#card').hidden) closeCard();
+      if (key === 'estaduais' && QUANT_MODES.includes(MapView.colorMode())) renderLegend();
+    });
     syncEstTrafego();
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape' && !$('#card').hidden) closeCard();

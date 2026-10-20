@@ -17,6 +17,10 @@ const DATA = {
 const DATA_SLOTS = [DATA.blue, DATA.orange, DATA.aqua, DATA.yellow, DATA.magenta, DATA.green, DATA.violet, DATA.red];
 // Rotas de Integração Sul-Americana (validadas all-pairs; WARN de CVD aceito com rótulo direto + traço).
 const ROTAS = { r1: DATA.yellow, r2: DATA.violet, r3: DATA.green, r4: DATA.red, r5: DATA.aqua };
+// Cada rota repete o hex de uma camada temática (Rota 1 = ferrovias, 2 = portos, 3 = malha estadual, 4 = SIADE, 5 = SATs;
+// docs/paleta.md). Com as Rotas ligadas, a malha federal e as camadas temáticas de linha e ponto ficam a opacidade × factor
+// (estaduais = malha, concessões estaduais e malha colorida pelo Tráfego) e voltam ao normal quando as Rotas desligam.
+const ROTAS_DIM = { factor: 0.35, layers: ['estaduais', 'ferrovias', 'siade', 'portos', 'sats', 'obras', 'pracas'] };
 // Rampas ordinais de 5 passos (claro → escuro), um tom por modo quantitativo. Mesma escada de OKLCH L
 // (0,717 · 0,622 · 0,527 · 0,433 · 0,338) nas quatro; azul = passos 300/400/500/600/700 da rampa documentada;
 // as outras mantêm o matiz OKLCH do slot categórico (laranja 40,6°, vermelho 24,9°, violeta 283,4°).
@@ -235,7 +239,7 @@ function dataTokenCss() {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { COLORS, DATA, DATA_SLOTS, ROTAS, RAMPS, ROTAS_EXTRA, ROTA_LINHA, ROTAS_PAIS, PIPE_STATUS, QUANT_MODES, QUANT_STYLES, QUANT_NONE,
+  module.exports = { COLORS, DATA, DATA_SLOTS, ROTAS, ROTAS_DIM, RAMPS, ROTAS_EXTRA, ROTA_LINHA, ROTAS_PAIS, PIPE_STATUS, QUANT_MODES, QUANT_STYLES, QUANT_NONE,
     EST_TRAF, EST_NONE,
     LAYER_STYLES, LINE_STYLES, CONC_STYLES, DATA_TOKENS, quantStyle, quantSwatch, layerSwatch, rotaSwatch, rotaExtraSwatch, rotasSwatch, dataTokenCss };
 }

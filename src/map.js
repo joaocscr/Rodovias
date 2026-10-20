@@ -2,8 +2,9 @@
 const MapView = (() => {
   const BRASIL = [[-34.5, -74.5], [5.8, -32]];
   const DIM = 0.2;
-  // Malha federal esmaecida enquanto as Rotas de Integração estão ligadas (as rotas ficam em primeiro plano).
-  const BASE_DIM = 0.35;
+  // Malha federal esmaecida enquanto as Rotas de Integração estão ligadas (as rotas ficam em primeiro plano); o mesmo fator
+  // vale para as camadas temáticas (Layers, ROTAS_DIM).
+  const BASE_DIM = ROTAS_DIM.factor;
   // Colunas das legendas sobre o mapa (largura 320 + margem 16): legendas de camada à esquerda, "Cor das rodovias" à direita.
   const LEGEND_COL = 336;
   let baseDim = 1;
@@ -203,13 +204,18 @@ const MapView = (() => {
   // retorna cedo enquanto _animatingZoom é true). Ex.: desligar e religar as rotas em seguida. Aqui o último enquadramento
   // pedido espera o 'zoomend'. Depende do campo interno _animatingZoom do Leaflet 1.9.4 (vendor/leaflet, versão fixada);
   // rever ao atualizar o Leaflet.
+  // done (opcional): chamado no 'moveend' do próprio enquadramento (vista final, rótulos já reposicionados).
   let pendingFit = null;
-  function fitSafe(bounds, opts) {
-    if (!map._animatingZoom) { map.fitBounds(bounds, opts); return; }
+  function fitSafe(bounds, opts, done) {
+    if (!map._animatingZoom) {
+      if (done) map.once('moveend', done);
+      map.fitBounds(bounds, opts);
+      return;
+    }
     const waiting = !!pendingFit;
-    pendingFit = [bounds, opts];
+    pendingFit = [bounds, opts, done];
     if (waiting) return;
-    map.once('zoomend', () => { const f = pendingFit; pendingFit = null; fitSafe(f[0], f[1]); });
+    map.once('zoomend', () => { const f = pendingFit; pendingFit = null; fitSafe(f[0], f[1], f[2]); });
   }
 
   function fitBrasil(animate = true) {
@@ -220,13 +226,14 @@ const MapView = (() => {
   // Reserva as duas colunas de legenda quando isso ainda deixa zoom ≥ 4; senão (tela estreita) reserva só o necessário
   // para os rótulos a oeste e para a legenda da direita, que fica embaixo (as legendas ocupam só a parte de baixo do mapa,
   // onde o continente é mais estreito).
-  function fitAmericaSul(animate = true) {
+  // done (opcional): chamado quando o enquadramento termina (ver fitSafe).
+  function fitAmericaSul(animate = true, done = null) {
     if (!rotasFit) { fitBrasil(animate); return; }
     // embaixo, 96 px a mais: as legendas ficam na parte de baixo e o rótulo da Rota 5 sai para o sul
     const full = { paddingTopLeft: [LEGEND_COL, 16], paddingBottomRight: [LEGEND_COL, 112] };
     const zFull = map.getBoundsZoom(rotasFit, false, L.point(2 * LEGEND_COL, 128));
     const opts = zFull >= 4 ? full : { paddingTopLeft: [224, 16], paddingBottomRight: [288, 112] };
-    fitSafe(rotasFit, Object.assign({ animate }, opts));
+    fitSafe(rotasFit, Object.assign({ animate }, opts), done);
   }
 
   // Esmaece (ou restaura) a malha federal inteira, mantendo modo, filtros e realce.

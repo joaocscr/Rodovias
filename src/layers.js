@@ -13,6 +13,8 @@ const Layers = (() => {
   const ROTA_LADO = { r1: 'n', r2: 'w', r3: 'w', r4: 'nw', r5: 's' };
   // Rótulo de país: o dado guarda o polo de inacessibilidade; no mapa, o rótulo vai para o ponto livre mais próximo das linhas
   // das rotas (IntelModel.paisLabelPoint), com a caixa do texto medida no zoom do enquadramento (≈ 11,4 px por grau no zoom 4).
+  // Mantida fixa: medir no zoom real de telas menores (3,5, ≈ 8 px/°) aumenta a caixa e empurra Bolívia, Colômbia e Guiana para
+  // cima dos rótulos vizinhos (paisLabelPoint não evita outros rótulos); nessas telas a legenda das rotas começa recolhida (ui.js).
   const PX_GRAU = 11.4, pais_hw = t => (t.length * 4.3 + 6) / PX_GRAU, PAIS_HH = 12 / PX_GRAU;
   const LADO_DIR = { n: ['top', [0, -8]], s: ['bottom', [0, 8]], e: ['right', [8, 0]], w: ['left', [-8, 0]],
     nw: ['left', [-8, -8]], sw: ['left', [-8, 8]], ne: ['right', [8, -8]], se: ['right', [8, 8]] };
@@ -54,7 +56,8 @@ const Layers = (() => {
     { key: 'siade', label: 'Fluxos ferroviários de grãos', has: () => !!(mm('siade') && mm('siade').length), n: () => mm('siade').length,
       fonte: () => `${fonteMm(/SIADE/)} · origem → destino, espessura ∝ toneladas` },
     { key: 'rotas', label: 'Rotas de Integração Sul-Americana', has: () => !!rotas(), n: () => rotas().rotas.length,
-      fonte: () => `${IM.fonteRef(rotas().fonte, /Apresentação/)} · traçado esquemático; descrição e obras dos relatórios 2023–2025 do MPO` },
+      fonte: () => `${IM.fonteRef(rotas().fonte, /Apresentação/)} · traçado esquemático e obras (slides da apresentação de 01/07/2026); ` +
+        'descrição das rotas dos relatórios 2024 e 2025 do MPO' },
   ];
   const def = key => DEFS.find(d => d.key === key) || null;
   const hasLatLng = r => finite(r.lat) && finite(r.lon);
@@ -210,6 +213,27 @@ const Layers = (() => {
       if (b.traf) b.group.removeLayer(b.traf.group);
       if (b.malha && !b.group.hasLayer(b.malha)) b.group.addLayer(b.malha);
     }
+    applyDim('estaduais');
+  }
+
+  // ---------- Esmaecer as camadas temáticas com as Rotas ligadas (ROTAS_DIM) ----------
+  // Cada rota repete o hex de uma camada temática; com as Rotas ligadas, as camadas de ROTAS_DIM.layers que estão no mapa
+  // ficam com opacidade × ROTAS_DIM.factor (o mesmo da malha federal), sempre a partir da opacidade original de cada feição
+  // (guardada na 1ª vez), de modo que religar, reconstruir ou trocar a malha estadual de modo não acumula nem perde o fator.
+  const DIM_KEYS = new Set(ROTAS_DIM.layers), dimBase = new WeakMap();
+  function dimGroup(g, f) {
+    g.eachLayer(l => {
+      if (l.eachLayer) { dimGroup(l, f); return; }
+      if (!(l instanceof L.Path)) return;
+      if (!dimBase.has(l)) dimBase.set(l, { opacity: l.options.opacity, fillOpacity: l.options.fillOpacity });
+      const b = dimBase.get(l), s = {};
+      if (b.opacity != null) s.opacity = b.opacity * f;
+      if (b.fillOpacity != null) s.fillOpacity = b.fillOpacity * f;
+      l.setStyle(s);
+    });
+  }
+  function applyDim(key) {
+    if (DIM_KEYS.has(key) && on[key] && built[key]) dimGroup(built[key].group, on.rotas ? ROTAS_DIM.factor : 1);
   }
 
   // Quebras do modo Tráfego (as da malha federal) ou null fora dele.
@@ -287,10 +311,14 @@ const Layers = (() => {
     } else if (built[key]) built[key].group.remove();
     on[key] = want;
     if (key === 'estaduais') applyEstMode();
+    else if (key === 'rotas') DIM_KEYS.forEach(applyDim);
+    else if (want) applyDim(key);
     if (!want) hideTip();
-    if (!want && sel && sel.key === key) clearSelection();
+    // Seleção que some com a camada (a concessão estadual pertence à camada "Rodovias estaduais"): limpa e avisa (a UI fecha o cartão).
+    const lost = !want && sel && (sel.key === key || (key === 'estaduais' && sel.key === 'estconc')) ? sel : null;
+    if (lost) clearSelection();
     const ms = performance.now() - t0;
-    if (was !== want) toggleCb(key, want);
+    if (was !== want) toggleCb(key, want, lost);
     return ms;
   }
 
@@ -527,8 +555,21 @@ const Layers = (() => {
       const t = b.traf;
       return { ano: t.ano, n: t.n, semDado: t.semDado, min: t.min, max: t.max, porClasse: Object.assign({}, t.porClasse) };
     },
-    // Avisa (key, ligada) quando uma camada liga ou desliga, venha a troca do painel, da ficha ou da aba Tráfego.
+    // Avisa (key, ligada, seleção perdida | null) quando uma camada liga ou desliga, venha a troca do painel, da ficha ou da aba Tráfego.
     onToggle(cb) { toggleCb = cb; },
+    // Para teste: maior opacidade efetiva (traço ou preenchimento) por camada de ROTAS_DIM ligada; com as Rotas ligadas, ≤ ROTAS_DIM.factor.
+    maxOpacity() {
+      const out = {};
+      const walk = (k, g) => g.eachLayer(l => {
+        if (l.eachLayer) { walk(k, l); return; }
+        if (!(l instanceof L.Path)) return;
+        const o = l.options;
+        const m = Math.max(o.stroke !== false ? o.opacity : 0, o.fill ? o.fillOpacity : 0);
+        out[k] = Math.max(out[k] || 0, m);
+      });
+      for (const k of DIM_KEYS) if (on[k] && built[k]) walk(k, built[k].group);
+      return out;
+    },
     available() { return DEFS.filter(d => d.has()).map(d => ({ key: d.key, label: d.label, title: d.fonte(), n: d.n() })); },
     isOn(key) { return !!on[key]; },
     fundo() { return fundoKey; },

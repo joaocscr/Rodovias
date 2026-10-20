@@ -384,7 +384,7 @@ const UI = (() => {
     if (v25) {
       const restrito = f.ns25 ? '<dd class="card__flag" data-ns="1"><span class="tag-nv">uso restrito (área urbana)</span> trecho não simulável no modelo</dd>' : '';
       const pesNota = f.pes25 != null && vm ? `<dd class="card__flag">Pesados (estimativa) = total ${v25.ano} × ${IM.fmtPct(f.pctPes)} de pesados no VMDa ${vm.ano} do trecho.</dd>` : '';
-      group(`VMDa ${v25.ano} · modelado, total e por sentido`, [
+      group(`VMDa ${v25.ano} · modelado · total e por sentido`, [
         ['Total', f.t25 == null ? '—' : IM.fmtVmd(f.t25)],
         ['Sentido crescente (SNV)', fmt(f.c25, IM.fmtVmd)], ['Sentido decrescente (SNV)', fmt(f.d25, IM.fmtVmd)],
         ['Pesados (estimativa)', fmt(f.pes25, IM.fmtVmd)],
@@ -392,7 +392,7 @@ const UI = (() => {
       ], pla, pesNota + restrito);
     }
     if (vm) {
-      group(`VMDa · estimado, ${vm.ano} · leves e pesados`, [
+      group(`VMDa ${vm.ano} · modelado · leves e pesados`, [
         ['Leves', fmt(f.l, IM.fmtVmd)], ['Pesados', fmt(f.p, IM.fmtVmd)],
         ['Total', fmt(f.tot, IM.fmtVmd)], ['% pesados', fmt(f.pctPes, IM.fmtPct)],
         ['Veículos × extensão', v25 ? null : fmt(f.vkm, IM.fmtVkm)],
@@ -488,8 +488,21 @@ const UI = (() => {
     if (!want && sel && sel.key === 'rotas') closeCard();
     Layers.toggle('rotas', want);
     MapView.setBaseDim(Layers.isOn('rotas'));
-    if (want) MapView.fitAmericaSul(); else MapView.fitBrasil();
     renderRotasLegend();
+    if (want) MapView.fitAmericaSul(true, fitRotasLegend); else MapView.fitBrasil();
+  }
+
+  // Ao fim do enquadramento das rotas: se um rótulo direto de rota caiu sob a legenda das rotas (mapa estreito, p. ex.
+  // 1366 × 768, onde o zoom mínimo deixa a Rota 4 na altura da legenda), a legenda começa recolhida; o leitor pode abri-la.
+  function fitRotasLegend() {
+    const el = document.getElementById('rotas-legend'), det = el && el.querySelector('details');
+    if (!det || el.hidden || !det.open || !Layers.isOn('rotas')) return;
+    const b = el.getBoundingClientRect();
+    const sob = [...document.querySelectorAll('.leaflet-tooltip.rota-label')].some(l => {
+      const r = l.getBoundingClientRect();
+      return r.left < b.right && b.left < r.right && r.top < b.bottom && b.top < r.bottom;
+    });
+    if (sob) det.open = false;
   }
 
   function renderRotasLegend() {
@@ -883,7 +896,11 @@ const UI = (() => {
     Layers.onPoint(openPoint);
     Layers.onMun(openMun);
     // Ligar/desligar as estaduais muda a legenda do Tráfego (estaduais incluídas), venha a troca do painel ou da ficha.
-    Layers.onToggle(key => { if (key === 'estaduais' && QUANT_MODES.includes(MapView.colorMode())) renderLegend(); });
+    // Desligar a camada da feição aberta no cartão (ex.: concessão estadual ao desligar "Rodovias estaduais") fecha o cartão.
+    Layers.onToggle((key, on, lost) => {
+      if (lost && !$('#card').hidden) closeCard();
+      if (key === 'estaduais' && QUANT_MODES.includes(MapView.colorMode())) renderLegend();
+    });
     syncEstTrafego();
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape' && !$('#card').hidden) closeCard();
