@@ -140,9 +140,9 @@ async function go(hash) {
   await page.waitForTimeout(250);
 }
 
-test('v2: barra com 4 abas e Mapa ativa', async () => {
+test('v2: barra de abas (v3: 7 abas) e Mapa ativa', async () => {
   await go('#mapa');
-  assert.deepEqual(await page.$$eval('#tabs a', as => as.map(a => a.textContent)), ['Mapa', 'Projetos', 'Mercado', 'Regulatório']);
+  assert.deepEqual(await page.$$eval('#tabs a', as => as.map(a => a.textContent)), ['Mapa', 'Projetos', 'Tráfego', 'Cargas', 'Mercado', 'Regulatório', 'Fontes']);
   assert.equal(await page.textContent('#tabs a.is-active'), 'Mapa');
 });
 
@@ -273,6 +273,8 @@ test('v2: Esc fecha a ficha e volta ao hash anterior', async () => {
 
 test('v2: comparador com 54 linhas, ordenação, filtro e totais', async () => {
   await go('#projetos');
+  // v3: com concessões estaduais no arquivo, os 39 + 4 + 11 da v2 são a esfera federal
+  if (await page.locator('#proj-esfera').count()) await page.selectOption('#proj-esfera', 'federal');
   assert.equal(await page.locator('#proj-table tbody tr').count(), 54);
   await page.click('[data-sort="capexKm"]');
   let vals = await page.evaluate(() => Projetos.rowsShown().map(r => r.capexKm));
@@ -295,6 +297,7 @@ test('v2: comparador com 54 linhas, ordenação, filtro e totais', async () => {
   await page.keyboard.press('Escape');
   await page.click('[data-f="estado"][data-v="projeto2027"]');
   assert.equal(await page.locator('#estudos-list li').count(), 27);
+  if (await page.locator('#proj-esfera').count()) await page.selectOption('#proj-esfera', '');
 });
 
 test('v2: aba Mercado tem gráficos com fonte e tooltip', async () => {
@@ -309,8 +312,17 @@ test('v2: aba Regulatório com índice, otimizações e estudos', async () => {
   await go('#regulatorio');
   assert.equal(await page.locator('.reg__toc a').count(), 8);
   await page.locator('.reg__toc a', { hasText: 'Matriz de riscos' }).click();
-  await page.waitForTimeout(500);
-  const top = await page.evaluate(() => document.getElementById('reg-riscos').getBoundingClientRect().top);
+  // A rolagem é suave: espera a posição parar (10 quadros iguais seguidos, até 3 s) em vez de um tempo fixo.
+  const top = await page.evaluate(() => new Promise(resolve => {
+    const el = document.getElementById('reg-riscos'), t0 = performance.now();
+    let last = NaN, still = 0;
+    (function tick() {
+      const t = el.getBoundingClientRect().top;
+      still = t === last ? still + 1 : 0;
+      last = t;
+      if (still >= 10 || performance.now() - t0 > 3000) resolve(t); else requestAnimationFrame(tick);
+    })();
+  }));
   assert.ok(top < 200, String(top));
   assert.equal(await page.locator('#otimizacoes tbody tr').count(), 11);
   await page.locator('#page-regulatorio [data-estudo]:not([disabled])').first().click();

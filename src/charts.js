@@ -7,8 +7,8 @@ const Charts = (() => {
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const num = v => typeof v === 'number' && isFinite(v);
 
-  function frame(w, h, body, aria) {
-    return `<svg class="chart" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(aria || '')}"` +
+  function frame(w, h, body, aria, role = 'img') {
+    return `<svg class="chart" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="${role}" aria-label="${esc(aria || '')}"` +
       ` font-family="Inter, sans-serif" font-size="${FONT}">${body}</svg>`;
   }
   const empty = (w, h) => frame(w, h, `<text x="${w / 2}" y="${h / 2}" text-anchor="middle" fill="${C.grey}">Sem dados</text>`, 'Sem dados');
@@ -92,19 +92,21 @@ const Charts = (() => {
     const all = series.flatMap(s => s.points.filter(p => num(p.x) && num(p.y)));
     if (!all.length) return empty(w, h);
     const fy = o.format || (v => nf1.format(v)), unit = o.unit ? ' ' + o.unit : '';
+    const fx = o.formatX || (x => String(x)), r = o.r || 4;
     const L = 72, R = 16, T = 16, B = 40, pw = w - L - R, ph = h - T - B;
     const xs = all.map(p => p.x), x0 = Math.min(...xs), x1 = Math.max(...xs);
     const ty = ticks(Math.max(...all.map(p => p.y))), my = ty[ty.length - 1] || 1;
     const xOf = v => L + (x1 === x0 ? pw / 2 : ((v - x0) / (x1 - x0)) * pw), yOf = v => T + ph - (v / my) * ph;
     let body = yAxis(ty, L, w - R, yOf, fy);
-    const step = Math.max(1, Math.ceil((x1 - x0) / 8));
-    for (let x = x0; x <= x1; x += step) body += `<text x="${xOf(x)}" y="${h - B + 24}" text-anchor="middle" fill="${C.grey}">${x}</text>`;
+    // o.stepX: passo dos rótulos do eixo x (ex.: meses em fração de ano); padrão = inteiro, até ~8 rótulos
+    const step = o.stepX > 0 ? o.stepX : Math.max(1, Math.ceil((x1 - x0) / 8));
+    for (let k = 0, x = x0; x <= x1 + 1e-9; k++, x = x0 + k * step) body += `<text x="${xOf(x)}" y="${h - B + 24}" text-anchor="middle" fill="${C.grey}">${esc(fx(x))}</text>`;
     series.forEach((s, k) => {
       const pts = s.points.filter(p => num(p.x) && num(p.y));
       const color = k === 0 ? C.deep : k === 1 ? C.bright : C.grey;
       const d = pts.map((p, i) => `${i ? 'L' : 'M'}${xOf(p.x).toFixed(1)},${yOf(p.y).toFixed(1)}`).join('');
       body += `<path class="line" d="${d}" fill="none" stroke="${color}" stroke-width="2.5"${s.dash ? ' stroke-dasharray="6 4"' : ''}/>`;
-      body += pts.map(p => `<circle cx="${xOf(p.x).toFixed(1)}" cy="${yOf(p.y).toFixed(1)}" r="4" fill="${color}"><title>${esc(s.name)} ${p.x}: ${esc(fy(p.y))}${esc(unit)}</title></circle>`).join('');
+      body += pts.map(p => `<circle cx="${xOf(p.x).toFixed(1)}" cy="${yOf(p.y).toFixed(1)}" r="${r}" fill="${color}"><title>${esc(s.name)} ${esc(fx(p.x))}: ${esc(fy(p.y))}${esc(unit)}</title></circle>`).join('');
     });
     return frame(w, h, body, o.title);
   }
@@ -115,7 +117,7 @@ const Charts = (() => {
     if (!data.length) return empty(w, h);
     const fmt = o.format || (v => nf1.format(v)), unit = o.unit ? ' ' + o.unit : '', names = o.names || [];
     const colors = [C.deep, C.bright, C.grey];
-    const L = 56, R = 16, T = 16, B = 40, pw = w - L - R, ph = h - T - B;
+    const L = o.left || 56, R = 16, T = 16, B = 40, pw = w - L - R, ph = h - T - B; // o.left: margem dos rótulos do eixo y
     const sums = data.map(d => d.parts.reduce((a, v) => a + (num(v) ? v : 0), 0));
     const tk = ticks(Math.max(...sums, 0)), max = tk[tk.length - 1] || 1;
     const yOf = v => T + ph - (v / max) * ph, bw = pw / data.length;
@@ -127,12 +129,43 @@ const Charts = (() => {
         if (!num(v) || v <= 0) return;
         const y = yOf(acc + v), hh = yOf(acc) - y;
         body += `<rect class="cbar" x="${(L + i * bw + bw * 0.15).toFixed(1)}" y="${y.toFixed(1)}" width="${(bw * 0.7).toFixed(1)}" height="${hh.toFixed(1)}" fill="${colors[k % 3]}">` +
-          `<title>${esc(d.label)} · ${esc(names[k] || '')}: ${esc(fmt(v))}${esc(unit)}</title></rect>`;
+          `<title>${esc(d.tip || d.label)} · ${esc(names[k] || '')}: ${esc(fmt(v))}${esc(unit)}</title></rect>`;
         acc += v;
       });
       if (i % every === 0) body += `<text x="${(L + i * bw + bw / 2).toFixed(1)}" y="${h - B + 24}" text-anchor="middle" fill="${C.grey}">${esc(d.label)}</text>`;
     });
     return frame(w, h, body, o.title);
+  }
+
+  // Barras horizontais empilhadas: uma linha por item ({label, parts, k?, detail?}), partes em Deep Blue, Bright Blue e Light Grey
+  // (ou o.colors), total à direita. o.clickable: cada linha vira <g role="button" tabindex="0" data-k> e o SVG, role="group".
+  function hstackSvg(data, o = {}) {
+    const w = o.width || 640, rh = o.rh || 32, bh = Math.min(16, rh - 8);
+    if (!data.length) return empty(w, 120);
+    const fmt = o.format || (v => nf1.format(v)), unit = o.unit ? ' ' + o.unit : '', names = o.names || [];
+    const colors = o.colors || [C.deep, C.bright, C.grey];
+    const L = o.labelWidth || Math.min(240, w * 0.4), R = o.valueWidth || 112, pw = Math.max(40, w - L - R);
+    const pos = v => (num(v) && v > 0 ? v : 0);
+    const sums = data.map(d => d.parts.reduce((a, v) => a + pos(v), 0));
+    const max = Math.max(...sums, 0) || 1, maxCh = Math.max(4, Math.floor((L - 8) / 7.5));
+    const cut = s => (s.length > maxCh ? `${s.slice(0, maxCh - 1)}…` : s);
+    const body = data.map((d, i) => {
+      const y = 4 + i * rh, ty = y + rh / 2 + 5, label = String(d.label);
+      let x = L, rects = '';
+      d.parts.forEach((v, k) => {
+        if (!pos(v)) return;
+        const bw = (v / max) * pw;
+        rects += `<rect class="cbar" x="${x.toFixed(1)}" y="${(y + (rh - bh) / 2).toFixed(1)}" width="${bw.toFixed(1)}" height="${bh}" fill="${colors[k % colors.length]}">` +
+          `<title>${esc(label)}${names[k] ? ` · ${esc(names[k])}` : ''}: ${esc(fmt(v))}${esc(unit)}${d.detail ? ` (${esc(d.detail)})` : ''}</title></rect>`;
+        x += bw;
+      });
+      const val = sums[i] > 0 ? fmt(sums[i]) : '—';
+      const attrs = o.clickable ? ` data-k="${esc(d.k)}" role="button" tabindex="0" aria-label="${esc(`${label}: ${val}${unit}`)}"` : '';
+      return `<g class="hrow"${attrs}><rect class="hrow__bg" x="0" y="${y}" width="${w}" height="${rh}" fill="${C.bright}" fill-opacity="0"/>` +
+        `<text x="${L - 8}" y="${ty}" text-anchor="end" fill="${C.spacial}">${esc(cut(label))}</text>${rects}` +
+        `<text x="${(x + 8).toFixed(1)}" y="${ty}" fill="${C.grey}">${esc(val)}</text></g>`;
+    }).join('');
+    return frame(w, data.length * rh + 8, body, o.title, o.clickable ? 'group' : 'img');
   }
 
   function legendHtml(items) {
@@ -142,7 +175,7 @@ const Charts = (() => {
 
   const into = fn => (el, data, o = {}) => { el.innerHTML = fn(data, Object.assign({ width: Math.max(320, el.clientWidth || 640) }, o)); };
 
-  return { C, barsSvg, hbarsSvg, scatterSvg, linesSvg, stackedSvg, legendHtml,
+  return { C, barsSvg, hbarsSvg, hstackSvg, scatterSvg, linesSvg, stackedSvg, legendHtml,
     bars: into(barsSvg), hbars: into(hbarsSvg), scatter: into(scatterSvg), lines: into(linesSvg), stacked: into(stackedSvg) };
 })();
 

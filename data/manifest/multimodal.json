@@ -1,0 +1,101 @@
+[
+ {
+  "dominio": "multimodal",
+  "descricao": "BaseFerro — malha ferroviária (shapefile)",
+  "url": "https://www.gov.br/transportes/pt-br/assuntos/dados-de-transportes/bit/Base-GEO/BaseFerro.zip/@@download/file",
+  "arquivo": "data/raw/graos/multimodal/BaseFerro.zip",
+  "bytes": 10187457,
+  "sha256": "6ca0fdb3a5c91e2824af8dbc4bdf3c01232bc4c33b698339215d39b1a4385373",
+  "periodo": "abr/2024",
+  "licenca": "Dados abertos do governo federal (Decreto 8.777/2016); citar a fonte",
+  "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "multimodal",
+  "descricao": "ANTAQ — instalações portuárias (shapefile)",
+  "url": "https://www.gov.br/antaq/pt-br/central-de-conteudos/Instalaesporturias06052025.zip",
+  "arquivo": "data/raw/graos/multimodal/antaq_instalacoes.zip",
+  "bytes": 518623,
+  "sha256": "79e28332bdd031388a6f2305e4f1e2e741c057a64a63724ea4278f78a040fb63",
+  "periodo": "06/05/2025",
+  "licenca": "Dados abertos do governo federal (Decreto 8.777/2016); citar a fonte",
+  "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "multimodal",
+  "descricao": "ANTT SIADE — produção origem-destino 2025",
+  "url": "https://dados.antt.gov.br/dataset/438a5184-09db-49a3-88c8-0bad418b4409/resource/d7263808-bd77-4153-9910-49e041d73b21/download/producao_origem_destino_2025.csv",
+  "arquivo": "data/raw/graos/antt/producao_origem_destino_2025.csv",
+  "bytes": 601420,
+  "sha256": "265a40f1759fcb6af5a83d28b687d3621d8cf50054ae777f80e7cb0d9e863114",
+  "periodo": "jan–dez/2025",
+  "licenca": "Dados abertos do governo federal (Decreto 8.777/2016); citar a fonte",
+  "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "multimodal",
+  "descricao": "IBGE Logística dos Transportes 2024 — fluxos ferroviários O/D",
+  "url": "https://geoftp.ibge.gov.br/organizacao_do_territorio/redes_e_fluxos_geograficos/logistica_dos_transportes/2024/Base_de_dados/Fluxos_Detalhados_OD_de_Mercadorias/Fluxos_Ferroviarios.zip",
+  "arquivo": "data/raw/graos/logistica/detalhados/Fluxos_Ferroviarios.zip",
+  "bytes": 110833,
+  "sha256": "614ee2d1536cb52da8eeae6bbb5a22ad2f4a59a4dd918624b0700a3d8564b62d",
+  "periodo": "2024",
+  "licenca": "Dados abertos do governo federal (Decreto 8.777/2016); citar a fonte",
+  "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "multimodal",
+  "descricao": "Comex Stat — exportações 2025 por NCM",
+  "url": "https://balanca.mdic.gov.br/balanca/bd/comexstat-bd/ncm/EXP_2025.csv",
+  "arquivo": "data/raw/graos/comex/EXP_2025.csv",
+  "bytes": 113715007,
+  "sha256": "34571d3fb125db0423f4a0785e7b40c26c815a90ccfa9783e457a1c34a96b96c",
+  "periodo": "jan–dez/2025",
+  "licenca": "Dados abertos do governo federal (Decreto 8.777/2016); citar a fonte",
+  "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "multimodal",
+  "descricao": "Comex Stat — tabela de URF",
+  "url": "https://balanca.mdic.gov.br/balanca/bd/tabelas/URF.csv",
+  "arquivo": "data/raw/graos/comex/URF.csv",
+  "bytes": 10714,
+  "sha256": "1a20764b160cb8d75a659ae49aa69aedc1476c72b3f639dec1c4fa55accfc2bb",
+  "periodo": "",
+  "licenca": "Dados abertos do governo federal (Decreto 8.777/2016); citar a fonte",
+  "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "multimodal",
+  "descricao": "Comex Stat — tabela de vias",
+  "url": "https://balanca.mdic.gov.br/balanca/bd/tabelas/VIA.csv",
+  "arquivo": "data/raw/graos/comex/VIA.csv",
+  "bytes": 369,
+  "sha256": "e8ab4418e369cefc80facd21f27e0bb9c6184974b01b36a85fa463a1affa7698",
+  "periodo": "",
+  "licenca": "Dados abertos do governo federal (Decreto 8.777/2016); citar a fonte",
+  "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "multimodal",
+  "descricao": "CONAB — Boletim Logístico set/2026 (PDF)",
+  "url": "https://www.gov.br/conab/pt-br/atuacao/logistica/boletim-logistico/boletim-logistico-setembro-2026-pdf.pdf/@@download/file",
+  "arquivo": "data/raw/graos/conab/boletim-setembro-2026-pdf.pdf",
+  "bytes": 2104944,
+  "sha256": "566ba9c1f046518befdf8cfff7caa9b0c5e0641b30818325bdf279f89109bf8c",
+  "periodo": "ago/2026",
+  "licenca": "Dados abertos do governo federal (Decreto 8.777/2016); citar a fonte",
+  "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "multimodal",
+  "descricao": "CONAB — fretes extraídos do Boletim Logístico set/2026 (derivado do PDF)",
+  "url": "https://www.gov.br/conab/pt-br/atuacao/logistica/boletim-logistico/boletim-logistico-setembro-2026-pdf.pdf/@@download/file",
+  "arquivo": "data/raw/graos/conab/fretes_boletim_set2026.csv",
+  "bytes": 17587,
+  "sha256": "c0b02999b77cd482b950f424aff438f6cae4e4120c326cd5807e73e4140980da",
+  "periodo": "ago/2026",
+  "licenca": "Dados abertos do governo federal (Decreto 8.777/2016); citar a fonte",
+  "acesso": "2026-10-20"
+ }
+]

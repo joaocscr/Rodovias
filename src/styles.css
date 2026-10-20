@@ -373,10 +373,15 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 .conc-item + .conc-item { border-top: 1px solid var(--line); }
 .conc-item__name { font-size: 14px; font-weight: 600; color: var(--color-deep-blue); }
 .conc-item__sub { display: block; font-size: 14px; color: var(--color-light-grey); font-weight: 400; }
-.mode-switch { display: flex; gap: 0; margin-bottom: 8px; border: 1px solid var(--line-strong); border-radius: var(--radius-md); overflow: hidden; }
-.mode-switch button { flex: 1; height: 32px; border: 0; background: var(--color-snow-white); font-size: 14px; cursor: pointer; color: var(--color-deep-blue); transition: background var(--transition); }
-.mode-switch button[aria-pressed="true"] { background: var(--color-deep-blue); color: var(--color-snow-white); }
-.mode-switch button:hover:not([aria-pressed="true"]) { background: var(--tint); }
+/* Seletor "Cor das rodovias" (v3): 6 rádios em duas colunas */
+.mode-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+.mode-switch button {
+  height: 32px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--radius-md);
+  background: var(--color-snow-white); font-family: var(--font-body); font-size: 14px; cursor: pointer; color: var(--color-deep-blue);
+  white-space: nowrap; transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+.mode-switch button[aria-checked="true"] { background: var(--color-deep-blue); border-color: var(--color-deep-blue); color: var(--color-snow-white); font-weight: 600; }
+.mode-switch button:hover:not([aria-checked="true"]) { background: var(--tint); border-color: var(--color-bright-blue); }
 
 /* Regulatório */
 .reg { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 40px; align-items: start; }
@@ -396,3 +401,128 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
   .reg__toc { position: static; }
 }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- v3: modos quantitativos, números e cartão de inteligência ---------- */
+.legend { width: 320px; max-height: calc(100% - 32px); overflow-y: auto; }
+.legend__title { margin-bottom: 8px; font-size: 16px; font-weight: 600; line-height: 24px; color: var(--color-deep-blue); }
+.legend__title span { font-size: 14px; font-weight: 400; color: var(--color-light-grey); }
+.legend__range { font-variant-numeric: tabular-nums; }
+.legend__tipo {
+  display: inline-flex; align-items: center; height: 24px; margin-top: 8px; padding: 0 8px; border-radius: var(--radius-sm);
+  background: var(--tint); color: var(--color-deep-blue); font-size: 14px; font-weight: 600;
+}
+.ikpis { display: flex; flex-direction: column; gap: 8px; margin: 0 0 16px; }
+.ikpi { display: flex; flex-direction: column; padding: 8px 16px; border-radius: var(--radius-md); background: var(--tint); cursor: help; }
+.ikpi__value { font-family: var(--font-title); font-weight: 700; font-size: 20px; line-height: 32px; color: var(--color-deep-blue); font-variant-numeric: tabular-nums; }
+.ikpi__sub { font-size: 14px; line-height: 24px; color: var(--color-light-grey); }
+.card__intel { padding: 16px 24px; border-top: 1px solid var(--line); }
+.card__intel .card__grid { border-top: 0; padding: 0; }
+.card__grid dt.card__sub { grid-column: 1 / -1; margin-top: 8px; font-weight: 600; color: var(--color-deep-blue); }
+.card__grid dt.card__sub:first-child { margin-top: 0; }
+
+/* ---------- v3: camadas de sobreposição, fundo municipal e cartões de ponto ---------- */
+.layers > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+.layers > summary::-webkit-details-marker { display: none; }
+.layers > summary .section-title { margin: 0; }
+.layers > summary .chev { transition: transform var(--transition); color: var(--color-light-grey); }
+.layers[open] > summary .chev { transform: rotate(180deg); }
+.layers__body { padding-top: 8px; }
+.layers .check { min-height: 32px; }
+.layers .check .muted { font-size: 14px; }
+.fundo { margin: 8px 0 0; padding: 8px 0 0; border: 0; border-top: 1px solid var(--line); }
+.fundo__title { padding: 0; margin-bottom: 4px; font-size: 14px; font-weight: 600; color: var(--color-spacial-grey); }
+.fundo__opts { display: grid; grid-template-columns: 1fr 1fr; gap: 0 8px; }
+.fundo .check input { accent-color: var(--color-deep-blue); }
+.layers__note { margin: 8px 0 0; }
+.leaflet-container.layers-hover { cursor: pointer; }
+.leaflet-tooltip.pt-tip {
+  padding: 4px 8px; border: 1px solid var(--line); border-radius: var(--radius-sm); box-shadow: var(--shadow);
+  background: var(--color-snow-white); color: var(--color-spacial-grey); font-family: var(--font-body); font-size: 14px; white-space: nowrap;
+}
+.leaflet-tooltip.pt-tip::before { display: none; }
+.fundo-legend { left: 16px; right: auto; width: 288px; }
+.legend__note { margin: 8px 0 0; font-size: 14px; line-height: 24px; color: var(--color-light-grey); }
+.card__chart { padding: 16px 24px; border-top: 1px solid var(--line); }
+.card__svg { overflow-x: auto; }
+.card__svg svg { display: block; }
+.card__src { margin: 8px 0 0; font-size: 14px; color: var(--color-light-grey); }
+.card__pad { margin: 0; padding: 0 24px 16px; }
+.card__meas { padding: 16px 24px; border-top: 1px solid var(--line); }
+.meas-list { margin: 0; padding: 0; list-style: none; }
+.meas {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; width: calc(100% + 16px); margin: 0 -8px; padding: 8px;
+  border: 0; border-radius: var(--radius-sm); background: transparent; text-align: left; cursor: pointer; transition: background var(--transition);
+}
+.meas:hover { background: var(--tint); }
+.meas:active { background: var(--tint-strong); }
+.meas__name { font-size: 14px; font-weight: 600; color: var(--color-deep-blue); min-width: 0; }
+.meas__kind { display: block; font-size: 14px; font-weight: 400; color: var(--color-light-grey); }
+.meas__v { flex: none; font-size: 14px; font-variant-numeric: tabular-nums; }
+.layer-sub { display: flex; flex-wrap: wrap; gap: 0 16px; padding: 0 0 8px 24px; font-size: 14px; color: var(--color-light-grey); }
+.layer-sub span { display: inline-flex; align-items: center; gap: 8px; }
+.card__src a.link-btn { padding: 0; }
+
+/* v3 (Task 11): ficha com ANTT, ficha estadual, pipeline */
+.fpad { margin-top: 8px; }
+.ftext a.link-btn, .flist a.link-btn, .fgrid a.link-btn, .ficha__foot a.link-btn { padding: 0; height: auto; }
+.flist { list-style: none; margin: 8px 0 0; padding: 0; font-size: 14px; }
+.flist li { padding: 8px 0; border-top: 1px solid var(--line); }
+.fserie + .fserie { margin-top: 16px; }
+.fserie__name { margin: 16px 0 8px; font-size: 14px; font-weight: 600; color: var(--color-deep-blue); }
+.fchart { width: 100%; overflow-x: auto; }
+.fchart svg { max-width: 100%; height: auto; display: block; }
+.fgrid dd .base--dark { color: var(--color-spacial-grey); }
+.table-wrap--static { max-height: none; overflow: visible; }
+.grid--static th, .grid--static tfoot td { position: static; }
+.grid--static tbody tr, .grid tbody tr.is-static { cursor: default; }
+.grid--static tbody tr:hover, .grid tbody tr.is-static:hover { background: none; }
+.grid td.wrap { white-space: normal; min-width: 160px; }
+.tag-nv {
+  display: inline-flex; align-items: center; height: 24px; padding: 0 8px; margin-left: 4px; border-radius: 12px; white-space: nowrap;
+  border: 1px solid var(--color-light-grey); color: var(--color-light-grey); font-size: 14px; font-weight: 600; background: var(--color-snow-white);
+}
+#pipe-counts { margin-bottom: 16px; }
+#pipe-counts .chip b { margin-left: 4px; font-variant-numeric: tabular-nums; }
+.pipeline .table-wrap { max-height: calc(100vh - 240px); }
+.pipe-obs { margin-top: 8px; font-weight: 400; color: var(--color-spacial-grey); }
+.pipe-obs > summary { display: inline-flex; align-items: center; min-height: 24px; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--color-bright-blue); }
+.pipe-obs > summary:focus-visible { outline: 2px solid var(--color-bright-blue); outline-offset: 2px; }
+.pipe-obs p { margin: 8px 0 0; max-width: 480px; font-size: 14px; line-height: 24px; white-space: normal; }
+#frete-table td.num .tag-nv { margin-left: 8px; }
+.card__sub .tag-nv { margin-left: 8px; text-transform: none; letter-spacing: 0; }
+
+/* v3 (Task 12): abas Tráfego, Cargas e Fontes */
+.duo { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.duo > div { min-width: 0; }
+.duo__title { margin: 0 0 8px; font-size: 14px; font-weight: 600; color: var(--color-spacial-grey); }
+#chart-c-exp-mat { margin-top: 0; }
+.table-wrap--x { max-height: none; overflow-x: auto; }
+.table-wrap--x th { position: static; }
+.ccard .chart-box > svg, .duo svg { display: block; }
+.hrow[data-k] { cursor: pointer; outline: none; }
+.hrow .hrow__bg { transition: fill-opacity var(--transition); }
+.hrow[data-k]:hover .hrow__bg { fill-opacity: 0.08; }
+.hrow[data-k]:focus-visible .hrow__bg { fill-opacity: 0.16; stroke: var(--color-bright-blue); stroke-width: 2; }
+.grid td.bar-cell { width: 30%; min-width: 120px; }
+.bar-cell span { display: block; height: 8px; border-radius: 2px; background: var(--color-deep-blue); }
+.grid--rows tbody tr[data-k] { cursor: pointer; }
+.grid--rows tbody tr[data-k]:hover { background: var(--tint); }
+.fontes-h2 { margin: 40px 0 8px; font-family: var(--font-title); font-weight: 700; font-size: 22px; color: var(--color-deep-blue); }
+.fontes-h2 .page__src { font-family: var(--font-body); font-weight: 400; }
+.fontes-nota { max-width: 920px; margin-bottom: 8px; }
+.fontes-nota .fontes-h2 { margin-top: 0; }
+.fontes-nota p { margin: 0 0 16px; font-size: 16px; line-height: 24px; color: var(--color-spacial-grey); }
+.fontes-table td { vertical-align: top; }
+.fontes-table td.fontes-nome { min-width: 240px; }
+.fontes-table td.fontes-nota-col { min-width: 320px; color: var(--color-light-grey); }
+.fontes-table a.link-btn { padding: 0; text-align: left; }
+.page__inner > .table-wrap + .fontes-h2 { margin-top: 40px; }
+/* 7 abas: o subtítulo encolhe com reticências (só some na regra da v2, ≤ 900 px); abas mais justas abaixo de 1600 px */
+.topbar__titles { flex: 1 1 auto; overflow: hidden; }
+.topbar__title { flex: none; }
+.topbar__sub { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.tabs { flex: none; }
+.fontes-legenda { margin: 8px 0 0; }
+@media (max-width: 1600px) { .tabs a { padding: 0 8px; } }
+@media (max-width: 1180px) { .tabs { gap: 0; } }
+@media (max-width: 900px) { .duo { grid-template-columns: 1fr; } }

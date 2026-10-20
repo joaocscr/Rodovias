@@ -1,9 +1,10 @@
-// Camada de mapa: UFs, rótulos, trechos físicos, hover, seleção. Usa Leaflet em canvas.
+// Camada de mapa: UFs, rótulos, trechos físicos, hover, seleção e modos de cor (inclusive quantitativos). Usa Leaflet em canvas.
 const MapView = (() => {
   const BRASIL = [[-34.5, -74.5], [5.8, -32]];
   const DIM = 0.2;
   let map, snv, lines, halos, order, visible, pickCb = () => {}, hlGroup, hlRenderer, hlWanted = null, hlIds = null, ufLayer;
-  let mode = 'fisica', states = null, conc = null, haloRenderer;
+  let mode = 'fisica', states = null, conc = null, haloRenderer, intel = null;
+  const quant = {};
 
   function decode(p) {
     const out = [];
@@ -18,9 +19,29 @@ const MapView = (() => {
   function situacaoOf(j) { return snv.dict.situacao[snv.trechos[snv.fis[j].r[0]][Model.FIELD.situacao]]; }
   function admOf(j) { return snv.dict.adm[snv.trechos[snv.fis[j].r[0]][Model.FIELD.adm]]; }
 
+  const isQuant = m => QUANT_MODES.includes(m);
+
+  // Classes por quantil de um modo quantitativo, calculadas uma vez: {values, breaks, cls, min, max}.
+  function classes(m) {
+    if (!isQuant(m)) return null;
+    if (!quant[m]) {
+      const values = IntelModel.metricArray(intel, snv, m);
+      const breaks = IntelModel.quantileBreaks(values, QUANT_STYLES.length);
+      const cls = new Int8Array(values.length);
+      let min = Infinity, max = -Infinity;
+      for (let j = 0; j < values.length; j++) {
+        cls[j] = IntelModel.classOf(values[j], breaks);
+        if (cls[j] >= 0) { min = Math.min(min, values[j]); max = Math.max(max, values[j]); }
+      }
+      quant[m] = { values, breaks, cls, min: min === Infinity ? null : min, max: max === -Infinity ? null : max };
+    }
+    return quant[m];
+  }
+
   // Estilo base do físico no modo atual: {color, weight, dash, opacity, z, halo?}
   function spec(j) {
     if (mode === 'concessoes' && states) return CONC_STYLES[states[j]] || CONC_STYLES.nenhum;
+    if (isQuant(mode)) return quantStyle(classes(mode).cls[j]);
     const s = lineStyle(situacaoOf(j));
     return admOf(j) === CONCESSAO ? Object.assign({ halo: HALO }, s) : s;
   }
@@ -48,7 +69,8 @@ const MapView = (() => {
   }
 
   function computeOrder() {
-    order = snv.fis.map((_, j) => j).sort((a, b) => spec(a).z - spec(b).z || a - b);
+    const z = snv.fis.map((_, j) => spec(j).z);
+    order = snv.fis.map((_, j) => j).sort((a, b) => z[a] - z[b] || a - b);
   }
 
   // Realce efetivo = pedidos que estão visíveis; sem nenhum visível, nada é esmaecido.
@@ -83,6 +105,7 @@ const MapView = (() => {
   function init(el, data, controlsEl, opts = {}) {
     snv = data;
     if (opts.states) { states = opts.states; conc = opts.conc; mode = 'concessoes'; }
+    intel = opts.intel || null;
     map = L.map(el, {
       zoomControl: false, attributionControl: false, preferCanvas: true,
       minZoom: 3.5, maxZoom: 13, zoomSnap: 0.5, zoomDelta: 0.5, wheelPxPerZoomLevel: 120,
@@ -91,6 +114,8 @@ const MapView = (() => {
     map.createPane('ufs').style.zIndex = 200;
     map.createPane('halo').style.zIndex = 390;
     map.createPane('hl').style.zIndex = 420;
+    // O realce fica acima das rodovias: sem isso o canvas dele engole o clique nas rodovias depois do 1º realce.
+    map.getPane('hl').style.pointerEvents = 'none';
     map.createPane('ufLabels').style.zIndex = 380;
     map.getPane('ufLabels').style.pointerEvents = 'none';
 
@@ -165,7 +190,7 @@ const MapView = (() => {
   }
 
   function setColorMode(m) {
-    if (m === mode || (m === 'concessoes' && !states)) return;
+    if (m === mode || (m === 'concessoes' && !states) || !(m === 'concessoes' || m === 'fisica' || isQuant(m))) return;
     mode = m;
     computeOrder();
     setVisible(visible);
@@ -176,6 +201,9 @@ const MapView = (() => {
   return {
     init, setVisible, highlight, fitTo, fitBrasil, setColorMode,
     colorMode() { return mode; },
+    classes,
+    classesCached(m) { return !!quant[m]; },
+    haloCount() { return halos.filter(h => h && map.hasLayer(h)).length; },
     fitEntity(idx) { fitTo(entityFis(idx)); },
     highlightEntity(idx) { highlight(entityFis(idx)); },
     onPick(cb) { pickCb = cb; },

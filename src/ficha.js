@@ -1,4 +1,5 @@
 // Ficha do projeto/contrato: todos os campos do RoadShow, avisos de divergência, capex anual e cronograma.
+// v3: blocos ANTT (capa, séries realizadas, praças, obras) e pipeline na ficha federal; ficha de concessão estadual.
 const Ficha = (() => {
   const fmt1 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const fmt2 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -13,7 +14,8 @@ const Ficha = (() => {
   const ICON_CLOSE = '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
   const ICON_WARN = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 4l9 16H3z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 10v4M12 17v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
 
-  let conc, current = null, popover = null;
+  const IM = IntelModel;
+  let conc, intel = null, snv = null, current = null, popover = null;
 
   const $ = s => document.querySelector(s);
   const isNum = v => typeof v === 'number' && isFinite(v);
@@ -133,7 +135,9 @@ const Ficha = (() => {
         ${block('Itens relacionados', relHtml)}
         ${block('Trecho no mapa', trecho)}
         ${block('Outras informações da ficha', extras, true)}
-        <p class="ficha__foot">Fonte: RoadShow 2026-2027 (${esc(conc.versaoRoadshow)}), Ministério dos Transportes${pages.length ? `, p. ${pages.join(', ')}` : ''}.</p>
+        ${anttBlocks(e.id)}
+        <p class="ficha__foot">Fonte: RoadShow 2026-2027 (${esc(conc.versaoRoadshow)}), Ministério dos Transportes${pages.length ? `, p. ${pages.join(', ')}` : ''}${
+  intel && (IM.anttCapa(intel, e.id) || IM.anttAnteriores(intel, e.id).length) ? '; ANTT (dados abertos e páginas das concessões)' : ''}.</p>
       </div>`;
 
     if (capexChart) Charts.bars($('#ficha-capex'), f.capex_anual.map(a => ({ label: `Ano ${a.ano}`, value: a.valor })),
@@ -144,6 +148,170 @@ const Ficha = (() => {
       ev.stopPropagation();
       openPopover(b, e.divergencias[Number(b.dataset.div)]);
     }));
+  }
+
+  // ---------- v3: blocos ANTT e pipeline na ficha federal ----------
+  const link = (url, text) => (url ? `<a class="link-btn" href="${esc(url)}" target="_blank" rel="noopener">${esc(text)}</a>` : esc(text));
+  // Prazo vigente (com prorrogações) em caixa baixa: "30 Anos" vira "30 anos".
+  const prazoTxt = v => (has(v) ? String(v).replace(/\b(Anos?|Meses|Dias?)\b/g, m => m.toLowerCase()) : null);
+  const NV_TAG = '<span class="tag-nv">não verificado</span>';
+  const nfMi = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
+
+  function anttBlocks(id) {
+    if (!intel) return '';
+    const capa = IM.anttCapa(intel, id), ant = IM.anttAnteriores(intel, id);
+    const capaHtml = capa ? dl(rows({}, [
+      ['Controladora', capa.controladora, 'txt'], ['Trecho', capa.trecho, 'txt'], ['Extensão', IM.has(capa.extensao_km) ? capa.extensao_km : null, 'km'],
+      ['Assinatura', capa.assinatura, 'data'], ['Início', capa.inicio, 'data'], ['Prazo atual (com prorrogações)', prazoTxt(capa.prazo), 'txt'], ['Edital', capa.edital, 'txt'],
+      ['Início da cobrança', capa.cobranca, 'data'], ['Data-base de reajuste', capa.database, 'txt'],
+    ])) + (capa.url ? `<p class="ftext fpad">${link(capa.url, 'Página da concessão na ANTT')}</p>` : '') : '';
+    const antHtml = ant.length ? `<ul class="flist">${ant.map(c => `<li>Contrato anterior: ${link(c.url, c.nome || c.id)} (encerrado)</li>`).join('')}</ul>` : '';
+    return block('ANTT', capaHtml + antHtml) + seriesBlock(id) + pracasBlock(id) + obrasBlock(id) + pipelineBlock(id);
+  }
+
+  // Receita, investimento e custo realizados (R$ nominais), um gráfico de linhas por contrato (atual e anteriores).
+  function seriesBlock(id) {
+    const list = IM.anttSeries(intel, id);
+    if (!list.length) return '';
+    const KEYS = [['receita', 'Receita'], ['investimento', 'Investimento'], ['custo', 'Custo']];
+    const charts = list.map(s => {
+      const nome = s.nome || id, title = s.anterior ? `Contrato anterior: ${nome} (encerrado)` : nome;
+      const val = {};
+      const series = KEYS.map(([k, label]) => ({ name: label, points: s.anos.map((a, i) => {
+        const v = s[k][i];
+        if (IM.has(v)) val[`${label} ${a}`] = v;
+        return { x: a, y: IM.has(v) ? v / 1e6 : null };
+      }) }));
+      const svg = Charts.linesSvg(series, { width: 880, height: 260, format: v => nfMi.format(v), title: `Receita, investimento e custo realizados · ${title}` })
+        .replace(/<title>((?:Receita|Investimento|Custo) \d{4}): [^<]*<\/title>/g, (m, k) => (k in val ? `<title>${esc(k)}: ${esc(IM.fmtBRL(val[k]))}</title>` : m));
+      return `<div class="fserie">${list.length > 1 || s.anterior ? `<p class="fserie__name">${esc(title)}</p>` : ''}<div class="fchart">${svg}</div></div>`;
+    }).join('');
+    return block('Receita, investimento e custo realizados', `<div id="ficha-antt-serie">
+      ${Charts.legendHtml([['Receita', Charts.C.deep], ['Investimento', Charts.C.bright], ['Custo', Charts.C.grey]])}${charts}
+      <p class="page__src">R$ nominais · ANTT. Valores anuais em R$ milhões, só os anos com dado, declarados pelas concessionárias à agência.</p></div>`, true);
+  }
+
+  function pracasBlock(id) {
+    const { linhas, receita } = IM.pracasDe(intel, id);
+    if (!linhas.length) return '';
+    return block('Praças da concessão', `<div class="table-wrap table-wrap--static"><table class="grid grid--static" id="ficha-pracas">
+      <thead><tr><th>Praça</th><th class="num">VMD 2025 (veíc./dia)</th><th class="num">% pesados</th><th class="num">Receita 2025</th></tr></thead>
+      <tbody>${linhas.map(p => `<tr><td>${esc(p.nome || '—')}</td><td class="num">${esc(IM.fmtInt(p.vmd))}</td><td class="num">${esc(IM.fmtPct(p.pctPes))}</td>
+        <td class="num">${esc(IM.fmtBRL(p.receita))}</td></tr>`).join('')}</tbody>
+      <tfoot><tr><td colspan="3">Receita total (${fmtInt.format(linhas.length)} ${linhas.length === 1 ? 'praça' : 'praças'})</td><td class="num">${esc(IM.fmtBRL(receita))}</td></tr></tfoot>
+    </table></div><p class="page__src">Contagem medida · ANTT 2025. VMD = média diária dos dois sentidos nos meses com dado; receita em R$ nominais.</p>${pracasSerieHtml(id)}`, true);
+  }
+
+  // Tráfego mensal da concessão: VMD do mês somado (leves × pesados) nas praças com todos os meses da janela
+  // (mesma regra do painel da aba Tráfego, IntelModel.pracasSerie filtrado pela concessão).
+  function pracasSerieHtml(id) {
+    const s = IM.pracasSerie(intel, p => p.ent === id);
+    if (!s || !s.total) return '';
+    const per = `${IM.monthLabel(s.meses[0])} a ${IM.monthLabel(s.meses[s.meses.length - 1])}`;
+    const nota = s.n
+      ? `Entram ${fmtInt.format(s.n)} de ${fmtInt.format(s.total)} ${s.total === 1 ? 'praça' : 'praças'} da concessão: só as que têm os ${s.meses.length} meses completos (${per}), para a série não oscilar com praças que entram ou saem. Leves incluem motos.`
+      : `Nenhuma das ${fmtInt.format(s.total)} ${s.total === 1 ? 'praça' : 'praças'} da concessão tem os ${s.meses.length} meses completos (${per}); sem série mensal somada.`;
+    const lab = m => `${IM.monthLabel(m).slice(0, 3)}/${m.slice(2, 4)}`; // eixo "jan/24"; a dica traz "jan/2024"
+    const svg = s.n ? Charts.stackedSvg(s.meses.map((m, k) => ({ label: lab(m), tip: IM.monthLabel(m), parts: [s.l[k], s.p[k]] })),
+      { width: 880, height: 260, left: 72, names: ['Leves', 'Pesados'], unit: 'veíc./dia', format: v => IM.fmtInt(v), title: 'Tráfego mensal nas praças da concessão' }) : '';
+    return `<div id="ficha-pracas-serie"><p class="fserie__name">Tráfego mensal nas praças, ${esc(per)} (VMD do mês somado)</p>
+      ${svg ? `${Charts.legendHtml([['Leves', Charts.C.deep], ['Pesados', Charts.C.bright]])}<div class="fchart">${svg}</div>` : ''}
+      <p class="page__src">${esc(nota)} Contagem medida · ANTT.</p></div>`;
+  }
+
+  function obrasBlock(id) {
+    const o = IM.obrasResumo(intel, id, 10);
+    if (!o.total) return '';
+    const kmTxt = r => {
+      const a = IM.has(r.km_i) ? fmt1.format(r.km_i) : null, b = IM.has(r.km_f) && r.km_f !== r.km_i ? fmt1.format(r.km_f) : null;
+      return `${IM.rodLabel(r.br, r.uf)}${a ? ` km ${a}${b ? `–${b}` : ''}` : ''}`;
+    };
+    const counts = dl(rows({}, [['Concluídas', o.concluidas, 'int'], ['Em andamento', o.andamento, 'int'], ['Não iniciadas', o.naoIniciadas, 'int'],
+      ['Sem dado de execução', o.semDado || null, 'int']]));
+    const top = o.top.length ? `<p class="fserie__name">${o.top.length === 1 ? 'Obra não concluída com maior avanço previsto' : `Obras não concluídas com maior avanço previsto (${fmtInt.format(o.top.length)})`}</p>
+      <div class="table-wrap table-wrap--static"><table class="grid grid--static"><thead><tr><th>Obra</th><th>Rodovia/km</th><th class="num">Executado</th></tr></thead>
+      <tbody>${o.top.map(r => `<tr><td class="wrap">${esc(r.descricao || r.tipo || 'Obra')}</td><td>${esc(kmTxt(r))}</td><td class="num">${esc(IM.fmtPct(r.executado))}</td></tr>`).join('')}</tbody></table></div>` : '';
+    return block('Obras acompanhadas pela ANTT', `<div id="ficha-obras">${counts}${top}
+      <p class="page__src">${fmtInt.format(o.total)} obras · previsto × executado no ano · ANTT, acompanhamento anual de investimentos. Concluída = executado ≥ 100%.</p></div>`, true);
+  }
+
+  function pipelineBlock(id) {
+    const items = IM.pipelineDe(intel, id);
+    if (!items.length) return '';
+    return block('Pipeline', `<div id="ficha-pipeline">${items.map(i => `${dl(rows({}, [
+      ['Item', items.length > 1 ? i.nome : null, 'txt'], ['Status', IM.statusLabel(intel, i.status), 'txt'], ['Data prevista', i.data_prevista, 'data'],
+    ]) + `<dt>Fonte</dt><dd>${i.fonte_url ? link(i.fonte_url, 'Abrir fonte') : '—'}${i.verificado === false ? ` ${NV_TAG}` : ''}${
+      i.fonte_data ? `<span class="base">${esc(i.fonte_data)}</span>` : ''}</dd>`)}${has(i.obs) ? `<p class="ftext fpad">${esc(i.obs)}</p>` : ''}`).join('')}</div>`, true);
+  }
+
+  // ---------- v3: ficha de concessão estadual ----------
+  const estEnts = () => (intel && intel.estaduais && Array.isArray(intel.estaduais.entidades) ? intel.estaduais.entidades : []);
+  // Linhas da concessão estadual k: o mesmo cache de IntelModel.estConcLines usado pela camada do mapa.
+  const estLines = k => ((intel && intel.estaduais ? IM.estConcLines(intel.estaduais, snv) : [])[k] || []);
+  const estLabel = k => (IM.EST_ESTADOS.find(s => s.key === k) || {}).label || k;
+
+  function renderEst(e, k) {
+    const geo = estLines(k).length > 0;
+    const km = v => (IM.has(v) ? Model.fmtKm(v) : '—');
+    const estado = e.estado === 'encerrado' ? 'estadual_encerrado' : 'estadual_vigente';
+    const capex = IM.has(e.capex_bi) ? `${IM.fmtBRL(e.capex_bi * 1e9)}${e.capex_ref ? ` (ref. ${e.capex_ref})` : ''}` : null;
+    const grupo = e.grupo && e.controlador && !e.controlador.includes(e.grupo) ? `${e.grupo} · ${e.controlador}` : (e.controlador || e.grupo);
+    const trechos = IM.trechosLabel(e.trechos);
+    const contrato = dl(rows({}, [
+      ['Poder concedente', e.poder, 'txt'], ['Regulador', e.regulador, 'txt'], ['Lote', e.lote, 'txt'], ['Grupo', grupo, 'txt'],
+      ['Situação', estLabel(estado), 'txt'], ['Assinatura', e.assinatura, 'data'], ['Início', e.inicio, 'data'],
+      ['Fim', e.fim ? `${F.data(e.fim)}${e.fim_estimado ? ' (estimado)' : ''}` : null, 'txt'], ['Prazo atual (com prorrogações)', prazoTxt(e.prazo), 'txt'], ['Capex', capex, 'txt'],
+    ]));
+    const rod = dl(rows({}, [
+      ['Rodovias', (e.rodovias || []).filter(Boolean).join(', '), 'txt'],
+      ['km declarado × mapeado', IM.has(e.km_decl) || IM.has(e.km_map) ? `${km(e.km_decl)} × ${km(e.km_map)}` : null, 'txt'],
+    ]) + (trechos.length ? `<dt>Trechos</dt><dd>${trechos.map(t => `<span class="base base--dark">${esc(t)}</span>`).join('')}</dd>` : '')) +
+      (has(e.trecho_texto) ? `<p class="ftext fpad">${esc(e.trecho_texto)}</p>` : '');
+    const noGeo = 'Sem traçado no mapa: o recorte desta concessão não foi desenhado (fonte sem km por trecho ou sem geometria).';
+    const mapa = dl(rows({}, [['Qualidade do recorte', e.qualidade ? IM.qualidadeRecorte(e.qualidade) : null, 'txt'], ['Nota', e.nota, 'txt']])) +
+      (geo ? '' : `<p class="ftext fpad">${esc(noGeo)}</p>`);
+    const fonteEst = intel.estaduais.fonte ? IM.fonteRef(intel.estaduais.fonte, /./) : null;
+    $('#ficha').innerHTML = `
+      <header class="ficha__head">
+        <div>
+          <h2 class="ficha__title" id="ficha-title">${esc(e.nome)}</h2>
+          <div class="ficha__meta">
+            <span class="estado-tag">${typeof layerSwatch === 'function' ? layerSwatch('estconc', 24) : ''}Concessão estadual · ${esc(e.uf || '—')}${e.regulador ? ` · ${esc(e.regulador)}` : ''}</span>
+            <span>${esc(estLabel(estado))}</span>
+            ${e.assinatura ? `<span>Assinatura: ${esc(F.data(e.assinatura))}</span>` : ''}
+          </div>
+        </div>
+        <div class="ficha__actions">
+          <button type="button" class="btn btn--primary" id="ficha-map" ${geo ? '' : `disabled title="Concessão sem traçado no mapa${e.qualidade === 'nao_mapeado' ? ' (não mapeada)' : ''}"`}>Ver no mapa</button>
+          <button type="button" class="icon-btn" id="ficha-close" aria-label="Fechar ficha">${ICON_CLOSE}</button>
+        </div>
+      </header>
+      <div class="ficha__body">
+        ${block('Contrato', contrato)}
+        ${block('Rodovias e trechos', rod)}
+        ${block('Trecho no mapa', mapa)}
+        ${pipelineBlock(e.id)}
+        <p class="ficha__foot">Fonte: ${e.fonte_url ? link(e.fonte_url, `página da concessão (${e.regulador || e.poder || 'órgão estadual'})`) : esc(e.regulador || e.poder || '—')}${
+  e.abcr_url ? ` · ${link(e.abcr_url, 'ABCR')}` : ''}${fonteEst && fonteEst !== '—' ? ` · traçado: ${esc(fonteEst)}` : ''}.</p>
+      </div>`;
+    $('#ficha-close').addEventListener('click', () => close());
+    $('#ficha-map').addEventListener('click', () => showEstOnMap(k));
+  }
+
+  // Liga "Rodovias estaduais", realça a concessão k (com o cartão dela) e enquadra suas linhas.
+  function showEstOnMap(k) {
+    close(true);
+    // Enquadra só depois que a aba Mapa está exibida (hashchange é assíncrono) e o Leaflet recalculou o tamanho.
+    Tabs.goThen('#mapa', () => {
+      MapView.invalidate();
+      const box = document.querySelector('#layers-section input[data-layer="estaduais"]');
+      if (box) box.checked = true;
+      Layers.toggle('estaduais', true);
+      Layers.open('estconc', k);
+      const pts = estLines(k).flat();
+      // à direita fica o cartão da concessão (~360 px): enquadra no espaço livre
+      if (pts.length) MapView.map.fitBounds(L.latLngBounds(pts), { paddingTopLeft: [64, 64], paddingBottomRight: [424, 64], maxZoom: 11 });
+    });
   }
 
   function concSwatch(key) {
@@ -174,9 +342,10 @@ const Ficha = (() => {
 
   function open(id) {
     const idx = conc.entidades.findIndex(x => x.id === id);
-    if (idx < 0) return false;
-    current = idx;
-    render(conc.entidades[idx], idx);
+    const k = idx < 0 ? IM.estIndex(intel, id) : -1;
+    if (idx < 0 && k < 0) return false;
+    closePopover();
+    if (idx >= 0) { current = idx; render(conc.entidades[idx], idx); } else { current = { est: k }; renderEst(estEnts()[k], k); }
     $('#ficha').hidden = false;
     $('#ficha-backdrop').hidden = false;
     $('#ficha').scrollTop = 0;
@@ -194,8 +363,8 @@ const Ficha = (() => {
     if (!silent) Tabs.back();
   }
 
-  function init(data) {
-    conc = data;
+  function init(data, intelData = null, snvData = null) {
+    conc = data; intel = intelData || null; snv = snvData || null;
     $('#ficha-backdrop').addEventListener('click', () => close());
     document.addEventListener('click', ev => { if (popover && !popover.contains(ev.target)) closePopover(); });
     document.addEventListener('keydown', ev => {
@@ -205,5 +374,9 @@ const Ficha = (() => {
     }, true);
   }
 
-  return { init, open, close, isOpen: () => current !== null, exists: id => conc.entidades.some(x => x.id === id) };
+  return {
+    init, open, close, isOpen: () => current !== null,
+    exists: id => conc.entidades.some(x => x.id === id) || IM.estIndex(intel, id) >= 0,
+    showEstOnMap, estHasMap: k => estLines(k).length > 0,
+  };
 })();
