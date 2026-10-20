@@ -1,6 +1,7 @@
-// Abas (Mapa | Projetos | Mercado | Regulatório) e ficha, roteadas por #hash (funciona em file://).
+// Abas (Mapa | Projetos | Tráfego | Cargas | Mercado | Regulatório | Fontes) e ficha, roteadas por #hash (funciona em file://).
 const Tabs = (() => {
-  const TABS = [['mapa', 'Mapa'], ['projetos', 'Projetos'], ['mercado', 'Mercado'], ['regulatorio', 'Regulatório']];
+  const TABS = [['mapa', 'Mapa'], ['projetos', 'Projetos'], ['trafego', 'Tráfego'], ['cargas', 'Cargas'],
+    ['mercado', 'Mercado'], ['regulatorio', 'Regulatório'], ['fontes', 'Fontes']];
   const inits = {};
   const started = new Set();
   let active = 'mapa', prevHash = '#mapa', fichaValid = () => false;
@@ -57,6 +58,13 @@ const Tabs = (() => {
     init, route,
     on(tab, fn) { inits[tab] = fn; if (active === tab && !started.has(tab) && document.getElementById('tabs').children.length) { started.add(tab); fn(); } },
     go(r) { if (location.hash === r) route(); else location.hash = r; },
+    // Vai para a aba e roda fn quando ela está exibida (hashchange é assíncrono); usado para abrir algo no mapa.
+    goThen(r, fn) {
+      const tab = parse(r).tab;
+      this.go(r);
+      const wait = (n = 0) => requestAnimationFrame(() => (active === tab || n > 60 ? fn() : wait(n + 1)));
+      wait();
+    },
     back() { location.hash = prevHash; },
     current() { return Object.assign(parse(location.hash), { active }); },
   };

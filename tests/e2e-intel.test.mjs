@@ -824,6 +824,216 @@ test('sem window.INTEL a seção Camadas não quebra', async () => {
   await p.context().close();
 });
 
+// ---------- Task 12: abas Tráfego, Cargas e Fontes ----------
+const TABS7 = ['Mapa', 'Projetos', 'Tráfego', 'Cargas', 'Mercado', 'Regulatório', 'Fontes'];
+
+test('(a) barra de abas com as 7 abas na ordem', async () => {
+  await go('#mapa');
+  assert.deepEqual(await page.$$eval('#tabs a', as => as.map(a => a.textContent)), TABS7);
+  assert.deepEqual(await page.$$eval('#tabs a', as => as.map(a => a.getAttribute('href'))),
+    ['#mapa', '#projetos', '#trafego', '#cargas', '#mercado', '#regulatorio', '#fontes']);
+});
+
+test('(b) Tráfego: ≥ 5 gráficos, "Fonte:" em cada cartão, KPIs do modelo, sem undefined/NaN', async () => {
+  await go('#trafego');
+  assert.equal(await page.isVisible('#page-trafego'), true);
+  assert.equal(await page.isVisible('#map'), false);
+  assert.ok(await page.locator('#page-trafego svg.chart').count() >= 5);
+  const cards = await page.$$eval('#page-trafego .ccard', cs => cs.map(c => ({ id: c.id, src: [...c.querySelectorAll('.src')].map(p => p.textContent).join(' ') })));
+  assert.ok(cards.length >= 6, cards.map(c => c.id).join());
+  for (const c of cards) assert.match(c.src, /Fonte: \S/, c.id);
+  for (const c of cards) assert.match(c.src, /medido|modelado/, c.id);
+  const k = await page.evaluate(() => {
+    const x = IntelModel.trafegoKpis(window.INTEL, window.SNV);
+    return { n: IntelModel.fmtInt(x.nPracas), acid: IntelModel.fmtInt(x.acidAno), pes: IntelModel.fmtPct(x.pctPes) };
+  });
+  assert.equal(await page.textContent('#kpi-pracas b'), k.n);
+  assert.equal(await page.textContent('#kpi-acid b'), k.acid);
+  assert.equal(await page.textContent('#kpi-pes b'), k.pes);
+  const t = await page.textContent('#page-trafego');
+  assert.doesNotMatch(t, /undefined|NaN/);
+  assert.match(t, /índice 1999 = 100, rodovias pedagiadas, não é volume/i);
+  assert.match(t, /Entram só as \d+ praças/);
+  assert.equal(await page.locator('#chart-t-rank .hrow[data-k]').count(), 20);
+  assert.equal(await page.locator('#chart-t-taxa .hrow').count(), 15);
+  assert.equal(await page.locator('#chart-t-uf-a .hrow').count(), await page.evaluate(() => IntelModel.acidentesPorUf(window.INTEL, window.SNV).length));
+  // dicas da série mensal e do ABCR em mmm/aaaa
+  assert.match(await page.innerHTML('#chart-t-serie'), /<title>jan\/2024 · Leves:/);
+  assert.match(await page.innerHTML('#chart-t-abcr'), /<title>Leves out\/2016:/);
+});
+
+test('(b) clicar na 1ª praça do ranking abre o Mapa com a camada Praças e o cartão da praça', async () => {
+  await go('#trafego');
+  const top = await page.evaluate(() => IntelModel.pracasRanking(window.INTEL, 1)[0]);
+  assert.equal(await page.getAttribute('#chart-t-rank .hrow[data-k]', 'data-k'), String(top.i));
+  await page.click('#chart-t-rank .hrow[data-k] rect.cbar');
+  await page.waitForTimeout(400);
+  assert.equal(await page.evaluate(() => location.hash), '#mapa');
+  assert.equal(await page.evaluate(() => Layers.isOn('pracas')), true);
+  assert.equal(await page.isChecked('#layers-section input[data-layer="pracas"]'), true);
+  assert.deepEqual(await page.evaluate(() => Layers.selected()), { key: 'pracas', i: top.i });
+  assert.equal(await page.isVisible('#card'), true);
+  assert.equal(await page.textContent('#card .card__title'), top.nome);
+  assert.equal(await page.evaluate(([lat, lon]) => MapView.map.getBounds().contains([lat, lon]), [top.lat, top.lon]), true);
+  await page.click('#card-close');
+  await page.locator('#layers-section input[data-layer="pracas"]').uncheck();
+  await page.evaluate(() => MapView.fitBrasil(false));
+});
+
+test('(b) Enter numa linha do ranking também abre a praça', async () => {
+  await go('#trafego');
+  const second = await page.$$eval('#chart-t-rank .hrow[data-k]', gs => gs[1].dataset.k);
+  await page.focus(`#chart-t-rank .hrow[data-k="${second}"]`);
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(400);
+  assert.equal(await page.evaluate(() => location.hash), '#mapa');
+  assert.deepEqual(await page.evaluate(() => Layers.selected()), { key: 'pracas', i: Number(second) });
+  await page.click('#card-close');
+  await page.locator('#layers-section input[data-layer="pracas"]').uncheck();
+});
+
+test('(c) Cargas: KPI de soja = fmtT(soma), "Fonte:" em cada cartão, sem undefined/NaN', async () => {
+  await go('#cargas');
+  assert.equal(await page.isVisible('#page-cargas'), true);
+  const soja = await page.evaluate(() => IntelModel.fmtT(window.INTEL.agro.produtos.soja.reduce((a, v) => a + (v || 0), 0)));
+  assert.equal(await page.textContent('#kpi-soja b'), soja);
+  const cards = await page.$$eval('#page-cargas .ccard', cs => cs.map(c => ({ id: c.id, src: [...c.querySelectorAll('.src')].map(p => p.textContent).join(' ') })));
+  assert.equal(cards.length, 7, cards.map(c => c.id).join());
+  for (const c of cards) assert.match(c.src, /Fonte: \S.*(medido|modelado)/, c.id);
+  assert.match(cards.find(c => c.id === 'card-c-pnl').src, /modelado/);
+  assert.doesNotMatch(await page.textContent('#page-cargas'), /undefined|NaN/);
+  assert.equal(await page.locator('#chart-c-mun .hrow[data-k]').count(), 20);
+  assert.equal(await page.locator('#chart-c-siade .hrow').count(), 15);
+  assert.equal(await page.locator('#pnl-table tbody tr').count(), 15);
+  assert.equal(await page.locator('#chart-c-exp-mat tbody tr').count(), 10);
+  assert.equal(await page.locator('#chart-c-exp-mat thead th').count(), 9);
+});
+
+test('(c) trocar o produto da exportação muda o gráfico e a matriz', async () => {
+  await go('#cargas');
+  const before = await page.innerHTML('#chart-c-exp-bars');
+  assert.equal(await page.inputValue('#exp-sh4'), '1201');
+  assert.ok((await page.locator('#exp-sh4 option').count()) >= 10);
+  await page.selectOption('#exp-sh4', '1005');
+  const after = await page.innerHTML('#chart-c-exp-bars');
+  assert.notEqual(after, before);
+  assert.match(after, /Milho/);
+  const top = await page.evaluate(() => IntelModel.exportPorUrf(window.INTEL, '1005', 1)[0].urf);
+  assert.equal(await page.textContent('#chart-c-exp-bars .hrow text'), top);
+  await page.selectOption('#exp-sh4', '1201');
+});
+
+test('(c) fretes: ordena por R$/t, filtra UF de origem e marca origem aproximada', async () => {
+  await go('#cargas');
+  const vals = () => page.$$eval('#frete-table tbody tr', trs => trs.map(t => t.dataset.rst).filter(Boolean).map(Number));
+  const isSorted = (v, dir) => v.every((x, i) => i === 0 || (dir === 'desc' ? x <= v[i - 1] : x >= v[i - 1]));
+  // padrão: R$/t decrescente; clique no cabeçalho inverte
+  assert.ok(isSorted(await vals(), 'desc'));
+  await page.click('#frete-table [data-fsort="rs_t"]');
+  assert.ok(isSorted(await vals(), 'asc'));
+  assert.equal(await page.getAttribute('#frete-table th[aria-sort]', 'aria-sort'), 'ascending');
+  await page.click('#frete-table [data-fsort="km"]');
+  await page.click('#frete-table [data-fsort="rs_t"]');
+  assert.ok(isSorted(await vals(), 'desc'));
+  const n = await page.evaluate(() => window.INTEL.multimodal.fretes.linhas.length);
+  assert.equal(await page.locator('#frete-table tbody tr').count(), n);
+  const nAprox = await page.evaluate(() => window.INTEL.multimodal.fretes.linhas.filter(l => l[6] === 'aprox').length);
+  assert.equal(await page.locator('#frete-table .tag-nv', { hasText: 'origem aproximada' }).count(), nAprox);
+  await page.selectOption('#frete-uf', 'MT');
+  const ufs = await page.$$eval('#frete-table tbody tr td:nth-child(2)', tds => [...new Set(tds.map(t => t.textContent))]);
+  assert.deepEqual(ufs, ['MT']);
+  await page.selectOption('#frete-uf', '');
+});
+
+test('(c) município de soja abre no mapa com o fundo Soja; trecho de carga abre o cartão do trecho', async () => {
+  await go('#cargas');
+  const m = await page.evaluate(() => IntelModel.topMunicipios(window.INTEL, 'soja', 1)[0]);
+  await page.click('#chart-c-mun .hrow[data-k] rect.cbar');
+  await page.waitForTimeout(600);
+  assert.equal(await page.evaluate(() => location.hash), '#mapa');
+  assert.equal(await page.evaluate(() => Layers.fundo()), 'soja');
+  assert.equal(await page.isChecked('#layers-section input[name="fundo"][value="soja"]'), true);
+  assert.equal(await page.isVisible('#fundo-legend'), true);
+  assert.deepEqual(await page.evaluate(() => Layers.selected()), { key: 'mun', i: m.id });
+  assert.match(await page.textContent('#card .card__title'), new RegExp(`^${m.nome} / ${m.uf}$`));
+  await page.click('#card-close');
+  await page.check('#layers-section input[name="fundo"][value=""]');
+  assert.equal(await page.evaluate(() => Layers.fundo()), null);
+
+  await go('#cargas');
+  const j = await page.evaluate(() => IntelModel.cargaTop(window.INTEL, window.SNV, 1)[0].j);
+  await page.click('#pnl-table tbody tr');
+  await page.waitForTimeout(400);
+  assert.equal(await page.evaluate(() => location.hash), '#mapa');
+  assert.equal(await page.isVisible('#card'), true);
+  assert.deepEqual(await page.evaluate(() => MapView.highlighted()), [j]);
+  assert.match(await page.textContent('#card'), /Carga agrícola/);
+  await page.click('#card-close');
+  await page.evaluate(() => MapView.fitBrasil(false));
+});
+
+test('(d) Fontes: ≥ 30 fontes, ≥ 9 indisponíveis com motivo, bases v1/v2 e explicação medido × modelado', async () => {
+  await go('#fontes');
+  assert.ok(await page.locator('#fontes-table tbody tr').count() >= 30);
+  assert.ok(await page.locator('#fontes-indisp-table tbody tr').count() >= 9);
+  assert.equal(await page.locator('#fontes-base-table tbody tr').count(), await page.evaluate(() => window.INTEL.fontes.base.length));
+  const t = await page.textContent('#page-fontes');
+  assert.match(t, /Medido × modelado/);
+  assert.match(t, /Não disponíveis neste ambiente/);
+  assert.match(t, /Bases da v1\/v2/);
+  assert.match(t, /20\/10\/2026/);
+  assert.doesNotMatch(t, /undefined|NaN|2026-10-20/);
+  const motivos = await page.$$eval('#fontes-indisp-table tbody tr td:nth-child(2)', tds => tds.map(t => t.textContent));
+  assert.ok(motivos.every(m => m.length > 5));
+  assert.equal(await page.getAttribute('#fontes-table tbody tr a', 'target'), '_blank');
+  const tipos = await page.$$eval('#fontes-table tbody tr td:nth-child(6)', tds => [...new Set(tds.map(t => t.textContent))].sort());
+  assert.ok(tipos.includes('Medido') && tipos.includes('Modelado'), tipos.join());
+});
+
+test('(e) hashes inválidos continuam caindo no Mapa', async () => {
+  for (const h of ['#xyz', '#trafego/x%zz', '#Fontes']) {
+    await go(h);
+    assert.equal(await page.evaluate(() => location.hash), '#mapa', h);
+    assert.equal(await page.isVisible('#map'), true);
+  }
+  await go('#cargas');
+  assert.equal(await page.isVisible('#page-cargas'), true);
+  await go('#mapa');
+});
+
+test('sem window.INTEL as abas Tráfego, Cargas e Fontes degradam sem erros', async () => {
+  const errs = [], ext = [];
+  const p = await openPage(errs, ext, html => html.replace('window.INTEL=', 'window.INTEL_AUSENTE='));
+  assert.deepEqual(await p.$$eval('#tabs a', as => as.map(a => a.textContent)), TABS7);
+  for (const [h, re] of [['#trafego', /não estão neste arquivo/], ['#cargas', /não estão neste arquivo/], ['#fontes', /não está neste arquivo/]]) {
+    await p.evaluate(x => { location.hash = x; }, h);
+    await p.waitForTimeout(250);
+    const t = await p.textContent('#page-' + h.slice(1));
+    assert.match(t, re, h);
+    assert.doesNotMatch(t, /undefined|NaN/);
+  }
+  assert.deepEqual(errs, []);
+  await p.context().close();
+});
+
+test('com só parte dos blocos cada aba mostra só os cartões que têm dado', async () => {
+  const errs = [], ext = [];
+  const p = await openPage(errs, ext, html => html.replace('window.INTEL=', 'window.INTEL_FULL=').replace('</script>',
+    '</script><script>window.INTEL={trafego:window.INTEL_FULL.trafego,agro:window.INTEL_FULL.agro,municipios:window.INTEL_FULL.municipios};</script>'));
+  await p.evaluate(() => { location.hash = '#trafego'; });
+  await p.waitForTimeout(250);
+  const tr = await p.$$eval('#page-trafego .ccard', cs => cs.map(c => c.id));
+  assert.ok(!tr.includes('card-t-rank') && !tr.includes('card-t-serie') && tr.includes('card-t-abcr') && tr.includes('card-t-taxa'), tr.join());
+  assert.equal(await p.locator('#kpi-pracas').count(), 0);
+  await p.evaluate(() => { location.hash = '#cargas'; });
+  await p.waitForTimeout(250);
+  const ca = await p.$$eval('#page-cargas .ccard', cs => cs.map(c => c.id));
+  assert.deepEqual(ca, ['card-c-kpis', 'card-c-uf', 'card-c-mun']);
+  assert.doesNotMatch(await p.textContent('#page-cargas') + await p.textContent('#page-trafego'), /undefined|NaN/);
+  assert.deepEqual(errs, []);
+  await p.context().close();
+});
+
 test('nenhuma requisição externa', () => assert.deepEqual(external, []));
 
 test('(h) sem erros no console', () => assert.deepEqual(errors, []));

@@ -140,9 +140,9 @@ async function go(hash) {
   await page.waitForTimeout(250);
 }
 
-test('v2: barra com 4 abas e Mapa ativa', async () => {
+test('v2: barra de abas (v3: 7 abas) e Mapa ativa', async () => {
   await go('#mapa');
-  assert.deepEqual(await page.$$eval('#tabs a', as => as.map(a => a.textContent)), ['Mapa', 'Projetos', 'Mercado', 'Regulatório']);
+  assert.deepEqual(await page.$$eval('#tabs a', as => as.map(a => a.textContent)), ['Mapa', 'Projetos', 'Tráfego', 'Cargas', 'Mercado', 'Regulatório', 'Fontes']);
   assert.equal(await page.textContent('#tabs a.is-active'), 'Mapa');
 });
 

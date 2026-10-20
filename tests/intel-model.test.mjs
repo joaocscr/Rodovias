@@ -511,3 +511,175 @@ test('byEsfera, estIndex e trechosLabel', () => {
     ['SP-330: km 11,0 a 158,5', 'SP-300']);
   assert.deepEqual(IntelModel.trechosLabel(null), []);
 });
+
+// ---------- Task 12: abas Tráfego, Cargas e Fontes ----------
+const rec = (cod, br, uf, ini, fim) => [cod, br, uf, 0, 0, 0, 0, 0, 0, 0, 0, 0, ini, fim, '', 0];
+const snvT = {
+  dict: { br: ['116', '163'], uf: ['SP', 'MT'] },
+  trechos: [rec('116BSP0010', 0, 0, 'A', 'B'), rec('116BSP0020', 0, 0, 'B', 'C'), rec('163BMT0010', 1, 1, 'Sinop', 'Sorriso'),
+    rec('163BMT0020', 1, 1, 'Sorriso', 'Lucas'), rec('116BMT0010', 0, 1, 'X', 'Y')],
+  fis: [{ r: [0], ext: 8 }, { r: [1], ext: 4 }, { r: [2], ext: 20 }, { r: [3, 4], ext: 5 }],
+};
+const intelT = {
+  trafego: {
+    vmda: { ano: 2023, l: [1000, 3000, 500, null], p: [500, 1000, 1500, null] },
+    acidentes: { anos: [2024, 2025], n: [40, 20, 30, 10], m: [4, 2, 6, 2] },
+    abcr: { meses: ['2024-01', '2024-02', '2025-01', '2025-02'], leves: [90, 100, 110, 120], pesados: [80, 90, 100, 110], total: [100, 110, 120, 130] },
+  },
+  antt: { pracas: {
+    campos: ['nome', 'br', 'uf', 'lat', 'lon', 'fis', 'vmd', 'leves', 'pesados'],
+    linhas: [['A', 'BR-116', 'SP', -23, -46, 0, 1000, 600, 400], ['B', 'BR-163', 'MT', -12, -55, 2, 3000, 1000, 2000],
+      ['C', 'BR-163', 'MT', -13, -55, 2, null, null, null], ['D', 'BR-116', 'SP', -24, -47, 1, 500, 500, null]],
+    serie_meses: ['2024-01', '2024-02'],
+    serie_l: [[10, 20], [30, null], [1, 2], [5, 5]], serie_p: [[1, 2], [3, 4], [null, null], [5, 5]],
+  } },
+};
+
+test('trafegoKpis: praças com contagem, VMD somado, % pesados ponderado, veíc·km/dia e PRF por ano', () => {
+  const k = IntelModel.trafegoKpis(intelT, snvT);
+  assert.deepEqual(k, { nPracas: 3, vmdTotal: 4500, pctPes: 0.6, vkm: 68000, acidAno: 50, mortosAno: 7 });
+  assert.deepEqual(IntelModel.trafegoKpis({}, snvT), { nPracas: null, vmdTotal: null, pctPes: null, vkm: null, acidAno: null, mortosAno: null });
+});
+
+test('pracasRanking: maiores VMD com índice da linha; sem VMD fica de fora', () => {
+  const r = IntelModel.pracasRanking(intelT, 2);
+  assert.deepEqual(r.map(p => [p.i, p.nome, p.vmd, p.leves, p.pesados]), [[1, 'B', 3000, 1000, 2000], [0, 'A', 1000, 600, 400]]);
+  assert.equal(IntelModel.pracasRanking(intelT).length, 3);
+  assert.deepEqual(IntelModel.pracasRanking({}), []);
+});
+
+test('pracasSerie: soma mensal só das praças com todos os meses (leves e pesados)', () => {
+  assert.deepEqual(IntelModel.pracasSerie(intelT), { meses: ['2024-01', '2024-02'], l: [15, 25], p: [6, 7], n: 2, total: 4 });
+  assert.equal(IntelModel.pracasSerie({}), null);
+});
+
+test('abcrSazonal: média por mês do calendário; mês sem dado = null', () => {
+  const s = IntelModel.abcrSazonal(intelT.trafego.abcr, 'total');
+  assert.equal(s.length, 12);
+  assert.deepEqual(s.slice(0, 3), [110, 120, null]);
+  assert.deepEqual(IntelModel.abcrSazonal(intelT.trafego.abcr, 'pesados').slice(0, 2), [90, 100]);
+  assert.equal(IntelModel.abcrSazonal(null, 'total'), null);
+});
+
+test('acidentesPorUf: média anual por UF do trecho principal, maior primeiro', () => {
+  assert.deepEqual(IntelModel.acidentesPorUf(intelT, snvT), [{ uf: 'SP', acidAno: 30, mortosAno: 3 }, { uf: 'MT', acidAno: 20, mortosAno: 4 }]);
+  assert.deepEqual(IntelModel.acidentesPorUf({}, snvT), []);
+});
+
+test('taxaPorBrUf: acidentes por 10⁶ veíc·km por BR/UF, só trechos com VMDa e extensão mínima', () => {
+  const r = IntelModel.taxaPorBrUf(intelT, snvT, { minKm: 10 });
+  assert.deepEqual(r.map(x => [x.br, x.uf, x.km, x.acidAno, x.vkm]), [['BR-116', 'SP', 12, 30, 28000], ['BR-163', 'MT', 20, 15, 40000]]);
+  close(r[0].taxa, 30 / (28000 * 365) * 1e6);
+  close(r[1].taxa, 15 / (40000 * 365) * 1e6);
+  assert.deepEqual(IntelModel.taxaPorBrUf(intelT, snvT, { minKm: 15 }).map(x => x.br), ['BR-163']);
+  assert.equal(IntelModel.taxaPorBrUf(intelT, snvT, { minKm: 10, n: 1 }).length, 1);
+  assert.deepEqual(IntelModel.taxaPorBrUf({}, snvT), []);
+});
+
+const intelC = {
+  municipios: { ids: ['1', '2', '3'], nomes: ['Sorriso', 'Lucas', 'Rio Verde'], uf: ['MT', 'MT', 'GO'], centro: [[-55.7, -12.5], [-55.9, -13], [-50.9, -17.8]] },
+  agro: { ids: ['1', '2', '3'], ano: 2025,
+    produtos: { soja: [100, null, 50], milho1: [10, 0, 5], milho2: [200, 20, null], cana: [0, 0, 1000], algodao: [], trigo: [], cafe: [] },
+    armazenagem: { periodo: '2º sem/2025', cap: [1000, null, 500], sigilo: [0, 1, 0] } },
+  multimodal: {
+    exportacao: { ano: 2025, campos: ['sh4', 'uf', 'urf', 'via', 'kg'], linhas: [
+      ['1201', 'MT', 'SANTOS', 'MARITIMA', 5e6], ['1201', 'MT', 'SANTOS', 'RODOVIARIA', 1e6], ['1201', 'GO', 'PARANAGUA', 'MARITIMA', 2e6],
+      ['1005', 'MT', 'SANTOS', 'MARITIMA', 3e6], ['1005', 'GO', 'SANTOS', 'MARITIMA', 1e6]], sh4: { 1201: 'Soja', 1005: 'Milho', 1701: 'Açúcar' } },
+    siade: [{ o: 'Rondonópolis', uo: 'MT', d: 'Santos', ud: 'SP', prod: 'Soja', t: 100 }, { o: 'Rondonópolis', uo: 'MT', d: 'Santos', ud: 'SP', prod: 'Milho', t: 50 },
+      { o: 'Rio Verde', uo: 'GO', d: 'Santos', ud: 'SP', prod: 'Soja', t: 120 }, { o: 'X', uo: 'MT', d: 'Y', ud: 'SP', prod: 'Açúcar', t: 1000 }],
+    fretes: { mes: 'ago/2026', campos: ['origem', 'uf_o', 'destino', 'uf_d', 'km', 'rs_t', 'qualidade'], linhas: [
+      ['Sorriso', 'MT', 'Santos', 'SP', 2000, 400, 'ok'], ['Rio Verde', 'GO', 'Santos', 'SP', 1000, 250, 'aprox'], ['Q', 'MT', 'W', 'PR', null, null, 'ok']] },
+  },
+  carga: { ano_base: 2017, gsa: [100, null, 300, 200] },
+};
+
+test('cargasKpis: soja, milho (1ª + 2ª), cana, armazenagem e exportação de soja e milho (t)', () => {
+  assert.deepEqual(IntelModel.cargasKpis(intelC), { soja: 150, milho: 235, cana: 1000, cap: 1500, expSoja: 8000, expMilho: 4000 });
+  assert.deepEqual(IntelModel.cargasKpis({}), { soja: null, milho: null, cana: null, cap: null, expSoja: null, expMilho: null });
+});
+
+test('producaoPorUf: soja e milho por safra somados por UF, maior primeiro', () => {
+  assert.deepEqual(IntelModel.producaoPorUf(intelC), [{ uf: 'MT', soja: 100, milho1: 10, milho2: 220 }, { uf: 'GO', soja: 50, milho1: 5, milho2: 0 }]);
+  assert.deepEqual(IntelModel.producaoPorUf({}), []);
+});
+
+test('topMunicipios: maiores produtores com índice, nome e UF; null e zero fora', () => {
+  assert.deepEqual(IntelModel.topMunicipios(intelC, 'soja', 5), [
+    { k: 0, id: '1', nome: 'Sorriso', uf: 'MT', v: 100 }, { k: 2, id: '3', nome: 'Rio Verde', uf: 'GO', v: 50 }]);
+  assert.equal(IntelModel.topMunicipios(intelC, 'soja', 1).length, 1);
+  assert.deepEqual(IntelModel.topMunicipios({}, 'soja'), []);
+});
+
+test('exportação: produtos com fluxo, por URF (t) e matriz UF × URF', () => {
+  assert.deepEqual(IntelModel.exportProdutos(intelC), [{ sh4: '1201', nome: 'Soja', t: 8000 }, { sh4: '1005', nome: 'Milho', t: 4000 }]);
+  assert.deepEqual(IntelModel.exportPorUrf(intelC, '1201'), [{ urf: 'SANTOS', t: 6000 }, { urf: 'PARANAGUA', t: 2000 }]);
+  assert.deepEqual(IntelModel.exportPorUrf(intelC, '1201', 1), [{ urf: 'SANTOS', t: 6000 }]);
+  assert.deepEqual(IntelModel.exportMatriz(intelC, '1201'), { ufs: ['MT', 'GO'], urfs: ['SANTOS', 'PARANAGUA'], m: [[6000, null], [null, 2000]] });
+  assert.deepEqual(IntelModel.exportMatriz(intelC, '1201', 1, 1), { ufs: ['MT'], urfs: ['SANTOS'], m: [[6000]] });
+  assert.deepEqual(IntelModel.exportProdutos({}), []);
+  assert.deepEqual(IntelModel.exportPorUrf({}, '1201'), []);
+  assert.deepEqual(IntelModel.exportMatriz({}, '1201'), { ufs: [], urfs: [], m: [] });
+});
+
+test('siadePares: pares origem → destino somando os produtos pedidos, partes na ordem dos produtos', () => {
+  assert.deepEqual(IntelModel.siadePares(intelC, ['Soja', 'Milho'], 15), [
+    { o: 'Rondonópolis', uo: 'MT', d: 'Santos', ud: 'SP', t: 150, parts: [100, 50] },
+    { o: 'Rio Verde', uo: 'GO', d: 'Santos', ud: 'SP', t: 120, parts: [120, 0] }]);
+  assert.equal(IntelModel.siadePares(intelC, ['Soja', 'Milho'], 1).length, 1);
+  assert.deepEqual(IntelModel.siadePares({}, ['Soja']), []);
+});
+
+test('fretesRows: linhas com R$/t·km (null sem distância) e flag de origem aproximada', () => {
+  const r = IntelModel.fretesRows(intelC);
+  assert.equal(r.length, 3);
+  assert.equal(r[0].rs_tkm, 0.2);
+  assert.equal(r[0].aprox, false);
+  assert.equal(r[1].aprox, true);
+  assert.equal(r[2].rs_tkm, null);
+  assert.deepEqual(IntelModel.fretesRows({}), []);
+});
+
+test('cargaTop: físicos com maior carga agrícola modelada, com BR/UF e locais do trecho principal', () => {
+  assert.deepEqual(IntelModel.cargaTop(intelC, snvT, 2), [
+    { j: 2, br: 'BR-163', uf: 'MT', ini: 'Sinop', fim: 'Sorriso', gsa: 300 }, { j: 3, br: 'BR-163', uf: 'MT', ini: 'Sorriso', fim: 'Lucas', gsa: 200 }]);
+  assert.deepEqual(IntelModel.cargaTop({}, snvT), []);
+});
+
+test('fmtDia e fontesData: dd/mm/aaaa e listas com padrão vazio', () => {
+  assert.equal(IntelModel.fmtDia('2026-10-20'), '20/10/2026');
+  assert.equal(IntelModel.fmtDia(null), '—');
+  assert.equal(IntelModel.fmtDia('2026'), '2026');
+  const f = IntelModel.fontesData({ fontes: { fontes: [{ nome: 'A' }], indisponiveis: [{ nome: 'B' }] } });
+  assert.deepEqual(f, { fontes: [{ nome: 'A' }], indisponiveis: [{ nome: 'B' }], base: [] });
+  assert.equal(IntelModel.fontesData({}), null);
+});
+
+test('hstackSvg: barras horizontais empilhadas, linhas clicáveis com data-k, título e proporção', () => {
+  const svg = IntelModel.hstackSvg([{ label: 'A <x>', parts: [30, 10], k: 5 }, { label: 'B', parts: [10, null], k: 7 }],
+    { width: 600, names: ['Leves', 'Pesados'], colors: ['#183C80', '#0071BB'], format: v => String(v), unit: 'veíc./dia', clickable: true, labelWidth: 200 });
+  assert.equal((svg.match(/class="hrow"/g) || []).length, 2);
+  assert.match(svg, /data-k="5"/);
+  assert.match(svg, /data-k="7"/);
+  assert.match(svg, /role="button" tabindex="0"/);
+  assert.match(svg, /A &lt;x&gt; · Leves: 30 veíc\.\/dia/);
+  assert.doesNotMatch(svg, /NaN|undefined/);
+  const w = [...svg.matchAll(/<rect class="cbar"[^>]*width="([\d.]+)"/g)].map(m => Number(m[1]));
+  assert.equal(w.length, 3);
+  close(w[0] / w[1], 3, 0.01);
+  close(w[0] / w[2], 3, 0.01);
+  const plain = IntelModel.hstackSvg([{ label: 'A', parts: [1] }]);
+  assert.doesNotMatch(plain, /role="button"/);
+  assert.match(IntelModel.hstackSvg([]), /Sem dados/);
+});
+
+test('fonteTipo: "nome · período · medido|modelado" (tipo da fonte ou do bloco)', () => {
+  const b = { tipo: 'medido', fonte: [{ nome: 'ANTT — Praças', periodo: '2025' }, { nome: 'VMDa', periodo: '2023', tipo: 'modelado' }] };
+  assert.equal(IntelModel.fonteTipo(b, /Praças/), 'ANTT — Praças · 2025 · medido');
+  assert.equal(IntelModel.fonteTipo(b, /VMDa/), 'VMDa · 2023 · modelado');
+  assert.equal(IntelModel.fonteTipo({ fonte: { nome: 'X' } }, /X/), 'X');
+  assert.equal(IntelModel.fonteTipo(b, /nada/), '—');
+  assert.equal(IntelModel.fonteTipo(null, /./), '—');
+  // tipo explícito quando nem a fonte nem o bloco o têm (ex.: antt.pracas.tipo)
+  assert.equal(IntelModel.fonteTipo({ fonte: [{ nome: 'ANTT', periodo: '2025' }] }, /ANTT/, 'medido'), 'ANTT · 2025 · medido');
+  assert.equal(IntelModel.fonteTipo(b, /VMDa/, 'medido'), 'VMDa · 2023 · modelado');
+});

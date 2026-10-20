@@ -453,6 +453,247 @@ const IntelModel = (() => {
     return trechos.filter(t => t && t.rod).map(t => (has(t.km_i) && has(t.km_f) ? `${t.rod}: km ${f1.format(t.km_i)} a ${f1.format(t.km_f)}` : t.rod));
   }
 
+  // ---------- Abas Tráfego, Cargas e Fontes (Task 12) ----------
+  // Campos do registro de SNV.trechos usados aqui (mesmas posições de Model.FIELD / Model.T).
+  const SNV_I = { br: 1, uf: 2, locIni: 12, locFim: 13 };
+  const mainRec = (snv, j) => snv.trechos[snv.fis[j].r[0]];
+  const fisUf = (snv, j) => snv.dict.uf[mainRec(snv, j)[SNV_I.uf]];
+  const fisBr = (snv, j) => `BR-${snv.dict.br[mainRec(snv, j)[SNV_I.br]]}`;
+  const sumOf = arr => { let s = null; for (const v of arr || []) if (has(v)) s = (s || 0) + v; return s; };
+  const desc = key => (a, b) => b[key] - a[key];
+
+  // "nome · período · medido|modelado" da fonte do bloco que casa com re (tipo da própria fonte, senão o do bloco, senão tipoPadrao).
+  function fonteTipo(block, re, tipoPadrao = null) {
+    const list = block && block.fonte ? (Array.isArray(block.fonte) ? block.fonte : [block.fonte]) : [];
+    const f = list.find(x => x && re.test(x.nome || ''));
+    if (!f) return DASH;
+    const ok = t => t === 'medido' || t === 'modelado';
+    const tipo = ok(f.tipo) ? f.tipo : ok(block.tipo) ? block.tipo : ok(tipoPadrao) ? tipoPadrao : null;
+    return `${f.nome}${f.periodo ? ` · ${f.periodo}` : ''}${tipo ? ` · ${tipo}` : ''}`;
+  }
+
+  const pracasRows = intel => rows(anttOf(intel) && anttOf(intel).pracas).map((p, i) => Object.assign(p, { i }));
+
+  // KPIs da aba Tráfego: praças com contagem 2025 (VMD > 0), VMD somado, % pesados ponderado pelo VMD,
+  // veíc·km/dia do VMDa em toda a malha e médias anuais da PRF. Bloco ausente = null.
+  function trafegoKpis(intel, snv) {
+    const pr = anttOf(intel) && anttOf(intel).pracas ? pracasRows(intel) : null;
+    const ag = aggregateIntel(intel, snv, new Uint8Array(snv.fis.length).fill(1));
+    let nPracas = null, vmdTotal = null, pctPes = null;
+    if (pr) {
+      const comVmd = pr.filter(p => has(p.vmd) && p.vmd > 0);
+      nPracas = comVmd.length;
+      vmdTotal = comVmd.length ? comVmd.reduce((s, p) => s + p.vmd, 0) : null;
+      const comPes = comVmd.filter(p => has(p.pesados));
+      const base = comPes.reduce((s, p) => s + p.vmd, 0);
+      pctPes = base > 0 ? comPes.reduce((s, p) => s + p.pesados, 0) / base : null;
+    }
+    return { nPracas, vmdTotal, pctPes, vkm: ag.vkm, acidAno: ag.acidAno, mortosAno: ag.mortosAno };
+  }
+
+  const pracasRanking = (intel, n = 20) => pracasRows(intel).filter(p => has(p.vmd) && p.vmd > 0).sort(desc('vmd')).slice(0, n);
+
+  // Série mensal somada só das praças com todos os meses de leves e pesados (painel balanceado).
+  function pracasSerie(intel) {
+    const p = anttOf(intel) && anttOf(intel).pracas;
+    if (!p || !Array.isArray(p.serie_meses) || !p.serie_meses.length || !p.serie_l || !p.serie_p) return null;
+    const nm = p.serie_meses.length, full = arr => Array.isArray(arr) && arr.length === nm && arr.every(has);
+    const idx = p.serie_l.map((_, i) => i).filter(i => full(p.serie_l[i]) && full(p.serie_p[i]));
+    const l = p.serie_meses.map((_, k) => idx.reduce((s, i) => s + p.serie_l[i][k], 0));
+    const pe = p.serie_meses.map((_, k) => idx.reduce((s, i) => s + p.serie_p[i][k], 0));
+    return { meses: p.serie_meses.slice(), l, p: pe, n: idx.length, total: p.serie_l.length };
+  }
+
+  // Perfil sazonal: média do índice por mês do calendário (jan..dez).
+  function abcrSazonal(abcr, key = 'total') {
+    if (!abcr || !Array.isArray(abcr.meses) || !Array.isArray(abcr[key])) return null;
+    const s = new Array(12).fill(0), c = new Array(12).fill(0);
+    abcr.meses.forEach((ym, k) => {
+      const m = /^\d{4}-(\d{2})$/.exec(String(ym)), v = abcr[key][k];
+      if (m && has(v)) { s[Number(m[1]) - 1] += v; c[Number(m[1]) - 1]++; }
+    });
+    return s.map((v, i) => (c[i] ? v / c[i] : null));
+  }
+
+  // Acidentes e mortos por ano agregados à UF do registro principal de cada físico.
+  function acidentesPorUf(intel, snv) {
+    const ac = acidOf(intel);
+    if (!ac || !ac.n) return [];
+    const anos = nAnos(ac), by = new Map();
+    for (let j = 0; j < snv.fis.length; j++) {
+      const uf = fisUf(snv, j), o = by.get(uf) || { uf, acidAno: 0, mortosAno: 0 };
+      if (has(ac.n[j])) o.acidAno += ac.n[j] / anos;
+      if (ac.m && has(ac.m[j])) o.mortosAno += ac.m[j] / anos;
+      by.set(uf, o);
+    }
+    return [...by.values()].filter(o => o.acidAno > 0 || o.mortosAno > 0).sort(desc('acidAno'));
+  }
+
+  // Taxa por BR/UF: Σ acidentes/ano ÷ (Σ VMDa × ext × 365) × 10⁶, só físicos com VMDa e grupos com ≥ minKm.
+  function taxaPorBrUf(intel, snv, { minKm = 10, n = 15 } = {}) {
+    const ac = acidOf(intel), vm = vmdaOf(intel);
+    if (!ac || !ac.n || !vm) return [];
+    const anos = nAnos(ac), by = new Map();
+    for (let j = 0; j < snv.fis.length; j++) {
+      const tot = sumNullable(vm.l && vm.l[j], vm.p && vm.p[j]), ext = snv.fis[j].ext;
+      if (!(tot > 0) || !(ext > 0)) continue;
+      const br = fisBr(snv, j), uf = fisUf(snv, j), key = `${br}/${uf}`;
+      const o = by.get(key) || { br, uf, km: 0, nTot: 0, vkm: 0 };
+      o.km += ext; o.vkm += tot * ext;
+      if (has(ac.n[j])) o.nTot += ac.n[j];
+      by.set(key, o);
+    }
+    return [...by.values()].filter(o => o.km >= minKm)
+      .map(o => ({ br: o.br, uf: o.uf, km: o.km, acidAno: o.nTot / anos, vkm: o.vkm, taxa: taxaAcidentes(o.nTot, anos, o.vkm, 1) }))
+      .sort(desc('taxa')).slice(0, n);
+  }
+
+  const expOf = intel => (intel && intel.multimodal && intel.multimodal.exportacao && intel.multimodal.exportacao.linhas ? intel.multimodal.exportacao : null);
+  const expRows = (intel, sh4) => rows(expOf(intel)).filter(r => (sh4 == null || String(r.sh4) === String(sh4)) && has(r.kg));
+
+  function cargasKpis(intel) {
+    const a = agroOf(intel), pr = k => (a ? sumOf(a.produtos[k]) : null);
+    const milho = a ? sumNullable(pr('milho1'), pr('milho2')) : null;
+    const exp = sh4 => { const l = expRows(intel, sh4); return l.length ? l.reduce((s, r) => s + r.kg, 0) / 1000 : null; };
+    return { soja: pr('soja'), milho, cana: pr('cana'), cap: a && a.armazenagem ? sumOf(a.armazenagem.cap) : null,
+      expSoja: expOf(intel) ? exp('1201') : null, expMilho: expOf(intel) ? exp('1005') : null };
+  }
+
+  function producaoPorUf(intel) {
+    const a = agroOf(intel), mu = intel && intel.municipios;
+    if (!a || !mu || !mu.ids) return [];
+    const ufOf = new Map(mu.ids.map((id, i) => [String(id), mu.uf[i]])), by = new Map();
+    a.ids.forEach((id, k) => {
+      const uf = ufOf.get(String(id));
+      if (!uf) return;
+      const o = by.get(uf) || { uf, soja: 0, milho1: 0, milho2: 0 };
+      for (const p of ['soja', 'milho1', 'milho2']) { const v = (a.produtos[p] || [])[k]; if (has(v)) o[p] += v; }
+      by.set(uf, o);
+    });
+    return [...by.values()].sort((x, y) => (y.soja + y.milho1 + y.milho2) - (x.soja + x.milho1 + x.milho2));
+  }
+
+  // Maiores municípios de um produto (k = posição em municipios.ids).
+  function topMunicipios(intel, prod, n = 20) {
+    const a = agroOf(intel), mu = intel && intel.municipios;
+    if (!a || !mu || !mu.ids) return [];
+    const kOf = new Map(mu.ids.map((id, i) => [String(id), i])), vals = fundoValues(intel, prod) || [];
+    const out = [];
+    a.ids.forEach((id, i) => {
+      const k = kOf.get(String(id)), v = vals[i];
+      if (k != null && has(v) && v > 0) out.push({ k, id: String(id), nome: mu.nomes[k], uf: mu.uf[k], v });
+    });
+    return out.sort(desc('v')).slice(0, n);
+  }
+
+  // Produtos SH4 com exportação, maior volume primeiro (t).
+  function exportProdutos(intel) {
+    const e = expOf(intel);
+    if (!e) return [];
+    const by = new Map();
+    for (const r of expRows(intel)) by.set(String(r.sh4), (by.get(String(r.sh4)) || 0) + r.kg / 1000);
+    return [...by.entries()].map(([sh4, t]) => ({ sh4, nome: (e.sh4 && e.sh4[sh4]) || sh4, t })).sort(desc('t'));
+  }
+
+  const sumBy = (list, key) => {
+    const by = new Map();
+    for (const r of list) by.set(r[key], (by.get(r[key]) || 0) + r.kg / 1000);
+    return [...by.entries()].sort((a, b) => b[1] - a[1]);
+  };
+
+  const exportPorUrf = (intel, sh4, n = 12) => sumBy(expRows(intel, sh4), 'urf').slice(0, n).map(([urf, t]) => ({ urf, t }));
+
+  // Matriz das nUf maiores UFs × nUrf maiores URFs do produto (t; sem fluxo = null).
+  function exportMatriz(intel, sh4, nUf = 10, nUrf = 8) {
+    const l = expRows(intel, sh4);
+    const ufs = sumBy(l, 'uf').slice(0, nUf).map(x => x[0]), urfs = sumBy(l, 'urf').slice(0, nUrf).map(x => x[0]);
+    const m = ufs.map(() => urfs.map(() => null));
+    for (const r of l) {
+      const a = ufs.indexOf(r.uf), b = urfs.indexOf(r.urf);
+      if (a >= 0 && b >= 0) m[a][b] = (m[a][b] || 0) + r.kg / 1000;
+    }
+    return { ufs, urfs, m };
+  }
+
+  // Pares origem → destino do SIADE somando os produtos pedidos; parts na ordem de prods.
+  function siadePares(intel, prods, n = 15) {
+    const list = intel && intel.multimodal && Array.isArray(intel.multimodal.siade) ? intel.multimodal.siade : [];
+    const by = new Map();
+    for (const s of list) {
+      const k = prods.indexOf(s.prod);
+      if (k < 0 || !has(s.t)) continue;
+      const key = [s.o, s.uo, s.d, s.ud].join('|');
+      const o = by.get(key) || { o: s.o, uo: s.uo, d: s.d, ud: s.ud, t: 0, parts: prods.map(() => 0) };
+      o.t += s.t; o.parts[k] += s.t;
+      by.set(key, o);
+    }
+    return [...by.values()].sort(desc('t')).slice(0, n);
+  }
+
+  function fretesRows(intel) {
+    const f = intel && intel.multimodal && intel.multimodal.fretes;
+    return rows(f).map(r => Object.assign(r, { rs_tkm: has(r.rs_t) && has(r.km) && r.km > 0 ? r.rs_t / r.km : null, aprox: r.qualidade === 'aprox' }));
+  }
+
+  // Físicos com maior carga agrícola modelada (GSA, t/ano), rotulados pelo registro principal.
+  function cargaTop(intel, snv, n = 15) {
+    const c = cargaOf(intel);
+    if (!c) return [];
+    const out = [];
+    for (let j = 0; j < snv.fis.length; j++) {
+      if (!(has(c.gsa[j]) && c.gsa[j] > 0)) continue;
+      const t = mainRec(snv, j);
+      out.push({ j, br: fisBr(snv, j), uf: fisUf(snv, j), ini: t[SNV_I.locIni], fim: t[SNV_I.locFim], gsa: c.gsa[j] });
+    }
+    return out.sort(desc('gsa')).slice(0, n);
+  }
+
+  // "AAAA-MM-DD" -> "dd/mm/aaaa"; "AAAA-MM" -> "mmm/aaaa"; outro texto como está; vazio = —.
+  function fmtDia(s) {
+    if (s == null || s === '') return DASH;
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s));
+    if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+    return /^\d{4}-\d{2}$/.test(String(s)) ? monthLabel(s) : String(s);
+  }
+
+  function fontesData(intel) {
+    const f = intel && intel.fontes;
+    if (!f || !Array.isArray(f.fontes)) return null;
+    return { fontes: f.fontes, indisponiveis: Array.isArray(f.indisponiveis) ? f.indisponiveis : [], base: Array.isArray(f.base) ? f.base : [] };
+  }
+
+  // Barras horizontais empilhadas em SVG (string): uma linha por item, partes nas cores dadas, valor total à direita.
+  // clickable: cada linha vira <g role="button" tabindex="0" data-k="..."> para o clique / Enter da aba.
+  const PALETTE = ['#183C80', '#0071BB', '#525254'];
+  const escX = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  function hstackSvg(data, o = {}) {
+    const w = o.width || 640, rh = o.rh || 32, bh = Math.min(16, rh - 8);
+    const frame = (h, body, aria) => `<svg class="chart" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="${escX(aria || '')}" font-family="Inter, sans-serif" font-size="14">${body}</svg>`;
+    if (!data.length) return frame(120, `<text x="${w / 2}" y="60" text-anchor="middle" fill="${PALETTE[2]}">Sem dados</text>`, 'Sem dados');
+    const fmt = o.format || (v => f1.format(v)), unit = o.unit ? ` ${o.unit}` : '', names = o.names || [], colors = o.colors || PALETTE;
+    const L = o.labelWidth || Math.min(240, w * 0.4), R = o.valueWidth || 112, pw = Math.max(40, w - L - R);
+    const sums = data.map(d => d.parts.reduce((a, v) => a + (has(v) && v > 0 ? v : 0), 0));
+    const max = Math.max(...sums, 0) || 1, maxCh = Math.max(4, Math.floor((L - 8) / 7.5));
+    const cut = s => (s.length > maxCh ? `${s.slice(0, maxCh - 1)}…` : s);
+    const body = data.map((d, i) => {
+      const y = 4 + i * rh, ty = y + rh / 2 + 5, label = String(d.label);
+      let x = L, rects = '';
+      d.parts.forEach((v, k) => {
+        if (!(has(v) && v > 0)) return;
+        const bw = (v / max) * pw;
+        rects += `<rect class="cbar" x="${x.toFixed(1)}" y="${(y + (rh - bh) / 2).toFixed(1)}" width="${bw.toFixed(1)}" height="${bh}" fill="${colors[k % colors.length]}">` +
+          `<title>${escX(label)}${names[k] ? ` · ${escX(names[k])}` : ''}: ${escX(fmt(v))}${escX(unit)}${d.detail ? ` (${escX(d.detail)})` : ''}</title></rect>`;
+        x += bw;
+      });
+      const val = sums[i] > 0 ? fmt(sums[i]) : DASH;
+      const attrs = o.clickable ? ` data-k="${escX(d.k)}" role="button" tabindex="0" aria-label="${escX(`${label}: ${val}${unit}`)}"` : '';
+      return `<g class="hrow"${attrs}><rect x="0" y="${y}" width="${w}" height="${rh}" fill="${PALETTE[1]}" fill-opacity="0" class="hrow__bg"/>` +
+        `<text x="${L - 8}" y="${ty}" text-anchor="end" fill="#231F20">${escX(cut(label))}</text>${rects}` +
+        `<text x="${(x + 8).toFixed(1)}" y="${ty}" fill="${PALETTE[2]}">${escX(val)}</text></g>`;
+    }).join('');
+    return frame(data.length * rh + 8, body, o.title);
+  }
+
   // Escolhe a unidade depois de arredondar: 999.600 t vira "1,0 Mt", não "1.000 mil t".
   const round = (v, d) => Math.round(v * 10 ** d) / 10 ** d;
   function scaled(x, units) {
@@ -480,6 +721,9 @@ const IntelModel = (() => {
     fundoClasses, munInfo, pointInRings, ringsBBox, fonteRef,
     anttCapa, anttAnteriores, anttSeries, pracasDe, obrasResumo, pipelineRows, filterPipeline, pipelineCounts, statusLabel, pipelineDe,
     EST_ESTADOS, estaduaisRows, byEsfera, estIndex, trechosLabel,
+    trafegoKpis, pracasRanking, pracasSerie, abcrSazonal, acidentesPorUf, taxaPorBrUf,
+    cargasKpis, producaoPorUf, topMunicipios, exportProdutos, exportPorUrf, exportMatriz, siadePares, fretesRows, cargaTop,
+    fmtDia, fontesData, hstackSvg, fonteTipo,
     fmtInt, fmtDec, fmtVmd, fmtT, fmtPct, fmtBRL, fmtVkm, fmtTkm };
 })();
 

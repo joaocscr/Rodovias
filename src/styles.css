@@ -484,3 +484,33 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 #pipe-counts { margin-bottom: 16px; }
 #pipe-counts .chip b { margin-left: 4px; font-variant-numeric: tabular-nums; }
 .pipeline .table-wrap { max-height: calc(100vh - 240px); }
+
+/* v3 (Task 12): abas Tráfego, Cargas e Fontes */
+.duo { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.duo > div { min-width: 0; }
+.duo__title { margin: 0 0 8px; font-size: 14px; font-weight: 600; color: var(--color-spacial-grey); }
+#chart-c-exp-mat { margin-top: 0; }
+.table-wrap--x { max-height: none; overflow-x: auto; }
+.table-wrap--x th { position: static; }
+.ccard .chart-box > svg, .duo svg { display: block; }
+.hrow[data-k] { cursor: pointer; outline: none; }
+.hrow .hrow__bg { transition: fill-opacity var(--transition); }
+.hrow[data-k]:hover .hrow__bg { fill-opacity: 0.08; }
+.hrow[data-k]:focus-visible .hrow__bg { fill-opacity: 0.16; stroke: var(--color-bright-blue); stroke-width: 2; }
+.grid td.bar-cell { width: 30%; min-width: 120px; }
+.bar-cell span { display: block; height: 8px; border-radius: 2px; background: var(--color-deep-blue); }
+.grid--rows tbody tr[data-k] { cursor: pointer; }
+.grid--rows tbody tr[data-k]:hover { background: var(--tint); }
+.fontes-h2 { margin: 40px 0 8px; font-family: var(--font-title); font-weight: 700; font-size: 22px; color: var(--color-deep-blue); }
+.fontes-h2 .page__src { font-family: var(--font-body); font-weight: 400; }
+.fontes-nota { max-width: 920px; margin-bottom: 8px; }
+.fontes-nota .fontes-h2 { margin-top: 0; }
+.fontes-nota p { margin: 0 0 16px; font-size: 16px; line-height: 24px; color: var(--color-spacial-grey); }
+.fontes-table td { vertical-align: top; }
+.fontes-table td.fontes-nome { min-width: 240px; }
+.fontes-table td.fontes-nota-col { min-width: 320px; color: var(--color-light-grey); }
+.fontes-table a.link-btn { padding: 0; text-align: left; }
+.page__inner > .table-wrap + .fontes-h2 { margin-top: 40px; }
+@media (max-width: 1500px) { .topbar__sub { display: none; } }
+@media (max-width: 1180px) { .tabs { gap: 0; } .tabs a { padding: 0 8px; } }
+@media (max-width: 900px) { .duo { grid-template-columns: 1fr; } }

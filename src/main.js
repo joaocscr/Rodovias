@@ -7,7 +7,10 @@
   UI.init(snv, Model.createIndex(snv), conc, intel);
   Ficha.init(conc, intel, snv);
   Tabs.on('projetos', () => Projetos.init(conc, intel));
+  Tabs.on('trafego', () => Trafego.init(intel, snv));
+  Tabs.on('cargas', () => Cargas.init(intel, snv));
   Tabs.on('mercado', () => Mercado.init(conc));
   Tabs.on('regulatorio', () => Regulatorio.init(conc));
+  Tabs.on('fontes', () => Fontes.init(intel));
   Tabs.init({ isFicha: id => Ficha.exists(id) });
 })();

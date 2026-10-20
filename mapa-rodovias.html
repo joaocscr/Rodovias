@@ -1158,6 +1158,36 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 #pipe-counts .chip b { margin-left: 4px; font-variant-numeric: tabular-nums; }
 .pipeline .table-wrap { max-height: calc(100vh - 240px); }
 
+/* v3 (Task 12): abas Tráfego, Cargas e Fontes */
+.duo { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.duo > div { min-width: 0; }
+.duo__title { margin: 0 0 8px; font-size: 14px; font-weight: 600; color: var(--color-spacial-grey); }
+#chart-c-exp-mat { margin-top: 0; }
+.table-wrap--x { max-height: none; overflow-x: auto; }
+.table-wrap--x th { position: static; }
+.ccard .chart-box > svg, .duo svg { display: block; }
+.hrow[data-k] { cursor: pointer; outline: none; }
+.hrow .hrow__bg { transition: fill-opacity var(--transition); }
+.hrow[data-k]:hover .hrow__bg { fill-opacity: 0.08; }
+.hrow[data-k]:focus-visible .hrow__bg { fill-opacity: 0.16; stroke: var(--color-bright-blue); stroke-width: 2; }
+.grid td.bar-cell { width: 30%; min-width: 120px; }
+.bar-cell span { display: block; height: 8px; border-radius: 2px; background: var(--color-deep-blue); }
+.grid--rows tbody tr[data-k] { cursor: pointer; }
+.grid--rows tbody tr[data-k]:hover { background: var(--tint); }
+.fontes-h2 { margin: 40px 0 8px; font-family: var(--font-title); font-weight: 700; font-size: 22px; color: var(--color-deep-blue); }
+.fontes-h2 .page__src { font-family: var(--font-body); font-weight: 400; }
+.fontes-nota { max-width: 920px; margin-bottom: 8px; }
+.fontes-nota .fontes-h2 { margin-top: 0; }
+.fontes-nota p { margin: 0 0 16px; font-size: 16px; line-height: 24px; color: var(--color-spacial-grey); }
+.fontes-table td { vertical-align: top; }
+.fontes-table td.fontes-nome { min-width: 240px; }
+.fontes-table td.fontes-nota-col { min-width: 320px; color: var(--color-light-grey); }
+.fontes-table a.link-btn { padding: 0; text-align: left; }
+.page__inner > .table-wrap + .fontes-h2 { margin-top: 40px; }
+@media (max-width: 1500px) { .topbar__sub { display: none; } }
+@media (max-width: 1180px) { .tabs { gap: 0; } .tabs a { padding: 0 8px; } }
+@media (max-width: 900px) { .duo { grid-template-columns: 1fr; } }
+
 </style>
 </head>
 <body>
@@ -1185,8 +1215,11 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
   </main>
 </div>
 <section class="page" data-tab="projetos" id="page-projetos" hidden></section>
+<section class="page" data-tab="trafego" id="page-trafego" hidden></section>
+<section class="page" data-tab="cargas" id="page-cargas" hidden></section>
 <section class="page" data-tab="mercado" id="page-mercado" hidden></section>
 <section class="page" data-tab="regulatorio" id="page-regulatorio" hidden></section>
+<section class="page" data-tab="fontes" id="page-fontes" hidden></section>
 <div class="ficha-backdrop" id="ficha-backdrop" hidden></div>
 <div class="ficha" id="ficha" role="dialog" aria-modal="true" aria-labelledby="ficha-title" hidden></div>
 <script>
@@ -1905,6 +1938,247 @@ const IntelModel = (() => {
     return trechos.filter(t => t && t.rod).map(t => (has(t.km_i) && has(t.km_f) ? `${t.rod}: km ${f1.format(t.km_i)} a ${f1.format(t.km_f)}` : t.rod));
   }
 
+  // ---------- Abas Tráfego, Cargas e Fontes (Task 12) ----------
+  // Campos do registro de SNV.trechos usados aqui (mesmas posições de Model.FIELD / Model.T).
+  const SNV_I = { br: 1, uf: 2, locIni: 12, locFim: 13 };
+  const mainRec = (snv, j) => snv.trechos[snv.fis[j].r[0]];
+  const fisUf = (snv, j) => snv.dict.uf[mainRec(snv, j)[SNV_I.uf]];
+  const fisBr = (snv, j) => `BR-${snv.dict.br[mainRec(snv, j)[SNV_I.br]]}`;
+  const sumOf = arr => { let s = null; for (const v of arr || []) if (has(v)) s = (s || 0) + v; return s; };
+  const desc = key => (a, b) => b[key] - a[key];
+
+  // "nome · período · medido|modelado" da fonte do bloco que casa com re (tipo da própria fonte, senão o do bloco, senão tipoPadrao).
+  function fonteTipo(block, re, tipoPadrao = null) {
+    const list = block && block.fonte ? (Array.isArray(block.fonte) ? block.fonte : [block.fonte]) : [];
+    const f = list.find(x => x && re.test(x.nome || ''));
+    if (!f) return DASH;
+    const ok = t => t === 'medido' || t === 'modelado';
+    const tipo = ok(f.tipo) ? f.tipo : ok(block.tipo) ? block.tipo : ok(tipoPadrao) ? tipoPadrao : null;
+    return `${f.nome}${f.periodo ? ` · ${f.periodo}` : ''}${tipo ? ` · ${tipo}` : ''}`;
+  }
+
+  const pracasRows = intel => rows(anttOf(intel) && anttOf(intel).pracas).map((p, i) => Object.assign(p, { i }));
+
+  // KPIs da aba Tráfego: praças com contagem 2025 (VMD > 0), VMD somado, % pesados ponderado pelo VMD,
+  // veíc·km/dia do VMDa em toda a malha e médias anuais da PRF. Bloco ausente = null.
+  function trafegoKpis(intel, snv) {
+    const pr = anttOf(intel) && anttOf(intel).pracas ? pracasRows(intel) : null;
+    const ag = aggregateIntel(intel, snv, new Uint8Array(snv.fis.length).fill(1));
+    let nPracas = null, vmdTotal = null, pctPes = null;
+    if (pr) {
+      const comVmd = pr.filter(p => has(p.vmd) && p.vmd > 0);
+      nPracas = comVmd.length;
+      vmdTotal = comVmd.length ? comVmd.reduce((s, p) => s + p.vmd, 0) : null;
+      const comPes = comVmd.filter(p => has(p.pesados));
+      const base = comPes.reduce((s, p) => s + p.vmd, 0);
+      pctPes = base > 0 ? comPes.reduce((s, p) => s + p.pesados, 0) / base : null;
+    }
+    return { nPracas, vmdTotal, pctPes, vkm: ag.vkm, acidAno: ag.acidAno, mortosAno: ag.mortosAno };
+  }
+
+  const pracasRanking = (intel, n = 20) => pracasRows(intel).filter(p => has(p.vmd) && p.vmd > 0).sort(desc('vmd')).slice(0, n);
+
+  // Série mensal somada só das praças com todos os meses de leves e pesados (painel balanceado).
+  function pracasSerie(intel) {
+    const p = anttOf(intel) && anttOf(intel).pracas;
+    if (!p || !Array.isArray(p.serie_meses) || !p.serie_meses.length || !p.serie_l || !p.serie_p) return null;
+    const nm = p.serie_meses.length, full = arr => Array.isArray(arr) && arr.length === nm && arr.every(has);
+    const idx = p.serie_l.map((_, i) => i).filter(i => full(p.serie_l[i]) && full(p.serie_p[i]));
+    const l = p.serie_meses.map((_, k) => idx.reduce((s, i) => s + p.serie_l[i][k], 0));
+    const pe = p.serie_meses.map((_, k) => idx.reduce((s, i) => s + p.serie_p[i][k], 0));
+    return { meses: p.serie_meses.slice(), l, p: pe, n: idx.length, total: p.serie_l.length };
+  }
+
+  // Perfil sazonal: média do índice por mês do calendário (jan..dez).
+  function abcrSazonal(abcr, key = 'total') {
+    if (!abcr || !Array.isArray(abcr.meses) || !Array.isArray(abcr[key])) return null;
+    const s = new Array(12).fill(0), c = new Array(12).fill(0);
+    abcr.meses.forEach((ym, k) => {
+      const m = /^\d{4}-(\d{2})$/.exec(String(ym)), v = abcr[key][k];
+      if (m && has(v)) { s[Number(m[1]) - 1] += v; c[Number(m[1]) - 1]++; }
+    });
+    return s.map((v, i) => (c[i] ? v / c[i] : null));
+  }
+
+  // Acidentes e mortos por ano agregados à UF do registro principal de cada físico.
+  function acidentesPorUf(intel, snv) {
+    const ac = acidOf(intel);
+    if (!ac || !ac.n) return [];
+    const anos = nAnos(ac), by = new Map();
+    for (let j = 0; j < snv.fis.length; j++) {
+      const uf = fisUf(snv, j), o = by.get(uf) || { uf, acidAno: 0, mortosAno: 0 };
+      if (has(ac.n[j])) o.acidAno += ac.n[j] / anos;
+      if (ac.m && has(ac.m[j])) o.mortosAno += ac.m[j] / anos;
+      by.set(uf, o);
+    }
+    return [...by.values()].filter(o => o.acidAno > 0 || o.mortosAno > 0).sort(desc('acidAno'));
+  }
+
+  // Taxa por BR/UF: Σ acidentes/ano ÷ (Σ VMDa × ext × 365) × 10⁶, só físicos com VMDa e grupos com ≥ minKm.
+  function taxaPorBrUf(intel, snv, { minKm = 10, n = 15 } = {}) {
+    const ac = acidOf(intel), vm = vmdaOf(intel);
+    if (!ac || !ac.n || !vm) return [];
+    const anos = nAnos(ac), by = new Map();
+    for (let j = 0; j < snv.fis.length; j++) {
+      const tot = sumNullable(vm.l && vm.l[j], vm.p && vm.p[j]), ext = snv.fis[j].ext;
+      if (!(tot > 0) || !(ext > 0)) continue;
+      const br = fisBr(snv, j), uf = fisUf(snv, j), key = `${br}/${uf}`;
+      const o = by.get(key) || { br, uf, km: 0, nTot: 0, vkm: 0 };
+      o.km += ext; o.vkm += tot * ext;
+      if (has(ac.n[j])) o.nTot += ac.n[j];
+      by.set(key, o);
+    }
+    return [...by.values()].filter(o => o.km >= minKm)
+      .map(o => ({ br: o.br, uf: o.uf, km: o.km, acidAno: o.nTot / anos, vkm: o.vkm, taxa: taxaAcidentes(o.nTot, anos, o.vkm, 1) }))
+      .sort(desc('taxa')).slice(0, n);
+  }
+
+  const expOf = intel => (intel && intel.multimodal && intel.multimodal.exportacao && intel.multimodal.exportacao.linhas ? intel.multimodal.exportacao : null);
+  const expRows = (intel, sh4) => rows(expOf(intel)).filter(r => (sh4 == null || String(r.sh4) === String(sh4)) && has(r.kg));
+
+  function cargasKpis(intel) {
+    const a = agroOf(intel), pr = k => (a ? sumOf(a.produtos[k]) : null);
+    const milho = a ? sumNullable(pr('milho1'), pr('milho2')) : null;
+    const exp = sh4 => { const l = expRows(intel, sh4); return l.length ? l.reduce((s, r) => s + r.kg, 0) / 1000 : null; };
+    return { soja: pr('soja'), milho, cana: pr('cana'), cap: a && a.armazenagem ? sumOf(a.armazenagem.cap) : null,
+      expSoja: expOf(intel) ? exp('1201') : null, expMilho: expOf(intel) ? exp('1005') : null };
+  }
+
+  function producaoPorUf(intel) {
+    const a = agroOf(intel), mu = intel && intel.municipios;
+    if (!a || !mu || !mu.ids) return [];
+    const ufOf = new Map(mu.ids.map((id, i) => [String(id), mu.uf[i]])), by = new Map();
+    a.ids.forEach((id, k) => {
+      const uf = ufOf.get(String(id));
+      if (!uf) return;
+      const o = by.get(uf) || { uf, soja: 0, milho1: 0, milho2: 0 };
+      for (const p of ['soja', 'milho1', 'milho2']) { const v = (a.produtos[p] || [])[k]; if (has(v)) o[p] += v; }
+      by.set(uf, o);
+    });
+    return [...by.values()].sort((x, y) => (y.soja + y.milho1 + y.milho2) - (x.soja + x.milho1 + x.milho2));
+  }
+
+  // Maiores municípios de um produto (k = posição em municipios.ids).
+  function topMunicipios(intel, prod, n = 20) {
+    const a = agroOf(intel), mu = intel && intel.municipios;
+    if (!a || !mu || !mu.ids) return [];
+    const kOf = new Map(mu.ids.map((id, i) => [String(id), i])), vals = fundoValues(intel, prod) || [];
+    const out = [];
+    a.ids.forEach((id, i) => {
+      const k = kOf.get(String(id)), v = vals[i];
+      if (k != null && has(v) && v > 0) out.push({ k, id: String(id), nome: mu.nomes[k], uf: mu.uf[k], v });
+    });
+    return out.sort(desc('v')).slice(0, n);
+  }
+
+  // Produtos SH4 com exportação, maior volume primeiro (t).
+  function exportProdutos(intel) {
+    const e = expOf(intel);
+    if (!e) return [];
+    const by = new Map();
+    for (const r of expRows(intel)) by.set(String(r.sh4), (by.get(String(r.sh4)) || 0) + r.kg / 1000);
+    return [...by.entries()].map(([sh4, t]) => ({ sh4, nome: (e.sh4 && e.sh4[sh4]) || sh4, t })).sort(desc('t'));
+  }
+
+  const sumBy = (list, key) => {
+    const by = new Map();
+    for (const r of list) by.set(r[key], (by.get(r[key]) || 0) + r.kg / 1000);
+    return [...by.entries()].sort((a, b) => b[1] - a[1]);
+  };
+
+  const exportPorUrf = (intel, sh4, n = 12) => sumBy(expRows(intel, sh4), 'urf').slice(0, n).map(([urf, t]) => ({ urf, t }));
+
+  // Matriz das nUf maiores UFs × nUrf maiores URFs do produto (t; sem fluxo = null).
+  function exportMatriz(intel, sh4, nUf = 10, nUrf = 8) {
+    const l = expRows(intel, sh4);
+    const ufs = sumBy(l, 'uf').slice(0, nUf).map(x => x[0]), urfs = sumBy(l, 'urf').slice(0, nUrf).map(x => x[0]);
+    const m = ufs.map(() => urfs.map(() => null));
+    for (const r of l) {
+      const a = ufs.indexOf(r.uf), b = urfs.indexOf(r.urf);
+      if (a >= 0 && b >= 0) m[a][b] = (m[a][b] || 0) + r.kg / 1000;
+    }
+    return { ufs, urfs, m };
+  }
+
+  // Pares origem → destino do SIADE somando os produtos pedidos; parts na ordem de prods.
+  function siadePares(intel, prods, n = 15) {
+    const list = intel && intel.multimodal && Array.isArray(intel.multimodal.siade) ? intel.multimodal.siade : [];
+    const by = new Map();
+    for (const s of list) {
+      const k = prods.indexOf(s.prod);
+      if (k < 0 || !has(s.t)) continue;
+      const key = [s.o, s.uo, s.d, s.ud].join('|');
+      const o = by.get(key) || { o: s.o, uo: s.uo, d: s.d, ud: s.ud, t: 0, parts: prods.map(() => 0) };
+      o.t += s.t; o.parts[k] += s.t;
+      by.set(key, o);
+    }
+    return [...by.values()].sort(desc('t')).slice(0, n);
+  }
+
+  function fretesRows(intel) {
+    const f = intel && intel.multimodal && intel.multimodal.fretes;
+    return rows(f).map(r => Object.assign(r, { rs_tkm: has(r.rs_t) && has(r.km) && r.km > 0 ? r.rs_t / r.km : null, aprox: r.qualidade === 'aprox' }));
+  }
+
+  // Físicos com maior carga agrícola modelada (GSA, t/ano), rotulados pelo registro principal.
+  function cargaTop(intel, snv, n = 15) {
+    const c = cargaOf(intel);
+    if (!c) return [];
+    const out = [];
+    for (let j = 0; j < snv.fis.length; j++) {
+      if (!(has(c.gsa[j]) && c.gsa[j] > 0)) continue;
+      const t = mainRec(snv, j);
+      out.push({ j, br: fisBr(snv, j), uf: fisUf(snv, j), ini: t[SNV_I.locIni], fim: t[SNV_I.locFim], gsa: c.gsa[j] });
+    }
+    return out.sort(desc('gsa')).slice(0, n);
+  }
+
+  // "AAAA-MM-DD" -> "dd/mm/aaaa"; "AAAA-MM" -> "mmm/aaaa"; outro texto como está; vazio = —.
+  function fmtDia(s) {
+    if (s == null || s === '') return DASH;
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s));
+    if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+    return /^\d{4}-\d{2}$/.test(String(s)) ? monthLabel(s) : String(s);
+  }
+
+  function fontesData(intel) {
+    const f = intel && intel.fontes;
+    if (!f || !Array.isArray(f.fontes)) return null;
+    return { fontes: f.fontes, indisponiveis: Array.isArray(f.indisponiveis) ? f.indisponiveis : [], base: Array.isArray(f.base) ? f.base : [] };
+  }
+
+  // Barras horizontais empilhadas em SVG (string): uma linha por item, partes nas cores dadas, valor total à direita.
+  // clickable: cada linha vira <g role="button" tabindex="0" data-k="..."> para o clique / Enter da aba.
+  const PALETTE = ['#183C80', '#0071BB', '#525254'];
+  const escX = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  function hstackSvg(data, o = {}) {
+    const w = o.width || 640, rh = o.rh || 32, bh = Math.min(16, rh - 8);
+    const frame = (h, body, aria) => `<svg class="chart" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="${escX(aria || '')}" font-family="Inter, sans-serif" font-size="14">${body}<\/svg>`;
+    if (!data.length) return frame(120, `<text x="${w / 2}" y="60" text-anchor="middle" fill="${PALETTE[2]}">Sem dados<\/text>`, 'Sem dados');
+    const fmt = o.format || (v => f1.format(v)), unit = o.unit ? ` ${o.unit}` : '', names = o.names || [], colors = o.colors || PALETTE;
+    const L = o.labelWidth || Math.min(240, w * 0.4), R = o.valueWidth || 112, pw = Math.max(40, w - L - R);
+    const sums = data.map(d => d.parts.reduce((a, v) => a + (has(v) && v > 0 ? v : 0), 0));
+    const max = Math.max(...sums, 0) || 1, maxCh = Math.max(4, Math.floor((L - 8) / 7.5));
+    const cut = s => (s.length > maxCh ? `${s.slice(0, maxCh - 1)}…` : s);
+    const body = data.map((d, i) => {
+      const y = 4 + i * rh, ty = y + rh / 2 + 5, label = String(d.label);
+      let x = L, rects = '';
+      d.parts.forEach((v, k) => {
+        if (!(has(v) && v > 0)) return;
+        const bw = (v / max) * pw;
+        rects += `<rect class="cbar" x="${x.toFixed(1)}" y="${(y + (rh - bh) / 2).toFixed(1)}" width="${bw.toFixed(1)}" height="${bh}" fill="${colors[k % colors.length]}">` +
+          `<title>${escX(label)}${names[k] ? ` · ${escX(names[k])}` : ''}: ${escX(fmt(v))}${escX(unit)}${d.detail ? ` (${escX(d.detail)})` : ''}<\/title><\/rect>`;
+        x += bw;
+      });
+      const val = sums[i] > 0 ? fmt(sums[i]) : DASH;
+      const attrs = o.clickable ? ` data-k="${escX(d.k)}" role="button" tabindex="0" aria-label="${escX(`${label}: ${val}${unit}`)}"` : '';
+      return `<g class="hrow"${attrs}><rect x="0" y="${y}" width="${w}" height="${rh}" fill="${PALETTE[1]}" fill-opacity="0" class="hrow__bg"/>` +
+        `<text x="${L - 8}" y="${ty}" text-anchor="end" fill="#231F20">${escX(cut(label))}<\/text>${rects}` +
+        `<text x="${(x + 8).toFixed(1)}" y="${ty}" fill="${PALETTE[2]}">${escX(val)}<\/text><\/g>`;
+    }).join('');
+    return frame(data.length * rh + 8, body, o.title);
+  }
+
   // Escolhe a unidade depois de arredondar: 999.600 t vira "1,0 Mt", não "1.000 mil t".
   const round = (v, d) => Math.round(v * 10 ** d) / 10 ** d;
   function scaled(x, units) {
@@ -1932,6 +2206,9 @@ const IntelModel = (() => {
     fundoClasses, munInfo, pointInRings, ringsBBox, fonteRef,
     anttCapa, anttAnteriores, anttSeries, pracasDe, obrasResumo, pipelineRows, filterPipeline, pipelineCounts, statusLabel, pipelineDe,
     EST_ESTADOS, estaduaisRows, byEsfera, estIndex, trechosLabel,
+    trafegoKpis, pracasRanking, pracasSerie, abcrSazonal, acidentesPorUf, taxaPorBrUf,
+    cargasKpis, producaoPorUf, topMunicipios, exportProdutos, exportPorUrf, exportMatriz, siadePares, fretesRows, cargaTop,
+    fmtDia, fontesData, hstackSvg, fonteTipo,
     fmtInt, fmtDec, fmtVmd, fmtT, fmtPct, fmtBRL, fmtVkm, fmtTkm };
 })();
 
@@ -3463,6 +3740,415 @@ const Projetos = (() => {
 })();
 
 ;
+// Aba Tráfego: praças de pedágio ANTT (contagem medida), VMDa (modelado), acidentes PRF (medido) e Índice ABCR.
+// Mesmo padrão da aba Mercado (cartões, gráficos SVG próprios, "Fonte:" em cada cartão). Cada cartão só aparece com o seu bloco.
+const Trafego = (() => {
+  const IM = IntelModel;
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const MES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  let intel = null, snv = null, built = false;
+
+  const fonte = IM.fonteTipo;
+  // o tipo das praças está em antt.pracas.tipo (as fontes do bloco antt não o repetem)
+  const fontePracas = () => fonte(intel.antt, /Praças de pedágio/, intel.antt && intel.antt.pracas && intel.antt.pracas.tipo);
+
+  function card(id, title, sub, o = {}) {
+    return `<article class="ccard${o.wide ? ' ccard--wide' : ''}" id="card-${id}">
+      <h3>${esc(title)}<\/h3>${sub ? `<p class="sub">${esc(sub)}<\/p>` : ''}
+      ${o.legend || ''}<div class="chart-box" id="chart-${id}">${o.html || ''}<\/div>
+      ${o.note ? `<p class="src">${esc(o.note)}<\/p>` : ''}<p class="src">Fonte: ${esc(o.fonte || '—')}<\/p><\/article>`;
+  }
+
+  const tile = (id, value, label) => `<div class="kpi-tile" id="${id}"><b>${esc(value)}<\/b><span>${esc(label)}<\/span><\/div>`;
+  const box = id => document.getElementById('chart-' + id);
+  const width = el => Math.max(320, (el && el.clientWidth) || 640);
+  const ym = s => { const [y, m] = String(s).split('-').map(Number); return { y, m }; };
+  const xOfYm = s => { const { y, m } = ym(s); return y + (m - 1) / 12; };
+  const ymOfX = x => { const y = Math.floor(x + 1e-6); return `${y}-${String(Math.round((x - y) * 12) + 1).padStart(2, '0')}`; };
+  const anosLabel = a => (Array.isArray(a) && a.length ? (a.length === 1 ? String(a[0]) : `${Math.min(...a)}–${String(Math.max(...a)).slice(-2)}`) : '');
+
+  // ---------- Navegação para o mapa ----------
+  function openPraca(i) {
+    Tabs.goThen('#mapa', () => {
+      MapView.invalidate();
+      const cb = document.querySelector('#layers-section input[data-layer="pracas"]');
+      if (cb) cb.checked = true;
+      Layers.toggle('pracas', true);
+      const r = Layers.rowsOf('pracas')[i];
+      if (r && IM.has(r.lat) && IM.has(r.lon)) {
+        // à direita fica o cartão (~360 px): enquadra no espaço livre
+        MapView.map.fitBounds(L.latLngBounds([[r.lat - 0.02, r.lon - 0.02], [r.lat + 0.02, r.lon + 0.02]]),
+          { paddingTopLeft: [64, 64], paddingBottomRight: [424, 64], maxZoom: 10, animate: false });
+      }
+      Layers.open('pracas', i);
+    });
+  }
+
+  // Clique / Enter / Espaço numa linha .hrow[data-k] do gráfico.
+  function onRows(el, fn) {
+    el.addEventListener('click', ev => { const g = ev.target.closest('.hrow[data-k]'); if (g) fn(Number(g.dataset.k)); });
+    el.addEventListener('keydown', ev => {
+      const g = ev.target.closest('.hrow[data-k]');
+      if (g && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); fn(Number(g.dataset.k)); }
+    });
+  }
+
+  // ---------- Cartões ----------
+  function kpisCard() {
+    const k = IM.trafegoKpis(intel, snv), tr = intel.trafego || {}, ac = IM.acidOf(intel), vm = IM.vmdaOf(intel);
+    const tiles = [];
+    if (k.nPracas != null) {
+      tiles.push(tile('kpi-pracas', IM.fmtInt(k.nPracas), 'praças com contagem em 2025 (ANTT, medido)'));
+      tiles.push(tile('kpi-vmd', IM.fmtInt(k.vmdTotal), 'veíc./dia somados nas praças (VMD 2025, dois sentidos)'));
+      tiles.push(tile('kpi-pes', IM.fmtPct(k.pctPes), 'de pesados nas praças, ponderado pelo VMD'));
+    }
+    if (vm) tiles.push(tile('kpi-vkm', IM.has(k.vkm) ? `${IM.fmtDec(k.vkm / 1e6, 1)} mi` : '—', `veíc·km/dia na malha federal (VMDa ${vm.ano}, modelado)`));
+    if (ac) {
+      tiles.push(tile('kpi-acid', IM.fmtInt(k.acidAno), `acidentes/ano (PRF ${anosLabel(ac.anos)}, medido)`));
+      tiles.push(tile('kpi-mortos', IM.fmtInt(k.mortosAno), `mortos/ano (PRF ${anosLabel(ac.anos)}, medido)`));
+    }
+    if (!tiles.length) return '';
+    const f = [k.nPracas != null && fontePracas(), vm && fonte(tr, /VMDa/), ac && fonte(tr, /PRF/)].filter(Boolean);
+    return card('t-kpis', 'Tráfego e segurança em números', 'Praças medidas pela ANTT, volume modelado da malha federal e acidentes registrados pela PRF',
+      { wide: true, html: `<div class="kpis">${tiles.join('')}<\/div>`, fonte: f.join('; ') });
+  }
+
+  function rankingCard() {
+    if (!IM.pracasRanking(intel, 1).length) return '';
+    return card('t-rank', 'As 20 praças de maior VMD em 2025', 'Veículos por dia, dois sentidos; clique numa praça para abri-la no mapa',
+      { legend: Charts.legendHtml([['Leves', Charts.C.deep], ['Pesados', Charts.C.bright], ['Motos', Charts.C.grey]]),
+        fonte: fontePracas(), note: 'VMD 2025 = média diária dos meses com dado em 2025; contagem medida.' });
+  }
+
+  function serieCard(s) {
+    if (!s || !s.n) return '';
+    const per = `${IM.monthLabel(s.meses[0])} a ${IM.monthLabel(s.meses[s.meses.length - 1])}`;
+    return card('t-serie', `Tráfego mensal nas praças, ${per}`, 'VMD do mês somado (mil veíc./dia), leves × pesados',
+      { legend: Charts.legendHtml([['Leves', Charts.C.deep], ['Pesados', Charts.C.bright]]), fonte: fontePracas(),
+        note: `Entram só as ${IM.fmtInt(s.n)} praças (de ${IM.fmtInt(s.total)}) com os ${s.meses.length} meses completos, para a série não oscilar com praças que entram ou saem.` });
+  }
+
+  const ABCR_NOTE = 'Índice 1999 = 100, rodovias pedagiadas, não é volume.';
+  function abcrCards(a) {
+    if (!a || !Array.isArray(a.meses) || !a.meses.length) return '';
+    const f = fonte(intel.trafego, /ABCR/);
+    const per = `${IM.monthLabel(a.meses[0])} a ${IM.monthLabel(a.meses[a.meses.length - 1])}`;
+    return card('t-abcr', 'Índice ABCR de fluxo pedagiado', `Série mensal original, Brasil, ${per}`,
+      { legend: Charts.legendHtml([['Leves', Charts.C.deep], ['Pesados', Charts.C.bright], ['Total', Charts.C.grey]]), fonte: f, note: ABCR_NOTE }) +
+      card('t-saz', 'Perfil sazonal do Índice ABCR', `Média do índice total por mês do calendário, ${per}`, { fonte: f, note: ABCR_NOTE });
+  }
+
+  function acidCards() {
+    const ac = IM.acidOf(intel);
+    if (!ac || !ac.n) return '';
+    const f = fonte(intel.trafego, /PRF/), anos = anosLabel(ac.anos);
+    let out = card('t-uf', `Acidentes e mortos por UF, média ${anos}`, 'Por ano; cada trecho conta na UF do seu registro principal no SNV',
+      { wide: true, fonte: f, html: '<div class="duo"><div><h4 class="duo__title">Acidentes/ano<\/h4><div id="chart-t-uf-a"><\/div><\/div><div><h4 class="duo__title">Mortos/ano<\/h4><div id="chart-t-uf-m"><\/div><\/div><\/div>' });
+    if (IM.vmdaOf(intel)) {
+      out += card('t-taxa', 'As 15 BRs/UF com maior taxa de acidentes', `Acidentes por 10⁶ veíc·km, PRF ${anos} ÷ VMDa ${IM.vmdaOf(intel).ano}`,
+        { wide: true, fonte: `${f}; ${fonte(intel.trafego, /VMDa/)}`,
+          note: 'Só trechos com VMDa (modelado) e BR/UF com pelo menos 10 km somados; acidentes medidos, exposição modelada.' });
+    }
+    return out;
+  }
+
+  // ---------- Desenho ----------
+  // linesSvg com x = ano + (mês - 1)/12: rótulos do eixo e dicas reescritos como "mmm/aaaa".
+  function monthlyLines(series, o) {
+    return Charts.linesSvg(series, o)
+      .replace(/(text-anchor="middle" fill="[^"]+">)(\d{4}(?:\.\d+)?)(<\/text>)/g, (_, a, x, b) => `${a}${IM.monthLabel(ymOfX(Number(x)))}${b}`)
+      .replace(/<title>(\S+) (\d{4}(?:\.\d+)?):/g, (_, n, x) => `<title>${n} ${IM.monthLabel(ymOfX(Number(x)))}:`)
+      .replace(/ r="4" fill=/g, ' r="2.5" fill='); // 120 meses: pontos menores (a dica continua em cada ponto)
+  }
+
+  function draw(s) {
+    const rk = box('t-rank');
+    if (rk) {
+      const list = IM.pracasRanking(intel, 20);
+      rk.innerHTML = IM.hstackSvg(list.map(p => ({ k: p.i, label: `${p.nome} · ${IM.rodLabel(p.br, p.uf)}${p.uf ? `/${p.uf}` : ''}`, parts: [p.leves, p.pesados, p.moto],
+        detail: `VMD ${IM.fmtInt(p.vmd)}` })), { width: width(rk), labelWidth: 280, names: ['Leves', 'Pesados', 'Motos'], colors: [Charts.C.deep, Charts.C.bright, Charts.C.grey],
+        format: v => IM.fmtInt(v), unit: 'veíc./dia', clickable: true, title: 'As 20 praças de maior VMD em 2025' });
+      onRows(rk, openPraca);
+    }
+    const se = box('t-serie');
+    if (se) {
+      const lab = m => { const { y, m: mm } = ym(m); return `${MES[mm - 1]}/${String(y).slice(-2)}`; };
+      se.innerHTML = Charts.stackedSvg(s.meses.map((m, k) => ({ label: lab(m), parts: [s.l[k] / 1000, s.p[k] / 1000] })),
+        { width: width(se), names: ['Leves', 'Pesados'], unit: 'mil veíc./dia', format: v => IM.fmtInt(v), title: 'Tráfego mensal nas praças' })
+        .replace(/<title>(\w{3})\/(\d{2}) ·/g, (_, m, y) => `<title>${m}/20${y} ·`);
+    }
+    const a = intel.trafego && intel.trafego.abcr;
+    const ab = box('t-abcr');
+    if (ab) {
+      const pts = key => a.meses.map((m, k) => ({ x: xOfYm(m), y: a[key] ? a[key][k] : null }));
+      ab.innerHTML = monthlyLines([{ name: 'Leves', points: pts('leves') }, { name: 'Pesados', points: pts('pesados') }, { name: 'Total', points: pts('total'), dash: true }],
+        { width: width(ab), format: v => IM.fmtDec(v, 1), title: 'Índice ABCR' });
+    }
+    const sz = box('t-saz');
+    if (sz) {
+      const v = IM.abcrSazonal(a, 'total');
+      Charts.bars(sz, MES.map((m, i) => ({ label: m, value: v[i] })), { format: x => IM.fmtDec(x, 1), title: 'Perfil sazonal do Índice ABCR' });
+    }
+    const ua = document.getElementById('chart-t-uf-a'), um = document.getElementById('chart-t-uf-m');
+    if (ua && um) {
+      const list = IM.acidentesPorUf(intel, snv);
+      const one = (el, key, color, name) => {
+        el.innerHTML = IM.hstackSvg(list.map(u => ({ label: u.uf, parts: [u[key]] })),
+          { width: width(el), rh: 24, labelWidth: 48, names: [name], colors: [color], format: x => IM.fmtInt(x), title: name });
+      };
+      one(ua, 'acidAno', Charts.C.deep, 'Acidentes/ano');
+      one(um, 'mortosAno', Charts.C.bright, 'Mortos/ano');
+    }
+    const tx = box('t-taxa');
+    if (tx) {
+      tx.innerHTML = IM.hstackSvg(IM.taxaPorBrUf(intel, snv, { minKm: 10, n: 15 }).map(r => ({ label: `${r.br}/${r.uf}`, parts: [r.taxa],
+        detail: `${IM.fmtDec(r.km, 1)} km com VMDa · ${IM.fmtDec(r.acidAno, 1)} acidentes/ano` })),
+        { width: width(tx), labelWidth: 120, names: ['Taxa'], colors: [Charts.C.deep], format: x => IM.fmtDec(x, 2), unit: 'por 10⁶ veíc·km', title: 'Taxa de acidentes por BR/UF' });
+    }
+  }
+
+  function render() {
+    const el = document.getElementById('page-trafego');
+    const s = IM.pracasSerie(intel);
+    const cards = [kpisCard(), rankingCard(), serieCard(s), abcrCards(intel.trafego && intel.trafego.abcr), acidCards()].join('');
+    el.innerHTML = `<div class="page__inner">
+      <h1 class="page__title">Tráfego nas rodovias federais<\/h1>
+      <p class="page__lead">Contagens medidas nas praças de pedágio (ANTT), volume estimado por modelo para toda a malha (VMDa), acidentes registrados pela PRF e o Índice ABCR. Cada cartão diz a fonte, o período e se o dado é medido ou modelado; passe o mouse nos gráficos para ver os valores.<\/p>
+      ${cards ? `<div class="grid-cards">${cards}<\/div>` : '<p class="empty">Os dados de tráfego (blocos trafego e antt) não estão neste arquivo.<\/p>'}<\/div>`;
+    if (cards) draw(s);
+  }
+
+  function init(intelData, snvData) {
+    if (built) return;
+    built = true;
+    intel = intelData || {}; snv = snvData;
+    render();
+  }
+
+  return { init, openPraca };
+})();
+
+;
+// Aba Cargas: produção agrícola (IBGE PAM, medido), armazenagem, exportação (Comex Stat), fluxos ferroviários (SIADE),
+// fretes rodoviários (CONAB) e carga agrícola modelada por trecho (PNL). Mesmo padrão da aba Mercado; cada cartão só com o seu bloco.
+const Cargas = (() => {
+  const IM = IntelModel;
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const fonte = IM.fonteTipo;
+  const GRAOS = ['Soja', 'Milho'];
+  const FRETE_COLS = [ // [chave, rótulo, numérica]
+    ['origem', 'Origem', false], ['uf_o', 'UF', false], ['destino', 'Destino', false], ['uf_d', 'UF', false],
+    ['km', 'km', true], ['rs_t', 'R$/t', true], ['rs_tkm', 'R$/t·km', true],
+  ];
+  let intel = null, snv = null, built = false, sh4 = null;
+  const frete = { uf: '', key: 'rs_t', dir: 'desc' };
+
+  function card(id, title, sub, o = {}) {
+    return `<article class="ccard${o.wide ? ' ccard--wide' : ''}" id="card-${id}">
+      <h3>${esc(title)}<\/h3>${sub ? `<p class="sub">${esc(sub)}<\/p>` : ''}
+      ${o.legend || ''}<div class="chart-box" id="chart-${id}">${o.html || ''}<\/div>
+      ${o.note ? `<p class="src">${esc(o.note)}<\/p>` : ''}<p class="src">Fonte: ${esc(o.fonte || '—')}<\/p><\/article>`;
+  }
+  const tile = (id, value, label) => `<div class="kpi-tile" id="${id}"><b>${esc(value)}<\/b><span>${esc(label)}<\/span><\/div>`;
+  const box = id => document.getElementById('chart-' + id);
+  const width = el => Math.max(320, (el && el.clientWidth) || 640);
+  const mt = t => (IM.has(t) ? IM.fmtDec(t / 1e6, 2) : '—');
+  const agro = () => intel.agro || null, mm = () => intel.multimodal || null;
+  const pam = () => fonte(agro(), /PAM/), est = () => fonte(agro(), /Estoques/);
+
+  function onRows(el, fn) {
+    el.addEventListener('click', ev => { const g = ev.target.closest('[data-k]'); if (g && el.contains(g)) fn(Number(g.dataset.k)); });
+    el.addEventListener('keydown', ev => {
+      const g = ev.target.closest('[data-k]');
+      if (g && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); fn(Number(g.dataset.k)); }
+    });
+  }
+
+  // ---------- Navegação para o mapa ----------
+  // Liga o fundo Soja (pelo rádio do painel, que também desenha a legenda), enquadra e abre o município k.
+  function openMun(k) {
+    const mu = intel.municipios, id = mu.ids[k], c = mu.centro && mu.centro[k];
+    Tabs.goThen('#mapa', () => {
+      MapView.invalidate();
+      const radio = document.querySelector('#layers-section input[name="fundo"][value="soja"]');
+      if (radio) { radio.checked = true; radio.dispatchEvent(new Event('change', { bubbles: true })); } else Layers.setFundo('soja');
+      if (c) MapView.map.fitBounds(L.latLngBounds([[c[1] - 0.4, c[0] - 0.4], [c[1] + 0.4, c[0] + 0.4]]),
+        { paddingTopLeft: [64, 64], paddingBottomRight: [424, 64], maxZoom: 8, animate: false });
+      Layers.open('mun', id);
+    });
+  }
+
+  function openFis(j) {
+    Tabs.goThen('#mapa', () => {
+      MapView.invalidate();
+      MapView.fitTo([j]);
+      MapView.map.panBy([188, 0], { animate: false }); // o cartão ocupa a direita
+      MapView.pick(j);
+    });
+  }
+
+  // ---------- Cartões ----------
+  function kpisCard() {
+    const k = IM.cargasKpis(intel), a = agro(), tiles = [];
+    if (a) {
+      tiles.push(tile('kpi-soja', IM.fmtT(k.soja), `de soja em ${a.ano} (PAM)`));
+      tiles.push(tile('kpi-milho', IM.fmtT(k.milho), `de milho em ${a.ano}, 1ª + 2ª safra (PAM)`));
+      tiles.push(tile('kpi-cana', IM.fmtT(k.cana), `de cana-de-açúcar em ${a.ano} (PAM)`));
+      if (a.armazenagem) tiles.push(tile('kpi-arm', IM.fmtT(k.cap), `de capacidade de armazenagem, ${a.armazenagem.periodo}`));
+    }
+    const e = mm() && mm().exportacao;
+    if (k.expSoja != null) tiles.push(tile('kpi-exp-soja', IM.fmtT(k.expSoja), `de soja exportada em ${e.ano} (Comex Stat)`));
+    if (k.expMilho != null) tiles.push(tile('kpi-exp-milho', IM.fmtT(k.expMilho), `de milho exportado em ${e.ano} (Comex Stat)`));
+    if (!tiles.length) return '';
+    const f = [a && pam(), a && a.armazenagem && est(), e && fonte(mm(), /Comex/)].filter(Boolean);
+    return card('c-kpis', 'Cargas agrícolas em números', 'Produção, armazenagem e exportação, todas medidas', { wide: true, html: `<div class="kpis">${tiles.join('')}<\/div>`, fonte: f.join('; ') });
+  }
+
+  function prodCard() {
+    if (!IM.producaoPorUf(intel).length) return '';
+    return card('c-uf', `Produção de soja e milho por UF, ${agro().ano}`, 'As 15 maiores UFs em cada produto, em toneladas', { wide: true, fonte: pam(),
+      html: `<div class="duo"><div><h4 class="duo__title">Soja<\/h4><div id="chart-c-uf-s"><\/div><\/div>
+        <div><h4 class="duo__title">Milho<\/h4>${Charts.legendHtml([['1ª safra', Charts.C.deep], ['2ª safra', Charts.C.bright]])}<div id="chart-c-uf-m"><\/div><\/div><\/div>` });
+  }
+
+  function munCard() {
+    if (!IM.topMunicipios(intel, 'soja', 1).length) return '';
+    return card('c-mun', `Os 20 maiores municípios produtores de soja, ${agro().ano}`, 'Toneladas; clique num município para vê-lo no mapa com o fundo Soja', { fonte: pam() });
+  }
+
+  function siadeCard() {
+    if (!IM.siadePares(intel, GRAOS, 1).length) return '';
+    return card('c-siade', 'Fluxos ferroviários de grãos', 'Os 15 maiores pares origem → destino de soja e milho, toneladas úteis no ano',
+      { legend: Charts.legendHtml([['Soja', Charts.C.deep], ['Milho', Charts.C.bright]]), fonte: fonte(mm(), /SIADE/),
+        note: 'Pares por estação ferroviária; açúcar, farelo de soja e fertilizantes ficam de fora.' });
+  }
+
+  function expCard() {
+    const prods = IM.exportProdutos(intel);
+    if (!prods.length) return '';
+    if (!sh4 || !prods.some(p => p.sh4 === sh4)) sh4 = (prods.find(p => p.sh4 === '1201') || prods[0]).sh4;
+    const e = mm().exportacao;
+    return card('c-exp', `Exportação ${e.ano} por URF de despacho`, 'As 12 maiores unidades da Receita no despacho do produto escolhido, e de onde vem a mercadoria', {
+      wide: true, fonte: fonte(mm(), /Comex/), note: 'A URF é a unidade da Receita onde a exportação foi despachada, não necessariamente o ponto de saída rodoviário; UF = origem da mercadoria.',
+      legend: `<div class="toolbar"><label class="sub" for="exp-sh4">Produto<\/label><select id="exp-sh4">${prods.map(p =>
+        `<option value="${esc(p.sh4)}"${p.sh4 === sh4 ? ' selected' : ''}>${esc(p.nome)} (SH4 ${esc(p.sh4)})<\/option>`).join('')}<\/select><\/div>`,
+      html: '<div id="chart-c-exp-bars"><\/div><h4 class="duo__title">Matriz UF de origem × URF de despacho (Mt)<\/h4><div class="table-wrap table-wrap--x" id="chart-c-exp-mat"><\/div>' });
+  }
+
+  function fretesCard() {
+    const r = IM.fretesRows(intel);
+    if (!r.length) return '';
+    const ufs = [...new Set(r.map(x => x.uf_o).filter(Boolean))].sort();
+    return card('c-fretes', `Fretes rodoviários de grãos, ${mm().fretes.mes}`, 'Clique no cabeçalho para ordenar; R$/t·km = R$/t ÷ distância', {
+      wide: true, fonte: fonte(mm(), /CONAB/), note: '"Origem aproximada": no boletim, a origem vem numa célula mesclada e foi atribuída por proximidade.',
+      legend: `<div class="toolbar"><label class="sub" for="frete-uf">UF de origem<\/label><select id="frete-uf"><option value="">Todas<\/option>${ufs.map(u => `<option>${esc(u)}<\/option>`).join('')}<\/select>
+        <span class="page__src" id="frete-n"><\/span><\/div>`,
+      html: '<div class="table-wrap" style="max-height:480px"><table class="grid" id="frete-table"><\/table><\/div>' });
+  }
+
+  function cargaCard() {
+    const c = IM.cargaOf(intel);
+    if (!c || !IM.cargaTop(intel, snv, 1).length) return '';
+    return card('c-pnl', 'Trechos com maior carga agrícola', `Os 15 trechos físicos com mais granel sólido agrícola, t/ano (${c.cenario || 'PNL 2035'}, ano-base ${c.ano_base}); clique para ver no mapa`,
+      { wide: true, fonte: fonte(c, /PNL/), note: 'Estimativa de modelo de alocação em rede, não contagem.' });
+  }
+
+  // ---------- Desenho ----------
+  function drawExp() {
+    const bars = document.getElementById('chart-c-exp-bars'), mat = document.getElementById('chart-c-exp-mat');
+    if (!bars) return;
+    const nome = (IM.exportProdutos(intel).find(p => p.sh4 === sh4) || {}).nome || sh4;
+    bars.innerHTML = IM.hstackSvg(IM.exportPorUrf(intel, sh4, 12).map(u => ({ label: u.urf, parts: [u.t] })),
+      { width: width(bars), labelWidth: 280, names: [nome], colors: [Charts.C.deep], format: v => IM.fmtT(v), title: `Exportação de ${nome} por URF` });
+    bars.dataset.sh4 = sh4;
+    const m = IM.exportMatriz(intel, sh4, 10, 8);
+    mat.innerHTML = `<table class="grid grid--static"><thead><tr><th>UF<\/th>${m.urfs.map(u => `<th class="num">${esc(u)}<\/th>`).join('')}<\/tr><\/thead><tbody>${
+      m.ufs.map((uf, a) => `<tr><td>${esc(uf)}<\/td>${m.m[a].map(v => `<td class="num">${v == null ? '—' : mt(v)}<\/td>`).join('')}<\/tr>`).join('')}<\/tbody><\/table>`;
+  }
+
+  function drawFretes() {
+    const t = document.getElementById('frete-table');
+    if (!t) return;
+    const all = IM.fretesRows(intel), list = ConcModel.sortRows(all.filter(r => !frete.uf || r.uf_o === frete.uf), frete.key, frete.dir);
+    const num = (v, d) => (IM.has(v) ? IM.fmtDec(v, d) : '—');
+    t.innerHTML = `<thead><tr>${FRETE_COLS.map(([k, l, n]) => `<th class="${n ? 'num' : ''}"${k === frete.key ? ` aria-sort="${frete.dir === 'asc' ? 'ascending' : 'descending'}"` : ''}>
+        <button type="button" data-fsort="${k}">${esc(l)}${k === frete.key ? (frete.dir === 'asc' ? ' ↑' : ' ↓') : ''}<\/button><\/th>`).join('')}<\/tr><\/thead>
+      <tbody>${list.map(r => `<tr class="is-static" data-rst="${IM.has(r.rs_t) ? r.rs_t : ''}"><td>${esc(r.origem)}${r.aprox ? ' <span class="tag-nv">origem aproximada<\/span>' : ''}<\/td><td>${esc(r.uf_o || '—')}<\/td>
+        <td>${esc(r.destino)}<\/td><td>${esc(r.uf_d || '—')}<\/td><td class="num">${num(r.km, 0)}<\/td><td class="num">${num(r.rs_t, 2)}<\/td><td class="num">${num(r.rs_tkm, 3)}<\/td><\/tr>`).join('')}<\/tbody>`;
+    document.getElementById('frete-n').textContent = `${IM.fmtInt(list.length)} de ${IM.fmtInt(all.length)} rotas`;
+  }
+
+  function drawCarga() {
+    const el = box('c-pnl');
+    if (!el) return;
+    const list = IM.cargaTop(intel, snv, 15), max = list.length ? list[0].gsa : 1;
+    el.innerHTML = `<div class="table-wrap table-wrap--static"><table class="grid grid--static grid--rows" id="pnl-table"><thead><tr><th>BR/UF<\/th><th>Trecho (início → fim)<\/th><th class="num">t/ano<\/th><th><span class="visually-hidden">Proporção<\/span><\/th><\/tr><\/thead><tbody>${
+      list.map(r => `<tr tabindex="0" data-k="${r.j}" title="Ver no mapa"><td class="name">${esc(r.br)}/${esc(r.uf)}<\/td><td class="wrap">${esc(r.ini)} → ${esc(r.fim)}<\/td>
+        <td class="num">${IM.fmtInt(r.gsa)}<\/td><td class="bar-cell"><span style="width:${(r.gsa / max * 100).toFixed(1)}%"><\/span><\/td><\/tr>`).join('')}<\/tbody><\/table><\/div>`;
+    onRows(el, openFis);
+  }
+
+  function draw() {
+    const us = document.getElementById('chart-c-uf-s'), um = document.getElementById('chart-c-uf-m');
+    if (us && um) {
+      const list = IM.producaoPorUf(intel);
+      const top = f => [...list].sort((a, b) => f(b) - f(a)).slice(0, 15);
+      us.innerHTML = IM.hstackSvg(top(u => u.soja).map(u => ({ label: u.uf, parts: [u.soja] })),
+        { width: width(us), rh: 24, labelWidth: 48, names: ['Soja'], colors: [Charts.C.deep], format: v => IM.fmtT(v), title: 'Soja por UF' });
+      um.innerHTML = IM.hstackSvg(top(u => u.milho1 + u.milho2).map(u => ({ label: u.uf, parts: [u.milho1, u.milho2] })),
+        { width: width(um), rh: 24, labelWidth: 48, names: ['1ª safra', '2ª safra'], colors: [Charts.C.deep, Charts.C.bright], format: v => IM.fmtT(v), title: 'Milho por UF' });
+    }
+    const mu = box('c-mun');
+    if (mu) {
+      mu.innerHTML = IM.hstackSvg(IM.topMunicipios(intel, 'soja', 20).map(m => ({ k: m.k, label: `${m.nome}/${m.uf}`, parts: [m.v] })),
+        { width: width(mu), labelWidth: 220, names: ['Soja'], colors: [Charts.C.deep], format: v => IM.fmtT(v), clickable: true, title: 'Maiores municípios produtores de soja' });
+      onRows(mu, openMun);
+    }
+    const si = box('c-siade');
+    if (si) {
+      si.innerHTML = IM.hstackSvg(IM.siadePares(intel, GRAOS, 15).map(p => ({ label: `${p.o}/${p.uo} → ${p.d}/${p.ud}`, parts: p.parts })),
+        { width: width(si), labelWidth: 300, names: GRAOS, colors: [Charts.C.deep, Charts.C.bright], format: v => IM.fmtT(v), title: 'Fluxos ferroviários de grãos' });
+    }
+    drawExp();
+    const sel = document.getElementById('exp-sh4');
+    if (sel) sel.addEventListener('change', ev => { sh4 = ev.target.value; drawExp(); });
+    drawFretes();
+    const ft = document.getElementById('frete-table');
+    if (ft) {
+      ft.addEventListener('click', ev => {
+        const b = ev.target.closest('[data-fsort]');
+        if (!b) return;
+        const k = b.dataset.fsort, numeric = FRETE_COLS.find(c => c[0] === k)[2];
+        if (frete.key === k) frete.dir = frete.dir === 'asc' ? 'desc' : 'asc';
+        else { frete.key = k; frete.dir = numeric ? 'desc' : 'asc'; }
+        drawFretes();
+      });
+      document.getElementById('frete-uf').addEventListener('change', ev => { frete.uf = ev.target.value; drawFretes(); });
+    }
+    drawCarga();
+  }
+
+  function render() {
+    const el = document.getElementById('page-cargas');
+    const cards = [kpisCard(), prodCard(), munCard(), siadeCard(), expCard(), fretesCard(), cargaCard()].join('');
+    el.innerHTML = `<div class="page__inner">
+      <h1 class="page__title">Cargas agrícolas e logística<\/h1>
+      <p class="page__lead">Onde se produz (IBGE PAM e Estoques), por onde se exporta (Comex Stat), o que vai de trem (SIADE), quanto custa o frete rodoviário (CONAB) e quais trechos federais carregam mais grãos segundo o modelo do PNL. Cada cartão diz a fonte, o período e se o dado é medido ou modelado.<\/p>
+      ${cards ? `<div class="grid-cards">${cards}<\/div>` : '<p class="empty">Os dados de cargas (blocos agro, multimodal e carga) não estão neste arquivo.<\/p>'}<\/div>`;
+    if (cards) draw();
+  }
+
+  function init(intelData, snvData) {
+    if (built) return;
+    built = true;
+    intel = intelData || {}; snv = snvData;
+    render();
+  }
+
+  return { init, openMun, openFis };
+})();
+
+;
 // Aba Mercado: séries do RoadShow em gráficos SVG próprios.
 const Mercado = (() => {
   const nf0 = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
@@ -3606,6 +4292,61 @@ const Regulatorio = (() => {
       const s = conc.estudos[Number(b.dataset.estudo)];
       UI.showOnMap(`Estudo pós-2027 BR-${s.brs.join('/')}/${s.ufs.join('/')}`, s.fis);
     }));
+  }
+
+  return { init };
+})();
+
+;
+// Aba Fontes: de onde vem cada número (INTEL.fontes), as bases congeladas da v1/v2 e o que não foi possível obter neste ambiente.
+const Fontes = (() => {
+  const IM = IntelModel;
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const BLOCO = { trafego: 'Tráfego', antt: 'ANTT', carga: 'Carga (PNL)', agro: 'Agro', municipios: 'Municípios', multimodal: 'Multimodal',
+    pipeline: 'Pipeline', estaduais: 'Estaduais' };
+  const TIPO = { medido: 'Medido', modelado: 'Modelado' };
+  let built = false;
+
+  const txt = v => (v == null || v === '' ? '—' : esc(v));
+  const link = (url, nome) => (url ? `<a class="link-btn" href="${esc(url)}" target="_blank" rel="noopener">${esc(nome || url)}<\/a>` : txt(nome));
+
+  function tabela(id, rows, cols) {
+    return `<div class="table-wrap table-wrap--static"><table class="grid grid--static fontes-table" id="${id}">
+      <thead><tr>${cols.map(c => `<th>${esc(c[0])}<\/th>`).join('')}<\/tr><\/thead>
+      <tbody>${rows.map(r => `<tr>${cols.map(c => `<td${c[2] ? ` class="${c[2]}"` : ''}>${c[1](r)}<\/td>`).join('')}<\/tr>`).join('')}<\/tbody><\/table><\/div>`;
+  }
+
+  function render(intel) {
+    const el = document.getElementById('page-fontes');
+    const d = IM.fontesData(intel);
+    const head = `<h1 class="page__title">Fontes dos dados<\/h1>
+      <p class="page__lead">Cada número do Centro de Inteligência vem de uma fonte pública listada aqui, com o período coberto, a data em que foi baixada e a licença. Tudo está embutido neste arquivo: nada é consultado na internet ao abri-lo.<\/p>
+      <div class="fontes-nota"><h2 class="fontes-h2">Medido × modelado<\/h2>
+        <p><b>Medido<\/b> é contagem ou registro do mundo real: veículos que passaram nas praças de pedágio e nos equipamentos SAT da ANTT, acidentes registrados pela PRF, produção declarada ao IBGE, exportações despachadas na Receita, toneladas transportadas nas ferrovias. <b>Modelado<\/b> é estimativa de um modelo de transporte: o VMDa da Infra S.A. (volume diário em trechos sem contagem) e a carga agrícola do PNL 2035 (alocação de fluxos na rede, ano-base 2017). Os dois servem para comparar trechos, mas só o medido é observação; os cartões e as legendas sempre dizem qual é qual.<\/p>
+        <p><b>Acesso<\/b> é a data em que o arquivo foi baixado da fonte para montar este mapa (dd/mm/aaaa). O dado pode ter sido atualizado na origem depois disso.<\/p><\/div>`;
+    if (!d) {
+      el.innerHTML = `<div class="page__inner">${head}<p class="empty">A lista de fontes (bloco fontes) não está neste arquivo.<\/p><\/div>`;
+      return;
+    }
+    const fontes = tabela('fontes-table', d.fontes, [
+      ['Bloco', r => txt(BLOCO[r.bloco] || r.bloco)], ['Fonte', r => link(r.url, r.nome), 'wrap fontes-nome'], ['Período', r => txt(r.periodo), 'wrap'],
+      ['Acesso', r => esc(IM.fmtDia(r.acesso))], ['Licença', r => txt(r.licenca), 'wrap'], ['Tipo', r => txt(TIPO[r.tipo] || null)], ['Nota', r => txt(r.nota), 'wrap fontes-nota-col'],
+    ]);
+    const base = d.base.length ? `<h2 class="fontes-h2" id="fontes-base">Bases da v1/v2<\/h2>
+      <p class="page__src">Malha federal (SNV) e programa de concessões (RoadShow), congelados no arquivo desde as primeiras versões.<\/p>
+      ${tabela('fontes-base-table', d.base, [['Fonte', r => link(r.url, r.nome), 'wrap fontes-nome'], ['Período', r => txt(r.periodo), 'wrap'],
+        ['Acesso', r => esc(IM.fmtDia(r.acesso))], ['Licença', r => txt(r.licenca), 'wrap'], ['Nota', r => txt(r.nota), 'wrap fontes-nota-col']])}` : '';
+    const indisp = d.indisponiveis.length ? `<h2 class="fontes-h2" id="fontes-indisp">Não disponíveis neste ambiente<\/h2>
+      <p class="page__src">Fontes procuradas que não responderam ou não têm arquivo aberto; o que foi usado no lugar está no motivo.<\/p>
+      ${tabela('fontes-indisp-table', d.indisponiveis, [['Fonte', r => link(r.url, r.nome), 'wrap fontes-nome'], ['Motivo', r => txt(r.motivo), 'wrap fontes-nota-col']])}` : '';
+    el.innerHTML = `<div class="page__inner">${head}
+      <h2 class="fontes-h2" id="fontes-lista">Fontes da v3 <span class="page__src">(${IM.fmtInt(d.fontes.length)})<\/span><\/h2>${fontes}${base}${indisp}<\/div>`;
+  }
+
+  function init(intel) {
+    if (built) return;
+    built = true;
+    render(intel || null);
   }
 
   return { init };
@@ -4383,9 +5124,10 @@ const UI = (() => {
 })();
 
 ;
-// Abas (Mapa | Projetos | Mercado | Regulatório) e ficha, roteadas por #hash (funciona em file://).
+// Abas (Mapa | Projetos | Tráfego | Cargas | Mercado | Regulatório | Fontes) e ficha, roteadas por #hash (funciona em file://).
 const Tabs = (() => {
-  const TABS = [['mapa', 'Mapa'], ['projetos', 'Projetos'], ['mercado', 'Mercado'], ['regulatorio', 'Regulatório']];
+  const TABS = [['mapa', 'Mapa'], ['projetos', 'Projetos'], ['trafego', 'Tráfego'], ['cargas', 'Cargas'],
+    ['mercado', 'Mercado'], ['regulatorio', 'Regulatório'], ['fontes', 'Fontes']];
   const inits = {};
   const started = new Set();
   let active = 'mapa', prevHash = '#mapa', fichaValid = () => false;
@@ -4442,6 +5184,13 @@ const Tabs = (() => {
     init, route,
     on(tab, fn) { inits[tab] = fn; if (active === tab && !started.has(tab) && document.getElementById('tabs').children.length) { started.add(tab); fn(); } },
     go(r) { if (location.hash === r) route(); else location.hash = r; },
+    // Vai para a aba e roda fn quando ela está exibida (hashchange é assíncrono); usado para abrir algo no mapa.
+    goThen(r, fn) {
+      const tab = parse(r).tab;
+      this.go(r);
+      const wait = (n = 0) => requestAnimationFrame(() => (active === tab || n > 60 ? fn() : wait(n + 1)));
+      wait();
+    },
     back() { location.hash = prevHash; },
     current() { return Object.assign(parse(location.hash), { active }); },
   };
@@ -4457,8 +5206,11 @@ const Tabs = (() => {
   UI.init(snv, Model.createIndex(snv), conc, intel);
   Ficha.init(conc, intel, snv);
   Tabs.on('projetos', () => Projetos.init(conc, intel));
+  Tabs.on('trafego', () => Trafego.init(intel, snv));
+  Tabs.on('cargas', () => Cargas.init(intel, snv));
   Tabs.on('mercado', () => Mercado.init(conc));
   Tabs.on('regulatorio', () => Regulatorio.init(conc));
+  Tabs.on('fontes', () => Fontes.init(intel));
   Tabs.init({ isFicha: id => Ficha.exists(id) });
 })();
 
