@@ -1,6 +1,7 @@
 """Pipeline de concessões rodoviárias (federal e estadual): data/intel/pipeline.csv → data/intel/pipeline.json.
 
-`pipeline.csv` é a única fonte curada e editável (versionada): edita-se à mão a cada versão da carteira do MT e o JSON
+`pipeline.csv` é a única fonte curada e editável (versionada): edita-se à mão a cada versão da carteira do Ministério
+dos Transportes e o JSON
 é regenerado por `build()`, que valida cada linha. A conversão do rascunho bruto (data/raw/pipeline/
 pipeline_rascunho.csv, 63 linhas) para o contrato foi uma migração única, já feita; não há código que a refaça.
 
@@ -9,7 +10,8 @@ Colunas do CSV (as do contrato mais `estudo`):
   ERS-010); vazio quando a fonte não detalha as rodovias.
 - `status`: chave do contrato (STATUS). `verificado`: `true` quando a fonte citada em `fonte_url` é página ou
   documento oficial (gov.br, ANTT, BNDES Hub, agência estadual, B3, TCU); `false` quando é só imprensa.
-- `ent`: id de entidade de data/base/conc.json, ou vazio.
+- `ent`: id de entidade federal de data/base/conc.json (item federal) ou de concessão estadual de
+  data/intel/estaduais.json (item estadual, ex.: RS Bloco 3 → rs-caminhos-da-serra-gaucha), ou vazio.
 - `estudo` (campo extra do contrato): índice base 0 em conc.json `estudos`, só para os 27 estudos pós-2027, que não têm
   entidade (então `ent` fica vazio); null nos demais itens.
 - `km`: número > 0, ou vazio quando a fonte não informa.
@@ -17,8 +19,9 @@ Colunas do CSV (as do contrato mais `estudo`):
   - edital, leilao_agendado, tcu, consulta_publica, estudo (e suspenso/cancelado, quando houver): data do leilão;
   - leiloado: data da assinatura do contrato (prevista);
   - contrato: data da assinatura do contrato (efetiva).
-  Quando o item tem `ent`, a data segue data/base/conc.json (`leilao`, `assinatura`, `assinatura_aditivo`) para
-  coincidir com as demais abas; divergências de outras fontes (ex.: BNDES Hub) ficam em `obs`.
+  Quando o item tem `ent`, a data segue data/base/conc.json (`leilao`, `assinatura`, `assinatura_aditivo`) ou a ficha
+  estadual (`assinatura`) para coincidir com as demais abas; divergências de outras fontes (ex.: BNDES Hub) ficam em
+  `obs`. O `km` de item com ficha estadual é o `km_decl` da ficha.
 - `obs`: texto exibido ao usuário; fatos em linguagem direta.
 
 Uso: python scripts/intel/pipeline.py [fetch|build|all]
@@ -39,6 +42,7 @@ RAW_DIR = RAW / DOMINIO
 CSV = ROOT / "data" / "intel" / "pipeline.csv"
 OUT = ROOT / "data" / "intel" / "pipeline.json"
 CONC = ROOT / "data" / "base" / "conc.json"
+ESTADUAIS = ROOT / "data" / "intel" / "estaduais.json"
 ACESSO = "2026-10-20"
 
 STATUS = [
@@ -120,10 +124,15 @@ def _lista(v):
     return [x.strip() for x in v.split(";") if x.strip()]
 
 
-def item_de_linha(r, ents, n_estudos):
-    """Linha do CSV → item do contrato; levanta ValueError em valor fora do contrato."""
+def item_de_linha(r, ents, n_estudos, ents_est=frozenset()):
+    """Linha do CSV → item do contrato; levanta ValueError em valor fora do contrato. `ents`: ids federais
+    (conc.json); `ents_est`: ids das concessões estaduais (estaduais.json), válidos só em item estadual."""
     def erro(msg):
         raise ValueError(f"{r.get('id')}: {msg}")
+
+    # vírgula fora de aspas desloca as colunas: o DictReader guarda o excesso em None (ou deixa colunas faltando)
+    if None in r or any(r.get(c) is None for c in COLUNAS):
+        erro(f"linha com {len(COLUNAS)} colunas esperadas, veio outra contagem (vírgula sem aspas?)")
 
     if r["status"] not in CHAVES:
         erro(f"status inválido {r['status']!r}")
@@ -132,8 +141,10 @@ def item_de_linha(r, ents, n_estudos):
     if r["verificado"] not in ("true", "false"):
         erro(f"verificado deve ser true/false, veio {r['verificado']!r}")
     ent = r["ent"] or None
-    if ent is not None and ent not in ents:
-        erro(f"ent {ent!r} não existe em conc.json")
+    if ent is not None and ent not in ents and ent not in ents_est:
+        erro(f"ent {ent!r} não existe em conc.json nem em estaduais.json")
+    if ent in ents_est and r["esfera"] != "estadual":
+        erro(f"ent estadual {ent!r} em item {r['esfera']}")
     estudo = None
     if r["estudo"] != "":
         if not r["estudo"].isdigit() or int(r["estudo"]) >= n_estudos:
@@ -173,11 +184,13 @@ def item_de_linha(r, ents, n_estudos):
     }
 
 
-def montar(csv_path=CSV, conc_path=CONC):
+def montar(csv_path=CSV, conc_path=CONC, est_path=ESTADUAIS):
     conc = json.loads(Path(conc_path).read_text(encoding="utf-8"))
     ents = {e["id"] for e in conc["entidades"]}
+    est = Path(est_path)
+    ents_est = {e["id"] for e in json.loads(est.read_text(encoding="utf-8"))["entidades"]} if est.exists() else set()
     with open(csv_path, encoding="utf-8", newline="") as f:
-        itens = [item_de_linha(r, ents, len(conc["estudos"])) for r in csv.DictReader(f)]
+        itens = [item_de_linha(r, ents, len(conc["estudos"]), ents_est) for r in csv.DictReader(f)]
     return {"fonte": FONTE, "itens": itens, "status": [{"key": k, "label": v} for k, v in STATUS]}
 
 

@@ -37,6 +37,7 @@ const Projetos = (() => {
   const filt = { estado: new Set(), uf: new Set(), ano: new Set(), tipo: new Set(), q: '', esfera: new Set() };
   let pipe = [];
   const pfilt = { esfera: new Set(), status: new Set() };
+  const pobs = new Set(); // ids com a observação aberta (sobrevive aos filtros)
 
   const label = k => (conc.estados.concat(IM.EST_ESTADOS).find(s => s.key === k) || {}).label || k;
 
@@ -125,7 +126,7 @@ const Projetos = (() => {
     return `<section id="pipeline" class="pipeline">
       <h2 class="page__title" style="font-size:22px;margin-top:40px">Pipeline</h2>
       <p class="page__lead">Próximos passos de concessões federais e estaduais (estudo, consulta pública, TCU/TCE, edital, leilão), por data prevista; sem data no fim.
-        Itens com a etiqueta “não verificado” vêm de uma única fonte secundária. Clique numa linha com ficha para abri-la.</p>
+        Itens com a etiqueta “não verificado” vêm de uma única fonte secundária. Clique numa linha com ficha (federal ou estadual) para abri-la; “Observação” abre o detalhe do item.</p>
       <div class="toolbar">
         <select id="pipe-esfera" aria-label="Filtrar pipeline por esfera"><option value="">Todas as esferas</option><option value="federal">Federal</option><option value="estadual">Estadual</option></select>
         <span class="page__src" id="pipe-n"></span>
@@ -152,7 +153,7 @@ const Projetos = (() => {
       <tbody>${list.map(i => {
         const ficha = i.ent && Ficha.exists(i.ent);
         return `<tr${ficha ? ` tabindex="0" data-ent="${esc(i.ent)}"` : ' class="is-static"'} data-data="${esc(i.data_prevista || '')}">
-          <td class="name">${esc(i.nome)}</td><td>${esc(ESFERA[i.esfera] || dash)}</td><td>${esc((i.uf || []).join('/') || dash)}</td>
+          <td class="name">${esc(i.nome)}${i.obs ? `<details class="pipe-obs" data-obs="${esc(i.id)}"${pobs.has(i.id) ? ' open' : ''}><summary>Observação</summary><p>${esc(i.obs)}</p></details>` : ''}</td><td>${esc(ESFERA[i.esfera] || dash)}</td><td>${esc((i.uf || []).join('/') || dash)}</td>
           <td class="wrap">${esc((i.rodovias || []).join(', ') || dash)}</td><td class="num">${n(v => nf1.format(v), IM.has(i.km) ? i.km : null)}</td>
           <td>${esc(IM.statusLabel(intel, i.status))}</td><td>${esc(ConcModel.fmtData(i.data_prevista))}</td><td>${fonte(i)}</td></tr>`;
       }).join('')}</tbody>`;
@@ -198,7 +199,7 @@ const Projetos = (() => {
         renderPipeline();
         return;
       }
-      if (ev.target.closest('#pipe-table a')) return;
+      if (ev.target.closest('#pipe-table a') || ev.target.closest('#pipe-table details')) return;
       const pr = ev.target.closest('#pipe-table tbody tr[data-ent]');
       if (pr) { Tabs.go('#ficha/' + pr.dataset.ent); return; }
       const mapBtn = ev.target.closest('[data-map]');
@@ -228,11 +229,17 @@ const Projetos = (() => {
       if (tr) Tabs.go('#ficha/' + tr.dataset.id);
     });
     el.addEventListener('keydown', ev => {
-      if (ev.key !== 'Enter' || ev.target.closest('a')) return;
+      if (ev.key !== 'Enter' || ev.target.closest('a') || ev.target.closest('summary')) return;
       const tr = ev.target.closest('tbody tr[data-id]'), pr = ev.target.closest('#pipe-table tbody tr[data-ent]');
       if (tr) Tabs.go('#ficha/' + tr.dataset.id);
       else if (pr) Tabs.go('#ficha/' + pr.dataset.ent);
     });
+    // "toggle" não borbulha: captura para lembrar quais observações estão abertas
+    el.addEventListener('toggle', ev => {
+      const d = ev.target;
+      if (!d.dataset || !d.dataset.obs) return;
+      if (d.open) pobs.add(d.dataset.obs); else pobs.delete(d.dataset.obs);
+    }, true);
     if (hasEst) document.getElementById('proj-esfera').addEventListener('change', ev => { filt.esfera = new Set(ev.target.value ? [ev.target.value] : []); renderTable(); });
     if (pipe.length) document.getElementById('pipe-esfera').addEventListener('change', ev => { pfilt.esfera = new Set(ev.target.value ? [ev.target.value] : []); renderPipeline(); });
     document.getElementById('proj-q').addEventListener('input', ev => { filt.q = ev.target.value; renderTable(); });

@@ -3,7 +3,10 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 const IntelModel = createRequire(import.meta.url)('../src/intel-model.js');
 
-const snv = { fis: [{ ext: 10 }, { ext: 20 }, { ext: 0 }, { ext: 5 }] };
+// superficie (posição 5 do registro): os 3 primeiros pavimentados, o 4º planejado
+const supRec = s => [0, 0, 0, 0, 0, s, 0, 0, 0, 0, 0, 0, '', '', '', 0];
+const snv = { dict: { superficie: ['PAV', 'N_PAV', 'PLA'] }, trechos: [supRec(0), supRec(0), supRec(0), supRec(2)],
+  fis: [{ r: [0], ext: 10 }, { r: [1], ext: 20 }, { r: [2], ext: 0 }, { r: [3], ext: 5 }] };
 const intel = {
   trafego: {
     vmda: { tipo: 'modelado', ano: 2023, l: [1000, 2000, 500, null], p: [200, 300, 0, null] },
@@ -75,16 +78,18 @@ test('aggregateIntel: só visíveis', () => {
   assert.equal(a.vkm, 1200 * 10 + 2300 * 20 + 500 * 0);
   assert.equal(a.vkmPes, 200 * 10 + 300 * 20);
   assert.equal(a.kmVmda, 30);
-  assert.equal(a.kmPav, 30);
+  assert.equal(a.kmPav, 30);  // km pavimentados da seleção
   close(a.acidAno, (4 + 0 + 6) / 2);
   close(a.mortosAno, (2 + 0 + 0) / 2);
   assert.equal(a.tkm, 100 * 10 + 0 * 20);
   assert.equal(a.kmCarga, 30);
   const all = IntelModel.aggregateIntel(intel, snv, Uint8Array.from([1, 1, 1, 1]));
-  assert.equal(all.kmPav, 35);
+  // o 4º trecho é planejado: soma na carga, mas não entra nos km pavimentados nem na cobertura
+  assert.equal(all.kmPav, 30);
   assert.equal(all.kmVmda, 30);
-  assert.equal(all.kmCarga, 35);
+  assert.equal(all.kmCarga, 30);
   assert.equal(all.tkm, 1000 + 50 * 5);
+  assert.ok(all.kmCarga <= all.kmPav && all.kmVmda <= all.kmPav);
 });
 
 test('aggregateIntel: bloco ausente = null', () => {
@@ -240,7 +245,16 @@ test('fisIntel: números do cartão, coerentes com aggregateIntel', () => {
   assert.equal(vkm, a.vkm); close(acid, a.acidAno);
   // sem INTEL: tudo null
   assert.deepEqual(IntelModel.fisIntel(null, snv, 0),
-    { l: null, p: null, tot: null, pctPes: null, acidAno: null, mortosAno: null, taxa: null, gsa: null });
+    { l: null, p: null, tot: null, pctPes: null, acidAno: null, mortosAno: null, taxa: null, gsa: null,
+      vkm: null, acidKmAno: null, cargaTotal: null });
+  // veíc·km/dia, acidentes por km por ano e carga total do PNL
+  assert.equal(f0.vkm, 1200 * 10);
+  close(f0.acidKmAno, 4 / 2 / 10);
+  assert.equal(f2.vkm, 0); assert.equal(f2.acidKmAno, null);
+  const ic = { carga: { ano_base: 2017, gsa: [100, 0, null, 50], total: [900, null, 5, 60] } };
+  assert.equal(IntelModel.fisIntel(ic, snv, 0).cargaTotal, 900);
+  assert.equal(IntelModel.fisIntel(ic, snv, 1).cargaTotal, null);
+  assert.equal(IntelModel.fisIntel(intel, snv, 0).cargaTotal, null);
 });
 
 // ---------- Task 10: camadas e cartões de ponto ----------
@@ -248,7 +262,7 @@ test('rodLabel: BR- como está, número vira <uf>-<n>, senão o texto original',
   assert.equal(IntelModel.rodLabel('BR-101', 'RJ'), 'BR-101');
   assert.equal(IntelModel.rodLabel('151', 'PR'), 'PR-151');
   assert.equal(IntelModel.rodLabel('092', 'PR'), 'PR-092');
-  assert.equal(IntelModel.rodLabel('ACESSOPARASP-278', 'PR'), 'ACESSOPARASP-278');
+  assert.equal(IntelModel.rodLabel('Acesso para SP-278', 'PR'), 'Acesso para SP-278');
   assert.equal(IntelModel.rodLabel('151', null), '151');
   assert.equal(IntelModel.rodLabel(null, 'PR'), '—');
   assert.equal(IntelModel.rodLabel('', 'PR'), '—');
@@ -376,6 +390,9 @@ test('estConcLines: por entidade, feições da malha (entEst) + físicos do SNV 
   // entFis sem SNV ou chaves ausentes não quebram
   assert.deepEqual(IntelModel.estConcLines({ malha: { p: [] }, entidades: [{}] }, null), [[]]);
   assert.deepEqual(IntelModel.estConcLines(null, snvFis), []);
+  // decodificado uma vez por bloco e SNV: a 2ª chamada devolve o mesmo resultado (cache)
+  assert.equal(IntelModel.estConcLines(est, snvFis), out);
+  assert.notEqual(IntelModel.estConcLines(est, { fis: [] }), out);
 });
 
 test('distToSegment: distância de ponto a segmento (pixels)', () => {
@@ -553,6 +570,45 @@ test('pracasSerie: soma mensal só das praças com todos os meses (leves e pesad
   assert.equal(IntelModel.pracasSerie({}), null);
 });
 
+test('pracasSerie com filtro: mesma regra só nas praças escolhidas (ex.: as de uma concessão)', () => {
+  const sp = IntelModel.pracasSerie(intelT, p => p.uf === 'SP');
+  assert.deepEqual(sp, { meses: ['2024-01', '2024-02'], l: [15, 25], p: [6, 7], n: 2, total: 2 });
+  // MT: B tem leves incompleto e C não tem pesados -> nenhuma entra
+  assert.deepEqual(IntelModel.pracasSerie(intelT, p => p.uf === 'MT'), { meses: ['2024-01', '2024-02'], l: [0, 0], p: [0, 0], n: 0, total: 2 });
+  assert.deepEqual(IntelModel.pracasSerie(intelT, p => p.i === 3), { meses: ['2024-01', '2024-02'], l: [5, 5], p: [5, 5], n: 1, total: 1 });
+});
+
+test('mesX / xMes / fmtMesX: eixo x mensal (ano + (mês - 1)/12) e rótulo "mmm/aaaa"', () => {
+  assert.equal(IntelModel.mesX('2024-01'), 2024);
+  close(IntelModel.mesX('2024-03'), 2024 + 2 / 12);
+  assert.equal(IntelModel.xMes(2024 + 2 / 12), '2024-03');
+  assert.equal(IntelModel.xMes(2025 + 11 / 12), '2025-12');
+  assert.equal(IntelModel.fmtMesX(2024 + 1 / 12), 'fev/2024');
+  assert.equal(IntelModel.fmtMesX(IntelModel.mesX('2026-08') + 1), 'ago/2027');
+});
+
+test('anosLabel: [2024, 2025] -> "2024–25"; um ano -> "2024"; vazio -> ""', () => {
+  assert.equal(IntelModel.anosLabel([2024, 2025]), '2024–25');
+  assert.equal(IntelModel.anosLabel([2025, 2024]), '2024–25');
+  assert.equal(IntelModel.anosLabel([2024]), '2024');
+  assert.equal(IntelModel.anosLabel([]), '');
+  assert.equal(IntelModel.anosLabel(null), '');
+});
+
+test('fisSup: superfície do registro principal (PAV, N_PAV, PLA); sem dicionário = null', () => {
+  assert.equal(IntelModel.fisSup(snv, 0), 'PAV');
+  assert.equal(IntelModel.fisSup(snv, 3), 'PLA');
+  assert.equal(IntelModel.fisSup({ fis: [{ ext: 1 }] }, 0), null);
+});
+
+test('qualidadeRecorte: um rótulo só para mapa e ficha', () => {
+  assert.equal(IntelModel.qualidadeRecorte('ok'), 'Recorte ok');
+  assert.equal(IntelModel.qualidadeRecorte('aproximado'), 'Recorte aproximado');
+  assert.equal(IntelModel.qualidadeRecorte('nao_mapeado'), 'Não mapeado');
+  assert.equal(IntelModel.qualidadeRecorte('outro'), 'outro');
+  assert.equal(IntelModel.qualidadeRecorte(null), '—');
+});
+
 test('abcrSazonal: média por mês do calendário; mês sem dado = null', () => {
   const s = IntelModel.abcrSazonal(intelT.trafego.abcr, 'total');
   assert.equal(s.length, 12);
@@ -576,6 +632,13 @@ test('taxaPorBrUf: acidentes por 10⁶ veíc·km por BR/UF, só trechos com VMDa
   assert.deepEqual(IntelModel.taxaPorBrUf({}, snvT), []);
 });
 
+test('taxaPorBrUf: trechos planejados (PLA) ficam de fora', () => {
+  const sup = { ...snvT, dict: { ...snvT.dict, superficie: ['PAV', 'PLA'] },
+    trechos: snvT.trechos.map((t, i) => { const c = t.slice(); c[5] = i === 2 ? 1 : 0; return c; }) };
+  // o físico 2 (BR-163/MT, 20 km) é planejado: sobra BR-163/MT com 5 km (< 10) -> só BR-116/SP
+  assert.deepEqual(IntelModel.taxaPorBrUf(intelT, sup, { minKm: 1 }).map(x => [x.br, x.uf, x.km]), [['BR-116', 'SP', 12]]);
+});
+
 const intelC = {
   municipios: { ids: ['1', '2', '3'], nomes: ['Sorriso', 'Lucas', 'Rio Verde'], uf: ['MT', 'MT', 'GO'], centro: [[-55.7, -12.5], [-55.9, -13], [-50.9, -17.8]] },
   agro: { ids: ['1', '2', '3'], ano: 2025,
@@ -588,7 +651,8 @@ const intelC = {
     siade: [{ o: 'Rondonópolis', uo: 'MT', d: 'Santos', ud: 'SP', prod: 'Soja', t: 100 }, { o: 'Rondonópolis', uo: 'MT', d: 'Santos', ud: 'SP', prod: 'Milho', t: 50 },
       { o: 'Rio Verde', uo: 'GO', d: 'Santos', ud: 'SP', prod: 'Soja', t: 120 }, { o: 'X', uo: 'MT', d: 'Y', ud: 'SP', prod: 'Açúcar', t: 1000 }],
     fretes: { mes: 'ago/2026', campos: ['origem', 'uf_o', 'destino', 'uf_d', 'km', 'rs_t', 'qualidade'], linhas: [
-      ['Sorriso', 'MT', 'Santos', 'SP', 2000, 400, 'ok'], ['Rio Verde', 'GO', 'Santos', 'SP', 1000, 250, 'aprox'], ['Q', 'MT', 'W', 'PR', null, null, 'ok']] },
+      ['Sorriso', 'MT', 'Santos', 'SP', 2000, 400, 'ok'], ['Rio Verde', 'GO', 'Santos', 'SP', 1000, 250, 'aprox'], ['Q', 'MT', 'W', 'PR', null, null, 'ok'],
+      ['Dourados', 'MS', 'Paranaguá', 'PR', 156, 248, 'km_suspeito'], ['Balsas', 'MA', 'Balsas', 'MA', 50, 30, 'aprox+km_suspeito']] },
   },
   carga: { ano_base: 2017, gsa: [100, null, 300, 200] },
 };
@@ -631,12 +695,26 @@ test('siadePares: pares origem → destino somando os produtos pedidos, partes n
 
 test('fretesRows: linhas com R$/t·km (null sem distância) e flag de origem aproximada', () => {
   const r = IntelModel.fretesRows(intelC);
-  assert.equal(r.length, 3);
+  assert.equal(r.length, 5);
   assert.equal(r[0].rs_tkm, 0.2);
   assert.equal(r[0].aprox, false);
   assert.equal(r[1].aprox, true);
   assert.equal(r[2].rs_tkm, null);
   assert.deepEqual(IntelModel.fretesRows({}), []);
+});
+
+test('fretesRows: distância suspeita na fonte não vira R$/t·km; km e R$/t ficam como na fonte', () => {
+  const r = IntelModel.fretesRows(intelC);
+  assert.deepEqual(r.map(x => x.kmSuspeito), [false, false, false, true, true]);
+  assert.equal(r[3].rs_tkm, null); assert.equal(r[3].km, 156); assert.equal(r[3].rs_t, 248);
+  assert.equal(r[3].aprox, false);
+  assert.equal(r[4].aprox, true); assert.equal(r[4].rs_tkm, null);
+});
+
+test('suspeitosNoFim: mantém a ordem e leva as rotas com distância suspeita para o fim', () => {
+  const r = IntelModel.fretesRows(intelC);
+  const ord = [r[3], r[0], r[4], r[1], r[2]];
+  assert.deepEqual(IntelModel.suspeitosNoFim(ord).map(x => x.origem), ['Sorriso', 'Rio Verde', 'Q', 'Dourados', 'Balsas']);
 });
 
 test('cargaTop: físicos com maior carga agrícola modelada, com BR/UF e locais do trecho principal', () => {
@@ -667,6 +745,8 @@ test('fonteTipo: "nome · período · medido|modelado" (tipo da fonte ou do bloc
   assert.equal(IntelModel.fonteTipo(b, /VMDa/, 'medido'), 'VMDa · 2023 · modelado');
   // período AAAA-MM em pt-BR
   assert.equal(IntelModel.fonteTipo({ tipo: 'medido', fonte: [{ nome: 'P', periodo: '2024-01 a 2026-08' }] }, /P/), 'P · jan/2024 a ago/2026 · medido');
+  // fonte de cadastro num bloco medido não herda "medido"
+  assert.equal(IntelModel.fonteTipo({ tipo: 'medido', fonte: [{ nome: 'ANTAQ', periodo: '2025', tipo: 'cadastro' }] }, /ANTAQ/), 'ANTAQ · 2025 · cadastro');
 });
 
 test('fmtPeriodo: AAAA-MM vira mmm/aaaa; anos, intervalos de anos e datas ficam como estão', () => {

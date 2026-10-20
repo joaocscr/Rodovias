@@ -98,8 +98,9 @@ const Charts = (() => {
     const ty = ticks(Math.max(...all.map(p => p.y))), my = ty[ty.length - 1] || 1;
     const xOf = v => L + (x1 === x0 ? pw / 2 : ((v - x0) / (x1 - x0)) * pw), yOf = v => T + ph - (v / my) * ph;
     let body = yAxis(ty, L, w - R, yOf, fy);
-    const step = Math.max(1, Math.ceil((x1 - x0) / 8));
-    for (let x = x0; x <= x1; x += step) body += `<text x="${xOf(x)}" y="${h - B + 24}" text-anchor="middle" fill="${C.grey}">${esc(fx(x))}</text>`;
+    // o.stepX: passo dos rótulos do eixo x (ex.: meses em fração de ano); padrão = inteiro, até ~8 rótulos
+    const step = o.stepX > 0 ? o.stepX : Math.max(1, Math.ceil((x1 - x0) / 8));
+    for (let k = 0, x = x0; x <= x1 + 1e-9; k++, x = x0 + k * step) body += `<text x="${xOf(x)}" y="${h - B + 24}" text-anchor="middle" fill="${C.grey}">${esc(fx(x))}</text>`;
     series.forEach((s, k) => {
       const pts = s.points.filter(p => num(p.x) && num(p.y));
       const color = k === 0 ? C.deep : k === 1 ? C.bright : C.grey;
@@ -116,7 +117,7 @@ const Charts = (() => {
     if (!data.length) return empty(w, h);
     const fmt = o.format || (v => nf1.format(v)), unit = o.unit ? ' ' + o.unit : '', names = o.names || [];
     const colors = [C.deep, C.bright, C.grey];
-    const L = 56, R = 16, T = 16, B = 40, pw = w - L - R, ph = h - T - B;
+    const L = o.left || 56, R = 16, T = 16, B = 40, pw = w - L - R, ph = h - T - B; // o.left: margem dos rótulos do eixo y
     const sums = data.map(d => d.parts.reduce((a, v) => a + (num(v) ? v : 0), 0));
     const tk = ticks(Math.max(...sums, 0)), max = tk[tk.length - 1] || 1;
     const yOf = v => T + ph - (v / max) * ph, bw = pw / data.length;

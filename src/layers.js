@@ -238,7 +238,7 @@ const Layers = (() => {
       L.polygon(m.rings, opts(st.halo, st.haloWeight)).addTo(selGroup);
       L.polygon(m.rings, opts(st.color, st.weight)).addTo(selGroup);
     } else if (key === 'estconc') {
-      const lines = IM.estConcLines(est(), snv)[i] || [];
+      const lines = IM.estConcLines(est(), snv)[i] || []; // decodificado uma vez (cache em IntelModel)
       if (!lines.length) return;
       L.polyline(lines, opts(st.halo, st.haloWeight)).addTo(selGroup);
       L.polyline(lines, opts(st.color, st.weight)).addTo(selGroup);
@@ -365,7 +365,7 @@ const Layers = (() => {
   }
 
   return {
-    init, toggle, setFundo, fundoInfo, fundoAvailable, munAt, estConcAt, select, clearSelection, rowsOf, labelOf,
+    init, toggle, setFundo, fundoInfo, fundoAvailable, munAt, select, clearSelection, rowsOf,
     available() { return DEFS.filter(d => d.has()).map(d => ({ key: d.key, label: d.label, title: d.fonte(), n: d.n() })); },
     isOn(key) { return !!on[key]; },
     fundo() { return fundoKey; },

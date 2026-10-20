@@ -43,6 +43,18 @@ test('linesSvg: formatX nos rótulos do eixo e nas dicas; r = raio dos pontos (p
   assert.match(svg, / r="2.5" /);
   assert.doesNotMatch(svg, / r="4" /);
 });
+test('linesSvg: stepX define o passo dos rótulos do eixo x (série mensal curta)', () => {
+  const s = [{ name: 'Leves', points: [0, 1, 2, 3, 4, 5].map(k => ({ x: 2025 + (10 + k) / 12, y: 10 + k })) }];
+  const lab = x => `m${Math.round(x * 12)}`;
+  const ticks = svg => [...svg.matchAll(/<text [^>]*text-anchor="middle"[^>]*>([^<]*)<\/text>/g)].map(m => m[1]);
+  assert.deepEqual(ticks(Charts.linesSvg(s, { formatX: lab })), ['m24310']);
+  assert.deepEqual(ticks(Charts.linesSvg(s, { formatX: lab, stepX: 2 / 12 })), ['m24310', 'm24312', 'm24314']);
+});
+test('stackedSvg: o.left alarga a margem dos rótulos do eixo y', () => {
+  const d = [{ label: 'a', parts: [150000, 50000] }];
+  assert.match(Charts.stackedSvg(d, {}), /<text x="48" /);
+  assert.match(Charts.stackedSvg(d, { left: 72 }), /<text x="64" /);
+});
 test('stackedSvg: item.tip substitui o rótulo nas dicas (eixo continua com o rótulo)', () => {
   const svg = Charts.stackedSvg([{ label: 'jan/24', tip: 'jan/2024', parts: [3, 4] }], { names: ['Leves', 'Pesados'] });
   assert.match(svg, /<title>jan\/2024 · Leves:/);

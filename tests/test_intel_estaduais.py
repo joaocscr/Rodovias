@@ -79,7 +79,7 @@ def test_corredor_conta_pistas_paralelas_uma_vez():
 # ---------------- contrato do JSON ----------------
 
 def test_estrutura_e_fontes(dados):
-    assert dados["tipo"] == "medido"
+    assert dados["tipo"] == "cadastro"
     fontes = dados["fonte"]
     assert isinstance(fontes, list) and len(fontes) >= 4
     for f in fontes:

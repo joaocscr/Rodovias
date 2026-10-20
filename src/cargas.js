@@ -108,7 +108,10 @@ const Cargas = (() => {
     if (!r.length) return '';
     const ufs = [...new Set(r.map(x => x.uf_o).filter(Boolean))].sort();
     return card('c-fretes', `Fretes rodoviários de grãos, ${mm().fretes.mes}`, 'Clique no cabeçalho para ordenar; R$/t·km = R$/t ÷ distância', {
-      wide: true, fonte: fonte(mm(), /CONAB/), note: '"Origem aproximada": no boletim, a origem vem numa célula mesclada e foi atribuída por proximidade.',
+      wide: true, fonte: fonte(mm(), /CONAB/),
+      note: '"Origem aproximada": no boletim, a origem vem numa célula mesclada e foi atribuída por proximidade. ' +
+        '"Distância suspeita na fonte": o km do boletim é menor que 0,9 vez ou maior que 3 vezes a linha reta entre as sedes dos municípios ' +
+        '(ou origem e destino são o mesmo município); nessas rotas o R$/t·km não é calculado e elas ficam no fim da tabela.',
       legend: `<div class="toolbar"><label class="sub" for="frete-uf">UF de origem</label><select id="frete-uf"><option value="">Todas</option>${ufs.map(u => `<option>${esc(u)}</option>`).join('')}</select>
         <span class="page__src" id="frete-n"></span></div>`,
       html: '<div class="table-wrap" style="max-height:480px"><table class="grid" id="frete-table"></table></div>' });
@@ -117,7 +120,7 @@ const Cargas = (() => {
   function cargaCard() {
     const c = IM.cargaOf(intel);
     if (!c || !IM.cargaTop(intel, snv, 1).length) return '';
-    return card('c-pnl', 'Trechos com maior carga agrícola', `Os 15 trechos físicos com mais granel sólido agrícola, t/ano (${c.cenario || 'PNL 2035'}, ano-base ${c.ano_base}); clique para ver no mapa`,
+    return card('c-pnl', 'Trechos com maior carga agrícola', `Os 15 trechos físicos com mais granel sólido agrícola por ano (${c.cenario || 'PNL 2035'}, ano-base ${c.ano_base}); clique para ver no mapa`,
       { wide: true, fonte: fonte(c, /PNL/), note: 'Estimativa de modelo de alocação em rede, não contagem.' });
   }
 
@@ -137,12 +140,14 @@ const Cargas = (() => {
   function drawFretes() {
     const t = document.getElementById('frete-table');
     if (!t) return;
-    const all = IM.fretesRows(intel), list = ConcModel.sortRows(all.filter(r => !frete.uf || r.uf_o === frete.uf), frete.key, frete.dir);
+    // rotas com distância suspeita na fonte ficam no fim, qualquer que seja a coluna ordenada
+    const all = IM.fretesRows(intel), list = IM.suspeitosNoFim(ConcModel.sortRows(all.filter(r => !frete.uf || r.uf_o === frete.uf), frete.key, frete.dir));
     const num = (v, d) => (IM.has(v) ? IM.fmtDec(v, d) : '—');
+    const tkm = r => (r.kmSuspeito ? '— <span class="tag-nv">distância suspeita na fonte</span>' : num(r.rs_tkm, 3));
     t.innerHTML = `<thead><tr>${FRETE_COLS.map(([k, l, n]) => `<th class="${n ? 'num' : ''}"${k === frete.key ? ` aria-sort="${frete.dir === 'asc' ? 'ascending' : 'descending'}"` : ''}>
         <button type="button" data-fsort="${k}">${esc(l)}${k === frete.key ? (frete.dir === 'asc' ? ' ↑' : ' ↓') : ''}</button></th>`).join('')}</tr></thead>
-      <tbody>${list.map(r => `<tr class="is-static" data-rst="${IM.has(r.rs_t) ? r.rs_t : ''}"><td>${esc(r.origem)}${r.aprox ? ' <span class="tag-nv">origem aproximada</span>' : ''}</td><td>${esc(r.uf_o || '—')}</td>
-        <td>${esc(r.destino)}</td><td>${esc(r.uf_d || '—')}</td><td class="num">${num(r.km, 0)}</td><td class="num">${num(r.rs_t, 2)}</td><td class="num">${num(r.rs_tkm, 3)}</td></tr>`).join('')}</tbody>`;
+      <tbody>${list.map(r => `<tr class="is-static" data-rst="${IM.has(r.rs_t) ? r.rs_t : ''}"${r.kmSuspeito ? ' data-suspeito="1"' : ''}><td>${esc(r.origem)}${r.aprox ? ' <span class="tag-nv">origem aproximada</span>' : ''}</td><td>${esc(r.uf_o || '—')}</td>
+        <td>${esc(r.destino)}</td><td>${esc(r.uf_d || '—')}</td><td class="num">${num(r.km, 0)}</td><td class="num">${num(r.rs_t, 2)}</td><td class="num">${tkm(r)}</td></tr>`).join('')}</tbody>`;
     document.getElementById('frete-n').textContent = `${IM.fmtInt(list.length)} de ${IM.fmtInt(all.length)} rotas`;
   }
 
@@ -150,9 +155,9 @@ const Cargas = (() => {
     const el = box('c-pnl');
     if (!el) return;
     const list = IM.cargaTop(intel, snv, 15), max = list.length ? list[0].gsa : 1;
-    el.innerHTML = `<div class="table-wrap table-wrap--static"><table class="grid grid--static grid--rows" id="pnl-table"><thead><tr><th>BR/UF</th><th>Trecho (início → fim)</th><th class="num">t/ano</th><th><span class="visually-hidden">Proporção</span></th></tr></thead><tbody>${
+    el.innerHTML = `<div class="table-wrap table-wrap--static"><table class="grid grid--static grid--rows" id="pnl-table"><thead><tr><th>BR/UF</th><th>Trecho (início → fim)</th><th class="num">Carga agrícola por ano</th><th><span class="visually-hidden">Proporção</span></th></tr></thead><tbody>${
       list.map(r => `<tr tabindex="0" data-k="${r.j}" title="Ver no mapa"><td class="name">${esc(r.br)}/${esc(r.uf)}</td><td class="wrap">${esc(r.ini)} → ${esc(r.fim)}</td>
-        <td class="num">${IM.fmtInt(r.gsa)}</td><td class="bar-cell"><span style="width:${(r.gsa / max * 100).toFixed(1)}%"></span></td></tr>`).join('')}</tbody></table></div>`;
+        <td class="num">${IM.fmtT(r.gsa)}</td><td class="bar-cell"><span style="width:${(r.gsa / max * 100).toFixed(1)}%"></span></td></tr>`).join('')}</tbody></table></div>`;
     onRows(el, openFis);
   }
 
@@ -213,5 +218,5 @@ const Cargas = (() => {
     render();
   }
 
-  return { init, openMun, openFis };
+  return { init };
 })();

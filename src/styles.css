@@ -484,6 +484,12 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 #pipe-counts { margin-bottom: 16px; }
 #pipe-counts .chip b { margin-left: 4px; font-variant-numeric: tabular-nums; }
 .pipeline .table-wrap { max-height: calc(100vh - 240px); }
+.pipe-obs { margin-top: 8px; font-weight: 400; color: var(--color-spacial-grey); }
+.pipe-obs > summary { display: inline-flex; align-items: center; min-height: 24px; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--color-bright-blue); }
+.pipe-obs > summary:focus-visible { outline: 2px solid var(--color-bright-blue); outline-offset: 2px; }
+.pipe-obs p { margin: 8px 0 0; max-width: 480px; font-size: 14px; line-height: 24px; white-space: normal; }
+#frete-table td.num .tag-nv { margin-left: 8px; }
+.card__sub .tag-nv { margin-left: 8px; text-transform: none; letter-spacing: 0; }
 
 /* v3 (Task 12): abas Tráfego, Cargas e Fontes */
 .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }

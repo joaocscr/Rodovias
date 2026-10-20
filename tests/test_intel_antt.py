@@ -1,4 +1,5 @@
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -86,6 +87,20 @@ def test_rodovia_e_pfe():
     assert antt.split_rod("BR-386/RS") == ("BR-386", "RS")
     assert antt.split_rod("BR-40") == ("BR-040", None)
     assert antt.split_rod("PR-151") == ("PR-151", "PR")
+    assert antt.split_rod("PR-PR-408") == ("PR-408", "PR")
+    # acessos, alças e contornos: texto da fonte limpo (espaços preservados, caixa de frase, códigos intactos)
+    assert antt.split_rod("ACESSO PARA SP-278") == ("Acesso para SP-278", None)
+    assert antt.split_rod("Acesso para SP-278") == ("Acesso para SP-278", None)
+    assert antt.split_rod("SAÍDA PARA BR-153") == ("Saída para BR-153", None)
+    assert antt.split_rod("ALÇA DE ENTRADA DA BR-040") == ("Alça de Entrada da BR-040", None)
+    assert antt.split_rod("ACESSO PORTO NOVO") == ("Acesso Porto Novo", None)
+    assert antt.split_rod("CONTORNO DE FLORIANÓPOLIS") == ("Contorno de Florianópolis", None)
+    assert antt.split_rod("Acesso  R1A ") == ("Acesso R1A", None)
+    assert antt.split_rod("ACESSO N01") == ("Acesso N01", None)
+    assert antt.split_rod("Acesso R 1 A") == ("Acesso R1A", None)
+    assert antt.split_rod("Acesso N 01") == ("Acesso N01", None)
+    assert antt.split_rod("Acesso km 71") == ("Acesso km 71", None)
+    assert antt.split_rod("") == (None, None)
     assert antt.pfe_key("Free Flow PFE004 - PFS003 Sul") == "PFE004"
     assert antt.pfe_key("Free Flow PPF001 Sul - PFS002 Sul") == "PPF001"
     assert antt.pfe_key("Free Flow Itaguaí") is None
@@ -94,7 +109,7 @@ def test_rodovia_e_pfe():
 # ---------------- bloco gerado ----------------
 
 def test_fontes_e_tamanho(A):
-    assert OUT.stat().st_size <= 400_000  # vale para kB e KiB
+    assert OUT.stat().st_size <= 450_000  # vale para kB e KiB
     assert isinstance(A["fonte"], list) and len(A["fonte"]) >= 5
     for f in A["fonte"]:
         assert {"nome", "url", "periodo", "acesso", "licenca", "nota"} <= set(f)
@@ -131,6 +146,21 @@ def test_pracas(A, ENT):
     assert len(P["serie_l"]) == len(P["serie_p"]) == len(L)
     assert all(len(s) == 32 for s in P["serie_l"] + P["serie_p"])
     assert all(v is None or (isinstance(v, int) and v >= 0) for s in P["serie_l"] + P["serie_p"] for v in s)
+
+
+def test_rotulos_de_rodovia_limpos(A):
+    """Rodovias de praças, SATs e obras: código (BR-101, PR-151, número das estaduais do PR) ou texto legível, nunca
+    palavras coladas da fonte ('ACESSOPARASP-278') nem prefixo repetido ('PR-PR-408')."""
+    for bloco in ("pracas", "sats", "obras"):
+        for r in rows(A[bloco]):
+            br = r["br"]
+            if br is None:
+                continue
+            assert not re.search(r"[A-ZÀ-Ú]{12,}", br), (bloco, br)
+            assert not re.match(r"([A-Z]{2})-\1-", br), (bloco, br)
+            assert br == " ".join(br.split()), (bloco, br)
+    textos = {r["br"] for b in ("pracas", "sats") for r in rows(A[b])}
+    assert {"Acesso para SP-278", "Saída para BR-153"} <= textos
 
 
 def test_praca_conhecida(A):

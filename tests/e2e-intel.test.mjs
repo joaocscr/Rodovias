@@ -41,6 +41,9 @@ before(async () => {
 after(async () => { await browser?.close(); });
 
 const legend = () => page.textContent('#legend');
+// Antes de medir tempo: espera a página ficar ociosa (sem tarefa pendente da carga ou do teste anterior) e dois quadros.
+const settle = p => p.evaluate(() => new Promise(res =>
+  requestIdleCallback(() => requestAnimationFrame(() => requestAnimationFrame(res)), { timeout: 3000 })));
 async function mode(m) {
   await page.click(`#legend [data-mode="${m}"]`);
   await page.waitForTimeout(50);
@@ -64,6 +67,7 @@ test('(a) seletor "Cor das rodovias" com os 6 rótulos na ordem, acessível', as
 // tempo atrasa os quadros da outra (~150 ms), o que tornava a medição instável.
 test('(g) primeira troca (cache frio) para cada modo quantitativo em menos de 300 ms', async t => {
   for (const m of ['trafego', 'pesados', 'carga', 'acidentes']) {
+    await settle(page);
     const r = await page.evaluate(m => new Promise(resolve => {
       const cold = MapView.classesCached(m) === false;
       const t0 = performance.now();
@@ -129,6 +133,16 @@ test('(d) KPI de veíc·km com filtro UF = MT bate com o modelo', async () => {
   assert.notEqual(expected.vkm, '—');
   assert.match(await page.textContent('#kpi-acid'), /\d/);
   assert.match(await page.textContent('#kpi-tkm'), /t·km\/ano/);
+  // cobertura sobre os km pavimentados da seleção
+  const cov = await page.evaluate(() => {
+    const f = Model.emptyFilters();
+    f.uf.add(window.SNV.dict.uf.indexOf('MT'));
+    const a = IntelModel.aggregateIntel(window.INTEL, window.SNV, Model.visibleFis(window.SNV, f));
+    const n = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    return { vm: `${n.format(a.kmVmda)} km com dado de ${n.format(a.kmPav)} km pavimentados`, ok: a.kmVmda <= a.kmPav && a.kmCarga <= a.kmPav };
+  });
+  assert.ok(cov.ok);
+  assert.ok((await page.textContent('#stats-section .ikpis')).includes(cov.vm), cov.vm);
   for (const id of ['#kpi-vkm', '#kpi-acid', '#kpi-tkm']) {
     assert.ok((await page.locator(id).evaluate(e => e.closest('[title]').title)).length > 20, id);
   }
@@ -151,7 +165,31 @@ test('(e) cartão de físico com VMDa mostra o bloco "Tráfego e segurança"', a
   assert.match(t, /estimado, 2023/);
   assert.match(t, /modelo PNL, 2017/);
   assert.match(t, /10⁶ veíc·km/);
+  // veíc·km/dia do trecho, acidentes por km por ano e carga total do PNL
+  const f = await page.evaluate(j => {
+    const x = IntelModel.fisIntel(window.INTEL, window.SNV, j);
+    return { vkm: IntelModel.fmtVkm(x.vkm), akm: x.acidKmAno == null ? null : IntelModel.fmtDec(x.acidKmAno, 2), tot: x.cargaTotal == null ? null : `${IntelModel.fmtT(x.cargaTotal)}/ano` };
+  }, j);
+  const kv = await page.$$eval('#card .card__intel dt:not(.card__sub)', dts => Object.fromEntries(dts.map(d => [d.textContent, d.nextElementSibling.textContent])));
+  assert.equal(kv['Veículos × extensão'], f.vkm);
+  assert.match(f.vkm, /veíc·km\/dia/);
+  if (f.akm) assert.equal(kv['Acidentes por km por ano'], f.akm);
+  if (f.tot) assert.equal(kv['Carga total (todas as mercadorias)'], f.tot);
+  assert.doesNotMatch(t, /trecho planejado no SNV/);
   assert.ok(!/NaN|undefined|null/.test(t));
+  await page.click('#card-close');
+});
+
+test('cartão de trecho planejado (PLA) marca tráfego e acidentes como "trecho planejado no SNV"', async () => {
+  const j = await page.evaluate(() => {
+    const v = window.INTEL.trafego.vmda;
+    return window.SNV.fis.findIndex((_, j) => IntelModel.fisSup(window.SNV, j) === 'PLA' && v.l[j] != null);
+  });
+  assert.ok(j >= 0);
+  await page.evaluate(j => MapView.pick(j), j);
+  await page.waitForSelector('#card:not([hidden])');
+  const tags = await page.$$eval('#card .card__intel .card__sub .tag-nv', ts => ts.map(t => t.textContent));
+  assert.ok(tags.length >= 1 && tags.every(t => t === 'trecho planejado no SNV'), tags.join());
   await page.click('#card-close');
 });
 
@@ -187,6 +225,7 @@ test('seletor responde a setas do teclado', async () => {
 
 test('(g) troca de modo em menos de 300 ms', async t => {
   for (const m of ['trafego', 'acidentes', 'concessoes', 'carga', 'fisica']) {
+    await settle(page);
     const ms = await page.evaluate(m => new Promise(resolve => {
       const t0 = performance.now();
       document.querySelector(`#legend [data-mode="${m}"]`).click();
@@ -247,6 +286,15 @@ test('(a) seção Camadas acima de Filtros, aberta, com os rótulos, fontes e no
   for (const title of await page.$$eval('#layers-section label:has(input[data-layer])', ls => ls.map(l => l.title))) {
     assert.ok(title.length > 15 && !/undefined|null/.test(title) && !title.startsWith('—'), title);
   }
+  // acessibilidade: sem título dentro do <summary>; fonte de cada camada e de cada fundo ligada ao controle (aria-describedby)
+  assert.equal(await page.locator('#layers-section summary :is(h1, h2, h3, h4)').count(), 0);
+  assert.equal((await page.textContent('#layers-section summary')).trim(), 'Camadas');
+  const desc = await page.$$eval('#layers-section input[data-layer], #layers-section input[name="fundo"][value]:not([value=""])', is => is.map(i => {
+    const d = document.getElementById(i.getAttribute('aria-describedby') || '');
+    return [i.dataset.layer || i.value, d ? d.textContent : null, i.closest('label').title];
+  }));
+  assert.ok(desc.length >= 13);
+  for (const [k, d, title] of desc) assert.ok(d && d === `Fonte: ${title}`, `${k}: ${d}`);
 });
 
 test('(f) Rodovias estaduais só aparece com INTEL.estaduais; concessões estaduais distintas das federais', async () => {
@@ -315,11 +363,11 @@ test('(f) com um bloco estaduais (contrato da Task 6) a camada liga e desenha ma
 
 // Mede na página principal (única aberta nesse momento): uma 2ª página headless em segundo plano atrasa os quadros da outra.
 test('(g) ligar cada camada leva menos de 400 ms (1ª vez); fundo municipal < 1.200 ms', async t => {
-  const timeClick = sel => page.evaluate(sel => new Promise(resolve => {
+  const timeClick = async sel => { await settle(page); return page.evaluate(sel => new Promise(resolve => {
     const t0 = performance.now();
     document.querySelector(sel).click();
     requestAnimationFrame(() => requestAnimationFrame(() => resolve(performance.now() - t0)));
-  }), sel);
+  }), sel); };
   const keys = ['pracas', 'sats', 'obras', 'ferrovias', 'portos', 'siade'];
   if (await layerBox('estaduais').count()) keys.push('estaduais');
   for (const key of keys) {
@@ -366,6 +414,24 @@ test('(b) Praças: ≥ 230 pontos; cartão da maior VMD com veíc./dia, gráfico
   assert.deepEqual(await page.evaluate(() => Layers.selected()), { key: 'pracas', i: top.i });
   await page.click('#card-close');
   assert.equal(await page.evaluate(() => Layers.selected()), null);
+});
+
+test('gráfico da praça cuja série não começa em janeiro: eixo e dicas em mmm/aaaa, nunca ano decimal', async () => {
+  const i = await page.evaluate(() => {
+    const p = window.INTEL.antt.pracas;
+    return p.serie_l.findIndex((s, i) => { const k = s.findIndex(v => v != null), k2 = p.serie_p[i].findIndex(v => v != null);
+      const first = Math.min(...[k, k2].filter(x => x >= 0)); return first > 0 && !p.serie_meses[first].endsWith('-01'); });
+  });
+  assert.ok(i >= 0);
+  await page.evaluate(i => Layers.open('pracas', i), i);
+  await page.waitForSelector('#card:not([hidden]) svg.chart');
+  const ticks = await page.$$eval('#card svg.chart > text', ts => ts.map(t => t.textContent).filter(x => !/^[\d.]+$/.test(x)));
+  assert.ok(ticks.length >= 2, ticks.join());
+  for (const x of ticks) assert.match(x, /^[a-z]{3}\/\d{4}$/, x);
+  const svg = await page.innerHTML('#card .card__svg');
+  assert.doesNotMatch(svg, /\d{4}\.\d/);
+  assert.match(svg, /<title>(Leves|Pesados) [a-z]{3}\/\d{4}: /);
+  await page.click('#card-close');
 });
 
 test('(b) clique real no mapa sobre uma praça abre o cartão dela (antes da rodovia embaixo)', async () => {
@@ -434,6 +500,13 @@ test('(c) Portos e ETCs: só os 4 tipos', async () => {
   const i = await page.evaluate(() => Layers.items('portos')[0]);
   await page.evaluate(i => Layers.open('portos', i), i);
   assert.match(await page.textContent('#card'), /UF/);
+  // "Porto público" × "Porto Público" (só a caixa muda): o tipo não se repete
+  const pp = await page.evaluate(() => { const rows = Layers.rowsOf('portos'); return Layers.items('portos').find(i => rows[i].tipo === 'Porto Público'); });
+  await page.evaluate(i => Layers.open('portos', i), pp);
+  assert.doesNotMatch(await page.textContent('#card .card__grid'), /Tipo ANTAQ/);
+  const tup = await page.evaluate(() => { const rows = Layers.rowsOf('portos'); return Layers.items('portos').find(i => rows[i].tipoLabel === 'TUP'); });
+  await page.evaluate(i => Layers.open('portos', i), tup);
+  assert.match(await page.textContent('#card .card__grid'), /Tipo ANTAQ/);
   await page.click('#card-close');
 });
 
@@ -481,7 +554,7 @@ test('(d) Fundo Soja: legenda com 5 faixas e "IBGE PAM 2025"; Sorriso mostra a p
     const pt = MapView.map.latLngToContainerPoint([lat, lon]), box = MapView.map.getContainer().getBoundingClientRect();
     return [box.left + pt.x, box.top + pt.y];
   });
-  await page.waitForTimeout(250);
+  await settle(page);
   await page.mouse.move(xy[0], xy[1]);
   await page.waitForTimeout(80);
   assert.equal(await page.evaluate(() => !!document.querySelector('.leaflet-overlay-pane canvas.leaflet-interactive')), false, 'há rodovia sob o centroide');
@@ -519,7 +592,7 @@ test('clique real numa rodovia continua abrindo o cartão do trecho depois de um
   await page.evaluate(() => MapView.pick(100));
   await page.click('#card-close');
   await page.evaluate(() => MapView.map.setView([-15.8, -47.9], 9, { animate: false }));
-  await page.waitForTimeout(250);
+  await settle(page);
   // acha um pixel de rodovia pelo cursor do canvas
   let pt = null;
   for (let x = 500; x < 1300 && !pt; x += 9) for (let y = 200; y < 800 && !pt; y += 9) {
@@ -535,9 +608,28 @@ test('clique real numa rodovia continua abrindo o cartão do trecho depois de um
 });
 
 // ---------- Task 11: ficha com ANTT, ficha estadual, Projetos com esfera e pipeline ----------
-async function go(hash) {
-  await page.evaluate(h => { location.hash = h; }, hash);
-  await page.waitForTimeout(250);
+// Navega e espera o roteador terminar (condição real, não um tempo fixo): ficha aberta com o título da entidade,
+// ou a aba exibida com a ficha fechada.
+function routed(p, hash) {
+  return p.waitForFunction(h => {
+    if (location.hash !== h) return false;
+    if (h.startsWith('#ficha/')) {
+      const id = decodeURIComponent(h.slice(7));
+      const e = window.CONC.entidades.find(x => x.id === id) || ((window.INTEL && window.INTEL.estaduais && window.INTEL.estaduais.entidades) || []).find(x => x.id === id);
+      const t = document.getElementById('ficha-title');
+      return Ficha.isOpen() && !!e && !!t && t.textContent === e.nome;
+    }
+    return !Ficha.isOpen() && Tabs.current().active === h.slice(1);
+  }, hash);
+}
+async function go(hash, p = page) {
+  await p.evaluate(h => { location.hash = h; }, hash);
+  await routed(p, hash);
+}
+// Esc fecha a ficha e o roteador volta para a aba anterior.
+async function escFicha(p = page) {
+  await p.keyboard.press('Escape');
+  await p.waitForFunction(() => !Ficha.isOpen() && !location.hash.startsWith('#ficha/') && Tabs.current().active === location.hash.slice(1));
 }
 const fichaText = () => page.textContent('#ficha');
 const blockTitles = () => page.$$eval('#ficha .fblock h3', hs => hs.map(h => h.textContent));
@@ -572,9 +664,18 @@ test('(a) ficha Nova Rota do Oeste: ANTT, controladora, gráfico de receita e pr
   assert.deepEqual(vmds, [...vmds].sort((a, b) => b - a));
   assert.match(await page.textContent('#ficha-pracas tfoot'), new RegExp(exp.receita ? (await page.evaluate(v => IntelModel.fmtBRL(v), exp.receita)).replace(/[$.]/g, '\\$&') : '—'));
   assert.match(t, /Contagem medida · ANTT 2025/);
+  // série mensal leves × pesados das praças da concessão (mesma regra da aba Tráfego, filtrada pela concessão)
+  const s = await page.evaluate(() => IntelModel.pracasSerie(window.INTEL, p => p.ent === 'nova-rota-do-oeste'));
+  assert.ok(s.n >= 1 && s.n <= s.total && s.total === exp.linhas.length, JSON.stringify([s.n, s.total]));
+  const st = await page.textContent('#ficha-pracas-serie');
+  assert.ok(st.includes(`Entram ${s.n} de ${s.total} praças da concessão`), st);
+  assert.match(st, /jan\/2024 a ago\/2026/);
+  assert.equal(await page.locator('#ficha-pracas-serie svg.chart rect.cbar').count(), s.meses.length * 2);
+  assert.match(await page.textContent('#ficha-pracas-serie .chart-legend'), /Leves.*Pesados/);
+  const tip = await page.evaluate(v => IntelModel.fmtInt(v), s.l[0]);
+  assert.ok((await page.innerHTML('#ficha-pracas-serie')).includes(`<title>jan/2024 · Leves: ${tip} veíc./dia</title>`));
   assert.doesNotMatch(t, /undefined|NaN/);
-  await page.keyboard.press('Escape');
-  await page.waitForTimeout(250);
+  await escFicha();
   assert.equal(await page.evaluate(() => location.hash), '#mapa');
 });
 
@@ -600,14 +701,14 @@ test('(a) contrato anterior listado e com série rotulada; obras e pipeline na f
   assert.equal(kv['Em andamento'], String(o.andamento));
   assert.equal(kv['Não iniciadas'], String(o.naoIniciadas));
   assert.equal(await page.locator('#ficha-obras tbody tr').count(), Math.min(10, o.top.length));
+  assert.equal(await page.textContent('#ficha-obras .fserie__name'), `Obras não concluídas com maior avanço previsto (${o.top.length})`);
   assert.ok(o.concluidas + o.andamento + o.naoIniciadas + o.semDado === o.total);
 
   await go('#ficha/' + r.pipe);
   const pt = await page.textContent('#ficha-pipeline');
   assert.ok(pt.includes(r.pipeLabel), pt);
   if (r.pipeItem.fonte_url) assert.equal(await page.locator(`#ficha-pipeline a[href="${r.pipeItem.fonte_url}"]`).count(), 1);
-  await page.keyboard.press('Escape');
-  await page.waitForTimeout(250);
+  await escFicha();
 });
 
 test('(b) ficha sem capa ANTT não mostra o bloco ANTT; nenhuma ficha mostra "undefined" ou "NaN"', async () => {
@@ -617,8 +718,7 @@ test('(b) ficha sem capa ANTT não mostra o bloco ANTT; nenhuma ficha mostra "un
   const titles = await blockTitles();
   assert.ok(!titles.some(h => /ANTT|Receita, investimento|Praças da concessão/.test(h)), titles.join(' | '));
   assert.doesNotMatch(await fichaText(), /undefined|NaN/);
-  await page.keyboard.press('Escape');
-  await page.waitForTimeout(250);
+  await escFicha();
   const bad = await page.evaluate(() => {
     const ids = window.CONC.entidades.map(e => e.id).concat(window.INTEL.estaduais.entidades.map(e => e.id));
     const out = [];
@@ -650,21 +750,23 @@ test('(c) ficha estadual: etiqueta, campos e "Ver no mapa" liga a camada, realç
   assert.ok(t.includes(s.e.nome));
   assert.ok(t.includes(`Concessão estadual · ${s.e.uf} · ${s.e.regulador}`), t.slice(0, 300));
   for (const re of [/Poder concedente/, /Rodovias/, /Trechos/, /km declarado × mapeado/, /Qualidade do recorte/, /Assinatura/, /Fim/]) assert.match(t, re);
+  const qual = await page.$$eval('#ficha dt', dts => { const d = dts.find(x => x.textContent === 'Qualidade do recorte'); return d ? d.nextElementSibling.textContent : null; });
+  assert.equal(qual, await page.evaluate(q => IntelModel.qualidadeRecorte(q), s.e.qualidade));
+  assert.ok(['Recorte ok', 'Recorte aproximado', 'Não mapeado'].includes(qual), qual);
   const prazo = await page.$$eval('#ficha dt', dts => { const d = dts.find(x => x.textContent === 'Prazo atual (com prorrogações)'); return d ? d.nextElementSibling.textContent : null; });
   assert.equal(prazo, s.e.prazo.replace(/\bAnos\b/, 'anos'));
   assert.ok(t.includes(s.e.trechos[0].rod));
   assert.equal(await page.locator(`#ficha a[href="${s.e.fonte_url}"]`).count() >= 1, true);
   assert.doesNotMatch(t, /undefined|NaN/);
   // Esc volta à aba anterior
-  await page.keyboard.press('Escape');
-  await page.waitForTimeout(250);
+  await escFicha();
   assert.equal(await page.evaluate(() => location.hash), '#projetos');
   assert.equal(await page.isVisible('#ficha'), false);
   // Ver no mapa
   await go('#ficha/' + s.e.id);
   assert.equal(await page.isDisabled('#ficha-map'), false);
   await page.click('#ficha-map');
-  await page.waitForTimeout(400);
+  await page.waitForFunction(() => location.hash === '#mapa' && Tabs.current().active === 'mapa' && !!Layers.selected() && Layers.selected().key === 'estconc');
   assert.equal(await page.evaluate(() => location.hash), '#mapa');
   assert.equal(await page.isVisible('#ficha'), false);
   assert.equal(await page.evaluate(() => Layers.isOn('estaduais')), true);
@@ -672,6 +774,8 @@ test('(c) ficha estadual: etiqueta, campos e "Ver no mapa" liga a camada, realç
   assert.deepEqual(await page.evaluate(() => Layers.selected()), { key: 'estconc', i: s.k });
   assert.equal(await page.evaluate(c => MapView.map.getBounds().contains(c), s.center), true);
   assert.ok(await page.evaluate(() => MapView.map.getZoom()) >= 6);
+  // o cartão do mapa usa o mesmo rótulo de recorte da ficha
+  assert.match(await page.textContent('#card .card__badges'), new RegExp(qual));
   await page.click('#card-close');
   await page.locator('#layers-section input[data-layer="estaduais"]').uncheck();
   // não mapeada sem geometria: botão desabilitado com explicação
@@ -680,8 +784,7 @@ test('(c) ficha estadual: etiqueta, campos e "Ver no mapa" liga a camada, realç
     assert.equal(await page.isDisabled('#ficha-map'), true);
     assert.match(await page.getAttribute('#ficha-map', 'title'), /sem traçado/i);
     assert.match(await fichaText(), /sem traçado no mapa/i);
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(250);
+    await escFicha();
   }
   await page.evaluate(() => MapView.fitBrasil(false));
 });
@@ -718,10 +821,9 @@ test('(d) Projetos: coluna e filtro Esfera; Estadual mostra só estaduais e tota
   // linha estadual abre a ficha estadual
   await page.selectOption('#proj-esfera', 'estadual');
   await page.locator('#proj-table tbody tr').first().click();
-  await page.waitForTimeout(250);
+  await page.waitForFunction(() => Ficha.isOpen() && location.hash.startsWith('#ficha/'));
   assert.match(await fichaText(), /Concessão estadual/);
-  await page.keyboard.press('Escape');
-  await page.waitForTimeout(250);
+  await escFicha();
   await page.selectOption('#proj-esfera', '');
 });
 
@@ -780,32 +882,52 @@ test('(e, f) Pipeline: ≥ 60 linhas por data prevista, filtros, contagem por st
   // linha com ent abre #ficha/<ent>
   const ent = await page.getAttribute('#pipe-table tbody tr[data-ent]', 'data-ent');
   await page.locator('#pipe-table tbody tr[data-ent]').first().click();
-  await page.waitForTimeout(250);
+  await routed(page, '#ficha/' + ent);
   assert.equal(await page.evaluate(() => location.hash), '#ficha/' + ent);
   assert.equal(await page.isVisible('#ficha'), true);
-  await page.keyboard.press('Escape');
-  await page.waitForTimeout(250);
+  await escFicha();
   assert.equal(await page.evaluate(() => location.hash), '#projetos');
   // link de fonte não navega para a ficha
   assert.equal(await page.getAttribute('#pipe-table tbody tr a[href^="http"]', 'target'), '_blank');
+  // item estadual com concessão vigente abre a ficha estadual (RS Bloco 3 → Caminhos da Serra Gaúcha), km como na ficha
+  const b3 = page.locator('#pipe-table tbody tr[data-ent="rs-caminhos-da-serra-gaucha"]');
+  assert.equal(await b3.count(), 1);
+  assert.equal(await b3.locator('td.num').textContent(), '271,4');
+  // observação: detalhe expansível na linha, sem abrir a ficha
+  const nObs = await page.evaluate(() => window.INTEL.pipeline.itens.filter(i => i.obs).length);
+  assert.equal(await page.locator('#pipe-table details.pipe-obs').count(), nObs);
+  const obs = await page.evaluate(() => window.INTEL.pipeline.itens.find(i => i.id === 'rs-bloco-3').obs);
+  await b3.locator('details.pipe-obs summary').click();
+  assert.equal(await b3.locator('details.pipe-obs').evaluate(d => d.open), true);
+  assert.equal(await b3.locator('details.pipe-obs p').textContent(), obs);
+  assert.equal(await page.evaluate(() => location.hash), '#projetos');
+  assert.equal(await page.isVisible('#ficha'), false);
+  // a observação aberta continua aberta depois de um filtro
+  await page.selectOption('#pipe-esfera', 'estadual');
+  assert.equal(await b3.locator('details.pipe-obs').evaluate(d => d.open), true);
+  await page.selectOption('#pipe-esfera', '');
+  await b3.locator('td.name').click({ position: { x: 4, y: 4 } });
+  await routed(page, '#ficha/rs-caminhos-da-serra-gaucha');
+  assert.match(await fichaText(), /Concessão estadual · RS/);
+  assert.match(await page.textContent('#ficha-pipeline'), /Contrato assinado/);
+  await escFicha();
+  assert.equal(await page.evaluate(() => location.hash), '#projetos');
   await go('#mapa');
 });
 
 test('sem window.INTEL: Projetos e ficha da v2 sem esfera, pipeline nem ANTT, sem erros', async () => {
   const errs = [], ext = [];
   const p = await openPage(errs, ext, html => html.replace('window.INTEL=', 'window.INTEL_AUSENTE='));
-  await p.evaluate(() => { location.hash = '#projetos'; });
-  await p.waitForTimeout(250);
+  await go('#projetos', p);
   assert.equal(await p.locator('#proj-table tbody tr').count(), 54);
   assert.equal(await p.locator('#pipeline').count(), 0);
   assert.equal(await p.locator('#estudos-list li').count(), 27);
-  await p.evaluate(() => { location.hash = '#ficha/nova-rota-do-oeste'; });
-  await p.waitForTimeout(250);
+  await go('#ficha/nova-rota-do-oeste', p);
   assert.equal(await p.isVisible('#ficha'), true);
   const titles = await p.$$eval('#ficha .fblock h3', hs => hs.map(h => h.textContent));
   assert.ok(!titles.some(h => /ANTT|Praças da concessão|Pipeline/.test(h)));
   await p.evaluate(() => { location.hash = '#ficha/sp-lt01-autoban'; });
-  await p.waitForTimeout(250);
+  await p.waitForFunction(() => location.hash === '#mapa' && Tabs.current().active === 'mapa' && !Ficha.isOpen());
   assert.equal(await p.evaluate(() => location.hash), '#mapa');
   assert.deepEqual(errs, []);
   await p.context().close();
@@ -867,6 +989,7 @@ test('(b) Tráfego: ≥ 5 gráficos, "Fonte:" em cada cartão, KPIs do modelo, s
   assert.equal(await page.getAttribute('#chart-t-taxa svg.chart', 'role'), 'img');
   assert.match(t, /índice 1999 = 100, rodovias pedagiadas, não é volume/i);
   assert.match(t, /Entram só as \d+ praças/);
+  assert.match(await page.textContent('#card-t-taxa'), /trechos planejados no SNV ficam de fora/);
   assert.equal(await page.locator('#chart-t-rank .hrow[data-k]').count(), 20);
   assert.equal(await page.locator('#chart-t-taxa .hrow').count(), 15);
   assert.equal(await page.locator('#chart-t-uf-a .hrow').count(), await page.evaluate(() => IntelModel.acidentesPorUf(window.INTEL, window.SNV).length));
@@ -918,6 +1041,9 @@ test('(c) Cargas: KPI de soja = fmtT(soma), "Fonte:" em cada cartão, sem undefi
   assert.equal(await page.locator('#chart-c-mun .hrow[data-k]').count(), 20);
   assert.equal(await page.locator('#chart-c-siade .hrow').count(), 15);
   assert.equal(await page.locator('#pnl-table tbody tr').count(), 15);
+  // mesma carga, mesmo formato do cartão e da legenda (fmtT)
+  const pnl = await page.evaluate(() => IntelModel.cargaTop(window.INTEL, window.SNV, 15).map(r => IntelModel.fmtT(r.gsa)));
+  assert.deepEqual(await page.$$eval('#pnl-table tbody tr td:nth-child(3)', tds => tds.map(t => t.textContent)), pnl);
   assert.equal(await page.locator('#chart-c-exp-mat tbody tr').count(), 10);
   assert.equal(await page.locator('#chart-c-exp-mat thead th').count(), 9);
   assert.match(await page.textContent('#kpi-arm'), /sem municípios sob sigilo/);
@@ -943,7 +1069,8 @@ test('(c) trocar o produto da exportação muda o gráfico e a matriz', async ()
 
 test('(c) fretes: ordena por R$/t, filtra UF de origem e marca origem aproximada', async () => {
   await goTab(page, '#cargas');
-  const vals = () => page.$$eval('#frete-table tbody tr', trs => trs.map(t => t.dataset.rst).filter(Boolean).map(Number));
+  // a ordem vale entre as rotas sem ressalva de distância; as de distância suspeita vêm depois de todas
+  const vals = () => page.$$eval('#frete-table tbody tr:not([data-suspeito])', trs => trs.map(t => t.dataset.rst).filter(Boolean).map(Number));
   const isSorted = (v, dir) => v.every((x, i) => i === 0 || (dir === 'desc' ? x <= v[i - 1] : x >= v[i - 1]));
   // padrão: R$/t decrescente; clique no cabeçalho inverte
   assert.ok(isSorted(await vals(), 'desc'));
@@ -955,8 +1082,24 @@ test('(c) fretes: ordena por R$/t, filtra UF de origem e marca origem aproximada
   assert.ok(isSorted(await vals(), 'desc'));
   const n = await page.evaluate(() => window.INTEL.multimodal.fretes.linhas.length);
   assert.equal(await page.locator('#frete-table tbody tr').count(), n);
-  const nAprox = await page.evaluate(() => window.INTEL.multimodal.fretes.linhas.filter(l => l[6] === 'aprox').length);
+  const nAprox = await page.evaluate(() => window.INTEL.multimodal.fretes.linhas.filter(l => l[6].split('+').includes('aprox')).length);
   assert.equal(await page.locator('#frete-table .tag-nv', { hasText: 'origem aproximada' }).count(), nAprox);
+  // distância suspeita na fonte: R$/t·km "—" com etiqueta, e essas rotas sempre no fim (em qualquer ordenação)
+  const nSus = await page.evaluate(() => window.INTEL.multimodal.fretes.linhas.filter(l => l[6].includes('km_suspeito')).length);
+  assert.ok(nSus >= 17);
+  for (const key of ['rs_t', 'rs_tkm', 'km', 'origem']) {
+    await page.click(`#frete-table [data-fsort="${key}"]`);
+    const flags = await page.$$eval('#frete-table tbody tr', trs => trs.map(t => t.dataset.suspeito === '1'));
+    assert.equal(flags.filter(Boolean).length, nSus, key);
+    assert.ok(flags.slice(flags.length - nSus).every(Boolean), `${key}: suspeitas fora do fim`);
+  }
+  const cells = await page.$$eval('#frete-table tbody tr[data-suspeito] td:nth-child(7)', tds => tds.map(t => t.textContent.trim()));
+  assert.ok(cells.every(c => c === '— distância suspeita na fonte'), cells[0]);
+  const ms = await page.$$eval('#frete-table tbody tr[data-suspeito]', trs => trs.filter(t => t.children[1].textContent === 'MS').length);
+  assert.equal(ms, 17);
+  await page.click('#frete-table [data-fsort="rs_t"]');
+  if ((await page.getAttribute('#frete-table th[aria-sort]', 'aria-sort')) !== 'descending') await page.click('#frete-table [data-fsort="rs_t"]');
+  assert.ok(isSorted(await vals(), 'desc'));
   await page.selectOption('#frete-uf', 'MT');
   const ufs = await page.$$eval('#frete-table tbody tr td:nth-child(2)', tds => [...new Set(tds.map(t => t.textContent))]);
   assert.deepEqual(ufs, ['MT']);
@@ -1004,13 +1147,20 @@ test('(d) Fontes: ≥ 30 fontes, ≥ 9 indisponíveis com motivo, bases v1/v2 e 
   // coluna Período em pt-BR (as notas ficam como na fonte)
   const periodos = await page.$$eval('#fontes-table tbody tr td:nth-child(3), #fontes-base-table tbody tr td:nth-child(2)', tds => tds.map(t => t.textContent));
   for (const x of periodos) assert.doesNotMatch(x, /\b\d{4}-(0[1-9]|1[0-2])\b/, x);
-  assert.match(await page.textContent('#fontes-legenda'), /Tipo "—": fonte de apoio/);
+  const leg = await page.textContent('#fontes-legenda');
+  for (const re of [/Medido/, /Modelado/, /Cadastro/, /"—": fonte de apoio/]) assert.match(leg, re);
+  assert.match(t, /Cadastro é registro de infraestrutura ou de contratos/);
   assert.doesNotMatch(t, /undefined|NaN|2026-10-20/);
   const motivos = await page.$$eval('#fontes-indisp-table tbody tr td:nth-child(2)', tds => tds.map(t => t.textContent));
   assert.ok(motivos.every(m => m.length > 5));
   assert.equal(await page.getAttribute('#fontes-table tbody tr a', 'target'), '_blank');
   const tipos = await page.$$eval('#fontes-table tbody tr td:nth-child(6)', tds => [...new Set(tds.map(t => t.textContent))].sort());
-  assert.ok(tipos.includes('Medido') && tipos.includes('Modelado'), tipos.join());
+  assert.ok(tipos.includes('Medido') && tipos.includes('Modelado') && tipos.includes('Cadastro'), tipos.join());
+  // registros (malha municipal, estaduais, capas ANTT) não aparecem como "Medido"
+  const tipoDe = await page.$$eval('#fontes-table tbody tr', trs => trs.map(tr => [tr.children[0].textContent, tr.children[1].textContent, tr.children[5].textContent]));
+  for (const [b, n, tp] of tipoDe) {
+    if (b === 'Municípios' || b === 'Estaduais' || /Capas das concessões/.test(n)) assert.equal(tp, 'Cadastro', n);
+  }
 });
 
 test('(e) hashes inválidos continuam caindo no Mapa', async () => {

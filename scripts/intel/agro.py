@@ -216,7 +216,8 @@ def build_municipios():
                "Centroides oficiais do serviço de metadados da malha; o de Boa Esperança do Norte vem do limite de "
                "2025. Nomes e UF dos 5.571 municípios vêm do serviço de localidades do IBGE."),
     ]
-    return {"fonte": fonte, "tipo": "medido", "topo": topo, "ids": ids, "nomes": nomes, "uf": ufs, "centro": centro}
+    # cadastro: malha e nomes dos municípios (registro), sem número medido
+    return {"fonte": fonte, "tipo": "cadastro", "topo": topo, "ids": ids, "nomes": nomes, "uf": ufs, "centro": centro}
 
 
 def build_agro(ids):

@@ -24,17 +24,17 @@ Mapa interativo dos trechos do **SNV (Sistema Nacional de Viação, DNIT)**, ver
 
 ## Camadas de inteligência (v3)
 
-Cada bloco fica em `data/intel/<bloco>.json` (versionado) e é embutido no HTML como `window.INTEL.<bloco>`. Todo bloco traz `fonte` (nome, URL, período, data de acesso, licença e nota, escritas em português claro, sem nomes de campo) e o rótulo **modelado** (estimativa de modelo) ou **medido** (contagem ou registro observado). Os arrays por trecho físico têm 6.815 posições, na ordem de `data/base/snv.json`, e `null` onde não há dado.
+Cada bloco fica em `data/intel/<bloco>.json` (versionado) e é embutido no HTML como `window.INTEL.<bloco>`. Todo bloco traz `fonte` (nome, URL, período, data de acesso, licença e nota, escritas em português claro, sem nomes de campo) e o rótulo **modelado** (estimativa de modelo), **medido** (contagem ou registro observado) ou **cadastro** (registro de infraestrutura ou de contratos, como malhas, portos e fichas de concessões, sem número medido nem modelado). Os arrays por trecho físico têm 6.815 posições, na ordem de `data/base/snv.json`, e `null` onde não há dado.
 
-| Bloco | Fonte | Período | Modelado × medido |
+| Bloco | Fonte | Período | Tipo |
 |---|---|---|---|
 | `trafego` | Infra S.A./DNIT (VMDa), PRF (acidentes), ABCR (fluxo pedagiado) | VMDa 2023; PRF 2024–2025; ABCR 2016–2026 | VMDa modelado; PRF e ABCR medidos |
-| `antt` | ANTT dados abertos (praças, SATs, receita, capas, investimentos) | jan/2024 a ago/2026; investimentos 2010 a 2025 | medido |
+| `antt` | ANTT dados abertos (praças, SATs, receita, capas, investimentos) | jan/2024 a ago/2026; investimentos 2010 a 2025 | medido; capas das concessões: cadastro |
 | `carga` | ONTL/Infra S.A., PNL 2035 (cenário-base) | ano-base 2017 | modelado |
-| `agro` e `municipios` | IBGE (PAM, estoques, malha municipal) | 2025 | medido |
-| `multimodal` | BaseFerro, ANTAQ, ANTT SIADE, IBGE Logística, Comex Stat, CONAB | 2024 a set/2026 | medido |
-| `estaduais` | Infra S.A. (malha estadual), ARTESP, AGERGS, Ager-MT, ABCR | CIDE 2021 (malha); fichas 2024–2026; imprensa e releases 2019–2026 | medido |
-| `pipeline` | MT (carteira v40), ANTT, BNDES Hub, portais estaduais, imprensa | out/2025 a out/2026 | sem rótulo (carteira curada) |
+| `agro` e `municipios` | IBGE (PAM, estoques, malha municipal) | 2025 | PAM e estoques medidos; malha municipal: cadastro |
+| `multimodal` | BaseFerro, ANTAQ, ANTT SIADE, IBGE Logística, Comex Stat, CONAB | 2024 a set/2026 | SIADE, Comex e CONAB medidos; BaseFerro, ANTAQ e estações IBGE: cadastro |
+| `estaduais` | Infra S.A. (malha estadual), ARTESP, AGERGS, Ager-MT, ABCR | CIDE 2021 (malha); fichas 2024–2026; imprensa e releases 2019–2026 | cadastro |
+| `pipeline` | Ministério dos Transportes (carteira v40), ANTT, BNDES Hub, portais estaduais, imprensa | out/2025 a out/2026 | sem rótulo (carteira curada) |
 | `fontes` | lista de todas as fontes, as da base e as indisponíveis | gerado a partir dos blocos | não se aplica |
 
 O bloco `fontes` relaciona também o que **não** foi possível obter, com o motivo (por exemplo, o portal PNCT do DNIT, o painel de cargas da ANTT, que só existe em Power BI, e o PNL 2050 por link de rodovia).

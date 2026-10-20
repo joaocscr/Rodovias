@@ -8,7 +8,7 @@ pavimentadas (PAV, DUP, EOP) e qualquer outra feição usada por uma concessão 
 (Douglas-Peucker 0,0003°) e codificada como o SNV (`snvbase.encode_line`).
 
 Concessões estaduais (`entidades`, com `entEst`/`entFis`/`entGeo` paralelos):
-- SP: fichas ARTESP (controlador, início, prazo, km, capex, trechos com km) + pasta "Traçado" dos KMZ do CKAN ARTESP;
+- SP: fichas ARTESP (controlador, início, prazo, km, capex, trechos com km) + pasta "Traçado" dos KMZ do portal de dados abertos da ARTESP;
   ViaRondon (l19) e Rota Mogiana (sem KMZ) por rodovia + km na malha SP; Via SP Serra pelos "Ativos Lineares" do l26.
 - RS: códigos SRE dos trechos da AGERGS (XLSX); partes RSC/BRS também como físicos do SNV.
 - MT: tabela "Rodovias Pedagiadas" da Ager-MT (rodovias + municípios) recortada pelos polígonos municipais do IBGE.
@@ -111,7 +111,7 @@ def fetch():
         url = ARTESP_RES.format(rid, f"{lote}.kmz")
         dest = _fetch(url, DIR / "artesp" / "dl" / f"{lote}.kmz")
         m.add(url, dest, f"ARTESP — KMZ do lote {lote[1:]} (CKAN malha-rodoviaria)", periodo="2026",
-              licenca="CC-BY (CKAN ARTESP)")
+              licenca="CC-BY (portal de dados abertos da ARTESP)")
     for slug, *_ in SP:
         dest = DIR / "artesp" / "fichas" / f"{slug}.html"
         url = ARTESP_FICHA.format(slug)
@@ -784,7 +784,7 @@ def _fontes(acesso):
                   "origem ('?') foram mantidos. A camada com ano-base 2024 não respondeu nas consultas (erro 503).")},
         {"nome": "ARTESP — dados abertos (malha rodoviária por lote) e fichas das concessionárias",
          "url": ARTESP_CKAN, "periodo": "arquivos e fichas consultados em out/2026; investimentos com referência em 2024 (Via Raposo, 2025)",
-         "acesso": acesso, "licenca": "CC-BY (CKAN ARTESP); fichas: página pública",
+         "acesso": acesso, "licenca": "CC-BY (portal de dados abertos da ARTESP); fichas: página pública",
          "nota": ("O desenho vem da pasta 'Traçado' dos arquivos KMZ da ARTESP; a extensão desenhada conta uma só "
                   "vez as pistas que ficam a até 100 m umas das outras. As fichas trazem controlador, início, prazo, "
                   "extensão, investimentos e trechos com km (https://www.artesp.sp.gov.br/artesp/setor-regulado/"
@@ -1248,7 +1248,8 @@ def build(F=None):
     opcionais = {"controlador", "abcr_url", "contrato", "municipios", "trecho_texto", "km_trechos"}
     saida = [{k: e.get(k) for k in ordem if k in e and not (k in opcionais and e.get(k) is None)} for e in ents]
     acesso = _acesso()
-    doc = {"fonte": _fontes(acesso), "tipo": "medido",
+    # cadastro: malha e fichas de concessões (registros), sem número medido ou modelado
+    doc = {"fonte": _fontes(acesso), "tipo": "cadastro",
            "malha": {"base": "Infra S.A. Hosted/Rodovias_Estaduais (cide2021)",
                      "campos": ["uf", "via", "sre", "sup", "km_i", "km_f", "ext", "tipo"], "tipos": tipos,
                      "ufs_sem_malha": [u for u in UFS if u not in ufs], "linhas": linhas, "p": ps},

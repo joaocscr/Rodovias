@@ -21,9 +21,7 @@ const Trafego = (() => {
   const box = id => document.getElementById('chart-' + id);
   const width = el => Math.max(320, (el && el.clientWidth) || 640);
   const ym = s => { const [y, m] = String(s).split('-').map(Number); return { y, m }; };
-  const xOfYm = s => { const { y, m } = ym(s); return y + (m - 1) / 12; };
-  const ymOfX = x => { const y = Math.floor(x + 1e-6); return `${y}-${String(Math.round((x - y) * 12) + 1).padStart(2, '0')}`; };
-  const anosLabel = a => (Array.isArray(a) && a.length ? (a.length === 1 ? String(a[0]) : `${Math.min(...a)}–${String(Math.max(...a)).slice(-2)}`) : '');
+  const anosLabel = IM.anosLabel;
 
   // ---------- Navegação para o mapa ----------
   function openPraca(i) {
@@ -105,7 +103,7 @@ const Trafego = (() => {
     if (IM.vmdaOf(intel)) {
       out += card('t-taxa', 'As 15 BRs/UF com maior taxa de acidentes', `Acidentes por 10⁶ veíc·km, PRF ${anos} ÷ VMDa ${IM.vmdaOf(intel).ano}`,
         { wide: true, fonte: `${f}; ${fonte(intel.trafego, /VMDa/)}`,
-          note: 'Só trechos com VMDa (modelado) e BR/UF com pelo menos 10 km somados; acidentes medidos, exposição modelada.' });
+          note: 'Só trechos com VMDa (modelado) e BR/UF com pelo menos 10 km somados; trechos planejados no SNV ficam de fora. Acidentes medidos, exposição modelada.' });
     }
     return out;
   }
@@ -129,10 +127,10 @@ const Trafego = (() => {
     const a = intel.trafego && intel.trafego.abcr;
     const ab = box('t-abcr');
     if (ab) {
-      const pts = key => a.meses.map((m, k) => ({ x: xOfYm(m), y: a[key] ? a[key][k] : null }));
+      const pts = key => a.meses.map((m, k) => ({ x: IM.mesX(m), y: a[key] ? a[key][k] : null }));
       // x = ano + (mês - 1)/12, rotulado como "mmm/aaaa"; 120 meses: pontos menores (a dica continua em cada ponto)
       ab.innerHTML = Charts.linesSvg([{ name: 'Leves', points: pts('leves') }, { name: 'Pesados', points: pts('pesados') }, { name: 'Total', points: pts('total'), dash: true }],
-        { width: width(ab), format: v => IM.fmtDec(v, 1), formatX: x => IM.monthLabel(ymOfX(x)), r: 2.5, title: 'Índice ABCR' });
+        { width: width(ab), format: v => IM.fmtDec(v, 1), formatX: IM.fmtMesX, r: 2.5, title: 'Índice ABCR' });
     }
     const sz = box('t-saz');
     if (sz) {
@@ -175,5 +173,5 @@ const Trafego = (() => {
     render();
   }
 
-  return { init, openPraca };
+  return { init };
 })();

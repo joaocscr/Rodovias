@@ -95,6 +95,16 @@ const IntelModel = (() => {
     return c;
   }
 
+  // Superfície do registro principal do físico j ('PAV', 'N_PAV', 'PLA'); sem dicionário = null.
+  const I_SUP = 5; // posição de Model.FIELD.superficie no registro de SNV.trechos
+  function fisSup(snv, j) {
+    const d = snv && snv.dict && snv.dict.superficie, f = snv && snv.fis && snv.fis[j];
+    if (!d || !f || !f.r || !snv.trechos) return null;
+    const t = snv.trechos[f.r[0]];
+    return t ? (d[t[I_SUP]] ?? null) : null;
+  }
+
+  // Somas da seleção. kmPav = km pavimentados visíveis; kmVmda e kmCarga = desses, os que têm dado (cobertura).
   function aggregateIntel(intel, snv, visible) {
     const vm = vmdaOf(intel), ac = acidOf(intel), ca = cargaOf(intel);
     const hasCarga = !!ca, hasMortos = !!(ac && ac.m && ac.m.length);
@@ -106,19 +116,19 @@ const IntelModel = (() => {
     const anos = nAnos(ac);
     for (let j = 0; j < snv.fis.length; j++) {
       if (!visible[j]) continue;
-      const ext = snv.fis[j].ext;
-      r.kmPav += ext;
+      const ext = snv.fis[j].ext, pav = fisSup(snv, j) === 'PAV';
+      if (pav) r.kmPav += ext;
       if (vm) {
         const tot = sumNullable(vm.l && vm.l[j], vm.p && vm.p[j]);
         if (tot != null) {
           r.vkm += tot * ext;
-          r.kmVmda += ext;
+          if (pav) r.kmVmda += ext;
           if (has(vm.p && vm.p[j])) r.vkmPes += vm.p[j] * ext;
         }
       }
       if (r.acidAno != null && has(ac.n[j])) r.acidAno += ac.n[j] / anos;
       if (hasMortos && has(ac.m[j])) r.mortosAno += ac.m[j] / anos;
-      if (hasCarga && has(ca.gsa[j])) { r.tkm += ca.gsa[j] * ext; r.kmCarga += ext; }
+      if (hasCarga && has(ca.gsa[j])) { r.tkm += ca.gsa[j] * ext; if (pav) r.kmCarga += ext; }
     }
     return r;
   }
@@ -130,14 +140,17 @@ const IntelModel = (() => {
     const l = vm ? at(vm.l, j) : null, p = vm ? at(vm.p, j) : null;
     const tot = sumNullable(l, p);
     const anos = nAnos(ac);
-    const n = ac ? at(ac.n, j) : null, m = ac ? at(ac.m, j) : null;
+    const n = ac ? at(ac.n, j) : null, m = ac ? at(ac.m, j) : null, ext = snv.fis[j].ext;
     return {
       l, p, tot,
       pctPes: p != null && tot > 0 ? p / tot : null,
       acidAno: n == null ? null : n / anos,
       mortosAno: m == null ? null : m / anos,
-      taxa: taxaAcidentes(n, anos, tot, snv.fis[j].ext),
+      taxa: taxaAcidentes(n, anos, tot, ext),
       gsa: ca ? at(ca.gsa, j) : null,
+      vkm: tot == null || !has(ext) ? null : tot * ext,
+      acidKmAno: n == null || !(ext > 0) ? null : n / anos / ext,
+      cargaTotal: ca ? at(ca.total, j) : null,
     };
   }
 
@@ -207,8 +220,18 @@ const IntelModel = (() => {
 
   // Geometria de cada concessão estadual ([[lat, lng], ...] por linha): feições da malha estadual (entEst),
   // trechos físicos do SNV (entFis, ex.: partes RSC/BR) e traçado próprio (entGeo). Índices inválidos são ignorados.
+  // Decodificado uma vez por bloco e SNV (o mapa, a seleção e a ficha usam o mesmo resultado).
+  const estMemo = new WeakMap();
   function estConcLines(est, snvData) {
     if (!est || !Array.isArray(est.entidades)) return [];
+    const c = estMemo.get(est);
+    if (c && c.snv === snvData) return c.lines;
+    const lines = decodeEstConc(est, snvData);
+    estMemo.set(est, { snv: snvData, lines });
+    return lines;
+  }
+
+  function decodeEstConc(est, snvData) {
     const malha = (est.malha && est.malha.p) || [], fis = (snvData && snvData.fis) || [];
     const ok = l => l.length >= 2;
     return est.entidades.map((_, k) => {
@@ -250,6 +273,16 @@ const IntelModel = (() => {
   function monthLabel(ym) {
     const m = /^(\d{4})-(\d{2})$/.exec(String(ym));
     return m ? `${MESES[Number(m[2]) - 1]}/${m[1]}` : String(ym);
+  }
+  // Eixo x mensal dos gráficos de linha: "AAAA-MM" <-> ano + (mês - 1)/12; fmtMesX rotula o x como "mmm/aaaa".
+  const mesX = ym => { const [y, m] = String(ym).split('-').map(Number); return y + (m - 1) / 12; };
+  const xMes = x => { const y = Math.floor(x + 1e-6); return `${y}-${String(Math.round((x - y) * 12) + 1).padStart(2, '0')}`; };
+  const fmtMesX = x => monthLabel(xMes(x));
+  // [2024, 2025] -> "2024–25"; um ano só -> "2024"; vazio -> "".
+  function anosLabel(anos) {
+    if (!Array.isArray(anos) || !anos.length) return '';
+    const a = Math.min(...anos), b = Math.max(...anos);
+    return a === b ? String(a) : `${a}–${String(b).slice(-2)}`;
   }
 
   // Fundo municipal: produtos PAM (t) e capacidade de armazenagem (t).
@@ -428,6 +461,10 @@ const IntelModel = (() => {
 
   const pipelineDe = (intel, id) => pipelineRows(intel).filter(i => i.ent === id);
 
+  // Qualidade do recorte de concessão estadual: o mesmo rótulo no cartão do mapa e na ficha.
+  const QUALIDADE_RECORTE = { ok: 'Recorte ok', aproximado: 'Recorte aproximado', nao_mapeado: 'Não mapeado' };
+  const qualidadeRecorte = q => (q == null || q === '' ? DASH : QUALIDADE_RECORTE[q] || String(q));
+
   const EST_ESTADOS = [{ key: 'estadual_vigente', label: 'Contrato estadual vigente' }, { key: 'estadual_encerrado', label: 'Contrato estadual encerrado' }];
   const estEnts = intel => (intel && intel.estaduais && Array.isArray(intel.estaduais.entidades) ? intel.estaduais.entidades : []);
 
@@ -462,12 +499,13 @@ const IntelModel = (() => {
   const sumOf = arr => { let s = null; for (const v of arr || []) if (has(v)) s = (s || 0) + v; return s; };
   const desc = key => (a, b) => b[key] - a[key];
 
-  // "nome · período · medido|modelado" da fonte do bloco que casa com re (tipo da própria fonte, senão o do bloco, senão tipoPadrao).
+  // "nome · período · medido|modelado|cadastro" da fonte do bloco que casa com re (tipo da própria fonte, senão o do bloco,
+  // senão tipoPadrao).
   function fonteTipo(block, re, tipoPadrao = null) {
     const list = block && block.fonte ? (Array.isArray(block.fonte) ? block.fonte : [block.fonte]) : [];
     const f = list.find(x => x && re.test(x.nome || ''));
     if (!f) return DASH;
-    const ok = t => t === 'medido' || t === 'modelado';
+    const ok = t => t === 'medido' || t === 'modelado' || t === 'cadastro';
     const tipo = ok(f.tipo) ? f.tipo : ok(block.tipo) ? block.tipo : ok(tipoPadrao) ? tipoPadrao : null;
     return `${f.nome}${f.periodo ? ` · ${fmtPeriodo(f.periodo)}` : ''}${tipo ? ` · ${tipo}` : ''}`;
   }
@@ -503,14 +541,16 @@ const IntelModel = (() => {
   const pracasRanking = (intel, n = 20) => pracasRows(intel).filter(p => has(p.vmd) && p.vmd > 0).sort(desc('vmd')).slice(0, n);
 
   // Série mensal somada só das praças com todos os meses de leves e pesados (painel balanceado).
-  function pracasSerie(intel) {
+  // keep (opcional): filtro sobre as praças (objeto de pracasRows, com i), ex.: as de uma concessão; total = praças do filtro.
+  function pracasSerie(intel, keep = null) {
     const p = anttOf(intel) && anttOf(intel).pracas;
     if (!p || !Array.isArray(p.serie_meses) || !p.serie_meses.length || !p.serie_l || !p.serie_p) return null;
     const nm = p.serie_meses.length, full = arr => Array.isArray(arr) && arr.length === nm && arr.every(has);
-    const idx = p.serie_l.map((_, i) => i).filter(i => full(p.serie_l[i]) && full(p.serie_p[i]));
+    const sel = keep ? pracasRows(intel).filter(keep).map(r => r.i) : p.serie_l.map((_, i) => i);
+    const idx = sel.filter(i => full(p.serie_l[i]) && full(p.serie_p[i]));
     const l = p.serie_meses.map((_, k) => idx.reduce((s, i) => s + p.serie_l[i][k], 0));
     const pe = p.serie_meses.map((_, k) => idx.reduce((s, i) => s + p.serie_p[i][k], 0));
-    return { meses: p.serie_meses.slice(), l, p: pe, n: idx.length, total: p.serie_l.length };
+    return { meses: p.serie_meses.slice(), l, p: pe, n: idx.length, total: sel.length };
   }
 
   // Perfil sazonal: média do índice por mês do calendário (jan..dez).
@@ -538,14 +578,15 @@ const IntelModel = (() => {
     return [...by.values()].filter(o => o.acidAno > 0 || o.mortosAno > 0).sort(desc('acidAno'));
   }
 
-  // Taxa por BR/UF: Σ acidentes/ano ÷ (Σ VMDa × ext × 365) × 10⁶, só físicos com VMDa e grupos com ≥ minKm.
+  // Taxa por BR/UF: Σ acidentes/ano ÷ (Σ VMDa × ext × 365) × 10⁶, só físicos com VMDa, fora os planejados (PLA),
+  // e grupos com ≥ minKm.
   function taxaPorBrUf(intel, snv, { minKm = 10, n = 15 } = {}) {
     const ac = acidOf(intel), vm = vmdaOf(intel);
     if (!ac || !ac.n || !vm) return [];
     const anos = nAnos(ac), by = new Map();
     for (let j = 0; j < snv.fis.length; j++) {
       const tot = sumNullable(vm.l && vm.l[j], vm.p && vm.p[j]), ext = snv.fis[j].ext;
-      if (!(tot > 0) || !(ext > 0)) continue;
+      if (!(tot > 0) || !(ext > 0) || fisSup(snv, j) === 'PLA') continue;
       const br = fisBr(snv, j), uf = fisUf(snv, j), key = `${br}/${uf}`;
       const o = by.get(key) || { br, uf, km: 0, nTot: 0, vkm: 0 };
       o.km += ext; o.vkm += tot * ext;
@@ -639,10 +680,19 @@ const IntelModel = (() => {
     return [...by.values()].sort(desc('t')).slice(0, n);
   }
 
+  // Fretes CONAB. qualidade: 'ok', 'aprox' (origem atribuída por proximidade), 'km_suspeito' (distância da fonte
+  // implausível frente à linha reta) ou 'aprox+km_suspeito'. Com distância suspeita, R$/t·km não é calculado.
   function fretesRows(intel) {
     const f = intel && intel.multimodal && intel.multimodal.fretes;
-    return rows(f).map(r => Object.assign(r, { rs_tkm: has(r.rs_t) && has(r.km) && r.km > 0 ? r.rs_t / r.km : null, aprox: r.qualidade === 'aprox' }));
+    return rows(f).map(r => {
+      const q = String(r.qualidade || '').split('+'), kmSuspeito = q.includes('km_suspeito');
+      return Object.assign(r, { rs_tkm: !kmSuspeito && has(r.rs_t) && has(r.km) && r.km > 0 ? r.rs_t / r.km : null,
+        aprox: q.includes('aprox'), kmSuspeito });
+    });
   }
+
+  // Mantém a ordem e leva as rotas com distância suspeita para o fim.
+  const suspeitosNoFim = list => list.filter(r => !r.kmSuspeito).concat(list.filter(r => r.kmSuspeito));
 
   // Físicos com maior carga agrícola modelada (GSA, t/ano), rotulados pelo registro principal.
   function cargaTop(intel, snv, n = 15) {
@@ -692,14 +742,15 @@ const IntelModel = (() => {
   const fmtVkm = x => scaled(x, [[1, 0, '', ' veíc·km/dia'], [1e6, 1, '', ' mi veíc·km/dia'], [1e9, 1, '', ' bi veíc·km/dia']]);
   const fmtTkm = x => scaled(x, [[1, 0, '', ' t·km/ano'], [1e6, 1, '', ' mi t·km/ano'], [1e9, 1, '', ' bi t·km/ano'], [1e12, 1, '', ' tri t·km/ano']]);
 
-  return { MODES, has, sumNullable, nAnos, vmdaOf, acidOf, cargaOf,
+  return { MODES, has, sumNullable, nAnos, vmdaOf, acidOf, cargaOf, fisSup,
     rows, metricArray, quantileBreaks, classOf, aggregateIntel, fisIntel, taxaAcidentes, pointsOfFis, decodeTopo,
-    rodLabel, decodeLine, estConcLines, distToSegment, pointRadius, lineWeight, PORTO_TIPOS, portoTipo, monthLabel, FUNDOS, PRODUTOS, fundoFonte, fundoValues,
+    rodLabel, decodeLine, estConcLines, distToSegment, pointRadius, lineWeight, PORTO_TIPOS, portoTipo, monthLabel, mesX, xMes, fmtMesX, anosLabel,
+    FUNDOS, PRODUTOS, fundoFonte, fundoValues,
     fundoClasses, munInfo, pointInRings, ringsBBox, fonteRef,
     anttCapa, anttAnteriores, anttSeries, pracasDe, obrasResumo, pipelineRows, filterPipeline, pipelineCounts, statusLabel, pipelineDe,
-    EST_ESTADOS, estaduaisRows, byEsfera, estIndex, trechosLabel,
+    EST_ESTADOS, QUALIDADE_RECORTE, qualidadeRecorte, estaduaisRows, byEsfera, estIndex, trechosLabel,
     trafegoKpis, pracasRanking, pracasSerie, abcrSazonal, acidentesPorUf, taxaPorBrUf,
-    cargasKpis, producaoPorUf, topMunicipios, exportProdutos, exportPorUrf, exportMatriz, siadePares, fretesRows, cargaTop,
+    cargasKpis, producaoPorUf, topMunicipios, exportProdutos, exportPorUrf, exportMatriz, siadePares, fretesRows, suspeitosNoFim, cargaTop,
     fmtDia, fontesData, fonteTipo, fmtPeriodo, fmtMt,
     fmtInt, fmtDec, fmtVmd, fmtT, fmtPct, fmtBRL, fmtVkm, fmtTkm };
 })();

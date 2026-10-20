@@ -20,6 +20,7 @@ import csv
 import datetime as dt
 import io
 import json
+import math
 import re
 import sqlite3
 import subprocess
@@ -258,6 +259,45 @@ def _num_br(s):
     return float(s.replace(".", "").replace(",", "."))
 
 
+def distancia_reta(a, b):
+    """Distância em linha reta (km, grande círculo) entre dois pontos [lon, lat]."""
+    lon1, lat1, lon2, lat2 = map(math.radians, (a[0], a[1], b[0], b[1]))
+    h = math.sin((lat2 - lat1) / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin((lon2 - lon1) / 2) ** 2
+    return 2 * 6371.0088 * math.asin(math.sqrt(h))
+
+
+# Plausibilidade da distância do boletim: a rota rodoviária fica entre 0,9× e 3× a linha reta entre as sedes.
+KM_MIN_RETA, KM_MAX_RETA = 0.9, 3.0
+# Só para achar a sede na verificação (o nome exibido não muda): localidades do boletim que não são município.
+SEDE_ALIAS = {("miritituba", "PA"): ("itaituba", "PA"), ("colinas", "TO"): ("colinasdotocantins", "TO"),
+              ("braganca", "SP"): ("bragancapaulista", "SP")}
+
+
+def km_suspeito(km, reta, mesma=False):
+    """True quando a distância informada é implausível: origem = destino, km < 0,9 × linha reta ou km > 3 × linha
+    reta. Sem km ou sem linha reta (sede não encontrada), não há como julgar: False."""
+    if mesma:
+        return True
+    if km is None or reta is None:
+        return False
+    return km < KM_MIN_RETA * reta or km > KM_MAX_RETA * reta
+
+
+def nome_colado(chave, uf, mun):
+    """True quando o nome normalizado é a junção de dois municípios da mesma UF (artefato de células mescladas no
+    boletim, ex.: 'Ribeirão Preto Santos')."""
+    return (chave, uf) not in mun and any((chave[:i], uf) in mun and (chave[i:], uf) in mun
+                                          for i in range(3, len(chave) - 2))
+
+
+def qualidade_frete(atribuicao, suspeito):
+    """'ok' | 'aprox' (origem atribuída por proximidade) e, com distância implausível, 'km_suspeito' ou
+    'aprox+km_suspeito' (as duas ressalvas)."""
+    if not suspeito:
+        return atribuicao
+    return "km_suspeito" if atribuicao == "ok" else f"{atribuicao}+km_suspeito"
+
+
 def build_fretes():
     if not FRETES_CSV.exists():
         extrair_fretes(FRETES_PDF, FRETES_CSV)
@@ -273,6 +313,13 @@ def build_fretes():
             nome = _titulo(nome)
         return nome, uf
 
+    def sede(s):
+        """(chave normalizada da sede, [lon, lat] ou None)."""
+        nome, uf = split_uf(s)
+        k = (norm_nome(nome.split(" - ")[0]), uf)
+        k = SEDE_ALIAS.get(k, k)
+        return k[0], (mun[k][1] if k in mun else None)
+
     linhas, meses = [], set()
     with open(FRETES_CSV, encoding="utf-8", newline="") as f:
         for r in csv.DictReader(f):
@@ -280,7 +327,13 @@ def build_fretes():
             o, uo = lugar(r["origem"])
             de, ud = lugar(r["destino"])
             km = int(r["km"]) if r["km"].strip().isdigit() else None
-            linhas.append([o, uo, de, ud, km, _num_br(r["rs_t_mes3"]), r["atribuicao_origem"]])
+            (no, co), (nd, cd) = sede(r["origem"]), sede(r["destino"])
+            reta = distancia_reta(co, cd) if co and cd else None
+            atrib = r["atribuicao_origem"]
+            if any(nome_colado(n, u, mun) for n, u in ((no, uo), (nd, ud))):
+                atrib = "aprox"
+            qual = qualidade_frete(atrib, km_suspeito(km, reta, mesma=no == nd))
+            linhas.append([o, uo, de, ud, km, _num_br(r["rs_t_mes3"]), qual])
     (mes,) = meses
     mm, aa = mes.split("/")
     assert mm in MESES
@@ -296,28 +349,35 @@ def _acesso():
 def fontes():
     a = _acesso()
 
-    def f(nome, url, periodo, nota, licenca=LIC_GOV):
-        return {"nome": nome, "url": url, "periodo": periodo, "acesso": a, "licenca": licenca, "nota": nota}
+    def f(nome, url, periodo, nota, licenca=LIC_GOV, tipo=None):
+        d = {"nome": nome, "url": url, "periodo": periodo, "acesso": a, "licenca": licenca, "nota": nota}
+        if tipo:
+            d["tipo"] = tipo  # cadastro: registro de infraestrutura, sem número medido
+        return d
 
     fonte = [
         f("Ministério dos Transportes / ONTL — BaseFerro (BIT)", ARQUIVOS[0][0], "abr/2024",
-          "Só trechos em operação, unidos por sigla e operadora e simplificados."),
+          "Só trechos em operação, unidos por sigla e operadora e simplificados.", tipo="cadastro"),
         f("ANTAQ — Instalações portuárias", ARQUIVOS[1][0], "06/05/2025",
-          "Só Brasil; tipo como na fonte (ETC = 'Estação de transbordo de cargas'). Coordenadas da própria ANTAQ."),
+          "Só Brasil; tipo como na fonte (ETC = 'Estação de transbordo de cargas'). Coordenadas da própria ANTAQ.",
+          tipo="cadastro"),
         f("ANTT — SIADE, produção origem-destino", ARQUIVOS[2][0], "2025",
           "Toneladas úteis (TU) somadas no ano por estação de origem, estação de destino e produto; só pares "
           "com 50.000 t ou mais. Fertilizantes reúne adubos, cloreto de potássio, fosfato e ureia."),
         f("IBGE — Logística dos Transportes 2024, fluxos ferroviários O/D", ARQUIVOS[3][0], "2024",
           "Usado só para localizar as estações do SIADE no mapa (por nome e UF); quando não há correspondência, "
           "vale a sede do município.",
-          licenca="Dados abertos IBGE: uso livre com citação da fonte"),
+          licenca="Dados abertos IBGE: uso livre com citação da fonte", tipo="cadastro"),
         f("MDIC — Comex Stat, base bruta de exportações", ARQUIVOS[4][0], "jan/2025 a dez/2025",
           "Quilos líquidos por produto (código SH4), UF de origem da mercadoria, unidade da Receita Federal (URF) "
           "de despacho e via de transporte. A URF é a unidade onde ocorreu o despacho, não o ponto de entrada "
           "rodoviário."),
         f("CONAB — Boletim Logístico", ARQUIVOS[7][0], "ago/2026 (boletim de set/2026)",
           "Fretes rodoviários de grãos (R$/t) e distância (km), extraídos do PDF do boletim. Na origem "
-          "aproximada, a rota foi atribuída por proximidade, porque o boletim traz a origem numa célula mesclada."),
+          "aproximada, a rota foi atribuída por proximidade, porque o boletim traz a origem numa célula mesclada. "
+          "Distância suspeita: a distância do boletim é menor que 0,9 vez ou maior que 3 vezes a linha reta entre "
+          "as sedes dos municípios (ou origem e destino são o mesmo município); nessas rotas o R$/t·km não é "
+          "calculado."),
     ]
     return fonte
 

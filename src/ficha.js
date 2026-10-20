@@ -15,7 +15,7 @@ const Ficha = (() => {
   const ICON_WARN = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 4l9 16H3z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 10v4M12 17v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
 
   const IM = IntelModel;
-  let conc, intel = null, snv = null, estGeo = null, current = null, popover = null;
+  let conc, intel = null, snv = null, current = null, popover = null;
 
   const $ = s => document.querySelector(s);
   const isNum = v => typeof v === 'number' && isFinite(v);
@@ -199,7 +199,24 @@ const Ficha = (() => {
       <tbody>${linhas.map(p => `<tr><td>${esc(p.nome || '—')}</td><td class="num">${esc(IM.fmtInt(p.vmd))}</td><td class="num">${esc(IM.fmtPct(p.pctPes))}</td>
         <td class="num">${esc(IM.fmtBRL(p.receita))}</td></tr>`).join('')}</tbody>
       <tfoot><tr><td colspan="3">Receita total (${fmtInt.format(linhas.length)} ${linhas.length === 1 ? 'praça' : 'praças'})</td><td class="num">${esc(IM.fmtBRL(receita))}</td></tr></tfoot>
-    </table></div><p class="page__src">Contagem medida · ANTT 2025. VMD = média diária dos dois sentidos nos meses com dado; receita em R$ nominais.</p>`, true);
+    </table></div><p class="page__src">Contagem medida · ANTT 2025. VMD = média diária dos dois sentidos nos meses com dado; receita em R$ nominais.</p>${pracasSerieHtml(id)}`, true);
+  }
+
+  // Tráfego mensal da concessão: VMD do mês somado (leves × pesados) nas praças com todos os meses da janela
+  // (mesma regra do painel da aba Tráfego, IntelModel.pracasSerie filtrado pela concessão).
+  function pracasSerieHtml(id) {
+    const s = IM.pracasSerie(intel, p => p.ent === id);
+    if (!s || !s.total) return '';
+    const per = `${IM.monthLabel(s.meses[0])} a ${IM.monthLabel(s.meses[s.meses.length - 1])}`;
+    const nota = s.n
+      ? `Entram ${fmtInt.format(s.n)} de ${fmtInt.format(s.total)} ${s.total === 1 ? 'praça' : 'praças'} da concessão: só as que têm os ${s.meses.length} meses completos (${per}), para a série não oscilar com praças que entram ou saem. Leves incluem motos.`
+      : `Nenhuma das ${fmtInt.format(s.total)} ${s.total === 1 ? 'praça' : 'praças'} da concessão tem os ${s.meses.length} meses completos (${per}); sem série mensal somada.`;
+    const lab = m => `${IM.monthLabel(m).slice(0, 3)}/${m.slice(2, 4)}`; // eixo "jan/24"; a dica traz "jan/2024"
+    const svg = s.n ? Charts.stackedSvg(s.meses.map((m, k) => ({ label: lab(m), tip: IM.monthLabel(m), parts: [s.l[k], s.p[k]] })),
+      { width: 880, height: 260, left: 72, names: ['Leves', 'Pesados'], unit: 'veíc./dia', format: v => IM.fmtInt(v), title: 'Tráfego mensal nas praças da concessão' }) : '';
+    return `<div id="ficha-pracas-serie"><p class="fserie__name">Tráfego mensal nas praças, ${esc(per)} (VMD do mês somado)</p>
+      ${svg ? `${Charts.legendHtml([['Leves', Charts.C.deep], ['Pesados', Charts.C.bright]])}<div class="fchart">${svg}</div>` : ''}
+      <p class="page__src">${esc(nota)} Contagem medida · ANTT.</p></div>`;
   }
 
   function obrasBlock(id) {
@@ -211,7 +228,7 @@ const Ficha = (() => {
     };
     const counts = dl(rows({}, [['Concluídas', o.concluidas, 'int'], ['Em andamento', o.andamento, 'int'], ['Não iniciadas', o.naoIniciadas, 'int'],
       ['Sem dado de execução', o.semDado || null, 'int']]));
-    const top = o.top.length ? `<p class="fserie__name">${o.top.length === 1 ? 'Maior obra prevista' : `As ${o.top.length} de maior previsto`} ainda não concluídas</p>
+    const top = o.top.length ? `<p class="fserie__name">${o.top.length === 1 ? 'Obra não concluída com maior avanço previsto' : `Obras não concluídas com maior avanço previsto (${fmtInt.format(o.top.length)})`}</p>
       <div class="table-wrap table-wrap--static"><table class="grid grid--static"><thead><tr><th>Obra</th><th>Rodovia/km</th><th class="num">Executado</th></tr></thead>
       <tbody>${o.top.map(r => `<tr><td class="wrap">${esc(r.descricao || r.tipo || 'Obra')}</td><td>${esc(kmTxt(r))}</td><td class="num">${esc(IM.fmtPct(r.executado))}</td></tr>`).join('')}</tbody></table></div>` : '';
     return block('Obras acompanhadas pela ANTT', `<div id="ficha-obras">${counts}${top}
@@ -228,12 +245,9 @@ const Ficha = (() => {
   }
 
   // ---------- v3: ficha de concessão estadual ----------
-  const QUALIDADE_EST = { ok: 'Recorte conferido', aproximado: 'Recorte aproximado', nao_mapeado: 'Não mapeado' };
   const estEnts = () => (intel && intel.estaduais && Array.isArray(intel.estaduais.entidades) ? intel.estaduais.entidades : []);
-  function estLines(k) {
-    if (!estGeo) estGeo = intel && intel.estaduais ? IM.estConcLines(intel.estaduais, snv) : [];
-    return estGeo[k] || [];
-  }
+  // Linhas da concessão estadual k: o mesmo cache de IntelModel.estConcLines usado pela camada do mapa.
+  const estLines = k => ((intel && intel.estaduais ? IM.estConcLines(intel.estaduais, snv) : [])[k] || []);
   const estLabel = k => (IM.EST_ESTADOS.find(s => s.key === k) || {}).label || k;
 
   function renderEst(e, k) {
@@ -254,7 +268,7 @@ const Ficha = (() => {
     ]) + (trechos.length ? `<dt>Trechos</dt><dd>${trechos.map(t => `<span class="base base--dark">${esc(t)}</span>`).join('')}</dd>` : '')) +
       (has(e.trecho_texto) ? `<p class="ftext fpad">${esc(e.trecho_texto)}</p>` : '');
     const noGeo = 'Sem traçado no mapa: o recorte desta concessão não foi desenhado (fonte sem km por trecho ou sem geometria).';
-    const mapa = dl(rows({}, [['Qualidade do recorte', QUALIDADE_EST[e.qualidade] || e.qualidade, 'txt'], ['Nota', e.nota, 'txt']])) +
+    const mapa = dl(rows({}, [['Qualidade do recorte', e.qualidade ? IM.qualidadeRecorte(e.qualidade) : null, 'txt'], ['Nota', e.nota, 'txt']])) +
       (geo ? '' : `<p class="ftext fpad">${esc(noGeo)}</p>`);
     const fonteEst = intel.estaduais.fonte ? IM.fonteRef(intel.estaduais.fonte, /./) : null;
     $('#ficha').innerHTML = `
@@ -276,6 +290,7 @@ const Ficha = (() => {
         ${block('Contrato', contrato)}
         ${block('Rodovias e trechos', rod)}
         ${block('Trecho no mapa', mapa)}
+        ${pipelineBlock(e.id)}
         <p class="ficha__foot">Fonte: ${e.fonte_url ? link(e.fonte_url, `página da concessão (${e.regulador || e.poder || 'órgão estadual'})`) : esc(e.regulador || e.poder || '—')}${
   e.abcr_url ? ` · ${link(e.abcr_url, 'ABCR')}` : ''}${fonteEst && fonteEst !== '—' ? ` · traçado: ${esc(fonteEst)}` : ''}.</p>
       </div>`;
@@ -286,10 +301,8 @@ const Ficha = (() => {
   // Liga "Rodovias estaduais", realça a concessão k (com o cartão dela) e enquadra suas linhas.
   function showEstOnMap(k) {
     close(true);
-    Tabs.go('#mapa');
     // Enquadra só depois que a aba Mapa está exibida (hashchange é assíncrono) e o Leaflet recalculou o tamanho.
-    const whenMap = (fn, n = 0) => requestAnimationFrame(() => (Tabs.current().active === 'mapa' || n > 60 ? fn() : whenMap(fn, n + 1)));
-    whenMap(() => {
+    Tabs.goThen('#mapa', () => {
       MapView.invalidate();
       const box = document.querySelector('#layers-section input[data-layer="estaduais"]');
       if (box) box.checked = true;

@@ -193,12 +193,37 @@ def km_of(s):
     return num(m.group(1)) if m else None
 
 
+MINUSC_ROD = {"de", "da", "do", "das", "dos", "e", "para", "c/", "km"}
+
+
+def rotulo_rod(s):
+    """Rodovia que não é código (acesso, alça, contorno): espaços normalizados; texto todo em caixa alta vira caixa de
+    frase, com conectivos e 'km' em minúsculas e códigos com dígitos intactos ('ACESSO PARA SP-278' → 'Acesso para
+    SP-278'); texto já em caixa mista fica como está."""
+    t = " ".join(str(s or "").split())
+    # código de acesso com espaços na fonte ('R 1 A', 'N 01') junta como os demais ('R5A')
+    t = re.sub(r"\b([A-Z]) (\d+)(?: ([A-Z]))?\b", lambda m: m.group(1) + m.group(2) + (m.group(3) or ""), t)
+    if not t or any(c.islower() for c in t):
+        return t
+    out = []
+    for i, w in enumerate(t.split(" ")):
+        if any(c.isdigit() for c in w):
+            out.append(w)
+        elif i and w.lower() in MINUSC_ROD:
+            out.append(w.lower())
+        else:
+            out.append(w[:1] + w[1:].lower())
+    return " ".join(out)
+
+
 def split_rod(s):
-    """'BR-386/RS' → ('BR-386','RS'); 'BR-40' → ('BR-040', None); 'PR-151' → ('PR-151','PR')."""
-    s = str(s or "").strip().upper().replace(" ", "")
-    m = re.match(r"([A-Z]{2})-?(\d+)(?:/([A-Z]{2}))?", s)
+    """'BR-386/RS' → ('BR-386','RS'); 'BR-40' → ('BR-040', None); 'PR-151' → ('PR-151','PR'); 'PR-PR-408' →
+    ('PR-408','PR'); o que não é código vira texto legível ('ACESSO PARA SP-278' → ('Acesso para SP-278', None))."""
+    raw = str(s or "").strip()
+    c = re.sub(r"^([A-Z]{2})-\1-", r"\1-", raw.upper().replace(" ", ""))
+    m = re.match(r"([A-Z]{2})-?(\d+)(?:/([A-Z]{2}))?", c)
     if not m:
-        return (s or None), None
+        return (rotulo_rod(raw) or None), None
     pre, n, uf = m.groups()
     if pre == "BR":
         return f"BR-{int(n):03d}", uf
@@ -761,7 +786,7 @@ def fontes():
                  "acessos e alças (vias que não estão no SNV) foram ligados ao trecho mais próximo, até 100 m, com o "
                  "código do acesso no lugar da rodovia. O sentido informado não é confiável para medir cobertura."},
         {"nome": "ANTT — Capas das concessões rodoviárias", "url": GOVBR, "periodo": "out/2026",
-         "acesso": acesso(rp + "capas/lista.html"), "licenca": "Conteúdo público gov.br",
+         "acesso": acesso(rp + "capas/lista.html"), "licenca": "Conteúdo público gov.br", "tipo": "cadastro",
          "nota": "36 concessões ativas e 10 encerradas; as datas só aparecem quando legíveis na capa. As "
                  "encerradas indicam a concessão sucessora."},
         {"nome": "ANTT — Receita de pedágio, investimentos e custos operacionais", "url": ds("receita-pedagio"),

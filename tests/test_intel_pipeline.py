@@ -49,11 +49,31 @@ def test_estrutura_do_item_e_fonte(blk):
         assert isinstance(i["verificado"], bool)
 
 
-def test_todo_ent_existe_em_conc(blk, conc):
-    ids = {e["id"] for e in conc["entidades"]}
+@pytest.fixture(scope="module")
+def est():
+    return json.loads((ROOT / "data" / "intel" / "estaduais.json").read_text(encoding="utf-8"))
+
+
+def test_todo_ent_existe_em_conc_ou_estaduais(blk, conc, est):
+    fed, ests = {e["id"] for e in conc["entidades"]}, {e["id"] for e in est["entidades"]}
     usados = [i["ent"] for i in blk["itens"] if i["ent"] is not None]
-    assert usados and set(usados) <= ids
+    assert usados and set(usados) <= fed | ests
     assert len(usados) == len(set(usados))  # um item por entidade
+    for i in blk["itens"]:
+        if i["ent"] in ests:
+            assert i["esfera"] == "estadual", i["id"]
+        elif i["ent"] is not None:
+            assert i["esfera"] == "federal", i["id"]
+
+
+def test_pipeline_estadual_liga_concessao_estadual(blk, est):
+    """Itens estaduais que já são concessões vigentes apontam para a ficha estadual; km igual ao da ficha."""
+    por_id = {i["id"]: i for i in blk["itens"]}
+    b3 = por_id["rs-bloco-3"]
+    assert b3["ent"] == "rs-caminhos-da-serra-gaucha"
+    e = next(x for x in est["entidades"] if x["id"] == b3["ent"])
+    assert b3["km"] == e["km_decl"] == 271.43
+    assert b3["data_prevista"] == e["assinatura"]
 
 
 def test_federal_cobre_projetos_2026_2027(blk, conc):
@@ -83,7 +103,7 @@ def test_estaduais_com_verificado_booleano_e_fonte_url(blk):
     for i in est:
         assert i["verificado"] in (True, False)
         assert i["fonte_url"].startswith("http"), i["id"]
-        assert i["ent"] is None and i["estudo"] is None
+        assert i["estudo"] is None
     # só notícia => não verificado; página oficial => verificado
     por_id = {i["id"]: i for i in est}
     assert por_id["rs-bloco-1"]["verificado"] is True
@@ -116,6 +136,21 @@ def test_fonte_data_sem_ferramental(blk):
         assert not re.search(r"WebFetch|curl|Incapsula|ultimaAtualizacao", i["fonte_data"]), i["id"]
 
 
+def test_textos_sem_colunas_deslocadas(blk):
+    """fonte_data é data/descrição de acesso e obs é frase: nenhuma das duas é um pedaço solto de outra coluna."""
+    for i in blk["itens"]:
+        assert i["fonte_data"].count("(") == i["fonte_data"].count(")"), (i["id"], i["fonte_data"])
+        assert not i["obs"] or len(i["obs"]) > 20, (i["id"], i["obs"])
+
+
+def test_carteira_por_extenso(blk):
+    """'carteira MT' e 'Cronograma MT' por extenso: carteira do Ministério dos Transportes."""
+    for i in blk["itens"]:
+        for k in ("fonte_data", "obs", "nome"):
+            assert not re.search(r"\b(carteira|Cronograma) MT\b|MT v40", i[k]), (i["id"], k, i[k])
+    assert any("carteira do Ministério dos Transportes" in i["fonte_data"] for i in blk["itens"])
+
+
 def test_obs_sem_linguagem_de_processo(blk):
     proibido = re.compile(r"rascunho|mapeado|Status mapeado|N[ÃA]O VERIFICADO|S[ÓO] NOT[ÍI]CIA|Não usar no mapa|"
                           r"inacess[ií]vel|conc\.json|data_prevista", re.I)
@@ -128,7 +163,7 @@ def test_data_prevista_com_ent_segue_conc(blk, conc):
     E = {e["id"]: e for e in conc["entidades"]}
     n = 0
     for i in blk["itens"]:
-        if i["ent"] is None:
+        if i["ent"] is None or i["ent"] not in E:
             continue
         e = E[i["ent"]]
         if i["status"] == "leiloado":
@@ -168,3 +203,15 @@ def test_validacao_rejeita_status_e_ent_invalidos():
     for campo, valor in [("data_prevista", "2026-12"), ("data_prevista", "2026-02-28"), ("km", ""),
                          ("rodovias", "")]:
         pipeline.item_de_linha({**linha, campo: valor}, {"rota-arco-norte"}, 27)
+    # vírgula sem aspas desloca colunas: DictReader põe o excesso em None
+    with pytest.raises(ValueError):
+        pipeline.item_de_linha({**linha, None: ["v40)"]}, {"rota-arco-norte"}, 27)
+    with pytest.raises(ValueError):
+        pipeline.item_de_linha({k: v for k, v in linha.items() if k != "obs"}, {"rota-arco-norte"}, 27)
+    # ent estadual: existe em estaduais.json e só em item estadual
+    est = {**linha, "esfera": "estadual", "uf": "RS", "rodovias": "ERS-122", "ent": "rs-x"}
+    assert pipeline.item_de_linha(est, {"rota-arco-norte"}, 27, {"rs-x"})["ent"] == "rs-x"
+    with pytest.raises(ValueError):
+        pipeline.item_de_linha(est, {"rota-arco-norte"}, 27)
+    with pytest.raises(ValueError):
+        pipeline.item_de_linha({**est, "esfera": "federal"}, {"rota-arco-norte"}, 27, {"rs-x"})

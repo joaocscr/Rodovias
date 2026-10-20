@@ -51,15 +51,27 @@ def test_campos_e_urls_das_fontes(fontes):
         assert set(f) == chaves
         assert f["url"].startswith("http"), f
         assert f["nome"] and f["acesso"] and f["licenca"]
-        assert f["tipo"] in ("modelado", "medido", "—"), f
+        assert f["tipo"] in ("modelado", "medido", "cadastro", "—"), f
 
 
 def test_tipo_herdado_do_bloco_ou_subbloco(fontes):
     por = {(f["bloco"], f["nome"]): f["tipo"] for f in fontes["fontes"]}
     assert por[("carga", next(n for b, n in por if b == "carga"))] == "modelado"
     assert {f["tipo"] for f in fontes["fontes"] if f["bloco"] == "pipeline"} == {"—"}
-    assert {f["tipo"] for f in fontes["fontes"] if f["bloco"] == "antt"} == {"medido"}
+    assert {f["tipo"] for f in fontes["fontes"] if f["bloco"] == "antt"} == {"medido", "cadastro"}
     assert {f["tipo"] for f in fontes["fontes"] if f["bloco"] == "trafego"} == {"modelado", "medido"}
+
+
+def test_cadastros_nao_sao_medidos(fontes):
+    """Registros (malha municipal, malha e fichas estaduais, capas ANTT, BaseFerro, ANTAQ, estações IBGE) são
+    'cadastro': não trazem número medido nem modelado."""
+    por = {(f["bloco"], f["nome"]): f["tipo"] for f in fontes["fontes"]}
+    assert {t for (b, _), t in por.items() if b in ("municipios", "estaduais")} == {"cadastro"}
+    assert por[("antt", "ANTT — Capas das concessões rodoviárias")] == "cadastro"
+    cad_mm = {n for (b, n), t in por.items() if b == "multimodal" and t == "cadastro"}
+    assert len(cad_mm) == 3 and any("BaseFerro" in n for n in cad_mm) and any("ANTAQ" in n for n in cad_mm)
+    med = {n for (b, n), t in por.items() if t == "medido"}
+    assert any("Praças de pedágio" in n for n in med) and any("CONAB" in n for n in med) and any("PAM" in n for n in med)
 
 
 def test_indisponiveis_e_base(fontes):
@@ -114,7 +126,7 @@ def test_build_embute_fontes_e_nao_o_manifesto(tmp_path, capsys):
 
 # Termos de implementação que não podem aparecer em texto visível ao usuário (nomes de campo, siglas de código).
 PROIBIDOS = re.compile(
-    r"TO_GSA|TO_TOTAL|V_TOTAL|GTYPE|dist_m|km_map|entFis|entEst|entGeo|fonte_url|verificado=|sigilo=|"
+    r"TO_GSA|TO_TOTAL|V_TOTAL|GTYPE|dist_m|km_map|entFis|entEst|entGeo|fonte_url|verificado=|sigilo=|CKAN|"
     r"\b(?:fis|snap|null|JSON|CSV|campos|campo|periodo|revisar)\b|\(revisar\)|[≤≥]|data/|\d{4}-(?:0[1-9]|1[0-2])\b|\w+_\w+",
     re.IGNORECASE)
 
@@ -124,8 +136,9 @@ def _textos_visiveis(fontes):
         yield ("fonte", f["bloco"], f["nome"]), f["nome"]
         yield ("periodo", f["bloco"], f["nome"]), f["periodo"]
         yield ("nota", f["bloco"], f["nome"]), f["nota"]
+        yield ("licenca", f["bloco"], f["nome"]), f["licenca"]
     for b in fontes["base"]:
-        for k in ("nome", "periodo", "nota"):
+        for k in ("nome", "periodo", "nota", "licenca"):
             yield ("base", k, b["nome"]), b[k]
     for i in fontes["indisponiveis"]:
         for k in ("nome", "motivo"):

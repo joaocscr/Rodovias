@@ -161,13 +161,13 @@ const UI = (() => {
 
   // "Ver no mapa" de qualquer aba: vira um destaque como o da busca (chip, limpar, Esc).
   function showOnMap(label, ids, entId = null) {
-    Tabs.go('#mapa');
-    setTimeout(() => {
+    Tabs.goThen('#mapa', () => {
+      MapView.invalidate();
       activeSearch = { label, ids, ent: entId };
       MapView.highlight(ids);
       MapView.fitTo(ids);
       renderActiveSearch();
-    }, 50);
+    });
   }
 
   function renderActiveSearch() {
@@ -335,60 +335,63 @@ const UI = (() => {
 
   // ---------- Camadas de inteligência (v3) ----------
   const vmdaOf = () => IM.vmdaOf(intel), acidOf = () => IM.acidOf(intel), cargaOf = () => IM.cargaOf(intel);
-  // [2024, 2025] -> "2024–25"; um ano só -> "2024".
-  function anosLabel(anos) {
-    if (!Array.isArray(anos) || !anos.length) return '';
-    const a = Math.min(...anos), b = Math.max(...anos);
-    return a === b ? String(a) : `${a}–${String(b).slice(-2)}`;
-  }
   const vmdaRef = () => { const v = vmdaOf(); return v ? `VMDa ${v.ano}` : 'VMDa'; };
-  const prfRef = () => { const a = acidOf(); const y = a && anosLabel(a.anos); return y ? `PRF ${y}` : 'PRF'; };
+  const prfRef = () => { const a = acidOf(); const y = a && IM.anosLabel(a.anos); return y ? `PRF ${y}` : 'PRF'; };
   const pnlRef = () => { const c = cargaOf(); return c ? `${c.cenario || 'PNL 2035'} ${c.ano_base}` : 'PNL 2035'; };
-  const kmTxt = km => `${fmtKmNum.format(km)} km com dado`;
 
   // Bloco do painel "Números da seleção": só soma trechos com dado; cada número explica a fonte no title.
+  // Cobertura: km pavimentados com dado sobre os km pavimentados da seleção.
   function intelStats(ag) {
     if (!ag) return '';
     const pctPes = ag.vkm > 0 ? ag.vkmPes / ag.vkm : null;
     const tile = (id, value, sub, title) => `<div class="ikpi" title="${esc(title)}">
         <span class="ikpi__value" id="${id}">${esc(value)}</span><span class="ikpi__sub">${esc(sub)}</span></div>`;
-    const cov = (km, base) => (km != null && ag.kmPav > 0 ? ` · ${kmTxt(km)} de ${fmtKmNum.format(base)} km` : '');
+    const cov = km => (km != null && ag.kmPav > 0 ? ` · ${fmtKmNum.format(km)} km com dado de ${fmtKmNum.format(ag.kmPav)} km pavimentados` : '');
     return `<div class="ikpis">
       ${tile('kpi-vkm', IM.fmtVkm(ag.vkm),
-        `${pctPes == null ? '—' : IM.fmtPct(pctPes)} pesados · Tráfego ${vmdaRef()}, estimado${cov(ag.kmVmda, ag.kmPav)}`,
-        `Soma de VMDa × extensão nos trechos visíveis que têm estimativa; % de pesados = veíc·km pesados ÷ veíc·km total. Fonte: ${IM.MODES.trafego.fonte(intel)} — estimativa de modelo, não contagem.`)}
+        `${pctPes == null ? '—' : IM.fmtPct(pctPes)} pesados · Tráfego ${vmdaRef()}, estimado${cov(ag.kmVmda)}`,
+        `Soma de VMDa × extensão nos trechos visíveis que têm estimativa; % de pesados = veíc·km pesados ÷ veíc·km total. Cobertura: km pavimentados com estimativa sobre os km pavimentados da seleção. Fonte: ${IM.MODES.trafego.fonte(intel)} — estimativa de modelo, não contagem.`)}
       ${tile('kpi-acid', ag.acidAno == null ? '—' : `${IM.fmtInt(ag.acidAno)} acidentes/ano`,
         `${ag.mortosAno == null ? '—' : IM.fmtInt(ag.mortosAno)} mortos/ano · ${prfRef()}, medido`,
         `Média anual de acidentes e de mortos registrados pela PRF nos trechos visíveis. Fonte: ${IM.MODES.acidentes.fonte(intel)} — contagem medida de ocorrências.`)}
       ${tile('kpi-tkm', IM.fmtTkm(ag.tkm),
-        `Carga agrícola · ${pnlRef()}, modelado${cov(ag.kmCarga, ag.kmPav)}`,
-        `Soma de carga agrícola (t/ano) × extensão nos trechos visíveis que casaram com a rede do PNL. Fonte: ${IM.MODES.carga.fonte(intel)} — estimativa de modelo.`)}
+        `Carga agrícola · ${pnlRef()}, modelado${cov(ag.kmCarga)}`,
+        `Soma de carga agrícola (t/ano) × extensão nos trechos visíveis que casaram com a rede do PNL. Cobertura: km pavimentados com carga sobre os km pavimentados da seleção. Fonte: ${IM.MODES.carga.fonte(intel)} — estimativa de modelo.`)}
     </div>`;
   }
 
   // Bloco "Tráfego e segurança" do cartão (números de IntelModel.fisIntel); omitido se o físico não tem nenhum dado.
+  // Trecho planejado (superfície PLA): tráfego e acidentes vêm marcados "trecho planejado no SNV".
   function intelBlock(j) {
     const vm = vmdaOf(), ac = acidOf(), ca = cargaOf(), f = IM.fisIntel(intel, snv, j);
+    const pla = IM.fisSup(snv, j) === 'PLA' ? '<span class="tag-nv">trecho planejado no SNV</span>' : '';
     const groups = [];
-    const group = (title, rows) => {
+    const group = (title, rows, tag = '') => {
       const body = rows.filter(([, v]) => v != null).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
-      if (body) groups.push(`<dt class="card__sub">${esc(title)}</dt>${body}`);
+      if (body) groups.push(`<dt class="card__sub">${esc(title)}${tag}</dt>${body}`);
     };
     const fmt = (v, fn) => (v == null ? null : fn(v));
     if (vm) {
       group(`VMDa · estimado, ${vm.ano}`, [
         ['Leves', fmt(f.l, IM.fmtVmd)], ['Pesados', fmt(f.p, IM.fmtVmd)],
         ['Total', fmt(f.tot, IM.fmtVmd)], ['% pesados', fmt(f.pctPes, IM.fmtPct)],
-      ]);
+        ['Veículos × extensão', fmt(f.vkm, IM.fmtVkm)],
+      ], pla);
     }
     if (ac) {
       group(`Acidentes · ${prfRef()}, medido`, [
         ['Acidentes/ano', fmt(f.acidAno, x => IM.fmtDec(x, 1))],
         ['Mortos/ano', fmt(f.mortosAno, x => IM.fmtDec(x, 1))],
+        ['Acidentes por km por ano', fmt(f.acidKmAno, x => IM.fmtDec(x, 2))],
         ['Acidentes por 10⁶ veíc·km', fmt(f.taxa, x => IM.fmtDec(x, 2))],
+      ], pla);
+    }
+    if (ca) {
+      group(`Carga · modelo PNL, ${ca.ano_base}`, [
+        ['Carga agrícola', fmt(f.gsa, x => `${IM.fmtT(x)}/ano`)],
+        ['Carga total (todas as mercadorias)', fmt(f.cargaTotal, x => `${IM.fmtT(x)}/ano`)],
       ]);
     }
-    if (ca) group(`Carga agrícola · modelo PNL, ${ca.ano_base}`, [['Carga agrícola', fmt(f.gsa, x => `${IM.fmtT(x)}/ano`)]]);
     if (!groups.length) return '';
     return `<div class="card__intel"><h3 class="section-title">Tráfego e segurança</h3><dl class="card__grid">${groups.join('')}</dl></div>`;
   }
@@ -396,7 +399,6 @@ const UI = (() => {
   // ---------- Camadas de sobreposição (v3, Task 10) ----------
   const LAYERS_NOTE = 'Medido: praças, SATs (ANTT), PAM, Estoques. Modelado: VMDa, carga PNL.';
   const PROD_LABEL = { soja: 'Soja', milho1: 'Milho 1ª safra', milho2: 'Milho 2ª safra', cana: 'Cana-de-açúcar', algodao: 'Algodão', trigo: 'Trigo', cafe: 'Café' };
-  const QUALIDADE = { ok: 'Recorte ok', aproximado: 'Aproximado', nao_mapeado: 'Não mapeado' };
 
   function renderLayers() {
     let sec = $('#layers-section');
@@ -410,14 +412,17 @@ const UI = (() => {
     // Rodovias estaduais: sublegenda distingue a malha das concessões estaduais (clicáveis).
     const sub = d => (d.key === 'estaduais'
       ? `<div class="layer-sub"><span>${layerSwatch('estaduais-malha')}Malha estadual</span><span>${layerSwatch('estconc')}Concessões estaduais</span></div>` : '');
-    const checks = avail.map(d => `<label class="check" title="${esc(d.title)}"><input type="checkbox" data-layer="${d.key}">${layerSwatch(d.key)}` +
-      `<span>${esc(d.label)}</span><span class="muted">${fmtInt.format(d.n)}</span></label>${sub(d)}`).join('');
+    // A fonte de cada camada fica no title (mouse) e num texto oculto ligado ao checkbox (teclado e leitor de tela).
+    const checks = avail.map(d => `<label class="check" title="${esc(d.title)}"><input type="checkbox" data-layer="${d.key}" aria-describedby="layer-src-${d.key}">${layerSwatch(d.key)}` +
+      `<span>${esc(d.label)}</span><span class="muted">${fmtInt.format(d.n)}</span></label><span class="visually-hidden" id="layer-src-${d.key}">Fonte: ${esc(d.title)}</span>${sub(d)}`).join('');
     const fundo = Layers.fundoAvailable() ? `<fieldset class="fundo"><legend class="fundo__title">Fundo municipal</legend><div class="fundo__opts">
         <label class="check"><input type="radio" name="fundo" value="" checked><span>Nenhum</span></label>
-        ${IM.FUNDOS.map(f => `<label class="check" title="${esc(`${IM.fundoFonte(intel, f.key)} · por município, 5 classes por quantil`)}"><input type="radio" name="fundo" value="${f.key}"><span>${esc(f.label)}</span></label>`).join('')}
+        ${IM.FUNDOS.map(f => { const src = `${IM.fundoFonte(intel, f.key)} · por município, 5 classes por quantil`;
+          return `<label class="check" title="${esc(src)}"><input type="radio" name="fundo" value="${f.key}" aria-describedby="fundo-src-${f.key}"><span>${esc(f.label)}</span></label>` +
+            `<span class="visually-hidden" id="fundo-src-${f.key}">Fonte: ${esc(src)}</span>`; }).join('')}
       </div></fieldset>` : '';
     sec.innerHTML = `<details class="layers" id="layers" open>
-        <summary><h2 class="section-title">Camadas</h2>${ICON.chev}</summary>
+        <summary><span class="section-title">Camadas</span>${ICON.chev}</summary>
         <div class="layers__body">
           ${checks ? `<div class="checks">${checks}</div>` : '<p class="empty">Sem camadas neste arquivo.</p>'}
           ${fundo}
@@ -494,16 +499,16 @@ const UI = (() => {
     return m ? `${IM.monthLabel(m[1])} a ${IM.monthLabel(m[2])}` : p ? String(p) : null;
   };
 
-  // Série mensal leves × pesados da praça i (Charts.linesSvg com x = ano + mês/12; dicas reescritas como "jan/2024").
+  // Série mensal leves × pesados da praça i (Charts.linesSvg com x = ano + (mês - 1)/12, rotulado "mmm/aaaa" no eixo e nas dicas).
   function pracaChart(i) {
     const p = intel.antt.pracas, meses = p.serie_meses || [], sl = (p.serie_l || [])[i] || [], sp = (p.serie_p || [])[i] || [];
-    const xOf = ym => { const [y, m] = ym.split('-').map(Number); return y + (m - 1) / 12; };
-    const pts = arr => meses.map((ym, k) => ({ x: xOf(ym), y: arr[k] })).filter(q => IM.has(q.y));
+    const pts = arr => meses.map((ym, k) => ({ x: IM.mesX(ym), y: arr[k] })).filter(q => IM.has(q.y));
     const series = [{ name: 'Leves', points: pts(sl) }, { name: 'Pesados', points: pts(sp) }];
     if (!series[0].points.length && !series[1].points.length) return '';
-    const label = x => { const y = Math.floor(x + 1e-6); return IM.monthLabel(`${y}-${String(Math.round((x - y) * 12) + 1).padStart(2, '0')}`); };
-    const svg = Charts.linesSvg(series, { width: 312, height: 200, format: v => IM.fmtInt(v), unit: ' veíc./dia', title: 'Tráfego mensal da praça: leves e pesados' })
-      .replace(/<title>(Leves|Pesados) ([\d.]+):/g, (_, n, x) => `<title>${n} ${label(Number(x))}:`);
+    // rótulos do eixo: um por ano em séries de 2 anos ou mais; senão 2 ou 3 rótulos (o cartão é estreito)
+    const xs = series.flatMap(q => q.points.map(pt => pt.x)), span = Math.round((Math.max(...xs) - Math.min(...xs)) * 12);
+    const svg = Charts.linesSvg(series, { width: 312, height: 200, format: v => IM.fmtInt(v), formatX: IM.fmtMesX, unit: ' veíc./dia',
+      stepX: (span >= 24 ? 12 : Math.max(1, Math.ceil((span + 1) / 2))) / 12, title: 'Tráfego mensal da praça: leves e pesados' });
     const per = meses.length ? `${IM.monthLabel(meses[0])} a ${IM.monthLabel(meses[meses.length - 1])}` : '';
     return `<div class="card__chart"><h3 class="section-title">Tráfego mensal · ${esc(per)}</h3>
       ${Charts.legendHtml([['Leves', Charts.C.deep], ['Pesados', Charts.C.bright]])}<div class="card__svg">${svg}</div>
@@ -539,7 +544,7 @@ const UI = (() => {
       openEstConc(r);
     } else if (key === 'portos') {
       showCard(r.nome, `${r.tipoLabel || r.tipo} · ${r.uf || '—'}`,
-        `${grid([['Tipo', r.tipoLabel || r.tipo], ['Tipo ANTAQ', r.tipoLabel && r.tipoLabel !== r.tipo ? r.tipo : null], ['UF', r.uf]])}
+        `${grid([['Tipo', r.tipoLabel || r.tipo], ['Tipo ANTAQ', r.tipoLabel && Model.normalize(r.tipoLabel) !== Model.normalize(r.tipo) ? r.tipo : null], ['UF', r.uf]])}
         <p class="card__src card__pad">ANTAQ, instalações portuárias</p>`, null);
     }
   }
@@ -551,7 +556,7 @@ const UI = (() => {
     const capex = IM.has(e.capex_bi) ? `${IM.fmtBRL(e.capex_bi * 1e9)}${e.capex_ref ? ` (ref. ${e.capex_ref})` : ''}` : null;
     const link = e.fonte_url ? `<p class="card__src card__pad"><a class="link-btn" href="${esc(e.fonte_url)}" target="_blank" rel="noopener">Fonte: ${esc(e.regulador || e.poder || 'página oficial')}</a></p>` : '';
     showCard(e.nome, `Concessão estadual · ${e.uf || '—'}${e.regulador ? ` · ${e.regulador}` : ''}`,
-      `<div class="card__badges"><span class="badge">${layerSwatch('estconc')}${esc(QUALIDADE[e.qualidade] || e.qualidade || '—')}</span></div>
+      `<div class="card__badges"><span class="badge">${layerSwatch('estconc')}${esc(IM.qualidadeRecorte(e.qualidade))}</span></div>
       ${grid([
         ['UF', e.uf], ['Regulador', e.regulador || e.poder], ['Rodovias', (e.rodovias || []).join(', ')],
         ['km declarado × mapeado', `${km(e.km_decl)} × ${km(e.km_map)}`], ['Grupo', e.grupo || e.controlador],
@@ -765,5 +770,5 @@ const UI = (() => {
     refresh();
   }
 
-  return { init, refresh, showOnMap, openPoint, openMun, states: () => states };
+  return { init, refresh, showOnMap, states: () => states };
 })();

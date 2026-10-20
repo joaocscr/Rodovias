@@ -117,15 +117,60 @@ def test_exportacao(mm):
     assert 33e9 < santos < 36e9
 
 
+def test_distancia_reta():
+    # Sorriso (MT) → Santos (SP): ~1.500 km em linha reta; mesmo ponto = 0.
+    assert multimodal.distancia_reta([-55.71, -12.55], [-46.33, -23.96]) == pytest.approx(1597, rel=0.02)
+    assert multimodal.distancia_reta([-50.0, -15.0], [-50.0, -15.0]) == 0
+
+
+def test_km_suspeito_regra():
+    """Suspeito: km < 0,9 × linha reta, km > 3 × linha reta, ou origem = destino; sem km ou sem reta não julga."""
+    assert multimodal.km_suspeito(100, 100) is False
+    assert multimodal.km_suspeito(90, 100) is False       # limite inferior incluso
+    assert multimodal.km_suspeito(89, 100) is True
+    assert multimodal.km_suspeito(300, 100) is False      # limite superior incluso
+    assert multimodal.km_suspeito(301, 100) is True
+    assert multimodal.km_suspeito(240, 844) is True       # Chapadão do Sul → Paranaguá (fonte com km 4× menor)
+    assert multimodal.km_suspeito(50, 0, mesma=True) is True
+    assert multimodal.km_suspeito(None, 100) is False
+    assert multimodal.km_suspeito(100, None) is False
+
+
+def test_nome_colado():
+    mun = {("ribeiraopreto", "SP"): 1, ("santos", "SP"): 1, ("sorriso", "MT"): 1}
+    assert multimodal.nome_colado("ribeiraopretosantos", "SP", mun) is True
+    assert multimodal.nome_colado("santos", "SP", mun) is False          # município de verdade
+    assert multimodal.nome_colado("ribeiraopretosorriso", "SP", mun) is False  # UF diferente
+    assert multimodal.nome_colado("miritituba", "PA", mun) is False
+
+
+def test_qualidade_frete():
+    assert multimodal.qualidade_frete("ok", False) == "ok"
+    assert multimodal.qualidade_frete("aprox", False) == "aprox"
+    assert multimodal.qualidade_frete("ok", True) == "km_suspeito"
+    assert multimodal.qualidade_frete("aprox", True) == "aprox+km_suspeito"
+
+
 def test_fretes(mm):
     fr = mm["fretes"]
     assert fr["mes"] == "ago/2026"
     assert fr["campos"] == ["origem", "uf_o", "destino", "uf_d", "km", "rs_t", "qualidade"]
     ok = [r for r in fr["linhas"] if r[4] and r[5] is not None]
     assert len(ok) >= 100
-    assert all(r[6] in ("ok", "aprox") for r in fr["linhas"])
+    assert all(r[6] in ("ok", "aprox", "km_suspeito", "aprox+km_suspeito") for r in fr["linhas"])
     sorriso_santos = [r for r in fr["linhas"] if r[0] == "Sorriso" and r[2] == "Santos"]
     assert sorriso_santos and sorriso_santos[0][4] == 1961 and sorriso_santos[0][5] == 490.0
+    assert sorriso_santos[0][6] == "ok"
+    # MS: as 17 rotas para os portos (PR, SP, RS) têm km 4 a 5 vezes menor que a distância real na fonte.
+    ms = [r for r in fr["linhas"] if r[1] == "MS" and r[3] in ("PR", "SP", "RS")]
+    assert len(ms) == 17 and all(r[6] == "km_suspeito" for r in ms)
+    # Rio Verde → Rio Verde (plataforma ferroviária): origem = destino.
+    rv = [r for r in fr["linhas"] if r[0] == "Rio Verde" and r[2].startswith("Rio Verde")]
+    assert rv and rv[0][6] == "km_suspeito"
+    # Artefato de nome do boletim ("Ribeirão Preto Santos") fica como origem aproximada.
+    assert all(r[6].startswith("aprox") for r in fr["linhas"] if r[2] == "Ribeirão Preto Santos")
+    # Só a qualidade muda: km e R$/t continuam os da fonte.
+    assert sum(1 for r in fr["linhas"] if "km_suspeito" in r[6]) == 25
 
 
 @pytest.mark.skipif(not RAW.exists(), reason="sem data/raw/graos")
