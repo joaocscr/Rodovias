@@ -419,7 +419,7 @@ const UI = (() => {
     // Rotas de Integração (v3.1): grupo próprio; ligar enquadra a América do Sul e mostra a legenda da camada.
     const rotas = rot ? `<fieldset class="fundo rotas-group"><legend class="fundo__title">${esc(rot.label)}</legend>
         ${check(rot, rotasSwatch(), 'Rotas e países vizinhos', fmtInt.format(rot.n))}
-        <p class="note layers__note">Traçado esquemático · fonte MPO</p></fieldset>` : '';
+        <p class="note layers__note">${esc(IM.rotasNota(IM.rotasOf(intel)))}</p></fieldset>` : '';
     const fundo = Layers.fundoAvailable() ? `<fieldset class="fundo"><legend class="fundo__title">Fundo municipal</legend><div class="fundo__opts">
         <label class="check"><input type="radio" name="fundo" value="" checked><span>Nenhum</span></label>
         ${IM.FUNDOS.map(f => { const src = `${IM.fundoFonte(intel, f.key)} · por município, 5 classes por quantil`;
@@ -461,11 +461,13 @@ const UI = (() => {
     return el;
   }
 
-  // Liga/desliga as Rotas de Integração: enquadra a América do Sul (ou volta ao Brasil) e mostra a legenda da camada.
+  // Liga/desliga as Rotas de Integração: enquadra a área das rotas (ou volta ao Brasil), esmaece a malha federal enquanto
+  // a camada está ligada e mostra a legenda da camada.
   function toggleRotas(want) {
     const sel = Layers.selected();
     if (!want && sel && sel.key === 'rotas') closeCard();
     Layers.toggle('rotas', want);
+    MapView.setBaseDim(Layers.isOn('rotas'));
     if (want) MapView.fitAmericaSul(); else MapView.fitBrasil();
     renderRotasLegend();
   }
@@ -480,8 +482,10 @@ const UI = (() => {
     const extras = ['hidrovia', 'cabotagem', 'pavimentacao', 'estudo'].filter(t => tipos.has(t))
       .map(t => `<div class="legend__row">${rotaExtraSwatch(t)}<span>${esc(ROTAS_EXTRA[t].label)}</span></div>`).join('');
     const fonte = IM.fonteRef(R.fonte, /Apresentação/);
-    el.innerHTML = `<h2 class="section-title">Rotas de Integração</h2>${rows}${extras ? `<div class="legend__sep"></div>${extras}` : ''}
-      <p class="legend__note" title="Fonte: ${esc(fonte)}">Traçado esquemático · fonte MPO</p>`;
+    // Recolhível (como "Camadas"), aberta por padrão.
+    el.innerHTML = `<details class="legend__det" open><summary><span class="section-title">Rotas de Integração</span>${ICON.chev}</summary>
+      <div class="legend__body">${rows}${extras ? `<div class="legend__sep"></div>${extras}` : ''}
+      <p class="legend__note" title="Fonte: ${esc(fonte)}">${esc(IM.rotasNota(R))}</p></div></details>`;
     el.querySelectorAll('[data-rota]').forEach(b => b.addEventListener('click', () => Layers.open('rotas', Number(b.dataset.rota))));
   }
 

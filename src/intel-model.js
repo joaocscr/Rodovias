@@ -396,22 +396,78 @@ const IntelModel = (() => {
   // Anéis de cada país vizinho (um anel externo por parte), [[lat, lng], ...].
   const paisAneis = p => ((p && p.p) || []).map(decodeLine).filter(r => r.length >= 3);
 
-  // Caixa [[s, w], [n, e]] dos países vizinhos e das linhas das rotas (o "enquadrar a América do Sul"); null sem dado.
-  function rotasBounds(rotas) {
+  // Caixa [[s, w], [n, e]] dos países vizinhos e das linhas das rotas (até onde o mapa pode ir); null sem dado.
+  // Com soLinhas, só as linhas das rotas (o enquadramento ao ligar a camada: a Patagônia fica de fora, como no mapa do MPO).
+  function rotasBounds(rotas, soLinhas = false) {
     if (!rotas) return null;
-    const rings = [...(rotas.paises || []).flatMap(paisAneis), ...rotaLinhas(rotas).map(l => l.ll)];
+    const rings = [...(soLinhas ? [] : (rotas.paises || []).flatMap(paisAneis)), ...rotaLinhas(rotas).map(l => l.ll)];
     const [s, w, n, e] = ringsBBox(rings);
     return s === Infinity ? null : [[s, w], [n, e]];
   }
 
-  // Âncora do rótulo direto de uma rota: o vértice mais extremo das linhas no lado pedido ('n', 's', 'e', 'w'),
-  // para o rótulo sair para fora do traçado (mar ou borda do continente). [lat, lng] ou null.
+  // Nota da camada com o mês da apresentação do MPO: "Traçado esquemático · fonte MPO, jul/2026".
+  function rotasNota(rotas) {
+    const f = rotas && (Array.isArray(rotas.fonte) ? rotas.fonte : [rotas.fonte]).find(x => x && /Apresentação/.test(x.nome || ''));
+    const m = f && /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(f.periodo || ''));
+    return `Traçado esquemático · fonte MPO${m ? `, ${monthLabel(`${m[3]}-${m[2]}`)}` : ''}`;
+  }
+
+  // Âncora do rótulo direto de uma rota: o vértice mais extremo das linhas no lado pedido ('n', 's', 'e', 'w' ou diagonal
+  // 'nw', 'ne', 'sw', 'se', em graus somados), para o rótulo sair para fora do traçado (mar ou borda do continente). [lat, lng] ou null.
+  const LADOS = {
+    n: ([lat]) => lat, s: ([lat]) => -lat, e: ([, lng]) => lng, w: ([, lng]) => -lng,
+    nw: ([lat, lng]) => lat - lng, ne: ([lat, lng]) => lat + lng, sw: ([lat, lng]) => -lat - lng, se: ([lat, lng]) => lng - lat,
+  };
   function rotaLabelAnchor(lines, side = 'w') {
-    const score = { n: ([lat]) => lat, s: ([lat]) => -lat, e: ([, lng]) => lng, w: ([, lng]) => -lng }[side];
+    const score = Object.prototype.hasOwnProperty.call(LADOS, side) ? LADOS[side] : null;
     if (!score) return null;
     let best = null;
     for (const l of lines || []) for (const pt of l) if (!best || score(pt) > score(best)) best = pt;
     return best ? [best[0], best[1]] : null;
+  }
+
+  // Posição do rótulo de um país fora das linhas das rotas. O rótulo é uma caixa de meia-largura hw e meia-altura hh (graus);
+  // se a caixa no polo de inacessibilidade (p.label) já não toca nenhuma linha, fica ali; senão, procura numa grade de passo
+  // `passo` dentro do país o ponto livre mais próximo do original; sem ponto livre, o de maior folga. [lat, lng] ou null.
+  function paisLabelPoint(p, lines, { hw = 3, hh = 0.9, passo = 0.25 } = {}) {
+    if (!p || !Array.isArray(p.label)) return null;
+    const rings = paisAneis(p), orig = [p.label[1], p.label[0]];
+    const [s, w, n, e] = ringsBBox(rings);
+    if (!Number.isFinite(s)) return orig;
+    // segmentos perto do país, em coordenadas escaladas pela caixa (folga >= 1 = caixa livre)
+    const segs = [];
+    for (const l of lines || []) {
+      for (let k = 1; k < l.length; k++) {
+        const [ay, ax] = l[k - 1], [by, bx] = l[k];
+        if (Math.max(ay, by) < s - hh || Math.min(ay, by) > n + hh || Math.max(ax, bx) < w - hw || Math.min(ax, bx) > e + hw) continue;
+        segs.push([ax / hw, ay / hh, bx / hw, by / hh]);
+      }
+    }
+    const folga = (lat, lng) => {
+      let m = Infinity;
+      const x = lng / hw, y = lat / hh;
+      for (const g of segs) { const d = distToSegment(x, y, g[0], g[1], g[2], g[3]); if (d < m) m = d; }
+      return m;
+    };
+    if (folga(orig[0], orig[1]) >= 1) return orig;
+    // anéis quadrados crescentes em volta do original: o 1º ponto livre (e dentro do país) é o mais próximo, a menos de um passo
+    let best = null, bf = -1;
+    const maxK = Math.ceil(Math.max(n - s, e - w) / passo);
+    for (let k = 1; k <= maxK; k++) {
+      let achou = null, ad = Infinity;
+      for (let i = -k; i <= k; i++) {
+        for (const [di, dj] of [[i, -k], [i, k], [-k, i], [k, i]]) {
+          const lat = orig[0] + di * passo, lng = orig[1] + dj * passo;
+          if (lat < s || lat > n || lng < w || lng > e) continue;
+          const f = folga(lat, lng);
+          if (f < 1 && f <= bf) continue;
+          if (!pointInRings(lat, lng, rings)) continue;
+          if (f >= 1) { const d = Math.hypot(di, dj); if (d < ad) { ad = d; achou = [lat, lng]; } } else { bf = f; best = [lat, lng]; }
+        }
+      }
+      if (achou) { best = achou; break; }
+    }
+    return best ? [Math.round(best[0] * 1e3) / 1e3, Math.round(best[1] * 1e3) / 1e3] : orig;
   }
 
   // Rótulo do país no mapa: o nome quando o país tem pelo menos minLarg graus de largura; senão a sigla ISO (Guianas, Uruguai).
@@ -793,7 +849,7 @@ const IntelModel = (() => {
     rodLabel, decodeLine, estConcLines, distToSegment, pointRadius, lineWeight, PORTO_TIPOS, portoTipo, monthLabel, mesX, xMes, fmtMesX, anosLabel,
     FUNDOS, PRODUTOS, fundoFonte, fundoValues,
     fundoClasses, munInfo, pointInRings, ringsBBox, fonteRef,
-    ROTA_TIPOS, rotasOf, rotaTitulo, rotaLinhas, paisAneis, rotasBounds, rotaLabelAnchor, paisLabel,
+    ROTA_TIPOS, rotasOf, rotaTitulo, rotaLinhas, paisAneis, rotasBounds, rotasNota, rotaLabelAnchor, paisLabel, paisLabelPoint,
     anttCapa, anttAnteriores, anttSeries, pracasDe, obrasResumo, pipelineRows, filterPipeline, pipelineCounts, statusLabel, pipelineDe,
     EST_ESTADOS, QUALIDADE_RECORTE, qualidadeRecorte, estaduaisRows, byEsfera, estIndex, trechosLabel,
     trafegoKpis, pracasRanking, pracasSerie, abcrSazonal, acidentesPorUf, taxaPorBrUf,

@@ -28,12 +28,13 @@ const RAMPS = {
 };
 // Elementos das Rotas além das 5 linhas (usados pela camada de rotas): hidrovia em traço-ponto e cabotagem pontilhada no slot azul
 // (o traço-ponto não repete o "Em obra" federal, Bright Blue tracejado 6 4); trecho em pavimentação em marrom (passo 4 da rampa
-// laranja); trecho em estudos em cinza Galapagos tracejado. Toda linha com rótulo na legenda da camada.
+// laranja); trecho em estudos em Spacial Grey, 2,5 px, traço longo 8 3 (não repete o "Leito natural" federal, Light Grey 4 4).
+// Toda linha com rótulo na legenda da camada.
 const ROTAS_EXTRA = {
   hidrovia: { color: DATA.blue, weight: 2.5, dash: '12 4 2 4', label: 'Hidrovia' },
   cabotagem: { color: DATA.blue, weight: 2, dash: '1 5', cap: 'round', label: 'Cabotagem' },
   pavimentacao: { color: RAMPS.carga[3], weight: 2.5, dash: null, label: 'Trecho em pavimentação' },
-  estudo: { color: COLORS.lightGrey, weight: 2, dash: '4 4', label: 'Trecho em estudos' },
+  estudo: { color: COLORS.spacialGrey, weight: 2.5, dash: '8 3', label: 'Trecho em estudos' },
 };
 // Linha de cada rota: 3 px na cor de ROTAS, sobre um contorno Snow White (+3 px) que a separa da malha federal embaixo.
 const ROTA_LINHA = { weight: 3, casing: COLORS.snowWhite, casingExtra: 3, casingOpacity: 0.9 };
@@ -228,5 +229,5 @@ function dataTokenCss() {
 
 if (typeof module !== 'undefined') {
   module.exports = { COLORS, DATA, DATA_SLOTS, ROTAS, RAMPS, ROTAS_EXTRA, ROTA_LINHA, ROTAS_PAIS, PIPE_STATUS, QUANT_MODES, QUANT_STYLES, QUANT_NONE,
-    LAYER_STYLES, LINE_STYLES, DATA_TOKENS, quantStyle, quantSwatch, layerSwatch, rotaSwatch, rotaExtraSwatch, rotasSwatch, dataTokenCss };
+    LAYER_STYLES, LINE_STYLES, CONC_STYLES, DATA_TOKENS, quantStyle, quantSwatch, layerSwatch, rotaSwatch, rotaExtraSwatch, rotasSwatch, dataTokenCss };
 }

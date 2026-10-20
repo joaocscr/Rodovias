@@ -810,6 +810,15 @@ test('rotasBounds: caixa de países e linhas; null sem dado', () => {
   close(s, -50, 1e-6); close(w, -75, 1e-6); close(n, 5.8, 1e-6); close(e, -44, 1e-6);
   assert.equal(IntelModel.rotasBounds(null), null);
   assert.equal(IntelModel.rotasBounds({ paises: [], linhas: [] }), null);
+  // só as linhas (enquadramento ao ligar a camada): sem o Chile até -50°
+  const [[s2, w2], [n2, e2]] = IntelModel.rotasBounds(rotasFake, true);
+  close(s2, -25, 1e-6); close(w2, -70.4, 1e-6); close(n2, -1, 1e-6); close(e2, -44, 1e-6);
+});
+
+test('rotasNota: mês da apresentação do MPO; sem data, só a nota', () => {
+  assert.equal(IntelModel.rotasNota(rotasFake), 'Traçado esquemático · fonte MPO, jul/2026');
+  assert.equal(IntelModel.rotasNota({ fonte: { nome: 'MPO — Apresentação', periodo: '2026' } }), 'Traçado esquemático · fonte MPO');
+  assert.equal(IntelModel.rotasNota(null), 'Traçado esquemático · fonte MPO');
 });
 
 test('rotaLabelAnchor: vértice extremo no lado pedido; lado inválido ou sem linha = null', () => {
@@ -819,6 +828,8 @@ test('rotaLabelAnchor: vértice extremo no lado pedido; lado inválido ou sem li
   assert.deepEqual(at('e'), [-24, -46]);
   assert.deepEqual(at('n'), [-22, -57]);
   assert.deepEqual(at('s'), [-24, -46]);
+  assert.deepEqual(at('nw'), [-23.4, -70.4]);
+  assert.deepEqual(at('ne'), [-24, -46]);
   assert.equal(IntelModel.rotaLabelAnchor(ll, 'x'), null);
   assert.equal(IntelModel.rotaLabelAnchor([], 'w'), null);
 });
@@ -828,4 +839,21 @@ test('paisLabel: nome se o país tem ≥ 5° de largura, senão a sigla ISO', ()
   assert.equal(IntelModel.paisLabel(rotasFake.paises[1]), 'GF');
   assert.equal(IntelModel.paisLabel(rotasFake.paises[1], 2), 'Guiana Francesa');
   assert.equal(IntelModel.paisLabel(null), '—');
+});
+
+test('paisLabelPoint: fica no polo se livre; senão vai ao ponto livre mais próximo dentro do país', () => {
+  const quad = { nome: 'Quadrado', iso: 'QQ', label: [-60, -20], p: [enc([[-66, -26], [-54, -26], [-54, -14], [-66, -14], [-66, -26]])] };
+  // sem linha perto: o polo
+  assert.deepEqual(IntelModel.paisLabelPoint(quad, [], { hw: 2, hh: 0.5 }), [-20, -60]);
+  // linha horizontal em -20: o rótulo sobe ou desce até a caixa (meia-altura 0,5) não tocar a linha
+  const linha = [[[-20, -70], [-20, -50]]];
+  const pt = IntelModel.paisLabelPoint(quad, linha, { hw: 2, hh: 0.5, passo: 0.25 });
+  assert.ok(Math.abs(pt[0] + 20) >= 0.5 && Math.abs(pt[0] + 20) <= 0.75, String(pt));
+  assert.equal(pt[1], -60);
+  assert.ok(IntelModel.pointInRings(pt[0], pt[1], IntelModel.paisAneis(quad)));
+  // país coberto de linhas: o ponto de maior folga, ainda dentro do país
+  const grade = Array.from({ length: 13 }, (_, k) => [[-26 + k, -70], [-26 + k, -50]]);
+  const p2 = IntelModel.paisLabelPoint(quad, grade, { hw: 2, hh: 2 });
+  assert.ok(IntelModel.pointInRings(p2[0], p2[1], IntelModel.paisAneis(quad)), String(p2));
+  assert.equal(IntelModel.paisLabelPoint({ nome: 'x' }, []), null);
 });

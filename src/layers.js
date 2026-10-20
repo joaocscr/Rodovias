@@ -5,12 +5,17 @@
 // e o clique em município pelo evento de clique do mapa quando nenhuma rodovia foi atingida.
 const Layers = (() => {
   const IM = IntelModel;
-  const PANES = { paises: 190, mun: 300, estaduais: 360, estconc: 405, ferrovias: 410, rotas: 415, siade: 430, obras: 440, sats: 450, portos: 460,
-    pracas: 470, lsel: 480, rotasLabels: 490 };
+  const PANES = { paises: 190, mun: 300, estaduais: 360, estconc: 405, ferrovias: 410, rotas: 415, paisLabels: 418, siade: 430, obras: 440,
+    sats: 450, portos: 460, pracas: 470, lsel: 480, rotasLabels: 490 };
   // Lado do rótulo direto de cada rota (o rótulo sai do vértice mais extremo desse lado, para fora do traçado): Rota 1 ao norte,
-  // no Caribe; Rotas 2 a 4 a oeste, no Pacífico; Rota 5 ao sul, abaixo do Prata (a oeste e a leste ficam as legendas do mapa).
-  const ROTA_LADO = { r1: 'n', r2: 'w', r3: 'w', r4: 'w', r5: 's' };
-  const LADO_DIR = { n: ['top', [0, -8]], s: ['bottom', [0, 8]], e: ['right', [8, 0]], w: ['left', [-8, 0]] };
+  // no Caribe; Rotas 2 e 3 a oeste, no Pacífico; Rota 4 a noroeste (Iquique), acima da coluna da legenda da esquerda;
+  // Rota 5 ao sul, abaixo do Prata (embaixo, à esquerda e à direita, ficam as legendas do mapa).
+  const ROTA_LADO = { r1: 'n', r2: 'w', r3: 'w', r4: 'nw', r5: 's' };
+  // Rótulo de país: o dado guarda o polo de inacessibilidade; no mapa, o rótulo vai para o ponto livre mais próximo das linhas
+  // das rotas (IntelModel.paisLabelPoint), com a caixa do texto medida no zoom do enquadramento (≈ 11,4 px por grau no zoom 4).
+  const PX_GRAU = 11.4, pais_hw = t => (t.length * 4.3 + 6) / PX_GRAU, PAIS_HH = 12 / PX_GRAU;
+  const LADO_DIR = { n: ['top', [0, -8]], s: ['bottom', [0, 8]], e: ['right', [8, 0]], w: ['left', [-8, 0]],
+    nw: ['left', [-8, -8]], sw: ['left', [-8, 8]], ne: ['right', [8, -8]], se: ['right', [8, 8]] };
   const POINT_KEYS = ['pracas', 'portos', 'sats', 'obras']; // de cima para baixo (prioridade do clique)
   const HIT_PAD = 3, LINE_TOL = 5;
   let map = null, intel = null;
@@ -150,11 +155,11 @@ const Layers = (() => {
     return { group, items: [], n: e.malha.p.length, conc, nConc: new Set(conc.map(c => c.k)).size };
   }
 
-  // Rotas: países vizinhos (pane abaixo das UFs) com rótulo; as 5 rotas sobre um contorno claro; hidrovias, cabotagem e
+  // Rotas: países vizinhos (pane abaixo das UFs; rótulo acima das linhas das rotas, com halo claro); as 5 rotas sobre um contorno claro; hidrovias, cabotagem e
   // trechos em pavimentação e em estudos por cima; rótulo direto "Rota N · Nome" (texto na cor de texto, amostra na cor da rota).
   function buildRotas() {
     const R = rotas(), group = L.layerGroup(), ls = IM.rotaLinhas(R), rend = renderer('rotas');
-    const P = ROTAS_PAIS, rp = renderer('paises');
+    const P = ROTAS_PAIS, rp = renderer('paises'), todasLinhas = ls.map(l => l.ll);
     for (const p of R.paises || []) {
       const rings = IM.paisAneis(p);
       if (!rings.length) continue;
@@ -163,8 +168,9 @@ const Layers = (() => {
       if (Array.isArray(p.label)) {
         const t = document.createElement('span');
         t.textContent = IM.paisLabel(p);
-        group.addLayer(L.tooltip({ permanent: true, direction: 'center', className: 'uf-label pais-label', pane: 'ufLabels', interactive: false })
-          .setLatLng([p.label[1], p.label[0]]).setContent(t));
+        const at = IM.paisLabelPoint(p, todasLinhas, { hw: pais_hw(t.textContent), hh: PAIS_HH });
+        group.addLayer(L.tooltip({ permanent: true, direction: 'center', className: 'uf-label pais-label', pane: 'l-paisLabels', interactive: false })
+          .setLatLng(at).setContent(t));
       }
     }
     const lines = (tipo, rota) => ls.filter(l => l.tipo === tipo && (rota === undefined || l.rota === rota)).map(l => l.ll);

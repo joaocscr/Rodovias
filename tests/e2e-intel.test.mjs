@@ -1246,7 +1246,7 @@ test('paleta: nenhuma cor de dado fora dos tokens; modos na rampa do modo; camad
   const D = await page.evaluate(() => Object.fromEntries(Object.entries(DATA).map(([k, v]) => [k, v.toUpperCase()])));
   const R = await page.evaluate(() => [...Object.values(ROTAS), ...Object.values(ROTAS_EXTRA).map(x => x.color)].map(c => c.toUpperCase()));
   const expect = { ferrovias: [D.yellow], portos: [D.violet, '#F7F7F8'], siade: [D.red], sats: [D.aqua], obras: [D.orange],
-    estaduais: [D.green, D.magenta, '#231F20'], pracas: ['#0071BB', '#F7F7F8'], rotas: [...new Set([...R, '#F7F7F8'])] };
+    estaduais: [D.green, D.magenta, '#231F20'], pracas: ['#0071BB', '#F7F7F8'], rotas: [...new Set([...R, '#F7F7F8', '#525254'])] };
   for (const [k, cs] of Object.entries(expect)) {
     if (!keys.includes(k)) continue;
     assert.deepEqual([...used[k]].sort(), [...cs].sort(), k);
@@ -1258,6 +1258,11 @@ test('paleta: nenhuma cor de dado fora dos tokens; modos na rampa do modo; camad
 const rotasBox = () => page.locator('#layers-section input[data-layer="rotas"]');
 const rectOf = (p, sel) => p.$$eval(sel, es => es.map(e => { const r = e.getBoundingClientRect(); return { l: r.left, t: r.top, r: r.right, b: r.bottom, text: e.textContent.trim() }; }));
 const overlap = (a, b) => a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;
+// Fim do enquadramento: nenhuma animação de zoom em curso e a vista já na área das rotas (sul além de -42°; a do Brasil para em -38°)
+// ou de volta ao Brasil.
+const naAreaDasRotas = (p = page) => p.waitForFunction(() => !MapView.map._animatingZoom && MapView.map.getBounds().getSouth() < -42);
+const noBrasil = (p = page) => p.waitForFunction(() => !MapView.map._animatingZoom && MapView.map.getBounds().getSouth() > -42);
+const NOTA = /Traçado esquemático · fonte MPO, jul\/2026/;
 
 test('rotas: ligar mostra países, linhas, rótulos diretos e legenda; enquadra a América do Sul; desligar volta ao Brasil', async t => {
   await page.evaluate(() => { location.hash = '#mapa'; });
@@ -1270,7 +1275,7 @@ test('rotas: ligar mostra países, linhas, rótulos diretos e legenda; enquadra 
   // grupo próprio no painel Camadas, desligado, com fonte no title e no texto oculto
   const g = await page.textContent('#layers-section .rotas-group');
   assert.match(g, /Rotas de Integração Sul-Americana/);
-  assert.match(g, /Traçado esquemático · fonte MPO/);
+  assert.match(g, NOTA);
   assert.equal(await rotasBox().isChecked(), false);
   const title = await page.locator('#layers-section label:has(input[data-layer="rotas"])').getAttribute('title');
   assert.match(title, /MPO .*01\/07\/2026.*traçado esquemático/);
@@ -1284,13 +1289,18 @@ test('rotas: ligar mostra países, linhas, rótulos diretos e legenda; enquadra 
   }));
   t.diagnostic(`rotas: ${ms.toFixed(0)} ms`);
   assert.ok(ms < 400, `rotas: ${ms.toFixed(0)} ms`);
-  await page.waitForTimeout(600); // animação do enquadramento
+  await naAreaDasRotas();
   assert.equal(await page.evaluate(() => Layers.isOn('rotas')), true);
   assert.ok(await page.evaluate(() => Layers.count('rotas')) > 0);
-  // enquadra a América do Sul: oeste além de -70°, sul além de -50°, caixa das rotas e vizinhos inteira
+  // enquadra o Brasil e as linhas das rotas (oeste além de -70°), zoom ≥ 4, com a Patagônia cortada como no mapa do MPO
   const b1 = await page.evaluate(() => MapView.map.getBounds().toBBoxString().split(',').map(Number));
-  assert.ok(b1[0] < -70 && b1[1] < -50, b1.join());
-  assert.equal(await page.evaluate(() => MapView.map.getBounds().contains(IntelModel.rotasBounds(window.INTEL.rotas))), true);
+  assert.ok(b1[0] < -70, b1.join());
+  assert.ok(b1[1] > -52, `Patagônia inteira: ${b1.join()}`);
+  assert.equal(await page.evaluate(() => MapView.map.getBounds().contains(IntelModel.rotasBounds(window.INTEL.rotas, true))), true);
+  assert.ok(await page.evaluate(() => MapView.map.getZoom()) >= 4);
+  // malha federal esmaecida enquanto as rotas estão ligadas
+  assert.equal(await page.evaluate(() => MapView.baseDimmed()), true);
+  assert.ok(await page.evaluate(() => MapView.maxLineOpacity()) <= 0.35 + 1e-9);
   // países vizinhos com rótulo; cores só de tokens (rotas, extras, Snow White, Light Grey)
   assert.equal(await page.locator('.leaflet-tooltip.pais-label').count(), await page.evaluate(() => window.INTEL.rotas.paises.length));
   assert.match(await page.textContent('.leaflet-pane'), /Argentina/);
@@ -1298,8 +1308,16 @@ test('rotas: ligar mostra países, linhas, rótulos diretos e legenda; enquadra 
   await page.waitForSelector('#rotas-legend:not([hidden])');
   assert.deepEqual(await page.$$eval('#rotas-legend [data-rota]', bs => bs.map(b => b.textContent.trim())), R.map(r => r.t));
   const lt = await page.textContent('#rotas-legend');
-  for (const re of [/Hidrovia/, /Cabotagem/, /Trecho em pavimentação/, /Trecho em estudos/, /Traçado esquemático · fonte MPO/]) assert.match(lt, re);
+  for (const re of [/Hidrovia/, /Cabotagem/, /Trecho em pavimentação/, /Trecho em estudos/, NOTA]) assert.match(lt, re);
   assert.doesNotMatch(lt, /undefined|NaN/);
+  // recolhível como "Camadas", aberta por padrão, sem título dentro do <summary>
+  assert.equal(await page.locator('#rotas-legend details[open]').count(), 1);
+  assert.equal((await page.textContent('#rotas-legend summary')).trim(), 'Rotas de Integração');
+  assert.equal(await page.locator('#rotas-legend summary :is(h1, h2, h3, h4)').count(), 0);
+  await page.click('#rotas-legend summary');
+  assert.equal(await page.isVisible('#rotas-legend [data-rota="0"]'), false);
+  await page.click('#rotas-legend summary');
+  assert.equal(await page.isVisible('#rotas-legend [data-rota="0"]'), true);
   // rótulo direto em cada rota: texto na cor de texto (Spacial Grey), ≥ 14 px, amostra na cor da rota
   const labs = await page.$$eval('.leaflet-tooltip.rota-label', es => es.map(e => {
     const cs = getComputedStyle(e), sw = e.querySelector('.rota-label__sw');
@@ -1320,10 +1338,24 @@ test('rotas: ligar mostra países, linhas, rótulos diretos e legenda; enquadra 
     for (const b of boxes) assert.ok(!overlap(l, b), `${l.text} sob uma legenda`);
     for (const o of lr) if (o !== l) assert.ok(!overlap(l, o), `${l.text} × ${o.text}`);
   }
+  // rótulos dos países: acima das linhas das rotas (pane), com halo claro, sem cobrir rótulos de rota nem uns aos outros
+  const pr = await rectOf(page, '.leaflet-tooltip.pais-label');
+  for (const l of pr) {
+    for (const o of lr) assert.ok(!overlap(l, o), `${l.text} × ${o.text}`);
+    for (const o of pr) if (o !== l) assert.ok(!overlap(l, o), `${l.text} × ${o.text}`);
+  }
+  const pane = await page.evaluate(() => {
+    const z = n => Number(getComputedStyle(MapView.map.getPane(n)).zIndex), e = document.querySelector('.leaflet-tooltip.pais-label');
+    return { pais: z('l-paisLabels'), rotas: z('l-rotas'), rotulos: z('l-rotasLabels'), dentro: MapView.map.getPane('l-paisLabels').contains(e), sombra: getComputedStyle(e).textShadow };
+  });
+  assert.ok(pane.dentro && pane.pais > pane.rotas && pane.pais < pane.rotulos, JSON.stringify(pane));
+  assert.match(pane.sombra, /rgb\(247, 247, 248\)/);
   // desligar: legenda e rótulos somem, volta ao Brasil
   await rotasBox().uncheck();
-  await page.waitForTimeout(600);
+  await noBrasil();
   assert.equal(await page.isHidden('#rotas-legend'), true);
+  assert.equal(await page.evaluate(() => MapView.baseDimmed()), false);
+  assert.equal(await page.evaluate(() => MapView.maxLineOpacity()), 1);
   assert.equal(await page.locator('.leaflet-tooltip.rota-label').count(), 0);
   assert.equal(await page.locator('.leaflet-tooltip.pais-label').count(), 0);
   const b2 = await page.evaluate(() => MapView.map.getBounds().toBBoxString().split(',').map(Number));
@@ -1333,7 +1365,7 @@ test('rotas: ligar mostra países, linhas, rótulos diretos e legenda; enquadra 
 
 test('rotas: clique real numa linha da Rota 4 abre o cartão; rótulo e legenda também abrem; desligar fecha', async () => {
   await rotasBox().check();
-  await page.waitForTimeout(600);
+  await naAreaDasRotas();
   // vértice da Rota 4 mais distante das outras rotas, com zoom para não haver ambiguidade
   const xy = await page.evaluate(() => {
     const ls = IntelModel.rotaLinhas(window.INTEL.rotas);
@@ -1347,7 +1379,6 @@ test('rotas: clique real numa linha da Rota 4 abre o cartão; rótulo e legenda 
     const c = MapView.map.latLngToContainerPoint(best), r = MapView.map.getContainer().getBoundingClientRect();
     return [r.left + c.x, r.top + c.y];
   });
-  await page.waitForTimeout(150);
   await page.mouse.move(xy[0], xy[1]);
   await page.waitForSelector('.leaflet-tooltip.pt-tip');
   assert.match(await page.textContent('.leaflet-tooltip.pt-tip'), /Rota 4 · Bioceânica de Capricórnio · traçado esquemático/);
@@ -1363,7 +1394,7 @@ test('rotas: clique real numa linha da Rota 4 abre o cartão; rótulo e legenda 
   assert.ok((await page.evaluate(() => Layers.colorsUsed().selecao)).includes('#E34948'));
   // rótulo direto da Rota 2 abre o cartão dela
   await page.evaluate(() => MapView.fitAmericaSul(false));
-  await page.waitForTimeout(150);
+  await naAreaDasRotas();
   await page.click('.leaflet-tooltip.rota-label:has-text("Rota 2")');
   await page.waitForFunction(() => /Amazônica/.test(document.querySelector('#card .card__title').textContent));
   assert.deepEqual(await page.evaluate(() => Layers.selected()), { key: 'rotas', i: 1 });
@@ -1373,7 +1404,7 @@ test('rotas: clique real numa linha da Rota 4 abre o cartão; rótulo e legenda 
   await page.waitForFunction(() => /Bioceânica do Sul/.test(document.querySelector('#card .card__title').textContent));
   // desligar a camada fecha o cartão da rota e limpa a seleção
   await rotasBox().uncheck();
-  await page.waitForTimeout(600);
+  await noBrasil();
   assert.equal(await page.isHidden('#card'), true);
   assert.equal(await page.evaluate(() => Layers.selected()), null);
   assert.deepEqual(errors, []);

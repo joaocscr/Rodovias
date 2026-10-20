@@ -96,9 +96,17 @@ test('tokens: todos hex válidos; CSS do pipeline gerado dos tokens', () => {
   for (const [k, c] of Object.entries(S.PIPE_STATUS)) assert.ok(css.includes(`.chip[data-pstatus="${k}"]::before{background:${c}}`), k);
 });
 
-test('rotas: hidrovia não repete o "Em obra" federal; extras e amostras com tokens; rótulo na legenda', () => {
-  const X = S.ROTAS_EXTRA, obra = S.LINE_STYLES['Em obra de Pavimentação'];
+test('rotas: hidrovia e estudos não repetem estilos federais (Em obra, Leito natural); extras e amostras com tokens; rótulo na legenda', () => {
+  const X = S.ROTAS_EXTRA, obra = S.LINE_STYLES['Em obra de Pavimentação'], leito = S.LINE_STYLES['Leito Natural'];
   assert.notEqual(X.hidrovia.dash, obra.dash);
+  // "Trecho em estudos" não repete o "Leito natural" federal (Light Grey 4 4): nem traço nem cor
+  assert.notEqual(X.estudo.dash, leito.dash);
+  assert.notEqual(X.estudo.color, leito.color);
+  // nenhum elemento extra repete cor + traço de um estilo da malha federal (situação física ou concessões)
+  const base = [...Object.values(S.LINE_STYLES), ...Object.values(S.CONC_STYLES)].map(x => `${x.color.toUpperCase()}|${x.dash}`);
+  for (const [k, x] of Object.entries(X)) assert.ok(!base.includes(`${x.color.toUpperCase()}|${x.dash}`), k);
+  const dashes = Object.values(X).map(x => x.dash);
+  assert.equal(new Set(dashes).size, dashes.length);
   assert.notEqual(X.hidrovia.dash, X.cabotagem.dash);
   assert.notEqual(X.hidrovia.dash, X.estudo.dash);
   assert.equal(X.hidrovia.color, S.DATA.blue);

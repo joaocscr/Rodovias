@@ -37,7 +37,7 @@ Ordem validada do método (adjacente), sem troca de hex.
 
 All-pairs: o pior par sob CVD (verde-água × vermelho, ΔE 6,9) fica na faixa WARN 6–8, aceita com rótulo direto "Rota N · Nome" sobre cada linha e traço.
 
-Cada rota é uma linha de 3 px na sua cor sobre um contorno Snow White `#F7F7F8` (+3 px, opacidade 0,9) que a separa da malha federal embaixo (`ROTA_LINHA`). O rótulo direto "Rota N · Nome" fica na ponta da rota que dá para fora do traçado (Rota 1 ao norte, Rotas 2 a 4 a oeste, Rota 5 ao sul), com o texto em Spacial Grey `#231F20` sobre Snow White e uma amostra de 16 × 4 px na cor da rota; o rótulo abre o cartão da rota. Rota selecionada: a própria cor, 5 px, sobre halo Snow White.
+Cada rota é uma linha de 3 px na sua cor sobre um contorno Snow White `#F7F7F8` (+3 px, opacidade 0,9) que a separa da malha federal embaixo (`ROTA_LINHA`). O rótulo direto "Rota N · Nome" fica na ponta da rota que dá para fora do traçado (Rota 1 ao norte, Rotas 2 e 3 a oeste, Rota 4 a noroeste, Rota 5 ao sul), com o texto em Spacial Grey `#231F20` sobre Snow White e uma amostra de 16 × 4 px na cor da rota; o rótulo abre o cartão da rota. Rota selecionada: a própria cor, 5 px, sobre halo Snow White.
 
 Elementos da camada de rotas além das 5 linhas (`ROTAS_EXTRA`), desenhados por cima das rotas (no mapa do MPO o trecho fluvial também tem a linha da rota) e todos com rótulo na legenda da camada:
 
@@ -46,11 +46,15 @@ Elementos da camada de rotas além das 5 linhas (`ROTAS_EXTRA`), desenhados por 
 | Hidrovia | slot azul `#2a78d6` | 2,5 px, traço-ponto `12 4 2 4` |
 | Cabotagem | slot azul `#2a78d6` | 2 px, pontilhado `1 5` (pontas redondas) |
 | Trecho em pavimentação | marrom = passo 4 da rampa laranja `#8a2e00` | 2,5 px, contínuo |
-| Trecho em estudos | cinza Galapagos `#525254` | 2 px, tracejado `4 4` |
+| Trecho em estudos | Spacial Grey (Galapagos) `#231F20` | 2,5 px, traço longo `8 3` |
 
 A hidrovia não repete o estilo "Em obra" da malha federal (Bright Blue `#0071BB`, 2,5 px, tracejado `6 4`): as duas são azuis (ΔE normal 4,9 entre o slot azul e o Bright Blue), então o que as distingue é o traço — traço-ponto na hidrovia, tracejado simples na obra — e o rótulo "Hidrovia" na legenda da camada.
 
-Países vizinhos (`ROTAS_PAIS`): preenchimento Snow White `#F7F7F8` e borda Light Grey `#525254` (1 px, opacidade 0,6), cores da interface, com o nome do país (ou a sigla ISO quando o país tem menos de 5° de largura: Guiana, Suriname, Guiana Francesa) em Light Grey.
+O trecho em estudos não repete o "Leito natural" da malha federal (Light Grey `#525254`, 1,5 px, tracejado `4 4`): usa o cinza mais escuro da interface (Spacial Grey), mais largo e com traço longo `8 3`. O teste de paleta confere que nenhum elemento extra repete cor + traço de um estilo federal (situação física ou concessões) e que os quatro traços são diferentes entre si.
+
+Com a camada de rotas ligada, a malha federal fica esmaecida (opacidade × 0,35) e volta ao normal quando a camada é desligada; as rotas ficam em primeiro plano sem mudar as cores da malha.
+
+Países vizinhos (`ROTAS_PAIS`): preenchimento Snow White `#F7F7F8` e borda Light Grey `#525254` (1 px, opacidade 0,6), cores da interface, com o nome do país (ou a sigla ISO quando o país tem menos de 5° de largura: Guiana, Suriname, Guiana Francesa) em Light Grey, acima das linhas das rotas e com halo Snow White; no mapa o rótulo sai do polo de inacessibilidade para o ponto livre mais próximo das linhas das rotas.
 
 ## Rampas dos modos quantitativos (`RAMPS`)
 

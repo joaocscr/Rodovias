@@ -1234,6 +1234,19 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 .card__desc { margin: 0; padding: 0 24px 16px; font-size: 14px; line-height: 24px; }
 .rota-cidades { margin: 8px 0 0; font-size: 14px; line-height: 24px; }
 .rotas-group .layers__note { margin: 0 0 0 24px; }
+/* Legenda das rotas recolhível (como "Camadas"). */
+.legend__det > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+.legend__det > summary::-webkit-details-marker { display: none; }
+.legend__det > summary .section-title { margin: 0; }
+.legend__det > summary .chev { transition: transform var(--transition); color: var(--color-light-grey); }
+.legend__det[open] > summary .chev { transform: rotate(180deg); }
+.legend__det > summary:focus-visible { outline: 2px solid var(--color-bright-blue); outline-offset: 2px; }
+.legend__body { padding-top: 8px; }
+/* Rótulos dos países acima das linhas das rotas, com halo claro para ler sobre elas. */
+.leaflet-tooltip.pais-label {
+  text-shadow: 0 0 2px var(--color-snow-white), 0 0 2px var(--color-snow-white), 0 0 3px var(--color-snow-white), 0 0 4px var(--color-snow-white);
+  opacity: 1 !important;
+}
 
 </style>
 </head>
@@ -1928,22 +1941,78 @@ const IntelModel = (() => {
   // Anéis de cada país vizinho (um anel externo por parte), [[lat, lng], ...].
   const paisAneis = p => ((p && p.p) || []).map(decodeLine).filter(r => r.length >= 3);
 
-  // Caixa [[s, w], [n, e]] dos países vizinhos e das linhas das rotas (o "enquadrar a América do Sul"); null sem dado.
-  function rotasBounds(rotas) {
+  // Caixa [[s, w], [n, e]] dos países vizinhos e das linhas das rotas (até onde o mapa pode ir); null sem dado.
+  // Com soLinhas, só as linhas das rotas (o enquadramento ao ligar a camada: a Patagônia fica de fora, como no mapa do MPO).
+  function rotasBounds(rotas, soLinhas = false) {
     if (!rotas) return null;
-    const rings = [...(rotas.paises || []).flatMap(paisAneis), ...rotaLinhas(rotas).map(l => l.ll)];
+    const rings = [...(soLinhas ? [] : (rotas.paises || []).flatMap(paisAneis)), ...rotaLinhas(rotas).map(l => l.ll)];
     const [s, w, n, e] = ringsBBox(rings);
     return s === Infinity ? null : [[s, w], [n, e]];
   }
 
-  // Âncora do rótulo direto de uma rota: o vértice mais extremo das linhas no lado pedido ('n', 's', 'e', 'w'),
-  // para o rótulo sair para fora do traçado (mar ou borda do continente). [lat, lng] ou null.
+  // Nota da camada com o mês da apresentação do MPO: "Traçado esquemático · fonte MPO, jul/2026".
+  function rotasNota(rotas) {
+    const f = rotas && (Array.isArray(rotas.fonte) ? rotas.fonte : [rotas.fonte]).find(x => x && /Apresentação/.test(x.nome || ''));
+    const m = f && /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(f.periodo || ''));
+    return `Traçado esquemático · fonte MPO${m ? `, ${monthLabel(`${m[3]}-${m[2]}`)}` : ''}`;
+  }
+
+  // Âncora do rótulo direto de uma rota: o vértice mais extremo das linhas no lado pedido ('n', 's', 'e', 'w' ou diagonal
+  // 'nw', 'ne', 'sw', 'se', em graus somados), para o rótulo sair para fora do traçado (mar ou borda do continente). [lat, lng] ou null.
+  const LADOS = {
+    n: ([lat]) => lat, s: ([lat]) => -lat, e: ([, lng]) => lng, w: ([, lng]) => -lng,
+    nw: ([lat, lng]) => lat - lng, ne: ([lat, lng]) => lat + lng, sw: ([lat, lng]) => -lat - lng, se: ([lat, lng]) => lng - lat,
+  };
   function rotaLabelAnchor(lines, side = 'w') {
-    const score = { n: ([lat]) => lat, s: ([lat]) => -lat, e: ([, lng]) => lng, w: ([, lng]) => -lng }[side];
+    const score = Object.prototype.hasOwnProperty.call(LADOS, side) ? LADOS[side] : null;
     if (!score) return null;
     let best = null;
     for (const l of lines || []) for (const pt of l) if (!best || score(pt) > score(best)) best = pt;
     return best ? [best[0], best[1]] : null;
+  }
+
+  // Posição do rótulo de um país fora das linhas das rotas. O rótulo é uma caixa de meia-largura hw e meia-altura hh (graus);
+  // se a caixa no polo de inacessibilidade (p.label) já não toca nenhuma linha, fica ali; senão, procura numa grade de passo
+  // `passo` dentro do país o ponto livre mais próximo do original; sem ponto livre, o de maior folga. [lat, lng] ou null.
+  function paisLabelPoint(p, lines, { hw = 3, hh = 0.9, passo = 0.25 } = {}) {
+    if (!p || !Array.isArray(p.label)) return null;
+    const rings = paisAneis(p), orig = [p.label[1], p.label[0]];
+    const [s, w, n, e] = ringsBBox(rings);
+    if (!Number.isFinite(s)) return orig;
+    // segmentos perto do país, em coordenadas escaladas pela caixa (folga >= 1 = caixa livre)
+    const segs = [];
+    for (const l of lines || []) {
+      for (let k = 1; k < l.length; k++) {
+        const [ay, ax] = l[k - 1], [by, bx] = l[k];
+        if (Math.max(ay, by) < s - hh || Math.min(ay, by) > n + hh || Math.max(ax, bx) < w - hw || Math.min(ax, bx) > e + hw) continue;
+        segs.push([ax / hw, ay / hh, bx / hw, by / hh]);
+      }
+    }
+    const folga = (lat, lng) => {
+      let m = Infinity;
+      const x = lng / hw, y = lat / hh;
+      for (const g of segs) { const d = distToSegment(x, y, g[0], g[1], g[2], g[3]); if (d < m) m = d; }
+      return m;
+    };
+    if (folga(orig[0], orig[1]) >= 1) return orig;
+    // anéis quadrados crescentes em volta do original: o 1º ponto livre (e dentro do país) é o mais próximo, a menos de um passo
+    let best = null, bf = -1;
+    const maxK = Math.ceil(Math.max(n - s, e - w) / passo);
+    for (let k = 1; k <= maxK; k++) {
+      let achou = null, ad = Infinity;
+      for (let i = -k; i <= k; i++) {
+        for (const [di, dj] of [[i, -k], [i, k], [-k, i], [k, i]]) {
+          const lat = orig[0] + di * passo, lng = orig[1] + dj * passo;
+          if (lat < s || lat > n || lng < w || lng > e) continue;
+          const f = folga(lat, lng);
+          if (f < 1 && f <= bf) continue;
+          if (!pointInRings(lat, lng, rings)) continue;
+          if (f >= 1) { const d = Math.hypot(di, dj); if (d < ad) { ad = d; achou = [lat, lng]; } } else { bf = f; best = [lat, lng]; }
+        }
+      }
+      if (achou) { best = achou; break; }
+    }
+    return best ? [Math.round(best[0] * 1e3) / 1e3, Math.round(best[1] * 1e3) / 1e3] : orig;
   }
 
   // Rótulo do país no mapa: o nome quando o país tem pelo menos minLarg graus de largura; senão a sigla ISO (Guianas, Uruguai).
@@ -2325,7 +2394,7 @@ const IntelModel = (() => {
     rodLabel, decodeLine, estConcLines, distToSegment, pointRadius, lineWeight, PORTO_TIPOS, portoTipo, monthLabel, mesX, xMes, fmtMesX, anosLabel,
     FUNDOS, PRODUTOS, fundoFonte, fundoValues,
     fundoClasses, munInfo, pointInRings, ringsBBox, fonteRef,
-    ROTA_TIPOS, rotasOf, rotaTitulo, rotaLinhas, paisAneis, rotasBounds, rotaLabelAnchor, paisLabel,
+    ROTA_TIPOS, rotasOf, rotaTitulo, rotaLinhas, paisAneis, rotasBounds, rotasNota, rotaLabelAnchor, paisLabel, paisLabelPoint,
     anttCapa, anttAnteriores, anttSeries, pracasDe, obrasResumo, pipelineRows, filterPipeline, pipelineCounts, statusLabel, pipelineDe,
     EST_ESTADOS, QUALIDADE_RECORTE, qualidadeRecorte, estaduaisRows, byEsfera, estIndex, trechosLabel,
     trafegoKpis, pracasRanking, pracasSerie, abcrSazonal, acidentesPorUf, taxaPorBrUf,
@@ -2367,12 +2436,13 @@ const RAMPS = {
 };
 // Elementos das Rotas além das 5 linhas (usados pela camada de rotas): hidrovia em traço-ponto e cabotagem pontilhada no slot azul
 // (o traço-ponto não repete o "Em obra" federal, Bright Blue tracejado 6 4); trecho em pavimentação em marrom (passo 4 da rampa
-// laranja); trecho em estudos em cinza Galapagos tracejado. Toda linha com rótulo na legenda da camada.
+// laranja); trecho em estudos em Spacial Grey, 2,5 px, traço longo 8 3 (não repete o "Leito natural" federal, Light Grey 4 4).
+// Toda linha com rótulo na legenda da camada.
 const ROTAS_EXTRA = {
   hidrovia: { color: DATA.blue, weight: 2.5, dash: '12 4 2 4', label: 'Hidrovia' },
   cabotagem: { color: DATA.blue, weight: 2, dash: '1 5', cap: 'round', label: 'Cabotagem' },
   pavimentacao: { color: RAMPS.carga[3], weight: 2.5, dash: null, label: 'Trecho em pavimentação' },
-  estudo: { color: COLORS.lightGrey, weight: 2, dash: '4 4', label: 'Trecho em estudos' },
+  estudo: { color: COLORS.spacialGrey, weight: 2.5, dash: '8 3', label: 'Trecho em estudos' },
 };
 // Linha de cada rota: 3 px na cor de ROTAS, sobre um contorno Snow White (+3 px) que a separa da malha federal embaixo.
 const ROTA_LINHA = { weight: 3, casing: COLORS.snowWhite, casingExtra: 3, casingOpacity: 0.9 };
@@ -2567,7 +2637,7 @@ function dataTokenCss() {
 
 if (typeof module !== 'undefined') {
   module.exports = { COLORS, DATA, DATA_SLOTS, ROTAS, RAMPS, ROTAS_EXTRA, ROTA_LINHA, ROTAS_PAIS, PIPE_STATUS, QUANT_MODES, QUANT_STYLES, QUANT_NONE,
-    LAYER_STYLES, LINE_STYLES, DATA_TOKENS, quantStyle, quantSwatch, layerSwatch, rotaSwatch, rotaExtraSwatch, rotasSwatch, dataTokenCss };
+    LAYER_STYLES, LINE_STYLES, CONC_STYLES, DATA_TOKENS, quantStyle, quantSwatch, layerSwatch, rotaSwatch, rotaExtraSwatch, rotasSwatch, dataTokenCss };
 }
 
 ;
@@ -2759,8 +2829,13 @@ if (typeof module !== 'undefined') module.exports = Charts;
 const MapView = (() => {
   const BRASIL = [[-34.5, -74.5], [5.8, -32]];
   const DIM = 0.2;
+  // Malha federal esmaecida enquanto as Rotas de Integração estão ligadas (as rotas ficam em primeiro plano).
+  const BASE_DIM = 0.35;
+  // Colunas das legendas sobre o mapa (largura 320 + margem 16): legendas de camada à esquerda, "Cor das rodovias" à direita.
+  const LEGEND_COL = 336;
+  let baseDim = 1;
   let map, snv, lines, halos, order, visible, pickCb = () => {}, hlGroup, hlRenderer, hlWanted = null, hlIds = null, ufLayer;
-  let mode = 'fisica', states = null, conc = null, haloRenderer, intel = null, saBounds = null;
+  let mode = 'fisica', states = null, conc = null, haloRenderer, intel = null, saBounds = null, rotasFit = null;
   const quant = {};
 
   function decode(p) {
@@ -2806,7 +2881,7 @@ const MapView = (() => {
   function styleFor(j, extra = {}) {
     const s = spec(j);
     const f = zoomFactor(map.getZoom());
-    const dim = hlIds && !hlIds.has(j) ? DIM : 1;
+    const dim = (hlIds && !hlIds.has(j) ? DIM : 1) * baseDim;
     return {
       color: s.color, weight: s.weight * f + (extra.hover ? 2 : 0), opacity: s.opacity * dim,
       dashArray: s.dash, lineCap: s.dash ? 'butt' : 'round', lineJoin: 'round',
@@ -2815,7 +2890,7 @@ const MapView = (() => {
 
   function haloStyle(j) {
     const s = spec(j);
-    const dim = hlIds && !hlIds.has(j) ? DIM : 1;
+    const dim = (hlIds && !hlIds.has(j) ? DIM : 1) * baseDim;
     return { color: s.halo.color, opacity: s.halo.opacity * dim, weight: (s.weight + s.halo.extra) * zoomFactor(map.getZoom()), lineCap: 'round' };
   }
 
@@ -2863,11 +2938,15 @@ const MapView = (() => {
     snv = data;
     if (opts.states) { states = opts.states; conc = opts.conc; mode = 'concessoes'; }
     intel = opts.intel || null;
-    // Com as Rotas de Integração no arquivo, o mapa pode ir até a América do Sul inteira (países vizinhos e rotas).
-    const sa = IntelModel.rotasBounds(IntelModel.rotasOf(intel));
+    // Com as Rotas de Integração no arquivo, o mapa pode ir até a América do Sul inteira (países vizinhos e rotas);
+    // ao ligar a camada, enquadra o Brasil e as linhas das rotas (sem a Patagônia, como no mapa do MPO).
+    const rot = IntelModel.rotasOf(intel), sa = IntelModel.rotasBounds(rot), sl = IntelModel.rotasBounds(rot, true);
     saBounds = sa ? L.latLngBounds(BRASIL).extend(sa) : null;
+    rotasFit = sl ? L.latLngBounds(BRASIL).extend(sl) : null;
     const maxBounds = L.latLngBounds(BRASIL).pad(0.3);
-    if (saBounds) maxBounds.extend(saBounds.pad(0.3));
+    // pad 0,5: a vista em zoom 4 (≈ 95° de longitude a 1080 px) cabe na caixa; se não coubesse, o Leaflet centraria a vista
+    // no centro da caixa e desfaria o deslocamento do enquadramento com as colunas de legenda.
+    if (saBounds) maxBounds.extend(saBounds.pad(0.5));
     map = L.map(el, {
       zoomControl: false, attributionControl: false, preferCanvas: true,
       minZoom: 3.5, maxZoom: 13, zoomSnap: 0.5, zoomDelta: 0.5, wheelPxPerZoomLevel: 120,
@@ -2947,8 +3026,10 @@ const MapView = (() => {
     map.fitBounds(boundsOf(vis.length ? vis : ids), { padding: [64, 64], maxZoom: 11 });
   }
 
-  // Durante uma animação de zoom o Leaflet descarta um novo setView/fitBounds (mesmo sem animação). Ex.: desligar e religar
-  // as rotas em seguida. Aqui o último enquadramento pedido espera o fim da animação.
+  // Durante uma animação de zoom o Leaflet descarta um novo setView/fitBounds, mesmo sem animação (Map._tryAnimatedZoom
+  // retorna cedo enquanto _animatingZoom é true). Ex.: desligar e religar as rotas em seguida. Aqui o último enquadramento
+  // pedido espera o 'zoomend'. Depende do campo interno _animatingZoom do Leaflet 1.9.4 (vendor/leaflet, versão fixada);
+  // rever ao atualizar o Leaflet.
   let pendingFit = null;
   function fitSafe(bounds, opts) {
     if (!map._animatingZoom) { map.fitBounds(bounds, opts); return; }
@@ -2962,10 +3043,25 @@ const MapView = (() => {
     fitSafe(ufLayer.getBounds(), { padding: [16, 16], animate });
   }
 
-  // Enquadra a América do Sul (países vizinhos + rotas + Brasil); sem o bloco de rotas, o Brasil.
+  // Enquadra a área das Rotas de Integração (Brasil + linhas das rotas); sem o bloco de rotas, o Brasil.
+  // Reserva as duas colunas de legenda quando isso ainda deixa zoom ≥ 4; senão (tela estreita) reserva só o necessário
+  // para os rótulos a oeste e para a legenda da direita, que fica embaixo (as legendas ocupam só a parte de baixo do mapa,
+  // onde o continente é mais estreito).
   function fitAmericaSul(animate = true) {
-    if (!saBounds) { fitBrasil(animate); return; }
-    fitSafe(saBounds, { padding: [16, 16], animate });
+    if (!rotasFit) { fitBrasil(animate); return; }
+    // embaixo, 96 px a mais: as legendas ficam na parte de baixo e o rótulo da Rota 5 sai para o sul
+    const full = { paddingTopLeft: [LEGEND_COL, 16], paddingBottomRight: [LEGEND_COL, 112] };
+    const zFull = map.getBoundsZoom(rotasFit, false, L.point(2 * LEGEND_COL, 128));
+    const opts = zFull >= 4 ? full : { paddingTopLeft: [224, 16], paddingBottomRight: [288, 112] };
+    fitSafe(rotasFit, Object.assign({ animate }, opts));
+  }
+
+  // Esmaece (ou restaura) a malha federal inteira, mantendo modo, filtros e realce.
+  function setBaseDim(on) {
+    const v = on ? BASE_DIM : 1;
+    if (v === baseDim) return;
+    baseDim = v;
+    applyHighlight();
   }
 
   function setColorMode(m) {
@@ -2978,7 +3074,10 @@ const MapView = (() => {
   function entityFis(idx) { return (conc && conc.entFis[idx]) || []; }
 
   return {
-    init, setVisible, highlight, fitTo, fitBrasil, fitAmericaSul, setColorMode,
+    init, setVisible, highlight, fitTo, fitBrasil, fitAmericaSul, setColorMode, setBaseDim,
+    baseDimmed() { return baseDim < 1; },
+    // Para teste: maior opacidade entre as linhas visíveis (1 sem esmaecer; 0,35 com as rotas ligadas).
+    maxLineOpacity() { let m = 0; lines.forEach((l, j) => { if (visible[j]) m = Math.max(m, l.options.opacity); }); return m; },
     colorMode() { return mode; },
     classes,
     classesCached(m) { return !!quant[m]; },
@@ -3009,12 +3108,17 @@ const MapView = (() => {
 // e o clique em município pelo evento de clique do mapa quando nenhuma rodovia foi atingida.
 const Layers = (() => {
   const IM = IntelModel;
-  const PANES = { paises: 190, mun: 300, estaduais: 360, estconc: 405, ferrovias: 410, rotas: 415, siade: 430, obras: 440, sats: 450, portos: 460,
-    pracas: 470, lsel: 480, rotasLabels: 490 };
+  const PANES = { paises: 190, mun: 300, estaduais: 360, estconc: 405, ferrovias: 410, rotas: 415, paisLabels: 418, siade: 430, obras: 440,
+    sats: 450, portos: 460, pracas: 470, lsel: 480, rotasLabels: 490 };
   // Lado do rótulo direto de cada rota (o rótulo sai do vértice mais extremo desse lado, para fora do traçado): Rota 1 ao norte,
-  // no Caribe; Rotas 2 a 4 a oeste, no Pacífico; Rota 5 ao sul, abaixo do Prata (a oeste e a leste ficam as legendas do mapa).
-  const ROTA_LADO = { r1: 'n', r2: 'w', r3: 'w', r4: 'w', r5: 's' };
-  const LADO_DIR = { n: ['top', [0, -8]], s: ['bottom', [0, 8]], e: ['right', [8, 0]], w: ['left', [-8, 0]] };
+  // no Caribe; Rotas 2 e 3 a oeste, no Pacífico; Rota 4 a noroeste (Iquique), acima da coluna da legenda da esquerda;
+  // Rota 5 ao sul, abaixo do Prata (embaixo, à esquerda e à direita, ficam as legendas do mapa).
+  const ROTA_LADO = { r1: 'n', r2: 'w', r3: 'w', r4: 'nw', r5: 's' };
+  // Rótulo de país: o dado guarda o polo de inacessibilidade; no mapa, o rótulo vai para o ponto livre mais próximo das linhas
+  // das rotas (IntelModel.paisLabelPoint), com a caixa do texto medida no zoom do enquadramento (≈ 11,4 px por grau no zoom 4).
+  const PX_GRAU = 11.4, pais_hw = t => (t.length * 4.3 + 6) / PX_GRAU, PAIS_HH = 12 / PX_GRAU;
+  const LADO_DIR = { n: ['top', [0, -8]], s: ['bottom', [0, 8]], e: ['right', [8, 0]], w: ['left', [-8, 0]],
+    nw: ['left', [-8, -8]], sw: ['left', [-8, 8]], ne: ['right', [8, -8]], se: ['right', [8, 8]] };
   const POINT_KEYS = ['pracas', 'portos', 'sats', 'obras']; // de cima para baixo (prioridade do clique)
   const HIT_PAD = 3, LINE_TOL = 5;
   let map = null, intel = null;
@@ -3154,11 +3258,11 @@ const Layers = (() => {
     return { group, items: [], n: e.malha.p.length, conc, nConc: new Set(conc.map(c => c.k)).size };
   }
 
-  // Rotas: países vizinhos (pane abaixo das UFs) com rótulo; as 5 rotas sobre um contorno claro; hidrovias, cabotagem e
+  // Rotas: países vizinhos (pane abaixo das UFs; rótulo acima das linhas das rotas, com halo claro); as 5 rotas sobre um contorno claro; hidrovias, cabotagem e
   // trechos em pavimentação e em estudos por cima; rótulo direto "Rota N · Nome" (texto na cor de texto, amostra na cor da rota).
   function buildRotas() {
     const R = rotas(), group = L.layerGroup(), ls = IM.rotaLinhas(R), rend = renderer('rotas');
-    const P = ROTAS_PAIS, rp = renderer('paises');
+    const P = ROTAS_PAIS, rp = renderer('paises'), todasLinhas = ls.map(l => l.ll);
     for (const p of R.paises || []) {
       const rings = IM.paisAneis(p);
       if (!rings.length) continue;
@@ -3167,8 +3271,9 @@ const Layers = (() => {
       if (Array.isArray(p.label)) {
         const t = document.createElement('span');
         t.textContent = IM.paisLabel(p);
-        group.addLayer(L.tooltip({ permanent: true, direction: 'center', className: 'uf-label pais-label', pane: 'ufLabels', interactive: false })
-          .setLatLng([p.label[1], p.label[0]]).setContent(t));
+        const at = IM.paisLabelPoint(p, todasLinhas, { hw: pais_hw(t.textContent), hh: PAIS_HH });
+        group.addLayer(L.tooltip({ permanent: true, direction: 'center', className: 'uf-label pais-label', pane: 'l-paisLabels', interactive: false })
+          .setLatLng(at).setContent(t));
       }
     }
     const lines = (tipo, rota) => ls.filter(l => l.tipo === tipo && (rota === undefined || l.rota === rota)).map(l => l.ll);
@@ -5155,7 +5260,7 @@ const UI = (() => {
     // Rotas de Integração (v3.1): grupo próprio; ligar enquadra a América do Sul e mostra a legenda da camada.
     const rotas = rot ? `<fieldset class="fundo rotas-group"><legend class="fundo__title">${esc(rot.label)}<\/legend>
         ${check(rot, rotasSwatch(), 'Rotas e países vizinhos', fmtInt.format(rot.n))}
-        <p class="note layers__note">Traçado esquemático · fonte MPO<\/p><\/fieldset>` : '';
+        <p class="note layers__note">${esc(IM.rotasNota(IM.rotasOf(intel)))}<\/p><\/fieldset>` : '';
     const fundo = Layers.fundoAvailable() ? `<fieldset class="fundo"><legend class="fundo__title">Fundo municipal<\/legend><div class="fundo__opts">
         <label class="check"><input type="radio" name="fundo" value="" checked><span>Nenhum<\/span><\/label>
         ${IM.FUNDOS.map(f => { const src = `${IM.fundoFonte(intel, f.key)} · por município, 5 classes por quantil`;
@@ -5197,11 +5302,13 @@ const UI = (() => {
     return el;
   }
 
-  // Liga/desliga as Rotas de Integração: enquadra a América do Sul (ou volta ao Brasil) e mostra a legenda da camada.
+  // Liga/desliga as Rotas de Integração: enquadra a área das rotas (ou volta ao Brasil), esmaece a malha federal enquanto
+  // a camada está ligada e mostra a legenda da camada.
   function toggleRotas(want) {
     const sel = Layers.selected();
     if (!want && sel && sel.key === 'rotas') closeCard();
     Layers.toggle('rotas', want);
+    MapView.setBaseDim(Layers.isOn('rotas'));
     if (want) MapView.fitAmericaSul(); else MapView.fitBrasil();
     renderRotasLegend();
   }
@@ -5216,8 +5323,10 @@ const UI = (() => {
     const extras = ['hidrovia', 'cabotagem', 'pavimentacao', 'estudo'].filter(t => tipos.has(t))
       .map(t => `<div class="legend__row">${rotaExtraSwatch(t)}<span>${esc(ROTAS_EXTRA[t].label)}<\/span><\/div>`).join('');
     const fonte = IM.fonteRef(R.fonte, /Apresentação/);
-    el.innerHTML = `<h2 class="section-title">Rotas de Integração<\/h2>${rows}${extras ? `<div class="legend__sep"><\/div>${extras}` : ''}
-      <p class="legend__note" title="Fonte: ${esc(fonte)}">Traçado esquemático · fonte MPO<\/p>`;
+    // Recolhível (como "Camadas"), aberta por padrão.
+    el.innerHTML = `<details class="legend__det" open><summary><span class="section-title">Rotas de Integração<\/span>${ICON.chev}<\/summary>
+      <div class="legend__body">${rows}${extras ? `<div class="legend__sep"><\/div>${extras}` : ''}
+      <p class="legend__note" title="Fonte: ${esc(fonte)}">${esc(IM.rotasNota(R))}<\/p><\/div><\/details>`;
     el.querySelectorAll('[data-rota]').forEach(b => b.addEventListener('click', () => Layers.open('rotas', Number(b.dataset.rota))));
   }
 

@@ -561,3 +561,16 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 .card__desc { margin: 0; padding: 0 24px 16px; font-size: 14px; line-height: 24px; }
 .rota-cidades { margin: 8px 0 0; font-size: 14px; line-height: 24px; }
 .rotas-group .layers__note { margin: 0 0 0 24px; }
+/* Legenda das rotas recolhível (como "Camadas"). */
+.legend__det > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+.legend__det > summary::-webkit-details-marker { display: none; }
+.legend__det > summary .section-title { margin: 0; }
+.legend__det > summary .chev { transition: transform var(--transition); color: var(--color-light-grey); }
+.legend__det[open] > summary .chev { transform: rotate(180deg); }
+.legend__det > summary:focus-visible { outline: 2px solid var(--color-bright-blue); outline-offset: 2px; }
+.legend__body { padding-top: 8px; }
+/* Rótulos dos países acima das linhas das rotas, com halo claro para ler sobre elas. */
+.leaflet-tooltip.pais-label {
+  text-shadow: 0 0 2px var(--color-snow-white), 0 0 2px var(--color-snow-white), 0 0 3px var(--color-snow-white), 0 0 4px var(--color-snow-white);
+  opacity: 1 !important;
+}
