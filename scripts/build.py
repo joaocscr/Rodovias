@@ -1,6 +1,7 @@
 """Gera mapa-rodovias.html: um arquivo único e offline com dados, código, estilos e fontes.
 
-Uso: python scripts/build.py --shp data/raw/SNV_202607A.shp --out mapa-rodovias.html
+Uso: python scripts/build.py                 (SNV e CONC da base congelada em data/base/ + blocos de data/intel/)
+     python scripts/build.py --shp data/raw/SNV_202607A.shp   (regenera data/base/ a partir do shapefile)
 """
 import argparse
 import base64
@@ -18,6 +19,8 @@ MAX_BYTES = 15_000_000
 JS_FILES = ["vendor/leaflet/leaflet.js", "src/model.js", "src/conc-model.js", "src/styles-map.js", "src/charts.js", "src/map.js",
             "src/ficha.js", "src/projetos.js", "src/mercado.js", "src/regulatorio.js", "src/ui.js", "src/tabs.js", "src/main.js"]
 ROADSHOW = ROOT / "data" / "roadshow"
+BASE = ROOT / "data" / "base"
+INTEL = ROOT / "data" / "intel"
 FONTS = [  # (família, peso, arquivo)
     ("Inter", 400, "inter-latin-400.woff2"),
     ("Inter", 600, "inter-latin-600.woff2"),
@@ -49,6 +52,44 @@ def script_safe(text):
     return text.replace("</", "<\\/")
 
 
+def assemble(payload, conc, intel, out):
+    """Monta o HTML único a partir dos payloads prontos e devolve o tamanho em bytes."""
+    css = "\n".join([font_faces(), leaflet_css(), (ROOT / "src" / "styles.css").read_text(encoding="utf-8")])
+    js = "\n;\n".join((ROOT / p).read_text(encoding="utf-8") for p in JS_FILES if (ROOT / p).exists())
+    dump = lambda o: json.dumps(o, ensure_ascii=False, separators=(",", ":"))  # noqa: E731
+    data = f"window.SNV={dump(payload)};\nwindow.CONC={dump(conc)};\nwindow.INTEL={dump(intel)};"
+
+    html = (ROOT / "src" / "template.html").read_text(encoding="utf-8")
+    html = html.replace("{{VERSAO}}", payload["versao"])
+    for key, value in [("CSS", css), ("DATA", script_safe(data)), ("JS", script_safe(js))]:
+        html = html.replace(f"/*__{key}__*/", value)
+    Path(out).write_text(html, encoding="utf-8")
+    return Path(out).stat().st_size
+
+
+def load_intel(intel_dir=INTEL):
+    """Lê data/intel/<bloco>.json (exceto o manifesto) em {bloco: dados}."""
+    intel = {}
+    for p in sorted(Path(intel_dir).glob("*.json")):
+        if p.stem != "manifest":
+            intel[p.stem] = json.loads(p.read_text(encoding="utf-8"))
+    return intel
+
+
+def build_from_base(base_dir, out, intel=None):
+    """Build sem o shapefile: SNV e CONC congelados em data/base/ (gerados pelo modo --shp)."""
+    payload = json.loads((Path(base_dir) / "snv.json").read_text(encoding="utf-8"))
+    conc = json.loads((Path(base_dir) / "conc.json").read_text(encoding="utf-8"))
+    intel = load_intel() if intel is None else intel
+    size = assemble(payload, conc, intel, out)
+    print(f"base: SNV {payload['versao']} ({len(payload['trechos'])} registros, {len(payload['fis'])} físicos) | "
+          f"intel: {', '.join(intel) or 'nenhum bloco'}")
+    print(f"arquivo: {out} ({size / 1e6:.2f} MB)")
+    if size > MAX_BYTES:
+        sys.exit(f"Falha: arquivo maior que {MAX_BYTES / 1e6:.0f} MB")
+    return size
+
+
 def build(shp, out, tol, rascunho=False):
     records = load_records(shp)
     groups = group_physical(records)
@@ -67,18 +108,10 @@ def build(shp, out, tol, rascunho=False):
     v_before = sum(len(r["points"]) for r in records)
     v_after = sum(len(f["p"]) // 2 for f in payload["fis"])
 
-    css = "\n".join([font_faces(), leaflet_css(), (ROOT / "src" / "styles.css").read_text(encoding="utf-8")])
-    js = "\n;\n".join((ROOT / p).read_text(encoding="utf-8") for p in JS_FILES if (ROOT / p).exists())
-    data = ("window.SNV=" + json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + ";\n"
-            "window.CONC=" + json.dumps(conc, ensure_ascii=False, separators=(",", ":")) + ";")
-
-    html = (ROOT / "src" / "template.html").read_text(encoding="utf-8")
-    html = html.replace("{{VERSAO}}", payload["versao"])
-    for key, value in [("CSS", css), ("DATA", script_safe(data)), ("JS", script_safe(js))]:
-        html = html.replace(f"/*__{key}__*/", value)
-
-    Path(out).write_text(html, encoding="utf-8")
-    size = Path(out).stat().st_size
+    BASE.mkdir(parents=True, exist_ok=True)
+    for name, obj in [("snv.json", payload), ("conc.json", conc)]:
+        (BASE / name).write_text(json.dumps(obj, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    size = assemble(payload, conc, load_intel(), out)
     print(f"registros: {len(records)} | trechos físicos: {len(groups)}")
     print(f"extensão bruta: {br(raw_km)} km | deduplicada: {br(dedup_km)} km")
     print(f"vértices: {v_before:,} -> {v_after:,} (tol {tol})".replace(",", "."))
@@ -99,12 +132,15 @@ def build(shp, out, tol, rascunho=False):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--shp", default=str(ROOT / "data" / "raw" / "SNV_202607A.shp"))
+    ap.add_argument("--shp", help="shapefile do SNV: regenera data/base/ (sem ele, o build usa a base congelada)")
     ap.add_argument("--out", default=str(ROOT / "mapa-rodovias.html"))
     ap.add_argument("--tol", type=float, default=0.0001)
     ap.add_argument("--rascunho", action="store_true", help="não falha por recorte incompleto (desenvolvimento)")
     args = ap.parse_args()
-    build(args.shp, args.out, args.tol, args.rascunho)
+    if args.shp:
+        build(args.shp, args.out, args.tol, args.rascunho)
+    else:
+        build_from_base(BASE, args.out)
 
 
 if __name__ == "__main__":
