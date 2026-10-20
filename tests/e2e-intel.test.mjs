@@ -60,6 +60,25 @@ test('(a) seletor "Cor das rodovias" com os 6 rótulos na ordem, acessível', as
   assert.equal(await g.locator('[role="radio"][aria-checked="true"]').textContent(), 'Concessões');
 });
 
+// Mede na página principal antes de qualquer modo quantitativo ser usado: uma 2ª página headless aberta ao mesmo
+// tempo atrasa os quadros da outra (~150 ms), o que tornava a medição instável.
+test('(g) primeira troca (cache frio) para cada modo quantitativo em menos de 300 ms', async t => {
+  for (const m of ['trafego', 'pesados', 'carga', 'acidentes']) {
+    const r = await page.evaluate(m => new Promise(resolve => {
+      const cold = MapView.classesCached(m) === false;
+      const t0 = performance.now();
+      document.querySelector(`#legend [data-mode="${m}"]`).click();
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve({ ms: performance.now() - t0, cold })));
+    }), m);
+    t.diagnostic(`${m} (frio): ${r.ms.toFixed(0)} ms`);
+    assert.equal(r.cold, true, `${m} já estava em cache`);
+    assert.equal(await page.evaluate(() => MapView.colorMode()), m);
+    assert.ok(r.ms < 300, `${m} (frio): levou ${r.ms.toFixed(0)} ms`);
+  }
+  await mode('concessoes');
+  assert.equal(await page.evaluate(() => MapView.colorMode()), 'concessoes');
+});
+
 test('(b, c) modo Tráfego: legenda com 5 faixas, "Sem dado" e "Estimativa de modelo"', async () => {
   await mode('trafego');
   assert.equal(await page.evaluate(() => MapView.colorMode()), 'trafego');
@@ -179,25 +198,6 @@ test('(g) troca de modo em menos de 300 ms', async t => {
   }
 });
 
-test('(g) primeira troca (cache frio) para cada modo quantitativo em menos de 300 ms', async t => {
-  const errs = [], ext = [];
-  const p = await openPage(errs, ext);
-  for (const m of ['trafego', 'pesados', 'carga', 'acidentes']) {
-    const r = await p.evaluate(m => new Promise(resolve => {
-      const cold = MapView.classesCached(m) === false;
-      const t0 = performance.now();
-      document.querySelector(`#legend [data-mode="${m}"]`).click();
-      requestAnimationFrame(() => requestAnimationFrame(() => resolve({ ms: performance.now() - t0, cold })));
-    }), m);
-    t.diagnostic(`${m} (frio): ${r.ms.toFixed(0)} ms`);
-    assert.equal(r.cold, true, `${m} já estava em cache`);
-    assert.equal(await p.evaluate(() => MapView.colorMode()), m);
-    assert.ok(r.ms < 300, `${m} (frio): levou ${r.ms.toFixed(0)} ms`);
-  }
-  assert.deepEqual(errs, []);
-  await p.context().close();
-});
-
 test('(i) volta ao modo Concessões com legenda e halo da v2', async () => {
   await mode('concessoes');
   assert.equal(await page.evaluate(() => MapView.colorMode()), 'concessoes');
@@ -249,10 +249,21 @@ test('(a) seção Camadas acima de Filtros, aberta, com os rótulos, fontes e no
   }
 });
 
-test('(f) Rodovias estaduais só aparece com INTEL.estaduais', async () => {
+test('(f) Rodovias estaduais só aparece com INTEL.estaduais; concessões estaduais distintas das federais', async () => {
   const has = await page.evaluate(() => !!(window.INTEL.estaduais && window.INTEL.estaduais.malha));
   assert.equal(await layerBox('estaduais').count(), has ? 1 : 0);
   if (!has) assert.doesNotMatch(await page.textContent('#layers-section'), /Rodovias estaduais/);
+  const st = await page.evaluate(() => LAYER_STYLES.estConc);
+  assert.deepEqual([st.color, st.weight, st.halo, st.haloOpacity, st.haloExtra], ['#0071BB', 3, '#231F20', 0.35, 3]);
+  if (has) {
+    // entidades só com entFis (ex.: Rota de Santa Maria) também têm geometria
+    const r = await page.evaluate(() => {
+      const e = window.INTEL.estaduais, lines = IntelModel.estConcLines(e, window.SNV);
+      const so = e.entidades.map((_, k) => k).filter(k => !(e.entEst[k] || []).length && !(e.entGeo[k] || []).length && (e.entFis[k] || []).length);
+      return { so: so.length, ok: so.every(k => lines[k].length > 0) };
+    });
+    assert.ok(r.ok, 'entidade só com entFis sem geometria');
+  }
 });
 
 test('(f) com um bloco estaduais (contrato da Task 6) a camada liga e desenha malha e concessões', async () => {
@@ -260,16 +271,43 @@ test('(f) com um bloco estaduais (contrato da Task 6) a camada liga e desenha ma
   const fake = { fonte: [{ nome: 'Infra S.A. — Rodovias estaduais', periodo: '2021' }], tipo: 'medido',
     malha: { campos: ['uf', 'via', 'sre', 'sup', 'km_i', 'km_f', 'ext'], linhas: [['SP', 'SP-330', 'x', 'PAV', 0, 1, 1], ['SP', 'SP-310', 'y', 'PAV', 0, 1, 1]],
       p: [[-4700000, -2300000, 1000, 1000], [-4800000, -2200000, 500, -500, 500, 0]] },
-    entidades: [{ id: 'sp-x', nome: 'X', uf: 'SP' }], entEst: [[1]], entFis: [[]], entGeo: [[[-4750000, -2250000, 2000, 0]]] };
-  const p = await openPage(errs, ext, html => html.replace('window.INTEL={', `window.INTEL={"estaduais":${JSON.stringify(fake)},`));
+    entidades: [{ id: 'sp-x', nome: 'Concessão X', uf: 'SP', regulador: 'ARTESP', rodovias: ['SP-310'], km_decl: 10, km_map: 9.5, qualidade: 'ok',
+      grupo: 'Grupo Y', assinatura: '2020-01-02', fim: '2050-01-01', capex_bi: 1.5, capex_ref: '2024', fonte_url: 'https://example.org/x' },
+      { id: 'rs-y', nome: 'Só SNV', uf: 'RS', qualidade: 'aproximado', nota: 'Recorte por rodovia inteira.' }],
+    entEst: [[1], []], entFis: [[], [0]], entGeo: [[[-4750000, -2250000, 2000, 0]], []] };
+  // Substitui (ou cria) INTEL.estaduais logo depois da linha de dados, valendo com ou sem o bloco real no build.
+  const inject = html => {
+    const i = html.indexOf('</script>', html.indexOf('window.INTEL='));
+    return `${html.slice(0, i)};window.INTEL.estaduais=${JSON.stringify(fake)};${html.slice(i)}`;
+  };
+  const p = await openPage(errs, ext, inject);
   const real = await p.evaluate(() => window.INTEL.estaduais.malha.p.length);
+  assert.equal(real, 2);
   const box = p.locator('#layers-section input[data-layer="estaduais"]');
   assert.equal(await box.count(), 1);
   assert.match(await p.textContent('#layers-section'), /Rodovias estaduais/);
+  assert.match(await p.textContent('#layers-section .layer-sub'), /Concessões estaduais/);
   await box.check();
   await p.waitForTimeout(50);
   assert.equal(await p.evaluate(() => Layers.count('estaduais')), real);
   assert.equal(await p.evaluate(() => Layers.isOn('estaduais')), true);
+  {
+    // entFis (físico 0 do SNV) também é desenhado: as duas entidades têm geometria
+    assert.equal(await p.evaluate(() => Layers.count('estconc')), 2);
+    // clique real no meio do traçado próprio (entGeo) da 1ª entidade abre o cartão dela
+    const xy = await p.evaluate(() => {
+      MapView.map.setView([-22.5, -47.49], 12, { animate: false });
+      const pt = MapView.map.latLngToContainerPoint([-22.5, -47.49]), box = MapView.map.getContainer().getBoundingClientRect();
+      return [box.left + pt.x, box.top + pt.y];
+    });
+    await p.waitForTimeout(150);
+    await p.mouse.click(xy[0], xy[1] + 2);
+    await p.waitForSelector('#card:not([hidden])');
+    const t = await p.textContent('#card');
+    for (const re of [/Concessão X/, /Concessão estadual · SP · ARTESP/, /SP-310/, /10,0 km × 9,5 km/, /Recorte ok/, /Grupo Y/, /02\/01\/2020 \/ 01\/01\/2050/, /R\$ 1,50 bi \(ref\. 2024\)/]) assert.match(t, re);
+    assert.equal(await p.getAttribute('#card a[href="https://example.org/x"]', 'target'), '_blank');
+    assert.deepEqual(await p.evaluate(() => Layers.selected()), { key: 'estconc', i: 0 });
+  }
   await box.uncheck();
   assert.deepEqual(errs, []);
   await p.context().close();
@@ -436,6 +474,36 @@ test('(d) Fundo Soja: legenda com 5 faixas e "IBGE PAM 2025"; Sorriso mostra a p
   assert.match(t, /Capacidade útil/);
   assert.ok(!/NaN|undefined|null/.test(t));
   await page.click('#card-close');
+  // clique real no centroide de Sorriso (zoom 8): clique do mapa -> munAt -> cartão
+  const xy = await page.evaluate(() => {
+    const mu = window.INTEL.municipios, [lon, lat] = mu.centro[mu.ids.indexOf('5107925')];
+    MapView.map.setView([lat, lon], 8, { animate: false });
+    const pt = MapView.map.latLngToContainerPoint([lat, lon]), box = MapView.map.getContainer().getBoundingClientRect();
+    return [box.left + pt.x, box.top + pt.y];
+  });
+  await page.waitForTimeout(250);
+  await page.mouse.move(xy[0], xy[1]);
+  await page.waitForTimeout(80);
+  assert.equal(await page.evaluate(() => !!document.querySelector('.leaflet-overlay-pane canvas.leaflet-interactive')), false, 'há rodovia sob o centroide');
+  await page.mouse.click(xy[0], xy[1]);
+  await page.waitForSelector('#card:not([hidden])');
+  assert.equal((await page.textContent('#card .card__title')).trim(), 'Sorriso / MT');
+  assert.deepEqual(await page.evaluate(() => Layers.selected()), { key: 'mun', i: '5107925' });
+  await page.click('#card-close');
+  // clique real numa rodovia com o fundo ligado: abre o trecho, não o município (notePick)
+  let road = null;
+  for (let x = 420; x < 1300 && !road; x += 9) for (let y = 120; y < 800 && !road; y += 9) {
+    await page.mouse.move(x, y);
+    if (await page.evaluate(() => !!document.querySelector('.leaflet-overlay-pane canvas.leaflet-interactive'))) road = [x, y];
+  }
+  assert.ok(road, 'nenhuma rodovia sob o cursor');
+  await page.mouse.click(...road);
+  await page.waitForSelector('#card:not([hidden])');
+  assert.match(await page.textContent('#card .card__code'), /\d{3}B[A-Z]{2}\d{4}/);
+  assert.doesNotMatch(await page.textContent('#card .card__code'), /Município/);
+  assert.equal(await page.evaluate(() => Layers.selected()), null);
+  await page.click('#card-close');
+  await page.evaluate(() => MapView.fitBrasil(false));
   // armazenagem explica o sigilo
   await page.check('#layers-section input[name="fundo"][value="armazenagem"]');
   const at = await page.textContent('#fundo-legend');

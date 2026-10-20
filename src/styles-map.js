@@ -97,7 +97,8 @@ function quantSwatch(c, width = 32) {
 // Camadas de sobreposição (v3, Task 10): só cores da marca; opacidade e espessura variam.
 const LAYER_STYLES = {
   estaduais: { color: COLORS.lightGrey, weight: 1, opacity: 0.6 },
-  estConc: { color: COLORS.deepBlue, weight: 2.5, opacity: 1 },
+  // Concessões estaduais: Bright Blue 3 px com halo Spacial Grey (+3 px), distinto das federais (Deep Blue).
+  estConc: { color: COLORS.brightBlue, weight: 3, opacity: 1, halo: COLORS.spacialGrey, haloOpacity: 0.35, haloExtra: 3 },
   pracas: { fillColor: COLORS.brightBlue, fillOpacity: 0.85, color: COLORS.snowWhite, weight: 1, rmin: 3, rmax: 10, semDadoOpacity: 0.5 },
   sats: { color: COLORS.deepBlue, weight: 1.5, radius: 3 },
   obras: { fillColor: COLORS.spacialGrey, fillOpacity: 0.7, radius: 3 },
@@ -120,7 +121,12 @@ function layerSwatch(key, size = 24) {
   const svg = body => `<svg class="swatch" width="${size}" height="16" viewBox="0 0 ${size} 16" aria-hidden="true">${body}</svg>`;
   const line = (st, w, dash) => `<line x1="2" y1="8" x2="${size - 2}" y2="8" stroke="${st.color}" stroke-opacity="${st.opacity}" stroke-width="${w}"${dash ? ` stroke-dasharray="${dash}"` : ''}/>`;
   switch (key) {
-    case 'estaduais': return svg(line(s.estaduais, 1.5) + `<line x1="${c}" y1="8" x2="${size - 2}" y2="8" stroke="${s.estConc.color}" stroke-width="2.5"/>`);
+    case 'estaduais': return svg(line(s.estaduais, 1.5) +
+      `<line x1="${c + 2}" y1="8" x2="${size - 3}" y2="8" stroke="${s.estConc.halo}" stroke-opacity="${s.estConc.haloOpacity}" stroke-width="${s.estConc.weight + s.estConc.haloExtra}" stroke-linecap="round"/>` +
+      `<line x1="${c + 2}" y1="8" x2="${size - 3}" y2="8" stroke="${s.estConc.color}" stroke-width="${s.estConc.weight}" stroke-linecap="round"/>`);
+    case 'estaduais-malha': return svg(line(s.estaduais, 1.5));
+    case 'estconc': return svg(`<line x1="4" y1="8" x2="${size - 4}" y2="8" stroke="${s.estConc.halo}" stroke-opacity="${s.estConc.haloOpacity}" stroke-width="${s.estConc.weight + s.estConc.haloExtra}" stroke-linecap="round"/>` +
+      `<line x1="4" y1="8" x2="${size - 4}" y2="8" stroke="${s.estConc.color}" stroke-width="${s.estConc.weight}" stroke-linecap="round"/>`);
     case 'pracas': return svg(`<circle cx="${c - 4}" cy="8" r="3" fill="${s.pracas.fillColor}" fill-opacity="${s.pracas.fillOpacity}" stroke="${s.pracas.color}"/>` +
       `<circle cx="${c + 4}" cy="8" r="6" fill="${s.pracas.fillColor}" fill-opacity="${s.pracas.fillOpacity}" stroke="${s.pracas.color}"/>`);
     case 'sats': return svg(`<circle cx="${c}" cy="8" r="3.5" fill="none" stroke="${s.sats.color}" stroke-width="${s.sats.weight}"/>`);

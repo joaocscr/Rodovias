@@ -358,3 +358,29 @@ test('fonteRef: "nome · período" da fonte que casa', () => {
   assert.equal(IntelModel.fonteRef(f, /nada/), '—');
   assert.equal(IntelModel.fonteRef(null, /x/), '—');
 });
+
+test('estConcLines: por entidade, feições da malha (entEst) + físicos do SNV (entFis) + traçado próprio (entGeo)', () => {
+  const est = {
+    malha: { p: [[100000, 200000, 100, 0], [300000, 400000, 0, 100]] },
+    entidades: [{ id: 'a' }, { id: 'b' }, { id: 'c' }],
+    entEst: [[1], [], [0, 9]], entFis: [[], [0], []], entGeo: [[[500000, 600000, 100, 100]], [], []],
+  };
+  const snvFis = { fis: [{ p: [700000, 800000, -100, 0] }] };
+  const out = IntelModel.estConcLines(est, snvFis);
+  assert.equal(out.length, 3);
+  assert.deepEqual(out[0], [[[4, 3], [4.001, 3]], [[6, 5], [6.001, 5.001]]]);
+  // Rota de Santa Maria: só entFis
+  assert.deepEqual(out[1], [[[8, 7], [8, 6.999]]]);
+  // índice inválido ignorado
+  assert.deepEqual(out[2], [[[2, 1], [2, 1.001]]]);
+  // entFis sem SNV ou chaves ausentes não quebram
+  assert.deepEqual(IntelModel.estConcLines({ malha: { p: [] }, entidades: [{}] }, null), [[]]);
+  assert.deepEqual(IntelModel.estConcLines(null, snvFis), []);
+});
+
+test('distToSegment: distância de ponto a segmento (pixels)', () => {
+  assert.equal(IntelModel.distToSegment(5, 3, 0, 0, 10, 0), 3);
+  assert.equal(IntelModel.distToSegment(-4, 3, 0, 0, 10, 0), 5);
+  assert.equal(IntelModel.distToSegment(13, 4, 0, 0, 10, 0), 5);
+  assert.equal(IntelModel.distToSegment(3, 4, 0, 0, 0, 0), 5);
+});

@@ -114,6 +114,8 @@ const MapView = (() => {
     map.createPane('ufs').style.zIndex = 200;
     map.createPane('halo').style.zIndex = 390;
     map.createPane('hl').style.zIndex = 420;
+    // O realce fica acima das rodovias: sem isso o canvas dele engole o clique nas rodovias depois do 1º realce.
+    map.getPane('hl').style.pointerEvents = 'none';
     map.createPane('ufLabels').style.zIndex = 380;
     map.getPane('ufLabels').style.pointerEvents = 'none';
 

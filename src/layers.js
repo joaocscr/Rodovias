@@ -1,16 +1,16 @@
 // Camadas de sobreposição do mapa (v3): estaduais, praças, SATs, obras, ferrovias, portos/ETCs, fluxos SIADE e fundo municipal.
 // Cada camada tem pane e renderer canvas próprios e só é construída quando ligada pela 1ª vez. Os panes não recebem eventos:
-// o clique em ponto é resolvido aqui por distância em pixels (antes de chegar ao canvas das rodovias) e o clique em município
-// pelo evento de clique do mapa quando nenhuma rodovia foi atingida.
+// o clique em ponto e em concessão estadual é resolvido aqui por distância em pixels (antes de chegar ao canvas das rodovias)
+// e o clique em município pelo evento de clique do mapa quando nenhuma rodovia foi atingida.
 const Layers = (() => {
   const IM = IntelModel;
-  const PANES = { mun: 300, estaduais: 360, ferrovias: 410, siade: 430, obras: 440, sats: 450, portos: 460, pracas: 470, lsel: 480 };
+  const PANES = { mun: 300, estaduais: 360, estconc: 405, ferrovias: 410, siade: 430, obras: 440, sats: 450, portos: 460, pracas: 470, lsel: 480 };
   const POINT_KEYS = ['pracas', 'portos', 'sats', 'obras']; // de cima para baixo (prioridade do clique)
-  const HIT_PAD = 3;
+  const HIT_PAD = 3, LINE_TOL = 5;
   let map = null, intel = null;
   let pointCb = () => {}, munCb = () => {};
   const built = {}, on = {}, rowsCache = {}, fundoCache = {};
-  let fundoKey = null, mun = null, sel = null, selGroup = null, selRenderer = null;
+  let fundoKey = null, mun = null, sel = null, selGroup = null, selRenderer = null, snv = null;
   let roadPicked = false, down = null, hoverTip = null, hoverRaf = 0;
 
   const est = () => (intel && intel.estaduais && intel.estaduais.malha && Array.isArray(intel.estaduais.malha.p) ? intel.estaduais : null);
@@ -24,7 +24,7 @@ const Layers = (() => {
   // Definição das camadas: rótulo, disponibilidade, nº de feições e fonte (title do checkbox).
   const DEFS = [
     { key: 'estaduais', label: 'Rodovias estaduais', has: () => !!est(), n: () => est().malha.p.length,
-      fonte: () => `${IM.fonteRef(est().fonte, /./)} · concessões estaduais em azul-escuro` },
+      fonte: () => `${IM.fonteRef(est().fonte, /./)} · concessões estaduais em azul com halo (ARTESP, AGERGS e demais agências)` },
     { key: 'pracas', label: 'Praças de pedágio', has: () => !!antt('pracas'), n: () => rowsOf('pracas').filter(hasLatLng).length,
       fonte: () => `${fonteAntt(/Praças de pedágio/)} · VMD 2025, contagem medida; círculo ∝ √VMD` },
     { key: 'sats', label: 'SATs', has: () => !!antt('sats'), n: () => rowsOf('sats').filter(hasLatLng).length,
@@ -45,6 +45,7 @@ const Layers = (() => {
     if (!rowsCache[key]) {
       if (key === 'pracas' || key === 'sats' || key === 'obras') rowsCache[key] = IM.rows(antt(key));
       else if (key === 'portos') rowsCache[key] = (mm('portos') || []).map(p => Object.assign({}, p, { tipoLabel: IM.portoTipo(p.tipo) }));
+      else if (key === 'estconc') rowsCache[key] = (est() && est().entidades) || [];
       else rowsCache[key] = [];
     }
     return rowsCache[key];
@@ -101,8 +102,8 @@ const Layers = (() => {
     return { group, items, n: items.length };
   }
 
-  function polyOpts(key, st, extra = {}) {
-    return Object.assign({ renderer: renderer(key), interactive: false, color: st.color, weight: st.weight, opacity: st.opacity,
+  function polyOpts(rend, st, extra = {}) {
+    return Object.assign({ renderer: rend, interactive: false, color: st.color, weight: st.weight, opacity: st.opacity,
       dashArray: st.dash || null, lineCap: st.dash ? 'butt' : 'round', lineJoin: 'round', smoothFactor: 1 }, extra);
   }
 
@@ -110,7 +111,7 @@ const Layers = (() => {
     const group = L.layerGroup();
     if (key === 'ferrovias') {
       const lines = ferrovias().map(f => IM.decodeLine(f.p));
-      if (lines.length) group.addLayer(L.polyline(lines, polyOpts(key, LAYER_STYLES.ferrovias)));
+      if (lines.length) group.addLayer(L.polyline(lines, polyOpts(renderer(key), LAYER_STYLES.ferrovias)));
       return { group, items: [], n: lines.length };
     }
     if (key === 'siade') {
@@ -118,24 +119,25 @@ const Layers = (() => {
       const fl = (mm('siade') || []).filter(s => s.lo && s.ld && finite(s.t)).sort((a, b) => b.t - a.t);
       const tmax = fl.length ? fl[0].t : 0;
       for (const s of fl) {
-        group.addLayer(L.polyline([[s.lo[1], s.lo[0]], [s.ld[1], s.ld[0]]],
-          { renderer: rend, interactive: false, color: st.color, opacity: st.opacity, weight: IM.lineWeight(s.t, tmax, st.wmin, st.wmax), lineCap: 'round' }));
+        group.addLayer(L.polyline([[s.lo[1], s.lo[0]], [s.ld[1], s.ld[0]]], polyOpts(rend, st, { weight: IM.lineWeight(s.t, tmax, st.wmin, st.wmax) })));
       }
       return { group, items: [], n: fl.length };
     }
-    // estaduais: malha em cinza, concessões estaduais (entEst -> feições da malha; entGeo -> traçado próprio) por cima.
-    const e = est(), rend = renderer(key);
-    const malha = e.malha.p.map(p => IM.decodeLine(p));
-    const ok = l => l && l.length >= 2;
-    const base = malha.filter(ok);
-    if (base.length) group.addLayer(L.polyline(base, Object.assign(polyOpts(key, LAYER_STYLES.estaduais), { renderer: rend })));
-    const conc = [];
-    (e.entidades || []).forEach((_, k) => {
-      for (const ix of (e.entEst && e.entEst[k]) || []) if (ok(malha[ix])) conc.push(malha[ix]);
-      for (const p of (e.entGeo && e.entGeo[k]) || []) { const l = IM.decodeLine(p); if (ok(l)) conc.push(l); }
+    // estaduais: malha em cinza (pane abaixo das rodovias federais); concessões estaduais em Bright Blue com halo, acima delas
+    // (entEst -> feições da malha; entFis -> físicos do SNV; entGeo -> traçado próprio), clicáveis.
+    const e = est();
+    const base = e.malha.p.map(p => IM.decodeLine(p)).filter(l => l.length >= 2);
+    if (base.length) group.addLayer(L.polyline(base, polyOpts(renderer(key), LAYER_STYLES.estaduais)));
+    const st = LAYER_STYLES.estConc, rc = renderer('estconc');
+    const conc = [], all = [];
+    IM.estConcLines(e, snv).forEach((lines, k) => {
+      for (const ll of lines) { conc.push({ k, ll, bbox: IM.ringsBBox([ll]) }); all.push(ll); }
     });
-    if (conc.length) group.addLayer(L.polyline(conc, Object.assign(polyOpts(key, LAYER_STYLES.estConc), { renderer: rend })));
-    return { group, items: [], n: malha.length, nConc: conc.length };
+    if (all.length) {
+      group.addLayer(L.polyline(all, polyOpts(rc, { color: st.halo, weight: st.weight + st.haloExtra, opacity: st.haloOpacity })));
+      group.addLayer(L.polyline(all, polyOpts(rc, st)));
+    }
+    return { group, items: [], n: e.malha.p.length, conc, nConc: new Set(conc.map(c => c.k)).size };
   }
 
   function build(key) { return POINT_KEYS.includes(key) ? buildPoints(key) : buildLines(key); }
@@ -156,7 +158,7 @@ const Layers = (() => {
   }
 
   // ---------- Fundo municipal ----------
-  function munOk() { return !!(intel && intel.municipios && intel.municipios.topo && intel.agro && intel.agro.ids); }
+  function fundoAvailable() { return !!(intel && intel.municipios && intel.municipios.topo && intel.agro && intel.agro.ids); }
 
   function buildMun() {
     const st = FUNDO_BORDER, rend = renderer('mun'), group = L.layerGroup();
@@ -183,7 +185,7 @@ const Layers = (() => {
 
   function setFundo(key) {
     const t0 = performance.now();
-    const k = key && IM.FUNDOS.some(f => f.key === key) && munOk() ? key : null;
+    const k = key && IM.FUNDOS.some(f => f.key === key) && fundoAvailable() ? key : null;
     if (!k) {
       if (mun) mun.group.remove();
       fundoKey = null;
@@ -235,6 +237,11 @@ const Layers = (() => {
       if (!m) return;
       L.polygon(m.rings, opts(st.halo, st.haloWeight)).addTo(selGroup);
       L.polygon(m.rings, opts(st.color, st.weight)).addTo(selGroup);
+    } else if (key === 'estconc') {
+      const lines = IM.estConcLines(est(), snv)[i] || [];
+      if (!lines.length) return;
+      L.polyline(lines, opts(st.halo, st.haloWeight)).addTo(selGroup);
+      L.polyline(lines, opts(st.color, st.weight)).addTo(selGroup);
     } else {
       const r = rowsOf(key)[i];
       if (!r || !hasLatLng(r)) return;
@@ -264,6 +271,30 @@ const Layers = (() => {
     return null;
   }
 
+  // Concessão estadual sob o cursor: candidatas pela caixa (com tolerância em graus), depois distância ao segmento em pixels.
+  function estConcAt(clientX, clientY) {
+    if (!on.estaduais || !built.estaduais || !built.estaduais.conc.length) return null;
+    const rect = map.getContainer().getBoundingClientRect();
+    const x = clientX - rect.left, y = clientY - rect.top;
+    const ll = map.containerPointToLatLng([x, y]), ll2 = map.containerPointToLatLng([x + LINE_TOL, y + LINE_TOL]);
+    const tLat = Math.abs(ll2.lat - ll.lat), tLng = Math.abs(ll2.lng - ll.lng);
+    let best = null, bd = Infinity;
+    for (const c of built.estaduais.conc) {
+      const [s, w, n, e] = c.bbox;
+      if (ll.lat < s - tLat || ll.lat > n + tLat || ll.lng < w - tLng || ll.lng > e + tLng) continue;
+      let prev = map.latLngToContainerPoint(c.ll[0]);
+      for (let k = 1; k < c.ll.length; k++) {
+        const cur = map.latLngToContainerPoint(c.ll[k]);
+        const d = IM.distToSegment(x, y, prev.x, prev.y, cur.x, cur.y);
+        if (d < bd) { bd = d; best = c; }
+        prev = cur;
+      }
+    }
+    return best && bd <= LINE_TOL ? { key: 'estconc', i: best.k, latlng: ll } : null;
+  }
+
+  const hitAt = (cx, cy) => pointAt(cx, cy) || estConcAt(cx, cy);
+
   function openPoint(key, i) {
     if (key === 'mun') { select('mun', i); munCb(String(i)); return; }
     select(key, i);
@@ -277,6 +308,7 @@ const Layers = (() => {
     if (key === 'sats') return `SAT ${r.id} · ${IM.fmtVmd(r.vmd)}`;
     if (key === 'obras') return r.descricao || r.tipo || 'Obra';
     if (key === 'portos') return `${r.nome} · ${r.tipoLabel}`;
+    if (key === 'estconc') return `${r.nome} · concessão estadual ${r.uf || ''}`.trim();
     return '';
   }
 
@@ -290,36 +322,33 @@ const Layers = (() => {
     const cx = e.clientX, cy = e.clientY;
     hoverRaf = requestAnimationFrame(() => {
       hoverRaf = 0;
-      if (!POINT_KEYS.some(k => on[k])) { hideTip(); return; }
-      const hit = pointAt(cx, cy);
+      if (!POINT_KEYS.some(k => on[k]) && !on.estaduais) { hideTip(); return; }
+      const hit = hitAt(cx, cy);
       if (!hit) { hideTip(); return; }
       const r = rowsOf(hit.key)[hit.i];
       map.getContainer().classList.add('layers-hover');
       if (!hoverTip) hoverTip = L.tooltip({ direction: 'top', offset: [0, -8], className: 'pt-tip', interactive: false });
-      hoverTip.setLatLng([r.lat, r.lon]).setContent(esc(labelOf(hit.key, hit.i)));
+      const text = document.createElement('span');
+      text.textContent = labelOf(hit.key, hit.i);
+      hoverTip.setLatLng(hit.latlng || [r.lat, r.lon]).setContent(text);
       if (!map.hasLayer(hoverTip)) hoverTip.addTo(map);
     });
   }
 
-  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-
-  function init(leafletMap, intelData) {
-    map = leafletMap; intel = intelData || null;
+  function init(leafletMap, intelData, snvData = null) {
+    map = leafletMap; intel = intelData || null; snv = snvData;
     for (const [name, z] of Object.entries(PANES)) {
       const p = map.createPane('l-' + name);
       p.style.zIndex = z;
       p.style.pointerEvents = 'none';
     }
-    // O canvas do realce (pane "hl", acima das rodovias) também não deve engolir o clique nas rodovias.
-    const hl = map.getPane('hl');
-    if (hl) hl.style.pointerEvents = 'none';
     selRenderer = L.canvas({ pane: 'l-lsel', padding: 0.5 });
     selGroup = L.layerGroup().addTo(map);
     const el = map.getContainer();
     el.addEventListener('mousedown', e => { down = [e.clientX, e.clientY]; }, true);
     el.addEventListener('click', e => {
       if (down && Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5) return;
-      const hit = pointAt(e.clientX, e.clientY);
+      const hit = hitAt(e.clientX, e.clientY);
       if (!hit) return;
       e.stopPropagation();
       hideTip();
@@ -336,11 +365,15 @@ const Layers = (() => {
   }
 
   return {
-    init, toggle, setFundo, fundoInfo, munAt, select, clearSelection, rowsOf, labelOf,
+    init, toggle, setFundo, fundoInfo, fundoAvailable, munAt, estConcAt, select, clearSelection, rowsOf, labelOf,
     available() { return DEFS.filter(d => d.has()).map(d => ({ key: d.key, label: d.label, title: d.fonte(), n: d.n() })); },
     isOn(key) { return !!on[key]; },
     fundo() { return fundoKey; },
-    count(key) { return key === 'mun' ? (mun ? mun.list.length : 0) : built[key] ? built[key].n : 0; },
+    count(key) {
+      if (key === 'mun') return mun ? mun.list.length : 0;
+      if (key === 'estconc') return built.estaduais ? built.estaduais.nConc : 0;
+      return built[key] ? built[key].n : 0;
+    },
     items(key) { return built[key] ? built[key].items.map(x => x.i) : []; },
     open: openPoint,
     // Clique numa rodovia: o clique do mapa que vem em seguida não abre município.

@@ -396,7 +396,7 @@ const UI = (() => {
   // ---------- Camadas de sobreposição (v3, Task 10) ----------
   const LAYERS_NOTE = 'Medido: praças, SATs (ANTT), PAM, Estoques. Modelado: VMDa, carga PNL.';
   const PROD_LABEL = { soja: 'Soja', milho1: 'Milho 1ª safra', milho2: 'Milho 2ª safra', cana: 'Cana-de-açúcar', algodao: 'Algodão', trigo: 'Trigo', cafe: 'Café' };
-  const munReady = () => !!(intel && intel.municipios && intel.municipios.topo && intel.agro && intel.agro.ids);
+  const QUALIDADE = { ok: 'Recorte ok', aproximado: 'Aproximado', nao_mapeado: 'Não mapeado' };
 
   function renderLayers() {
     let sec = $('#layers-section');
@@ -407,9 +407,12 @@ const UI = (() => {
       $('#filters-section').before(sec);
     }
     const avail = Layers.available();
+    // Rodovias estaduais: sublegenda distingue a malha das concessões estaduais (clicáveis).
+    const sub = d => (d.key === 'estaduais'
+      ? `<div class="layer-sub"><span>${layerSwatch('estaduais-malha')}Malha estadual</span><span>${layerSwatch('estconc')}Concessões estaduais</span></div>` : '');
     const checks = avail.map(d => `<label class="check" title="${esc(d.title)}"><input type="checkbox" data-layer="${d.key}">${layerSwatch(d.key)}` +
-      `<span>${esc(d.label)}</span><span class="muted">${fmtInt.format(d.n)}</span></label>`).join('');
-    const fundo = munReady() ? `<fieldset class="fundo"><legend class="fundo__title">Fundo municipal</legend><div class="fundo__opts">
+      `<span>${esc(d.label)}</span><span class="muted">${fmtInt.format(d.n)}</span></label>${sub(d)}`).join('');
+    const fundo = Layers.fundoAvailable() ? `<fieldset class="fundo"><legend class="fundo__title">Fundo municipal</legend><div class="fundo__opts">
         <label class="check"><input type="radio" name="fundo" value="" checked><span>Nenhum</span></label>
         ${IM.FUNDOS.map(f => `<label class="check" title="${esc(`${IM.fundoFonte(intel, f.key)} · por município, 5 classes por quantil`)}"><input type="radio" name="fundo" value="${f.key}"><span>${esc(f.label)}</span></label>`).join('')}
       </div></fieldset>` : '';
@@ -529,14 +532,31 @@ const UI = (() => {
       const km = kmFmt(r.km_i) ? `km ${kmFmt(r.km_i)}${kmFmt(r.km_f) && r.km_f !== r.km_i ? `–${kmFmt(r.km_f)}` : ''}` : null;
       showCard(r.descricao || r.tipo || 'Obra', `Obra ANTT · ${rodUf(r)}`,
         `${grid([
-          ['Tipo', r.tipo], ['Rodovia', rodUf(r)], ['Localização', km], ['Ano', IM.has(r.ano) ? String(r.ano) : null],
+          ['Tipo', r.tipo], ['Localização', km], ['Ano', IM.has(r.ano) ? String(r.ano) : null],
           ['Previsto', IM.fmtPct(r.previsto)], ['Executado', IM.fmtPct(r.executado)],
         ])}<p class="card__src card__pad">Previsto × executado no ano · ANTT, acompanhamento anual de investimentos</p>${pointConc(r.ent, null)}`, r.fis);
+    } else if (key === 'estconc') {
+      openEstConc(r);
     } else if (key === 'portos') {
       showCard(r.nome, `${r.tipoLabel || r.tipo} · ${r.uf || '—'}`,
         `${grid([['Tipo', r.tipoLabel || r.tipo], ['Tipo ANTAQ', r.tipoLabel && r.tipoLabel !== r.tipo ? r.tipo : null], ['UF', r.uf]])}
         <p class="card__src card__pad">ANTAQ, instalações portuárias</p>`, null);
     }
+  }
+
+  // Cartão de concessão estadual (estaduais.entidades).
+  function openEstConc(e) {
+    const km = v => (IM.has(v) ? Model.fmtKm(v) : '—');
+    const datas = [e.assinatura, e.fim].some(Boolean) ? `${ConcModel.fmtData(e.assinatura)} / ${ConcModel.fmtData(e.fim)}` : null;
+    const capex = IM.has(e.capex_bi) ? `${IM.fmtBRL(e.capex_bi * 1e9)}${e.capex_ref ? ` (ref. ${e.capex_ref})` : ''}` : null;
+    const link = e.fonte_url ? `<p class="card__src card__pad"><a class="link-btn" href="${esc(e.fonte_url)}" target="_blank" rel="noopener">Fonte: ${esc(e.regulador || e.poder || 'página oficial')}</a></p>` : '';
+    showCard(e.nome, `Concessão estadual · ${e.uf || '—'}${e.regulador ? ` · ${e.regulador}` : ''}`,
+      `<div class="card__badges"><span class="badge">${layerSwatch('estconc')}${esc(QUALIDADE[e.qualidade] || e.qualidade || '—')}</span></div>
+      ${grid([
+        ['UF', e.uf], ['Regulador', e.regulador || e.poder], ['Rodovias', (e.rodovias || []).join(', ')],
+        ['km declarado × mapeado', `${km(e.km_decl)} × ${km(e.km_map)}`], ['Grupo', e.grupo || e.controlador],
+        ['Assinatura / fim', datas], ['Capex', capex],
+      ])}${e.nota ? `<p class="card__src card__pad">${esc(e.nota)}</p>` : ''}${link}`, null);
   }
 
   function openMun(id) {

@@ -441,7 +441,7 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 }
 .leaflet-tooltip.pt-tip::before { display: none; }
 .fundo-legend { left: 16px; right: auto; width: 288px; }
-.legend__note { margin: 8px 0 0; font-size: 14px; line-height: 20px; color: var(--color-light-grey); }
+.legend__note { margin: 8px 0 0; font-size: 14px; line-height: 24px; color: var(--color-light-grey); }
 .card__chart { padding: 16px 24px; border-top: 1px solid var(--line); }
 .card__svg { overflow-x: auto; }
 .card__svg svg { display: block; }
@@ -458,3 +458,6 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 .meas__name { font-size: 14px; font-weight: 600; color: var(--color-deep-blue); min-width: 0; }
 .meas__kind { display: block; font-size: 14px; font-weight: 400; color: var(--color-light-grey); }
 .meas__v { flex: none; font-size: 14px; font-variant-numeric: tabular-nums; }
+.layer-sub { display: flex; flex-wrap: wrap; gap: 0 16px; padding: 0 0 8px 24px; font-size: 14px; color: var(--color-light-grey); }
+.layer-sub span { display: inline-flex; align-items: center; gap: 8px; }
+.card__src a.link-btn { padding: 0; }

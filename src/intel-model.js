@@ -205,6 +205,28 @@ const IntelModel = (() => {
     return out;
   }
 
+  // Geometria de cada concessão estadual ([[lat, lng], ...] por linha): feições da malha estadual (entEst),
+  // trechos físicos do SNV (entFis, ex.: partes RSC/BR) e traçado próprio (entGeo). Índices inválidos são ignorados.
+  function estConcLines(est, snvData) {
+    if (!est || !Array.isArray(est.entidades)) return [];
+    const malha = (est.malha && est.malha.p) || [], fis = (snvData && snvData.fis) || [];
+    const ok = l => l.length >= 2;
+    return est.entidades.map((_, k) => {
+      const out = [];
+      for (const ix of (est.entEst && est.entEst[k]) || []) if (malha[ix]) { const l = decodeLine(malha[ix]); if (ok(l)) out.push(l); }
+      for (const j of (est.entFis && est.entFis[k]) || []) if (fis[j] && fis[j].p) { const l = decodeLine(fis[j].p); if (ok(l)) out.push(l); }
+      for (const p of (est.entGeo && est.entGeo[k]) || []) { const l = decodeLine(p); if (ok(l)) out.push(l); }
+      return out;
+    });
+  }
+
+  // Distância do ponto (px, py) ao segmento a–b, nas mesmas unidades (pixels de tela).
+  function distToSegment(px, py, ax, ay, bx, by) {
+    const dx = bx - ax, dy = by - ay, len2 = dx * dx + dy * dy;
+    const t = len2 ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len2)) : 0;
+    return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+  }
+
   // Raio ∝ √valor (área ∝ valor), limitado a [rmin, rmax]; sem valor = rmin.
   function pointRadius(v, vmax, rmin = 3, rmax = 10) {
     if (!has(v) || v <= 0 || !has(vmax) || vmax <= 0) return rmin;
@@ -343,7 +365,7 @@ const IntelModel = (() => {
 
   return { MODES, has, sumNullable, nAnos, vmdaOf, acidOf, cargaOf,
     rows, metricArray, quantileBreaks, classOf, aggregateIntel, fisIntel, taxaAcidentes, pointsOfFis, decodeTopo,
-    rodLabel, decodeLine, pointRadius, lineWeight, PORTO_TIPOS, portoTipo, monthLabel, FUNDOS, PRODUTOS, fundoFonte, fundoValues,
+    rodLabel, decodeLine, estConcLines, distToSegment, pointRadius, lineWeight, PORTO_TIPOS, portoTipo, monthLabel, FUNDOS, PRODUTOS, fundoFonte, fundoValues,
     fundoClasses, munInfo, pointInRings, ringsBBox, fonteRef,
     fmtInt, fmtDec, fmtVmd, fmtT, fmtPct, fmtBRL, fmtVkm, fmtTkm };
 })();
