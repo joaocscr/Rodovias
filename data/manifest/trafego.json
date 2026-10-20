@@ -1,0 +1,57 @@
+[
+ {
+  "dominio": "trafego",
+  "descricao": "VMDa 2023 por subtrecho de modelagem (Leves/Pesados), tabela `data`, SNV 202401A",
+  "url": "https://geo.infrasa.gov.br/server/rest/services/Hosted/VMDa_2023/FeatureServer/3",
+  "arquivo": "data/raw/trafego/infrasa/vmda2023_data.json",
+  "bytes": 14217554,
+  "sha256": "cb0afcf012c6a6038c89f3aad26d2ff984d2bb7a09dab043e89a7b8e7ca7083c",
+  "periodo": "2023",
+  "licenca": "Dados abertos Infra S.A.",
+  "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "trafego",
+  "descricao": "Índice ABCR de fluxo de veículos pedagiados, série mensal 1999-set/2026",
+  "url": "https://melhoresrodovias.org.br/wp-content/uploads/2026/10/base_0926.xlsx",
+  "arquivo": "data/raw/trafego/abcr/base_0926.xlsx",
+  "bytes": 558163,
+  "sha256": "2cd91056ab7d09a0cea5a82372324b642953076316d18e04c24366d9a8384b62",
+  "periodo": "1999-2026-09",
+  "licenca": "Divulgação pública ABCR (citar a fonte)",
+  "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "trafego",
+  "descricao": "PRF DATATRAN 2024 agrupado por ocorrência (ZIP; página: https://www.gov.br/prf/pt-br/acesso-a-informacao/dados-abertos/dados-abertos-da-prf)",
+  "url": "https://drive.google.com/uc?export=download&id=14lB0vqMFkaZj8HZ44b0njYgxs9nAN8KO",
+  "arquivo": "data/raw/trafego/prf/datatran2024.zip",
+  "bytes": 3783609,
+  "sha256": "905dac836867297b261e4edefff6cdb470809814e7e1796b3f2f57517099d165",
+  "periodo": "2024",
+  "licenca": "CC BY-ND 3.0 (PRF, dados abertos)",
+  "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "trafego",
+  "descricao": "PRF DATATRAN 2025 agrupado por ocorrência (ZIP; página: https://www.gov.br/prf/pt-br/acesso-a-informacao/dados-abertos/dados-abertos-da-prf)",
+  "url": "https://drive.google.com/uc?export=download&id=1-G3MdmHBt6CprDwcW99xxC4BZ2DU5ryR",
+  "arquivo": "data/raw/trafego/prf/datatran2025.zip",
+  "bytes": 3727148,
+  "sha256": "52c8a631ac9d428bf845e2fa996b8c61f66b219f7014a61d292f9d95d186bb0f",
+  "periodo": "2025",
+  "licenca": "CC BY-ND 3.0 (PRF, dados abertos)",
+  "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "trafego",
+  "descricao": "PRF DATATRAN 2026 agrupado por ocorrência (ZIP; página: https://www.gov.br/prf/pt-br/acesso-a-informacao/dados-abertos/dados-abertos-da-prf)",
+  "url": "https://drive.google.com/uc?export=download&id=1A3IirNm0AzRaSosA1IS94DOVmvKsn0Ol",
+  "arquivo": "data/raw/trafego/prf/datatran2026.zip",
+  "bytes": 2501149,
+  "sha256": "edc00438a4a00a483115a14be886b7b3e8a975064f14375ee043d3d69c157333",
+  "periodo": "2026-01 a 2026-08 (parcial)",
+  "licenca": "CC BY-ND 3.0 (PRF, dados abertos)",
+  "acesso": "2026-10-20"
+ }
+]
