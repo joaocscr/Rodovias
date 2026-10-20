@@ -155,7 +155,7 @@ const Projetos = (() => {
         return `<tr${ficha ? ` tabindex="0" data-ent="${esc(i.ent)}"` : ' class="is-static"'} data-data="${esc(i.data_prevista || '')}">
           <td class="name">${esc(i.nome)}${i.obs ? `<details class="pipe-obs" data-obs="${esc(i.id)}"${pobs.has(i.id) ? ' open' : ''}><summary>Observação</summary><p>${esc(i.obs)}</p></details>` : ''}</td><td>${esc(ESFERA[i.esfera] || dash)}</td><td>${esc((i.uf || []).join('/') || dash)}</td>
           <td class="wrap">${esc((i.rodovias || []).join(', ') || dash)}</td><td class="num">${n(v => nf1.format(v), IM.has(i.km) ? i.km : null)}</td>
-          <td>${esc(IM.statusLabel(intel, i.status))}</td><td>${esc(ConcModel.fmtData(i.data_prevista))}</td><td>${fonte(i)}</td></tr>`;
+          <td><span class="pstatus" data-pdot="${esc(i.status || '')}">${esc(IM.statusLabel(intel, i.status))}</span></td><td>${esc(ConcModel.fmtData(i.data_prevista))}</td><td>${fonte(i)}</td></tr>`;
       }).join('')}</tbody>`;
     document.getElementById('pipe-n').textContent = `${nf0.format(list.length)} de ${nf0.format(pipe.length)}`;
   }

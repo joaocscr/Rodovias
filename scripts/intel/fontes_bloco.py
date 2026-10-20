@@ -37,10 +37,11 @@ BASE = [
 
 INDISPONIVEIS = [
     {"nome": "DNIT, portal PNCT (contagem contínua e VMDa nacional)", "url": "https://servicos.dnit.gov.br/dadospnct",
-     "motivo": "Inacessível em todas as tentativas (conexão resetada ou 503); sem contagem por posto, o VMDa vem do modelo da Infra S.A."},
+     "motivo": "Inacessível em todas as tentativas (conexão resetada ou 503); sem contagem por posto, o VMDa vem de "
+                "modelos: o da Infra S.A. (2023) e o do DNIT (2025)."},
     {"nome": "Infra S.A., SNV VMDa 2021",
      "url": "https://geo.infrasa.gov.br/server/rest/services/Hosted/SNV_VMDA_2021/FeatureServer",
-     "motivo": "Sem resposta em todas as tentativas; dispensável, porque o VMDa 2023 é mais recente."},
+     "motivo": "Sem resposta em todas as tentativas; dispensável, porque o VMDa 2023 e o VMDa 2025 são mais recentes."},
     {"nome": "Infra S.A., Rodovias Estaduais, ano-base 2024",
      "url": "https://geo.infrasa.gov.br/server/rest/services/Rodovias_Estaduais/FeatureServer/0",
      "motivo": "Nenhuma consulta respondeu; foi usada a camada de Rodovias Estaduais com CIDE 2021 e Base DNIT 2002."},

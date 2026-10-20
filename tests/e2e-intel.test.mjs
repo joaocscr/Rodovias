@@ -15,8 +15,8 @@ const LABELS = ['Concessões', 'Situação física', 'Tráfego', 'Pesados', 'Car
 let browser, page;
 const external = [], errors = [];
 
-async function openPage(errs, ext, transform) {
-  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+async function openPage(errs, ext, transform, viewport = { width: 1440, height: 900 }) {
+  const context = await browser.newContext({ viewport });
   await context.route('**/*', r => {
     const url = r.request().url();
     if (transform && url.startsWith('file:') && url.endsWith('.html')) {
@@ -91,12 +91,21 @@ test('(b, c) modo Tráfego: legenda com 5 faixas, "Sem dado" e "Estimativa de mo
   assert.match(t, /Sem dado/);
   assert.match(t, /Estimativa de modelo/);
   assert.match(t, /veíc\.\/dia/);
-  assert.match(t, /VMDa 2023/);
+  // v3.1: Tráfego colorido pelo VMDa 2025 (DNIT, modelado), com o ano visível no título e na fonte
+  assert.match(await page.textContent('#legend .legend__title'), /VMDa 2025, modelado/);
+  assert.match(await page.textContent('#legend .legend__src'), /DNIT, VMDa 2025 \(modelado\)/);
+  assert.doesNotMatch(t, /VMDa 2023/);
+  // camada de estaduais desligada: a legenda não fala delas
+  assert.doesNotMatch(t, /estaduais/i);
   // faixas "a – b" formatadas, contíguas
   const rows = await page.$$eval('#legend .legend__row[data-class] .legend__range', es => es.map(e => e.textContent));
   for (const r of rows) assert.match(r, /^[\d.,]+ – [\d.,]+$/, r);
   for (let i = 1; i < rows.length; i++) assert.equal(rows[i].split(' – ')[0], rows[i - 1].split(' – ')[1]);
   assert.ok(!/NaN|undefined|null/.test(t));
+  // v3.1: amostras da legenda na rampa azul do Tráfego, claro → escuro, cor sólida; "Sem dado" em cinza tracejado
+  const sw = await page.$$eval('#legend .legend__row[data-class] svg line', ls => ls.map(l => [l.getAttribute('stroke'), l.getAttribute('stroke-opacity')]));
+  assert.deepEqual(sw, (await page.evaluate(() => RAMPS.trafego)).map(c => [c, '1']));
+  assert.equal(await page.getAttribute('#legend .legend__row:not([data-class]) svg line', 'stroke'), '#525254');
 });
 
 test('modos quantitativos: classes por quantil, sem halo, classe maior por cima', async () => {
@@ -108,12 +117,18 @@ test('modos quantitativos: classes por quantil, sem halo, classe maior por cima'
   assert.deepEqual(r.breaks, r.expected);
   assert.equal(r.breaks.length, 4);
   assert.equal(r.halos, 0);
-  const st = await page.evaluate(() => ({ q: QUANT_STYLES, none: QUANT_NONE }));
-  assert.deepEqual(st.q.map(x => [x.color, x.opacity]),
-    [['#0071BB', 0.45], ['#0071BB', 0.7], ['#183C80', 0.75], ['#183C80', 0.9], ['#183C80', 1]]);
-  assert.equal(st.q[0].weight, 1.5);
-  assert.equal(st.q[4].weight, 6);
-  assert.ok(st.q.every((x, i) => i === 0 || (x.weight > st.q[i - 1].weight && x.z > st.q[i - 1].z)));
+  // v3.1: cor sólida por classe, da rampa do modo (claro → escuro), espessura crescente
+  const st = await page.evaluate(() => ({ q: QUANT_MODES.map(m => [0, 1, 2, 3, 4].map(c => quantStyle(c, m))), ramps: RAMPS, none: QUANT_NONE }));
+  assert.deepEqual(st.ramps.trafego, ['#6da7ec', '#3987e5', '#256abf', '#184f95', '#0d366b']);
+  assert.deepEqual(st.ramps.pesados, ['#9895ff', '#7c6ef7', '#6250d6', '#4a30b6', '#360396']);
+  assert.deepEqual(st.ramps.carga, ['#fb7744', '#da5821', '#b43f00', '#8a2e00', '#621e00']);
+  assert.deepEqual(st.ramps.acidentes, ['#ff6f69', '#e34948', '#c1252c', '#9a0016', '#6e000c']);
+  for (const [k, q] of ['trafego', 'pesados', 'carga', 'acidentes'].map((m, k) => [m, st.q[k]])) {
+    assert.deepEqual(q.map(x => [x.color, x.opacity]), st.ramps[k].map(c => [c, 1]), k);
+    assert.equal(q[0].weight, 1.5);
+    assert.equal(q[4].weight, 6);
+    assert.ok(q.every((x, i) => i === 0 || (x.weight > q[i - 1].weight && x.z > q[i - 1].z)));
+  }
   assert.deepEqual(st.none, { color: '#525254', weight: 1, dash: '2 4', opacity: 0.5, z: 0 });
 });
 
@@ -127,10 +142,19 @@ test('(d) KPI de veíc·km com filtro UF = MT bate com o modelo', async () => {
     f.uf.add(window.SNV.dict.uf.indexOf('MT'));
     const mask = Model.visibleFis(window.SNV, f);
     const a = IntelModel.aggregateIntel(window.INTEL, window.SNV, mask);
-    return { vkm: IntelModel.fmtVkm(a.vkm), acid: a.acidAno, tkm: a.tkm };
+    // v3.1: veíc·km = Σ VMDa 2025 × extensão; pesados = 2025 × participação de pesados 2023 (estimativa)
+    let vkm25 = 0;
+    const t = window.INTEL.vmda2025.fis.t;
+    for (let j = 0; j < mask.length; j++) if (mask[j] && t[j] != null) vkm25 += t[j] * window.SNV.fis[j].ext;
+    return { vkm: IntelModel.fmtVkm(a.vkm), acid: a.acidAno, tkm: a.tkm, ano: a.anoVmda, ok25: Math.abs(vkm25 - a.vkm) < 1e-6 * a.vkm,
+      pct: IntelModel.fmtPct(a.vkmPes / a.vkmBasePes) };
   });
   assert.equal((await page.textContent('#kpi-vkm')).trim(), expected.vkm);
   assert.notEqual(expected.vkm, '—');
+  assert.equal(expected.ano, 2025);
+  assert.ok(expected.ok25);
+  const sub = await page.locator('#kpi-vkm').evaluate(e => e.nextElementSibling.textContent);
+  assert.ok(sub.startsWith(`${expected.pct} pesados (estimativa: % de 2023) · Tráfego VMDa 2025, modelado`), sub);
   assert.match(await page.textContent('#kpi-acid'), /\d/);
   assert.match(await page.textContent('#kpi-tkm'), /t·km\/ano/);
   // cobertura sobre os km pavimentados da seleção
@@ -153,8 +177,9 @@ test('(d) KPI de veíc·km com filtro UF = MT bate com o modelo', async () => {
 
 test('(e) cartão de físico com VMDa mostra o bloco "Tráfego e segurança"', async () => {
   const j = await page.evaluate(() => {
-    const v = window.INTEL.trafego.vmda, c = window.INTEL.carga;
-    return window.SNV.fis.findIndex((_, j) => v.l[j] != null && v.p[j] != null && c.gsa[j] > 0);
+    const v = window.INTEL.trafego.vmda, c = window.INTEL.carga, f = window.INTEL.vmda2025.fis;
+    return window.SNV.fis.findIndex((_, j) => v.l[j] != null && v.p[j] != null && v.p[j] > 0 && c.gsa[j] > 0
+      && f.t[j] != null && f.c[j] != null && f.d[j] != null && !f.ns[j] && IntelModel.fisSup(window.SNV, j) === 'PAV');
   });
   assert.ok(j >= 0);
   await page.evaluate(j => MapView.pick(j), j);
@@ -162,7 +187,35 @@ test('(e) cartão de físico com VMDa mostra o bloco "Tráfego e segurança"', a
   const t = await page.textContent('#card');
   assert.match(t, /Tráfego e segurança/);
   assert.match(t, /veíc\.\/dia/);
-  assert.match(t, /estimado, 2023/);
+  assert.match(t, /VMDa 2023 · modelado · leves e pesados/);
+  // v3.1: VMDa 2025 total e por sentido; pesados 2025 rotulados "estimativa"; bloco 2023 leves/pesados mantido
+  const subs = await page.$$eval('#card .card__intel dt.card__sub', ds => ds.map(d => d.textContent));
+  // grupos paralelos: "VMDa <ano> · modelado · <o que traz>"
+  assert.ok(subs.some(s => s === 'VMDa 2025 · modelado · total e por sentido'), subs.join(' | '));
+  assert.ok(subs.some(s => s === 'VMDa 2023 · modelado · leves e pesados'), subs.join(' | '));
+  const k25 = await page.evaluate(j => {
+    const f = window.INTEL.vmda2025.fis, x = IntelModel.fisIntel(window.INTEL, window.SNV, j);
+    return { t: IntelModel.fmtVmd(f.t[j]), c: IntelModel.fmtVmd(f.c[j]), d: IntelModel.fmtVmd(f.d[j]), pes: IntelModel.fmtVmd(x.pes25),
+      l: IntelModel.fmtVmd(window.INTEL.trafego.vmda.l[j]), p: IntelModel.fmtVmd(window.INTEL.trafego.vmda.p[j]) };
+  }, j);
+  const rows25 = await page.$$eval('#card .card__intel dt.card__sub', ds => {
+    const out = {};
+    let g = null;
+    for (const el of ds[0].parentElement.children) {
+      if (el.matches('dt.card__sub')) g = el.textContent;
+      else if (el.matches('dt')) out[`${g}|${el.textContent}`] = el.nextElementSibling.textContent;
+    }
+    return out;
+  });
+  const G25 = 'VMDa 2025 · modelado · total e por sentido', G23 = 'VMDa 2023 · modelado · leves e pesados';
+  assert.equal(rows25[`${G25}|Total`], k25.t);
+  assert.equal(rows25[`${G25}|Sentido crescente (SNV)`], k25.c);
+  assert.equal(rows25[`${G25}|Sentido decrescente (SNV)`], k25.d);
+  assert.equal(rows25[`${G25}|Pesados (estimativa)`], k25.pes);
+  assert.equal(rows25[`${G23}|Leves`], k25.l);
+  assert.equal(rows25[`${G23}|Pesados`], k25.p);
+  assert.match(t, /Pesados \(estimativa\) = total 2025 × [\d,]+% de pesados no VMDa 2023 do trecho/);
+  assert.equal(await page.locator('#card .card__flag[data-ns]').count(), 0);
   assert.match(t, /modelo PNL, 2017/);
   assert.match(t, /10⁶ veíc·km/);
   // veíc·km/dia do trecho, acidentes por km por ano e carga total do PNL
@@ -193,6 +246,22 @@ test('cartão de trecho planejado (PLA) marca tráfego e acidentes como "trecho 
   await page.click('#card-close');
 });
 
+test('v3.1: trecho "não simulável" no VMDa 2025 mostra "uso restrito (área urbana)" no cartão', async () => {
+  const j = await page.evaluate(() => {
+    const f = window.INTEL.vmda2025.fis;
+    return window.SNV.fis.findIndex((_, j) => f.ns[j] === 1 && f.t[j] != null);
+  });
+  assert.ok(j >= 0);
+  await page.evaluate(j => MapView.pick(j), j);
+  await page.waitForSelector('#card:not([hidden])');
+  assert.equal(await page.locator('#card .card__flag[data-ns]').count(), 1);
+  assert.match(await page.textContent('#card .card__flag[data-ns]'), /^uso restrito \(área urbana\) trecho não simulável no modelo$/);
+  // o valor é mantido
+  assert.match(await page.textContent('#card .card__intel'), new RegExp(
+    (await page.evaluate(j => IntelModel.fmtVmd(window.INTEL.vmda2025.fis.t[j]), j)).replace(/\./g, '\\.')));
+  await page.click('#card-close');
+});
+
 test('(f) modos Acidentes e Carga mudam a legenda', async () => {
   const trafego = await legend();
   await mode('acidentes');
@@ -209,6 +278,9 @@ test('(f) modos Acidentes e Carga mudam a legenda', async () => {
   assert.match(carga, /PNL/);
   await mode('pesados');
   assert.match(await legend(), /Pesados/);
+  // Pesados segue o VMDa 2023 (leves/pesados), rotulado 2023
+  assert.match(await page.textContent('#legend .legend__title'), /VMDa 2023, modelado/);
+  assert.match(await page.textContent('#legend .legend__src'), /VMDa 2023/);
   assert.equal(await page.evaluate(() => MapView.colorMode()), 'pesados');
 });
 
@@ -302,7 +374,7 @@ test('(f) Rodovias estaduais só aparece com INTEL.estaduais; concessões estadu
   assert.equal(await layerBox('estaduais').count(), has ? 1 : 0);
   if (!has) assert.doesNotMatch(await page.textContent('#layers-section'), /Rodovias estaduais/);
   const st = await page.evaluate(() => LAYER_STYLES.estConc);
-  assert.deepEqual([st.color, st.weight, st.halo, st.haloOpacity, st.haloExtra], ['#0071BB', 3, '#231F20', 0.35, 3]);
+  assert.deepEqual([st.color, st.weight, st.halo, st.haloOpacity, st.haloExtra], ['#e87ba4', 3, '#231F20', 0.35, 3]);
   if (has) {
     // entidades só com entFis (ex.: Rota de Santa Maria) também têm geometria
     const r = await page.evaluate(() => {
@@ -370,6 +442,7 @@ test('(g) ligar cada camada leva menos de 400 ms (1ª vez); fundo municipal < 1.
   }), sel); };
   const keys = ['pracas', 'sats', 'obras', 'ferrovias', 'portos', 'siade'];
   if (await layerBox('estaduais').count()) keys.push('estaduais');
+  if (await layerBox('rotas').count()) keys.push('rotas');
   for (const key of keys) {
     assert.equal(await page.evaluate(k => Layers.count(k), key), 0, `${key} já construída`);
     const ms = await timeClick(`#layers-section input[data-layer="${key}"]`);
@@ -776,8 +849,12 @@ test('(c) ficha estadual: etiqueta, campos e "Ver no mapa" liga a camada, realç
   assert.ok(await page.evaluate(() => MapView.map.getZoom()) >= 6);
   // o cartão do mapa usa o mesmo rótulo de recorte da ficha
   assert.match(await page.textContent('#card .card__badges'), new RegExp(qual));
-  await page.click('#card-close');
+  assert.ok((await page.evaluate(() => Layers.colorsUsed().selecao || [])).length > 0);
+  // desligar "Rodovias estaduais" com a concessão aberta limpa a seleção (contorno) e fecha o cartão
   await page.locator('#layers-section input[data-layer="estaduais"]').uncheck();
+  await page.waitForSelector('#card', { state: 'hidden' });
+  assert.equal(await page.evaluate(() => Layers.selected()), null);
+  assert.equal(await page.evaluate(() => Layers.colorsUsed().selecao), undefined);
   // não mapeada sem geometria: botão desabilitado com explicação
   if (s.nm) {
     await go('#ficha/' + s.nm);
@@ -852,6 +929,22 @@ test('(e, f) Pipeline: ≥ 60 linhas por data prevista, filtros, contagem por st
   const counts = await page.evaluate(() => IntelModel.pipelineCounts(window.INTEL.pipeline.itens, window.INTEL.pipeline.status));
   const top = await page.textContent('#pipe-counts');
   for (const c of counts) assert.ok(top.includes(`${c.label} ${c.n}`), `${c.label} ${c.n}`);
+  // v3.1: cada status com ponto colorido do token PIPE_STATUS, além do texto
+  const rgb = h => `rgb(${[1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)).join(', ')})`;
+  const dots = await page.$$eval('#pipe-counts [data-pstatus]', bs => bs.map(b => [b.dataset.pstatus, getComputedStyle(b, '::before').backgroundColor]));
+  const pipeTok = await page.evaluate(() => PIPE_STATUS);
+  assert.ok(dots.length >= 5);
+  for (const [k, bg] of dots) assert.equal(bg, rgb(pipeTok[k]), k);
+  // o mesmo ponto (mesmo token) em cada linha da tabela, ao lado do texto do status
+  const rowDots = await page.$$eval('#pipe-table tbody tr td:nth-child(6) .pstatus', ss => ss.map(s =>
+    [s.dataset.pdot, s.textContent, getComputedStyle(s, '::before').backgroundColor, getComputedStyle(s, '::before').width]));
+  assert.equal(rowDots.length, await page.locator('#pipe-table tbody tr').count());
+  const lbl = await page.evaluate(() => Object.fromEntries(window.INTEL.pipeline.itens.map(i => [i.status, IntelModel.statusLabel(window.INTEL, i.status)])));
+  for (const [k, txt, bg, w] of rowDots) {
+    assert.equal(bg, rgb(pipeTok[k]), k);
+    assert.equal(w, '10px', k);
+    assert.equal(txt, lbl[k], k);
+  }
   // filtro de esfera e de status
   await page.selectOption('#pipe-esfera', 'estadual');
   const nE = await page.evaluate(() => window.INTEL.pipeline.itens.filter(i => i.esfera === 'estadual').length);
@@ -980,6 +1073,28 @@ test('(b) Tráfego: ≥ 5 gráficos, "Fonte:" em cada cartão, KPIs do modelo, s
   assert.equal(await page.textContent('#kpi-acid b'), k.acid);
   assert.equal(await page.textContent('#kpi-pes b'), k.pes);
   assert.equal(await page.textContent('#kpi-vkm b'), await page.evaluate(() => IntelModel.fmtVkm(IntelModel.trafegoKpis(window.INTEL, window.SNV).vkm)));
+  // v3.1: veíc·km/dia federal = aggregateIntel (VMDa 2025) em toda a malha; estadual 2025 = Σ total × extensão das linhas
+  const v = await page.evaluate(() => {
+    const all = new Uint8Array(window.SNV.fis.length).fill(1), a = IntelModel.aggregateIntel(window.INTEL, window.SNV, all);
+    const m = window.INTEL.estaduais.malha, iExt = m.campos.indexOf('ext'), t = window.INTEL.vmda2025.estaduais.t;
+    let est = 0;
+    t.forEach((x, i) => { if (x != null && x > 0) est += x * m.linhas[i][iExt]; });
+    return { fed: IntelModel.fmtVkm(a.vkm), est: IntelModel.fmtVkm(est), ano: a.anoVmda };
+  });
+  assert.equal(v.ano, 2025);
+  assert.equal(await page.textContent('#kpi-vkm b'), v.fed);
+  assert.match(await page.textContent('#kpi-vkm span'), /^na malha federal \(VMDa 2025, modelado\)$/);
+  assert.equal(await page.textContent('#kpi-vkm-est b'), v.est);
+  assert.match(await page.textContent('#kpi-vkm-est span'), /^nas rodovias estaduais \(VMDa 2025, modelado\)$/);
+  const kSrc = await page.textContent('#card-t-kpis');
+  assert.match(kSrc, /DNIT — VMDa 2025 .* · 2025 · modelado/);
+  assert.match(kSrc, /Rodovias estaduais: .* km com estimativa de .* km/);
+  // cobertura exata: a malha inclui duplicados e em obras (não só "pavimentadas") e não afirma "fora das BRs"
+  assert.match(kSrc, /pavimentados, duplicados ou em obras de pavimentação, mais os usados por concessões estaduais/);
+  assert.match(kSrc, /se sobrepõem a rodovias federais do SNV em mais de 80% da extensão/);
+  assert.doesNotMatch(kSrc, /fora das BRs/);
+  // a taxa de acidentes segue com o VMDa 2023 (leves/pesados), rotulada
+  assert.match(await page.textContent('#card-t-taxa'), /÷ VMDa 2023/);
   // períodos das fontes em pt-BR
   assert.match(await page.textContent('#card-t-rank .src:last-child'), /jan\/2024 a ago\/2026/);
   assert.doesNotMatch(await page.textContent('#page-trafego'), /\b\d{4}-(0[1-9]|1[0-2])\b/);
@@ -1161,6 +1276,14 @@ test('(d) Fontes: ≥ 30 fontes, ≥ 9 indisponíveis com motivo, bases v1/v2 e 
   for (const [b, n, tp] of tipoDe) {
     if (b === 'Municípios' || b === 'Estaduais' || /Capas das concessões/.test(n)) assert.equal(tp, 'Cadastro', n);
   }
+  // v3.1: blocos novos com nome legível (nunca a chave interna), VMDa 2025 modelado e rotas como cadastro
+  const blocos = new Set(tipoDe.map(r => r[0]));
+  assert.ok(blocos.has('Tráfego (VMDa 2025)') && blocos.has('Rotas de Integração'), [...blocos].join());
+  for (const b of blocos) assert.doesNotMatch(b, /^[a-z0-9]+$/, b);
+  for (const [b, n, tp] of tipoDe) {
+    if (b === 'Tráfego (VMDa 2025)') assert.equal(tp, 'Modelado', n);
+    if (b === 'Rotas de Integração') assert.equal(tp, 'Cadastro', n);
+  }
 });
 
 test('(e) hashes inválidos continuam caindo no Mapa', async () => {
@@ -1203,6 +1326,451 @@ test('com só parte dos blocos cada aba mostra só os cartões que têm dado', a
   assert.doesNotMatch(await p.textContent('#page-cargas') + await p.textContent('#page-trafego'), /undefined|NaN/);
   assert.deepEqual(errs, []);
   await p.context().close();
+});
+
+// ---------- v3.1, Task 3: paleta de dados estendida ----------
+test('paleta: nenhuma cor de dado fora dos tokens; modos na rampa do modo; camadas na cor documentada', async () => {
+  await page.evaluate(() => { location.hash = '#mapa'; });
+  await page.waitForFunction(() => Tabs.current().active === 'mapa');
+  const tokens = new Set(await page.evaluate(() => DATA_TOKENS));
+  assert.ok(tokens.has('#183C80') && tokens.has('#2A78D6') && tokens.has('#0D366B'));
+  for (const m of ['concessoes', 'fisica', 'trafego', 'pesados', 'carga', 'acidentes']) {
+    await mode(m);
+    const used = await page.evaluate(() => MapView.lineColors());
+    for (const c of Object.keys(used)) assert.ok(tokens.has(c), `${m}: ${c}`);
+    if (['trafego', 'pesados', 'carga', 'acidentes'].includes(m)) {
+      const ramp = await page.evaluate(m => RAMPS[m].map(c => c.toUpperCase()), m);
+      // só os 5 passos da rampa + cinza "sem dado"; os 5 passos presentes
+      assert.deepEqual(Object.keys(used).filter(c => c !== '#525254').sort(), [...ramp].sort(), m);
+    }
+  }
+  await mode('concessoes');
+  const keys = await page.$$eval('#layers-section input[data-layer]', is => is.map(i => i.dataset.layer));
+  for (const k of keys) await setLayer(page, k, true);
+  const used = await page.evaluate(() => Layers.colorsUsed());
+  for (const [k, cs] of Object.entries(used)) for (const c of cs) assert.ok(tokens.has(c), `${k}: ${c}`);
+  const D = await page.evaluate(() => Object.fromEntries(Object.entries(DATA).map(([k, v]) => [k, v.toUpperCase()])));
+  const R = await page.evaluate(() => [...Object.values(ROTAS), ...Object.values(ROTAS_EXTRA).map(x => x.color)].map(c => c.toUpperCase()));
+  const expect = { ferrovias: [D.yellow], portos: [D.violet, '#F7F7F8'], siade: [D.red], sats: [D.aqua], obras: [D.orange],
+    estaduais: [D.green, D.magenta, '#231F20'], pracas: ['#0071BB', '#F7F7F8'], rotas: [...new Set([...R, '#F7F7F8', '#525254'])] };
+  for (const [k, cs] of Object.entries(expect)) {
+    if (!keys.includes(k)) continue;
+    assert.deepEqual([...used[k]].sort(), [...cs].sort(), k);
+  }
+  for (const k of keys) await setLayer(page, k, false);
+});
+
+// ---------- v3.1, Task 4: Rotas de Integração Sul-Americana ----------
+const rotasBox = () => page.locator('#layers-section input[data-layer="rotas"]');
+const rectOf = (p, sel) => p.$$eval(sel, es => es.map(e => { const r = e.getBoundingClientRect(); return { l: r.left, t: r.top, r: r.right, b: r.bottom, text: e.textContent.trim() }; }));
+const overlap = (a, b) => a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;
+// Fim do enquadramento: nenhuma animação de zoom em curso e a vista já na área das rotas (sul além de -42°; a do Brasil para em -38°)
+// ou de volta ao Brasil.
+const naAreaDasRotas = (p = page) => p.waitForFunction(() => !MapView.map._animatingZoom && MapView.map.getBounds().getSouth() < -42);
+const noBrasil = (p = page) => p.waitForFunction(() => !MapView.map._animatingZoom && MapView.map.getBounds().getSouth() > -42);
+const NOTA = /Traçado esquemático · fonte MPO, jul\/2026/;
+
+test('rotas: ligar mostra países, linhas, rótulos diretos e legenda; enquadra a América do Sul; desligar volta ao Brasil', async t => {
+  await page.evaluate(() => { location.hash = '#mapa'; });
+  await page.waitForFunction(() => Tabs.current().active === 'mapa');
+  await page.evaluate(() => MapView.fitBrasil(false));
+  await page.waitForFunction(() => !MapView.map._animatingZoom);
+  const b0 = await page.evaluate(() => MapView.map.getBounds().toBBoxString().split(',').map(Number));
+  const R = await page.evaluate(() => window.INTEL.rotas.rotas.map(r => ({ id: r.id, t: `Rota ${r.n} · ${r.nome}`, c: ROTAS[r.id] })));
+  assert.equal(R.length, 5);
+  // grupo próprio no painel Camadas, desligado, com fonte no title e no texto oculto
+  const g = await page.textContent('#layers-section .rotas-group');
+  assert.match(g, /Rotas de Integração Sul-Americana/);
+  assert.match(g, NOTA);
+  assert.equal(await rotasBox().isChecked(), false);
+  const title = await page.locator('#layers-section label:has(input[data-layer="rotas"])').getAttribute('title');
+  assert.match(title, /MPO .*01\/07\/2026.*traçado esquemático/);
+  assert.equal(await page.textContent('#layer-src-rotas'), `Fonte: ${title}`);
+  // ligar em menos de 400 ms (a 1ª vez é medida no teste "(g) ligar cada camada")
+  await settle(page);
+  const ms = await page.evaluate(() => new Promise(resolve => {
+    const t0 = performance.now();
+    document.querySelector('#layers-section input[data-layer="rotas"]').click();
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve(performance.now() - t0)));
+  }));
+  t.diagnostic(`rotas: ${ms.toFixed(0)} ms`);
+  assert.ok(ms < 400, `rotas: ${ms.toFixed(0)} ms`);
+  await naAreaDasRotas();
+  assert.equal(await page.evaluate(() => Layers.isOn('rotas')), true);
+  assert.ok(await page.evaluate(() => Layers.count('rotas')) > 0);
+  // enquadra o Brasil e as linhas das rotas (oeste além de -70°), zoom ≥ 4, com a Patagônia cortada como no mapa do MPO
+  const b1 = await page.evaluate(() => MapView.map.getBounds().toBBoxString().split(',').map(Number));
+  assert.ok(b1[0] < -70, b1.join());
+  assert.ok(b1[1] > -52, `Patagônia inteira: ${b1.join()}`);
+  assert.equal(await page.evaluate(() => MapView.map.getBounds().contains(IntelModel.rotasBounds(window.INTEL.rotas, true))), true);
+  assert.ok(await page.evaluate(() => MapView.map.getZoom()) >= 4);
+  // malha federal esmaecida enquanto as rotas estão ligadas
+  assert.equal(await page.evaluate(() => MapView.baseDimmed()), true);
+  assert.ok(await page.evaluate(() => MapView.maxLineOpacity()) <= 0.35 + 1e-9);
+  // países vizinhos com rótulo; cores só de tokens (rotas, extras, Snow White, Light Grey)
+  assert.equal(await page.locator('.leaflet-tooltip.pais-label').count(), await page.evaluate(() => window.INTEL.rotas.paises.length));
+  assert.match(await page.textContent('.leaflet-pane'), /Argentina/);
+  // legenda própria: as 5 rotas, os 4 elementos extras e a nota
+  await page.waitForSelector('#rotas-legend:not([hidden])');
+  assert.deepEqual(await page.$$eval('#rotas-legend [data-rota]', bs => bs.map(b => b.textContent.trim())), R.map(r => r.t));
+  const lt = await page.textContent('#rotas-legend');
+  for (const re of [/Hidrovia/, /Cabotagem/, /Trecho em pavimentação/, /Trecho em estudos/, NOTA]) assert.match(lt, re);
+  assert.doesNotMatch(lt, /undefined|NaN/);
+  // recolhível como "Camadas", aberta por padrão, sem título dentro do <summary>
+  assert.equal(await page.locator('#rotas-legend details[open]').count(), 1);
+  assert.equal((await page.textContent('#rotas-legend summary')).trim(), 'Rotas de Integração');
+  assert.equal(await page.locator('#rotas-legend summary :is(h1, h2, h3, h4)').count(), 0);
+  await page.click('#rotas-legend summary');
+  assert.equal(await page.isVisible('#rotas-legend [data-rota="0"]'), false);
+  await page.click('#rotas-legend summary');
+  assert.equal(await page.isVisible('#rotas-legend [data-rota="0"]'), true);
+  // rótulo direto em cada rota: texto na cor de texto (Spacial Grey), ≥ 14 px, amostra na cor da rota
+  const labs = await page.$$eval('.leaflet-tooltip.rota-label', es => es.map(e => {
+    const cs = getComputedStyle(e), sw = e.querySelector('.rota-label__sw');
+    return { text: e.textContent.trim(), color: cs.color, size: parseFloat(cs.fontSize), sw: sw ? getComputedStyle(sw).backgroundColor : null };
+  }));
+  const rgb = h => `rgb(${[1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)).join(', ')})`;
+  assert.deepEqual(labs.map(l => l.text), R.map(r => r.t));
+  for (const [k, l] of labs.entries()) {
+    assert.equal(l.color, 'rgb(35, 31, 32)', l.text);
+    assert.ok(l.size >= 14, l.text);
+    assert.equal(l.sw, rgb(R[k].c), l.text);
+  }
+  // no enquadramento da América do Sul, os rótulos ficam dentro do mapa e fora das legendas e dos botões
+  const map = (await rectOf(page, '#map'))[0], boxes = [...await rectOf(page, '#rotas-legend'), ...await rectOf(page, '#legend'), ...await rectOf(page, '#map-controls')];
+  const lr = await rectOf(page, '.leaflet-tooltip.rota-label');
+  for (const l of lr) {
+    assert.ok(l.l >= map.l && l.r <= map.r && l.t >= map.t && l.b <= map.b, `${l.text} fora do mapa`);
+    for (const b of boxes) assert.ok(!overlap(l, b), `${l.text} sob uma legenda`);
+    for (const o of lr) if (o !== l) assert.ok(!overlap(l, o), `${l.text} × ${o.text}`);
+  }
+  // rótulos dos países: acima das linhas das rotas (pane), com halo claro, sem cobrir rótulos de rota nem uns aos outros
+  const pr = await rectOf(page, '.leaflet-tooltip.pais-label');
+  for (const l of pr) {
+    for (const o of lr) assert.ok(!overlap(l, o), `${l.text} × ${o.text}`);
+    for (const o of pr) if (o !== l) assert.ok(!overlap(l, o), `${l.text} × ${o.text}`);
+  }
+  const pane = await page.evaluate(() => {
+    const z = n => Number(getComputedStyle(MapView.map.getPane(n)).zIndex), e = document.querySelector('.leaflet-tooltip.pais-label');
+    return { pais: z('l-paisLabels'), rotas: z('l-rotas'), rotulos: z('l-rotasLabels'), dentro: MapView.map.getPane('l-paisLabels').contains(e), sombra: getComputedStyle(e).textShadow };
+  });
+  assert.ok(pane.dentro && pane.pais > pane.rotas && pane.pais < pane.rotulos, JSON.stringify(pane));
+  assert.match(pane.sombra, /rgb\(247, 247, 248\)/);
+  // desligar: legenda e rótulos somem, volta ao Brasil
+  await rotasBox().uncheck();
+  await noBrasil();
+  assert.equal(await page.isHidden('#rotas-legend'), true);
+  assert.equal(await page.evaluate(() => MapView.baseDimmed()), false);
+  assert.equal(await page.evaluate(() => MapView.maxLineOpacity()), 1);
+  assert.equal(await page.locator('.leaflet-tooltip.rota-label').count(), 0);
+  assert.equal(await page.locator('.leaflet-tooltip.pais-label').count(), 0);
+  const b2 = await page.evaluate(() => MapView.map.getBounds().toBBoxString().split(',').map(Number));
+  b2.forEach((v, k) => assert.ok(Math.abs(v - b0[k]) < 0.5, `${b2.join()} != ${b0.join()}`));
+  assert.deepEqual(errors, []);
+});
+
+test('rotas: clique real numa linha da Rota 4 abre o cartão; rótulo e legenda também abrem; desligar fecha', async () => {
+  await rotasBox().check();
+  await naAreaDasRotas();
+  // vértice da Rota 4 mais distante das outras rotas, com zoom para não haver ambiguidade
+  const xy = await page.evaluate(() => {
+    const ls = IntelModel.rotaLinhas(window.INTEL.rotas);
+    const outras = ls.filter(l => l.rota !== 'r4').flatMap(l => l.ll);
+    let best = null, bd = -1;
+    for (const l of ls.filter(x => x.rota === 'r4' && x.tipo === 'rota')) for (const p of l.ll) {
+      const d = Math.min(...outras.map(o => Math.hypot(o[0] - p[0], o[1] - p[1])));
+      if (d > bd) { bd = d; best = p; }
+    }
+    MapView.map.setView(best, 7, { animate: false });
+    const c = MapView.map.latLngToContainerPoint(best), r = MapView.map.getContainer().getBoundingClientRect();
+    return [r.left + c.x, r.top + c.y];
+  });
+  await page.mouse.move(xy[0], xy[1]);
+  await page.waitForSelector('.leaflet-tooltip.pt-tip');
+  assert.match(await page.textContent('.leaflet-tooltip.pt-tip'), /Rota 4 · Bioceânica de Capricórnio · traçado esquemático/);
+  await page.mouse.click(xy[0], xy[1]);
+  await page.waitForSelector('#card:not([hidden])');
+  const t = await page.textContent('#card');
+  for (const re of [/Rota 4 · Bioceânica de Capricórnio/, /Traçado esquemático/, /Paraguai/, /MS, SP, PR, SC/, /BR-267/,
+    /Porto Murtinho/, /Rio Paraguai/, /Ponte binacional/, /Fonte: MPO/, /não é o eixo das vias/]) assert.match(t, re);
+  assert.doesNotMatch(t, /undefined|NaN/);
+  const url = await page.evaluate(() => window.INTEL.rotas.rotas[3].fonte_url);
+  assert.equal(await page.getAttribute(`#card a[href="${url}"]`, 'target'), '_blank');
+  assert.deepEqual(await page.evaluate(() => Layers.selected()), { key: 'rotas', i: 3 });
+  assert.ok((await page.evaluate(() => Layers.colorsUsed().selecao)).includes('#E34948'));
+  // rótulo direto da Rota 2 abre o cartão dela
+  await page.evaluate(() => MapView.fitAmericaSul(false));
+  await naAreaDasRotas();
+  await page.click('.leaflet-tooltip.rota-label:has-text("Rota 2")');
+  await page.waitForFunction(() => /Amazônica/.test(document.querySelector('#card .card__title').textContent));
+  assert.deepEqual(await page.evaluate(() => Layers.selected()), { key: 'rotas', i: 1 });
+  // legenda: botão por rota, acessível pelo teclado
+  await page.focus('#rotas-legend [data-rota="4"]');
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => /Bioceânica do Sul/.test(document.querySelector('#card .card__title').textContent));
+  // desligar a camada fecha o cartão da rota e limpa a seleção
+  await rotasBox().uncheck();
+  await noBrasil();
+  assert.equal(await page.isHidden('#card'), true);
+  assert.equal(await page.evaluate(() => Layers.selected()), null);
+  assert.deepEqual(errors, []);
+});
+
+test('sem o bloco rotas: sem grupo no painel, "enquadrar a América do Sul" cai no Brasil, sem erros', async () => {
+  const errs = [], ext = [];
+  const inject = html => {
+    const i = html.indexOf('</script>', html.indexOf('window.INTEL='));
+    return `${html.slice(0, i)};delete window.INTEL.rotas;${html.slice(i)}`;
+  };
+  const p = await openPage(errs, ext, inject);
+  assert.equal(await p.locator('#layers-section .rotas-group').count(), 0);
+  assert.equal(await p.locator('#layers-section input[data-layer="rotas"]').count(), 0);
+  const b0 = await p.evaluate(() => MapView.map.getBounds().toBBoxString());
+  await p.evaluate(() => MapView.fitAmericaSul(false));
+  assert.equal(await p.evaluate(() => MapView.map.getBounds().toBBoxString()), b0);
+  assert.deepEqual(errs, []);
+  assert.deepEqual(ext, []);
+  await p.context().close();
+});
+
+// ---------- v3.1, Task 5: VMDa 2025 no front ----------
+// Cores das estaduais (camada ligada) e classes desenhadas.
+const estColors = p => p.evaluate(() => (Layers.colorsUsed().estaduais || []).slice().sort());
+const closeTo = (a, b, eps = 1e-9) => assert.ok(Number.isFinite(a) && Math.abs(a - b) < eps, `${a} != ${b}`);
+
+test('VMDa 2025: no modo Tráfego, as estaduais (camada ligada) usam a rampa e as classes federais; sem dado em cinza fino', async t => {
+  await page.evaluate(() => { location.hash = '#mapa'; });
+  await page.waitForFunction(() => Tabs.current().active === 'mapa');
+  await mode('trafego');
+  await settle(page);
+  const box = layerBox('estaduais');
+  // 1ª vez no modo Tráfego: monta a malha e as classes
+  const ms = await page.evaluate(() => new Promise(resolve => {
+    const t0 = performance.now();
+    document.querySelector('#layers-section input[data-layer="estaduais"]').click();
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve(performance.now() - t0)));
+  }));
+  t.diagnostic(`estaduais no modo Tráfego (1ª vez): ${ms.toFixed(0)} ms`);
+  assert.ok(ms < 600, `levou ${ms.toFixed(0)} ms`);
+  assert.equal(await box.isChecked(), true);
+  const r = await page.evaluate(() => {
+    const et = IntelModel.estTrafego(window.INTEL), br = MapView.classes('trafego').breaks, exp = {};
+    const dec = window.INTEL.estaduais.malha.p.map(IntelModel.decodeLine);
+    et.t.forEach((v, i) => { if (dec[i].length >= 2) { const c = IntelModel.classOf(v, br); exp[c] = (exp[c] || 0) + 1; } });
+    return { got: Layers.estTrafego(), exp, n: et.t.filter(x => x != null).length };
+  });
+  // classes = classOf(VMDa 2025 estadual, quebras federais), linha a linha
+  assert.deepEqual(r.got.porClasse, r.exp);
+  assert.equal(r.got.n, r.n);
+  assert.equal(r.got.ano, 2025);
+  for (let c = 0; c < 5; c++) assert.ok(r.exp[c] > 0, `classe ${c} vazia`);
+  // cores: os 5 passos da rampa do Tráfego, cinza sem dado, concessões estaduais (magenta + halo); sem o verde da malha
+  const T = await page.evaluate(() => RAMPS.trafego.map(c => c.toUpperCase()));
+  const D = await page.evaluate(() => DATA);
+  assert.deepEqual(await estColors(page), [...T, '#525254', D.magenta.toUpperCase(), '#231F20'].sort());
+  // sem dado: cinza fino contínuo (o federal é tracejado)
+  assert.deepEqual(await page.evaluate(() => Layers.EST_NONE), { color: '#525254', weight: 0.75, opacity: 0.5 });
+  // legenda: inclui as estaduais, faixas cobrem também os valores estaduais, linha "Sem dado (estadual)"
+  const lg = await legend();
+  assert.match(lg, /inclui rodovias estaduais \(VMDa 2025\)/i);
+  assert.match(lg, /Sem dado \(federal\)/);
+  assert.match(lg, /Sem dado \(estadual\)/);
+  assert.equal(await page.locator('#legend .legend__row[data-class]').count(), 5);
+  const rows = await page.$$eval('#legend .legend__row[data-class] .legend__range', es => es.map(e => e.textContent));
+  const lim = await page.evaluate(() => {
+    const q = MapView.classes('trafego'), e = Layers.estTrafego();
+    return [IntelModel.fmtInt(Math.min(q.min, e.min)), IntelModel.fmtInt(Math.max(q.max, e.max))];
+  });
+  assert.equal(rows[0].split(' – ')[0], lim[0]);
+  assert.equal(rows[4].split(' – ')[1], lim[1]);
+  assert.equal(await page.getAttribute('#legend [data-est-none] svg line', 'stroke'), '#525254');
+  assert.equal(await page.getAttribute('#legend [data-est-none] svg line', 'stroke-dasharray'), null);
+  // espessura acompanha o zoom como a federal, × 0,55 da federal na mesma classe (classe 4: federal 6 px × zoomFactor,
+  // estadual 6 × 0,55 × zoomFactor); a malha federal continua a rede principal
+  assert.equal(await page.evaluate(() => EST_TRAF.weightFactor), 0.55);
+  await page.evaluate(() => { MapView.map.setZoom(7, { animate: false }); });
+  await page.waitForTimeout(100);
+  const w = await page.evaluate(() => {
+    const est = [], fed = [];
+    MapView.map.eachLayer(l => {
+      const r = l.options && l.options.renderer;
+      if (!(l instanceof L.Polyline) || !r || l.options.color !== RAMPS.trafego[4]) return;
+      (r.options.pane === 'l-estaduais' ? est : fed).push(l.options.weight);
+    });
+    return { est, fed: [...new Set(fed)], f: zoomFactor(MapView.map.getZoom()) };
+  });
+  assert.ok(w.est.length === 1 && Math.abs(w.est[0] - 6 * 0.55 * w.f) < 1e-9, JSON.stringify(w));
+  assert.ok(w.fed.length === 1 && Math.abs(w.fed[0] - 6 * w.f) < 1e-9, JSON.stringify(w));
+  closeTo(w.est[0] / w.fed[0], 0.55);
+  // demais classes: mesma razão (pesos-base da rampa × 0,55); sem dado estadual fica com a espessura própria (0,75 px)
+  const wc = await page.evaluate(() => {
+    const out = {};
+    MapView.map.eachLayer(l => {
+      const r = l.options && l.options.renderer;
+      if (l instanceof L.Polyline && r && r.options.pane === 'l-estaduais') out[l.options.color] = l.options.weight;
+    });
+    return { out, f: zoomFactor(MapView.map.getZoom()), base: QUANT_STYLES.map(s => s.weight) };
+  });
+  for (let c = 0; c < 5; c++) closeTo(wc.out[(await page.evaluate(k => RAMPS.trafego[k], c))], wc.base[c] * 0.55 * wc.f);
+  closeTo(wc.out['#525254'], 0.75 * wc.f);
+  await page.evaluate(() => MapView.fitBrasil(false));
+  // outro modo: estaduais voltam ao verde e a legenda não fala delas; de volta ao Tráfego, coloridas de novo
+  await mode('pesados');
+  assert.deepEqual(await estColors(page), [D.green.toUpperCase(), D.magenta.toUpperCase(), '#231F20'].sort());
+  assert.doesNotMatch(await legend(), /estaduais/i);
+  await mode('trafego');
+  assert.ok((await estColors(page)).includes(T[4]));
+  // desligar a camada no modo Tráfego tira as estaduais da legenda; religar volta
+  await box.uncheck();
+  await page.waitForTimeout(50);
+  assert.doesNotMatch(await legend(), /estaduais/i);
+  assert.equal(await page.evaluate(() => Layers.estTrafego()), null);
+  await box.check();
+  await page.waitForTimeout(50);
+  assert.match(await legend(), /inclui rodovias estaduais \(VMDa 2025\)/i);
+  await box.uncheck();
+  await mode('concessoes');
+  assert.deepEqual(errors, []);
+});
+
+test('VMDa 2025: sem o bloco vmda2025 tudo volta ao VMDa 2023, sem erros', async () => {
+  const errs = [], ext = [];
+  const inject = html => {
+    const i = html.indexOf('</script>', html.indexOf('window.INTEL='));
+    return `${html.slice(0, i)};delete window.INTEL.vmda2025;${html.slice(i)}`;
+  };
+  const p = await openPage(errs, ext, inject);
+  assert.equal(await p.evaluate(() => window.INTEL.vmda2025), undefined);
+  // painel: veíc·km do 2023 (leves + pesados), rotulado 2023, pesados sem "estimativa"
+  const a = await p.evaluate(() => {
+    const all = new Uint8Array(window.SNV.fis.length).fill(1), x = IntelModel.aggregateIntel(window.INTEL, window.SNV, all), v = window.INTEL.trafego.vmda;
+    let s = 0;
+    for (let j = 0; j < all.length; j++) { const t = IntelModel.sumNullable(v.l[j], v.p[j]); if (t != null) s += t * window.SNV.fis[j].ext; }
+    return { fmt: IntelModel.fmtVkm(x.vkm), ok: Math.abs(s - x.vkm) < 1e-6 * s, ano: x.anoVmda };
+  });
+  assert.equal(a.ano, 2023);
+  assert.ok(a.ok);
+  assert.equal((await p.textContent('#kpi-vkm')).trim(), a.fmt);
+  const sub = await p.locator('#kpi-vkm').evaluate(e => e.nextElementSibling.textContent);
+  assert.match(sub, /pesados · Tráfego VMDa 2023, modelado/);
+  assert.doesNotMatch(sub, /estimativa/);
+  // modo Tráfego: legenda 2023, estaduais continuam verdes e fora da legenda
+  await p.click('#legend [data-mode="trafego"]');
+  assert.match(await p.textContent('#legend .legend__title'), /VMDa 2023, modelado/);
+  assert.match(await p.textContent('#legend .legend__src'), /Infra S\.A\.\/DNIT, VMDa 2023/);
+  assert.equal(await p.locator('#legend .legend__row[data-class]').count(), 5);
+  await p.locator('#layers-section input[data-layer="estaduais"]').check();
+  await p.waitForTimeout(50);
+  assert.equal(await p.evaluate(() => Layers.estTrafego()), null);
+  assert.ok((await estColors(p)).includes((await p.evaluate(() => DATA.green)).toUpperCase()));
+  assert.doesNotMatch(await p.textContent('#legend'), /estaduais/i);
+  // cartão: sem bloco 2025 nem sentidos; veíc·km no bloco 2023
+  const j = await p.evaluate(() => { const v = window.INTEL.trafego.vmda; return window.SNV.fis.findIndex((_, j) => v.l[j] > 0 && v.p[j] > 0); });
+  await p.evaluate(j => MapView.pick(j), j);
+  await p.waitForSelector('#card:not([hidden])');
+  const t = await p.textContent('#card');
+  assert.doesNotMatch(t, /VMDa 2025|Sentido crescente|uso restrito|estimativa/);
+  assert.match(t, /VMDa 2023 · modelado · leves e pesados/);
+  assert.match(t, /Veículos × extensão/);
+  // aba Tráfego: só o veíc·km federal 2023, sem o estadual
+  await goTab(p, '#trafego');
+  assert.equal(await p.textContent('#kpi-vkm b'), a.fmt);
+  assert.match(await p.textContent('#kpi-vkm span'), /VMDa 2023, modelado/);
+  assert.equal(await p.locator('#kpi-vkm-est').count(), 0);
+  assert.doesNotMatch(await p.textContent('#page-trafego'), /undefined|NaN|VMDa 2025/);
+  assert.deepEqual(errs, []);
+  assert.deepEqual(ext, []);
+  await p.context().close();
+});
+
+// ---------- v3.1, revisão final: rotas × camadas temáticas, rótulos em telas menores ----------
+test('rotas ligadas: malha federal e camadas temáticas (estaduais no Tráfego inclusive) a ≤ 0,35; desligar restaura; × 0,55 mantido', async () => {
+  await page.evaluate(() => { location.hash = '#mapa'; });
+  await page.waitForFunction(() => Tabs.current().active === 'mapa');
+  await mode('trafego');
+  const DIM = await page.evaluate(() => ROTAS_DIM);
+  assert.equal(DIM.factor, 0.35);
+  const keys = (await page.$$eval('#layers-section input[data-layer]', is => is.map(i => i.dataset.layer))).filter(k => k !== 'rotas');
+  // com as rotas, todas as camadas de linha e ponto do painel ficam esmaecidas (fundo municipal e seleção ficam fora)
+  assert.deepEqual([...keys].sort(), [...DIM.layers].filter(k => keys.includes(k)).sort());
+  // uma camada ligada antes das rotas e as demais depois (construídas já com as rotas ligadas)
+  await setLayer(page, 'estaduais', true);
+  const antes = await page.evaluate(() => Layers.maxOpacity());
+  assert.ok(antes.estaduais > 0.35, JSON.stringify(antes));
+  await rotasBox().check();
+  await naAreaDasRotas();
+  for (const k of keys) await setLayer(page, k, true);
+  const ws = () => page.evaluate(() => {
+    const est = [], fed = new Set();
+    MapView.map.eachLayer(l => {
+      const r = l.options && l.options.renderer;
+      if (!(l instanceof L.Polyline) || !r || l.options.color !== RAMPS.trafego[4]) return;
+      if (r.options.pane === 'l-estaduais') est.push(l.options.weight); else fed.add(l.options.weight);
+    });
+    return { est, fed: [...fed] };
+  });
+  const check = async when => {
+    const fed = await page.evaluate(() => MapView.maxLineOpacity()), op = await page.evaluate(() => Layers.maxOpacity());
+    assert.ok(fed <= 0.35 + 1e-9, `${when}: federal ${fed}`);
+    for (const k of keys) assert.ok(op[k] > 0 && op[k] <= 0.35 + 1e-9, `${when}: ${k} ${op[k]}`);
+    // estaduais no modo Tráfego: esmaecidas com a federal e ainda × 0,55 da espessura federal na mesma classe
+    if (await page.evaluate(() => MapView.colorMode()) === 'trafego') {
+      assert.ok(await page.evaluate(() => !!Layers.estTrafego()), when);
+      const w = await ws();
+      assert.ok(w.est.length === 1 && w.fed.length === 1 && Math.abs(w.est[0] / w.fed[0] - 0.55) < 1e-9, `${when}: ${JSON.stringify(w)}`);
+    }
+  };
+  await check('rotas + Tráfego');
+  // trocar de modo com as rotas ligadas (malha estadual verde de volta, depois as classes refeitas) continua esmaecido
+  await mode('pesados');
+  await check('rotas + Pesados');
+  await mode('trafego');
+  await check('rotas + Tráfego de novo');
+  // desligar e religar uma camada com as rotas ligadas não acumula o fator
+  await setLayer(page, 'pracas', false);
+  await setLayer(page, 'pracas', true);
+  await check('praças religadas');
+  // desligar as rotas restaura a opacidade original de tudo
+  await rotasBox().uncheck();
+  await noBrasil();
+  assert.equal(await page.evaluate(() => MapView.maxLineOpacity()), 1);
+  const depois = await page.evaluate(() => Layers.maxOpacity());
+  assert.equal(depois.estaduais, antes.estaduais);
+  for (const k of keys) assert.ok(depois[k] > 0.35, `${k} ${depois[k]}`);
+  // valores originais (maior entre traço e preenchimento): praças, portos e SATs com traço opaco
+  const st = await page.evaluate(() => ({ ferrovias: LAYER_STYLES.ferrovias.opacity, siade: LAYER_STYLES.siade.opacity,
+    obras: LAYER_STYLES.obras.fillOpacity, pracas: 1, portos: 1, sats: 1 }));
+  for (const [k, v] of Object.entries(st)) if (keys.includes(k)) assert.equal(depois[k], v, k);
+  for (const k of keys) await setLayer(page, k, false);
+  await mode('concessoes');
+  assert.deepEqual(errors, []);
+});
+
+test('rotas em 1366 × 768 e 1280 × 720: nenhum rótulo de rota sob as legendas ou os botões; legenda das rotas recolhida e reabrível', async () => {
+  for (const [w, h] of [[1366, 768], [1280, 720]]) {
+    const errs = [], ext = [];
+    const p = await openPage(errs, ext, null, { width: w, height: h });
+    await p.locator('#layers-section input[data-layer="rotas"]').check();
+    await naAreaDasRotas(p);
+    await p.waitForFunction(() => !document.querySelector('#rotas-legend details').open);
+    const map = (await rectOf(p, '#map'))[0];
+    const boxes = [...await rectOf(p, '#rotas-legend'), ...await rectOf(p, '#legend'), ...await rectOf(p, '#map-controls')];
+    const lr = await rectOf(p, '.leaflet-tooltip.rota-label');
+    assert.equal(lr.length, 5);
+    for (const l of lr) {
+      assert.ok(l.l >= map.l && l.r <= map.r && l.t >= map.t && l.b <= map.b, `${w}: ${l.text} fora do mapa`);
+      for (const b of boxes) assert.ok(!overlap(l, b), `${w}: ${l.text} sob uma legenda`);
+      for (const o of lr) if (o !== l) assert.ok(!overlap(l, o), `${w}: ${l.text} × ${o.text}`);
+    }
+    for (const l of await rectOf(p, '.leaflet-tooltip.pais-label')) for (const o of lr) assert.ok(!overlap(l, o), `${w}: ${l.text} × ${o.text}`);
+    // recolhida, mas a legenda continua lá: abre com um clique e mostra as 5 rotas
+    assert.equal(await p.isVisible('#rotas-legend summary'), true);
+    await p.click('#rotas-legend summary');
+    assert.equal(await p.isVisible('#rotas-legend [data-rota="3"]'), true);
+    assert.deepEqual(errs, []);
+    assert.deepEqual(ext, []);
+    await p.context().close();
+  }
 });
 
 test('nenhuma requisição externa', () => assert.deepEqual(external, []));

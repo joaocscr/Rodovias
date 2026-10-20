@@ -3,7 +3,7 @@ const Fontes = (() => {
   const IM = IntelModel;
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const BLOCO = { trafego: 'Tráfego', antt: 'ANTT', carga: 'Carga (PNL)', agro: 'Agro', municipios: 'Municípios', multimodal: 'Multimodal',
-    pipeline: 'Pipeline', estaduais: 'Estaduais' };
+    pipeline: 'Pipeline', estaduais: 'Estaduais', vmda2025: 'Tráfego (VMDa 2025)', rotas: 'Rotas de Integração' };
   const TIPO = { medido: 'Medido', modelado: 'Modelado', cadastro: 'Cadastro' };
   let built = false;
 
@@ -22,8 +22,8 @@ const Fontes = (() => {
     const head = `<h1 class="page__title">Fontes dos dados</h1>
       <p class="page__lead">Cada número do Centro de Inteligência vem de uma fonte pública listada aqui, com o período coberto, a data em que foi baixada e a licença. Tudo está embutido neste arquivo: nada é consultado na internet ao abri-lo.</p>
       <div class="fontes-nota"><h2 class="fontes-h2">Medido × modelado</h2>
-        <p><b>Medido</b> é contagem ou registro do mundo real: veículos que passaram nas praças de pedágio e nos equipamentos SAT da ANTT, acidentes registrados pela PRF, produção declarada ao IBGE, exportações despachadas na Receita, toneladas transportadas nas ferrovias. <b>Modelado</b> é estimativa de um modelo de transporte: o VMDa da Infra S.A. (volume diário em trechos sem contagem) e a carga agrícola do PNL 2035 (alocação de fluxos na rede, ano-base 2017). Os dois servem para comparar trechos, mas só o medido é observação; os cartões e as legendas sempre dizem qual é qual.</p>
-        <p><b>Cadastro</b> é registro de infraestrutura ou de contratos, sem número medido nem modelado: a malha municipal do IBGE, a malha e as fichas das concessões estaduais, as páginas das concessões na ANTT, as ferrovias da BaseFerro e as instalações portuárias da ANTAQ.</p>
+        <p><b>Medido</b> é contagem ou registro do mundo real: veículos que passaram nas praças de pedágio e nos equipamentos SAT da ANTT, acidentes registrados pela PRF, produção declarada ao IBGE, exportações despachadas na Receita, toneladas transportadas nas ferrovias. <b>Modelado</b> é estimativa de um modelo de transporte: o VMDa da Infra S.A. (2023) e o do DNIT (2025), volume diário em trechos sem contagem, e a carga agrícola do PNL 2035 (alocação de fluxos na rede, ano-base 2017). Os dois servem para comparar trechos, mas só o medido é observação; os cartões e as legendas sempre dizem qual é qual.</p>
+        <p><b>Cadastro</b> é registro de infraestrutura ou de contratos, sem número medido nem modelado: a malha municipal do IBGE, a malha e as fichas das concessões estaduais, as páginas das concessões na ANTT, as ferrovias da BaseFerro, as instalações portuárias da ANTAQ e o traçado esquemático das Rotas de Integração Sul-Americana (MPO).</p>
         <p><b>Acesso</b> é a data em que o arquivo foi baixado da fonte para montar este mapa (dd/mm/aaaa). O dado pode ter sido atualizado na origem depois disso.</p></div>`;
     if (!d) {
       el.innerHTML = `<div class="page__inner">${head}<p class="empty">A lista de fontes (bloco fontes) não está neste arquivo.</p></div>`;

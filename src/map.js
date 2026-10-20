@@ -2,8 +2,14 @@
 const MapView = (() => {
   const BRASIL = [[-34.5, -74.5], [5.8, -32]];
   const DIM = 0.2;
+  // Malha federal esmaecida enquanto as Rotas de Integração estão ligadas (as rotas ficam em primeiro plano); o mesmo fator
+  // vale para as camadas temáticas (Layers, ROTAS_DIM).
+  const BASE_DIM = ROTAS_DIM.factor;
+  // Colunas das legendas sobre o mapa (largura 320 + margem 16): legendas de camada à esquerda, "Cor das rodovias" à direita.
+  const LEGEND_COL = 336;
+  let baseDim = 1;
   let map, snv, lines, halos, order, visible, pickCb = () => {}, hlGroup, hlRenderer, hlWanted = null, hlIds = null, ufLayer;
-  let mode = 'fisica', states = null, conc = null, haloRenderer, intel = null;
+  let mode = 'fisica', states = null, conc = null, haloRenderer, intel = null, saBounds = null, rotasFit = null;
   const quant = {};
 
   function decode(p) {
@@ -41,7 +47,7 @@ const MapView = (() => {
   // Estilo base do físico no modo atual: {color, weight, dash, opacity, z, halo?}
   function spec(j) {
     if (mode === 'concessoes' && states) return CONC_STYLES[states[j]] || CONC_STYLES.nenhum;
-    if (isQuant(mode)) return quantStyle(classes(mode).cls[j]);
+    if (isQuant(mode)) return quantStyle(classes(mode).cls[j], mode);
     const s = lineStyle(situacaoOf(j));
     return admOf(j) === CONCESSAO ? Object.assign({ halo: HALO }, s) : s;
   }
@@ -49,7 +55,7 @@ const MapView = (() => {
   function styleFor(j, extra = {}) {
     const s = spec(j);
     const f = zoomFactor(map.getZoom());
-    const dim = hlIds && !hlIds.has(j) ? DIM : 1;
+    const dim = (hlIds && !hlIds.has(j) ? DIM : 1) * baseDim;
     return {
       color: s.color, weight: s.weight * f + (extra.hover ? 2 : 0), opacity: s.opacity * dim,
       dashArray: s.dash, lineCap: s.dash ? 'butt' : 'round', lineJoin: 'round',
@@ -58,7 +64,7 @@ const MapView = (() => {
 
   function haloStyle(j) {
     const s = spec(j);
-    const dim = hlIds && !hlIds.has(j) ? DIM : 1;
+    const dim = (hlIds && !hlIds.has(j) ? DIM : 1) * baseDim;
     return { color: s.halo.color, opacity: s.halo.opacity * dim, weight: (s.weight + s.halo.extra) * zoomFactor(map.getZoom()), lineCap: 'round' };
   }
 
@@ -106,10 +112,19 @@ const MapView = (() => {
     snv = data;
     if (opts.states) { states = opts.states; conc = opts.conc; mode = 'concessoes'; }
     intel = opts.intel || null;
+    // Com as Rotas de Integração no arquivo, o mapa pode ir até a América do Sul inteira (países vizinhos e rotas);
+    // ao ligar a camada, enquadra o Brasil e as linhas das rotas (sem a Patagônia, como no mapa do MPO).
+    const rot = IntelModel.rotasOf(intel), sa = IntelModel.rotasBounds(rot), sl = IntelModel.rotasBounds(rot, true);
+    saBounds = sa ? L.latLngBounds(BRASIL).extend(sa) : null;
+    rotasFit = sl ? L.latLngBounds(BRASIL).extend(sl) : null;
+    const maxBounds = L.latLngBounds(BRASIL).pad(0.3);
+    // pad 0,5: a vista em zoom 4 (≈ 95° de longitude a 1080 px) cabe na caixa; se não coubesse, o Leaflet centraria a vista
+    // no centro da caixa e desfaria o deslocamento do enquadramento com as colunas de legenda.
+    if (saBounds) maxBounds.extend(saBounds.pad(0.5));
     map = L.map(el, {
       zoomControl: false, attributionControl: false, preferCanvas: true,
       minZoom: 3.5, maxZoom: 13, zoomSnap: 0.5, zoomDelta: 0.5, wheelPxPerZoomLevel: 120,
-      maxBounds: L.latLngBounds(BRASIL).pad(0.3), maxBoundsViscosity: 0.8,
+      maxBounds, maxBoundsViscosity: 0.8,
     });
     map.createPane('ufs').style.zIndex = 200;
     map.createPane('halo').style.zIndex = 390;
@@ -185,8 +200,48 @@ const MapView = (() => {
     map.fitBounds(boundsOf(vis.length ? vis : ids), { padding: [64, 64], maxZoom: 11 });
   }
 
+  // Durante uma animação de zoom o Leaflet descarta um novo setView/fitBounds, mesmo sem animação (Map._tryAnimatedZoom
+  // retorna cedo enquanto _animatingZoom é true). Ex.: desligar e religar as rotas em seguida. Aqui o último enquadramento
+  // pedido espera o 'zoomend'. Depende do campo interno _animatingZoom do Leaflet 1.9.4 (vendor/leaflet, versão fixada);
+  // rever ao atualizar o Leaflet.
+  // done (opcional): chamado no 'moveend' do próprio enquadramento (vista final, rótulos já reposicionados).
+  let pendingFit = null;
+  function fitSafe(bounds, opts, done) {
+    if (!map._animatingZoom) {
+      if (done) map.once('moveend', done);
+      map.fitBounds(bounds, opts);
+      return;
+    }
+    const waiting = !!pendingFit;
+    pendingFit = [bounds, opts, done];
+    if (waiting) return;
+    map.once('zoomend', () => { const f = pendingFit; pendingFit = null; fitSafe(f[0], f[1], f[2]); });
+  }
+
   function fitBrasil(animate = true) {
-    map.fitBounds(ufLayer.getBounds(), { padding: [16, 16], animate });
+    fitSafe(ufLayer.getBounds(), { padding: [16, 16], animate });
+  }
+
+  // Enquadra a área das Rotas de Integração (Brasil + linhas das rotas); sem o bloco de rotas, o Brasil.
+  // Reserva as duas colunas de legenda quando isso ainda deixa zoom ≥ 4; senão (tela estreita) reserva só o necessário
+  // para os rótulos a oeste e para a legenda da direita, que fica embaixo (as legendas ocupam só a parte de baixo do mapa,
+  // onde o continente é mais estreito).
+  // done (opcional): chamado quando o enquadramento termina (ver fitSafe).
+  function fitAmericaSul(animate = true, done = null) {
+    if (!rotasFit) { fitBrasil(animate); return; }
+    // embaixo, 96 px a mais: as legendas ficam na parte de baixo e o rótulo da Rota 5 sai para o sul
+    const full = { paddingTopLeft: [LEGEND_COL, 16], paddingBottomRight: [LEGEND_COL, 112] };
+    const zFull = map.getBoundsZoom(rotasFit, false, L.point(2 * LEGEND_COL, 128));
+    const opts = zFull >= 4 ? full : { paddingTopLeft: [224, 16], paddingBottomRight: [288, 112] };
+    fitSafe(rotasFit, Object.assign({ animate }, opts), done);
+  }
+
+  // Esmaece (ou restaura) a malha federal inteira, mantendo modo, filtros e realce.
+  function setBaseDim(on) {
+    const v = on ? BASE_DIM : 1;
+    if (v === baseDim) return;
+    baseDim = v;
+    applyHighlight();
   }
 
   function setColorMode(m) {
@@ -199,10 +254,20 @@ const MapView = (() => {
   function entityFis(idx) { return (conc && conc.entFis[idx]) || []; }
 
   return {
-    init, setVisible, highlight, fitTo, fitBrasil, setColorMode,
+    init, setVisible, highlight, fitTo, fitBrasil, fitAmericaSul, setColorMode, setBaseDim,
+    baseDimmed() { return baseDim < 1; },
+    // Para teste: maior opacidade entre as linhas visíveis (1 sem esmaecer; 0,35 com as rotas ligadas).
+    maxLineOpacity() { let m = 0; lines.forEach((l, j) => { if (visible[j]) m = Math.max(m, l.options.opacity); }); return m; },
     colorMode() { return mode; },
     classes,
     classesCached(m) { return !!quant[m]; },
+    // Para teste: cores (maiúsculas) das linhas visíveis no modo atual, com o nº de físicos de cada uma.
+    lineColors() {
+      const n = {};
+      lines.forEach((l, j) => { if (visible[j]) { const c = String(l.options.color).toUpperCase(); n[c] = (n[c] || 0) + 1; } });
+      halos.forEach((h, j) => { if (h && visible[j] && map.hasLayer(h)) { const c = String(h.options.color).toUpperCase(); n[c] = (n[c] || 0) + 1; } });
+      return n;
+    },
     haloCount() { return halos.filter(h => h && map.hasLayer(h)).length; },
     fitEntity(idx) { fitTo(entityFis(idx)); },
     highlightEntity(idx) { highlight(entityFis(idx)); },

@@ -51,22 +51,30 @@ const Trafego = (() => {
 
   // ---------- Cartões ----------
   function kpisCard() {
-    const k = IM.trafegoKpis(intel, snv), tr = intel.trafego || {}, ac = IM.acidOf(intel), vm = IM.vmdaOf(intel);
+    const k = IM.trafegoKpis(intel, snv), tr = intel.trafego || {}, ac = IM.acidOf(intel), v25 = IM.v25Of(intel);
     const tiles = [];
     if (k.nPracas != null) {
       tiles.push(tile('kpi-pracas', IM.fmtInt(k.nPracas), 'praças com contagem em 2025 (ANTT, medido)'));
       tiles.push(tile('kpi-vmd', IM.fmtInt(k.vmdTotal), 'veíc./dia somados nas praças (VMD 2025, dois sentidos)'));
       tiles.push(tile('kpi-pes', IM.fmtPct(k.pctPes), 'de pesados nas praças, ponderado pelo VMD'));
     }
-    if (vm) tiles.push(tile('kpi-vkm', IM.fmtVkm(k.vkm), `na malha federal (VMDa ${vm.ano}, modelado)`));
+    // veíc·km/dia: VMDa 2025 (DNIT) na malha federal e na estadual; sem o bloco 2025, o federal com o VMDa 2023
+    if (k.vkm != null) tiles.push(tile('kpi-vkm', IM.fmtVkm(k.vkm), `na malha federal (VMDa ${k.anoVkm}, modelado)`));
+    if (k.vkmEst != null) tiles.push(tile('kpi-vkm-est', IM.fmtVkm(k.vkmEst), `nas rodovias estaduais (VMDa ${IM.estTrafego(intel).ano}, modelado)`));
     if (ac) {
       tiles.push(tile('kpi-acid', IM.fmtInt(k.acidAno), `acidentes/ano (PRF ${anosLabel(ac.anos)}, medido)`));
       tiles.push(tile('kpi-mortos', IM.fmtInt(k.mortosAno), `mortos/ano (PRF ${anosLabel(ac.anos)}, medido)`));
     }
     if (!tiles.length) return '';
-    const f = [k.nPracas != null && fontePracas(), vm && fonte(tr, /VMDa/), ac && fonte(tr, /PRF/)].filter(Boolean);
-    return card('t-kpis', 'Tráfego e segurança em números', 'Praças medidas pela ANTT, volume modelado da malha federal e acidentes registrados pela PRF',
-      { wide: true, html: `<div class="kpis">${tiles.join('')}</div>`, fonte: f.join('; ') });
+    const fVmda = k.vkm == null && k.vkmEst == null ? null : v25 || k.vkmEst != null ? fonte(intel.vmda2025, /VMDa/) : fonte(tr, /VMDa/);
+    const f = [k.nPracas != null && fontePracas(), fVmda, ac && fonte(tr, /PRF/)].filter(Boolean);
+    const km = x => IM.fmtInt(x);
+    const note = k.vkmEst != null
+      ? `Rodovias estaduais: trechos da malha estadual pavimentados, duplicados ou em obras de pavimentação, mais os usados por concessões estaduais; ficam fora os trechos com código ou jurisdição federal e os que se sobrepõem a rodovias federais do SNV em mais de 80% da extensão. ${km(k.kmEst)} km com estimativa de ${km(k.kmEstTotal)} km; veíc·km/dia = Σ VMDa × extensão.`
+      : '';
+    return card('t-kpis', 'Tráfego e segurança em números',
+      `Praças medidas pela ANTT, volume modelado da malha federal${k.vkmEst != null ? ' e da estadual' : ''} e acidentes registrados pela PRF`,
+      { wide: true, html: `<div class="kpis">${tiles.join('')}</div>`, fonte: f.join('; '), note });
   }
 
   function rankingCard() {

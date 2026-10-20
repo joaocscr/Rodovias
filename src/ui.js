@@ -335,22 +335,26 @@ const UI = (() => {
 
   // ---------- Camadas de inteligência (v3) ----------
   const vmdaOf = () => IM.vmdaOf(intel), acidOf = () => IM.acidOf(intel), cargaOf = () => IM.cargaOf(intel);
-  const vmdaRef = () => { const v = vmdaOf(); return v ? `VMDa ${v.ano}` : 'VMDa'; };
   const prfRef = () => { const a = acidOf(); const y = a && IM.anosLabel(a.anos); return y ? `PRF ${y}` : 'PRF'; };
   const pnlRef = () => { const c = cargaOf(); return c ? `${c.cenario || 'PNL 2035'} ${c.ano_base}` : 'PNL 2035'; };
 
   // Bloco do painel "Números da seleção": só soma trechos com dado; cada número explica a fonte no title.
   // Cobertura: km pavimentados com dado sobre os km pavimentados da seleção.
+  // veíc·km com o VMDa 2025 (sem o bloco, 2023); % de pesados com 2025 = estimativa (participação de pesados de 2023).
   function intelStats(ag) {
     if (!ag) return '';
-    const pctPes = ag.vkm > 0 ? ag.vkmPes / ag.vkm : null;
+    const pctPes = ag.vkmBasePes > 0 ? ag.vkmPes / ag.vkmBasePes : null;
+    const ref = ag.anoVmda ? `VMDa ${ag.anoVmda}` : 'VMDa', vm = vmdaOf();
     const tile = (id, value, sub, title) => `<div class="ikpi" title="${esc(title)}">
         <span class="ikpi__value" id="${id}">${esc(value)}</span><span class="ikpi__sub">${esc(sub)}</span></div>`;
     const cov = km => (km != null && ag.kmPav > 0 ? ` · ${fmtKmNum.format(km)} km com dado de ${fmtKmNum.format(ag.kmPav)} km pavimentados` : '');
+    const pesTitle = ag.pesEstimado
+      ? `% de pesados (estimativa) = VMDa ${ag.anoVmda} de cada trecho × participação de pesados no VMDa ${vm.ano} do mesmo trecho, somado e dividido pelo veíc·km dos trechos que têm as duas estimativas (o VMDa ${ag.anoVmda} não separa leves e pesados). Pesados: ${IM.MODES.pesados.fonte(intel)}.`
+      : '% de pesados = veíc·km pesados ÷ veíc·km total.';
     return `<div class="ikpis">
       ${tile('kpi-vkm', IM.fmtVkm(ag.vkm),
-        `${pctPes == null ? '—' : IM.fmtPct(pctPes)} pesados · Tráfego ${vmdaRef()}, estimado${cov(ag.kmVmda)}`,
-        `Soma de VMDa × extensão nos trechos visíveis que têm estimativa; % de pesados = veíc·km pesados ÷ veíc·km total. Cobertura: km pavimentados com estimativa sobre os km pavimentados da seleção. Fonte: ${IM.MODES.trafego.fonte(intel)} — estimativa de modelo, não contagem.`)}
+        `${pctPes == null ? '—' : IM.fmtPct(pctPes)} pesados${ag.pesEstimado ? ` (estimativa: % de ${vm.ano})` : ''} · Tráfego ${ref}, modelado${cov(ag.kmVmda)}`,
+        `Soma de ${ref} × extensão nos trechos visíveis que têm estimativa. ${pesTitle} Cobertura: km pavimentados com estimativa sobre os km pavimentados da seleção. Fonte: ${IM.MODES.trafego.fonte(intel)} — estimativa de modelo, não contagem.`)}
       ${tile('kpi-acid', ag.acidAno == null ? '—' : `${IM.fmtInt(ag.acidAno)} acidentes/ano`,
         `${ag.mortosAno == null ? '—' : IM.fmtInt(ag.mortosAno)} mortos/ano · ${prfRef()}, medido`,
         `Média anual de acidentes e de mortos registrados pela PRF nos trechos visíveis. Fonte: ${IM.MODES.acidentes.fonte(intel)} — contagem medida de ocorrências.`)}
@@ -360,22 +364,38 @@ const UI = (() => {
     </div>`;
   }
 
-  // Bloco "Tráfego e segurança" do cartão (números de IntelModel.fisIntel); omitido se o físico não tem nenhum dado.
-  // Trecho planejado (superfície PLA): tráfego e acidentes vêm marcados "trecho planejado no SNV".
+  // Bloco "Tráfego e segurança" do cartão (números de IntelModel.fisIntel). Cada grupo omite as linhas sem valor e some
+  // quando fica vazio. Com o bloco vmda2025, o grupo VMDa 2025 aparece sempre (Total "—" quando o físico não tem valor),
+  // então o bloco só é omitido sem o vmda2025 e sem nenhum dado nos outros grupos.
+  // - VMDa 2025 (DNIT): total, sentidos crescente/decrescente do SNV, pesados estimados (total × % de pesados 2023) e veíc·km;
+  //   "uso restrito (área urbana)" quando o modelo marca o trecho como não simulável.
+  // - VMDa 2023 (leves/pesados): leves, pesados, total e % pesados; o veíc·km fica aqui só sem o bloco 2025.
+  // - Acidentes (PRF): por ano, por km e por 10⁶ veíc·km (taxa sobre o VMDa 2023). Carga: modelo PNL.
+  // Trecho planejado (superfície PLA): os grupos VMDa 2025, VMDa 2023 e Acidentes vêm marcados "trecho planejado no SNV".
   function intelBlock(j) {
-    const vm = vmdaOf(), ac = acidOf(), ca = cargaOf(), f = IM.fisIntel(intel, snv, j);
+    const vm = vmdaOf(), v25 = IM.v25Of(intel), ac = acidOf(), ca = cargaOf(), f = IM.fisIntel(intel, snv, j);
     const pla = IM.fisSup(snv, j) === 'PLA' ? '<span class="tag-nv">trecho planejado no SNV</span>' : '';
     const groups = [];
-    const group = (title, rows, tag = '') => {
+    const group = (title, rows, tag = '', extra = '') => {
       const body = rows.filter(([, v]) => v != null).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
-      if (body) groups.push(`<dt class="card__sub">${esc(title)}${tag}</dt>${body}`);
+      if (body) groups.push(`<dt class="card__sub">${esc(title)}${tag}</dt>${body}${extra}`);
     };
     const fmt = (v, fn) => (v == null ? null : fn(v));
+    if (v25) {
+      const restrito = f.ns25 ? '<dd class="card__flag" data-ns="1"><span class="tag-nv">uso restrito (área urbana)</span> trecho não simulável no modelo</dd>' : '';
+      const pesNota = f.pes25 != null && vm ? `<dd class="card__flag">Pesados (estimativa) = total ${v25.ano} × ${IM.fmtPct(f.pctPes)} de pesados no VMDa ${vm.ano} do trecho.</dd>` : '';
+      group(`VMDa ${v25.ano} · modelado · total e por sentido`, [
+        ['Total', f.t25 == null ? '—' : IM.fmtVmd(f.t25)],
+        ['Sentido crescente (SNV)', fmt(f.c25, IM.fmtVmd)], ['Sentido decrescente (SNV)', fmt(f.d25, IM.fmtVmd)],
+        ['Pesados (estimativa)', fmt(f.pes25, IM.fmtVmd)],
+        ['Veículos × extensão', fmt(f.vkm, IM.fmtVkm)],
+      ], pla, pesNota + restrito);
+    }
     if (vm) {
-      group(`VMDa · estimado, ${vm.ano}`, [
+      group(`VMDa ${vm.ano} · modelado · leves e pesados`, [
         ['Leves', fmt(f.l, IM.fmtVmd)], ['Pesados', fmt(f.p, IM.fmtVmd)],
         ['Total', fmt(f.tot, IM.fmtVmd)], ['% pesados', fmt(f.pctPes, IM.fmtPct)],
-        ['Veículos × extensão', fmt(f.vkm, IM.fmtVkm)],
+        ['Veículos × extensão', v25 ? null : fmt(f.vkm, IM.fmtVkm)],
       ], pla);
     }
     if (ac) {
@@ -383,7 +403,7 @@ const UI = (() => {
         ['Acidentes/ano', fmt(f.acidAno, x => IM.fmtDec(x, 1))],
         ['Mortos/ano', fmt(f.mortosAno, x => IM.fmtDec(x, 1))],
         ['Acidentes por km por ano', fmt(f.acidKmAno, x => IM.fmtDec(x, 2))],
-        ['Acidentes por 10⁶ veíc·km', fmt(f.taxa, x => IM.fmtDec(x, 2))],
+        [vm ? `Acidentes por 10⁶ veíc·km (VMDa ${vm.ano})` : 'Acidentes por 10⁶ veíc·km', fmt(f.taxa, x => IM.fmtDec(x, 2))],
       ], pla);
     }
     if (ca) {
@@ -408,13 +428,18 @@ const UI = (() => {
       sec.id = 'layers-section';
       $('#filters-section').before(sec);
     }
-    const avail = Layers.available();
+    const all = Layers.available(), avail = all.filter(d => d.key !== 'rotas'), rot = all.find(d => d.key === 'rotas');
     // Rodovias estaduais: sublegenda distingue a malha das concessões estaduais (clicáveis).
     const sub = d => (d.key === 'estaduais'
       ? `<div class="layer-sub"><span>${layerSwatch('estaduais-malha')}Malha estadual</span><span>${layerSwatch('estconc')}Concessões estaduais</span></div>` : '');
     // A fonte de cada camada fica no title (mouse) e num texto oculto ligado ao checkbox (teclado e leitor de tela).
-    const checks = avail.map(d => `<label class="check" title="${esc(d.title)}"><input type="checkbox" data-layer="${d.key}" aria-describedby="layer-src-${d.key}">${layerSwatch(d.key)}` +
-      `<span>${esc(d.label)}</span><span class="muted">${fmtInt.format(d.n)}</span></label><span class="visually-hidden" id="layer-src-${d.key}">Fonte: ${esc(d.title)}</span>${sub(d)}`).join('');
+    const check = (d, sw, label, n) => `<label class="check" title="${esc(d.title)}"><input type="checkbox" data-layer="${d.key}" aria-describedby="layer-src-${d.key}">${sw}` +
+      `<span>${esc(label)}</span><span class="muted">${esc(n)}</span></label><span class="visually-hidden" id="layer-src-${d.key}">Fonte: ${esc(d.title)}</span>`;
+    const checks = avail.map(d => check(d, layerSwatch(d.key), d.label, fmtInt.format(d.n)) + sub(d)).join('');
+    // Rotas de Integração (v3.1): grupo próprio; ligar enquadra a América do Sul e mostra a legenda da camada.
+    const rotas = rot ? `<fieldset class="fundo rotas-group"><legend class="fundo__title">${esc(rot.label)}</legend>
+        ${check(rot, rotasSwatch(), 'Rotas e países vizinhos', fmtInt.format(rot.n))}
+        <p class="note layers__note">${esc(IM.rotasNota(IM.rotasOf(intel)))}</p></fieldset>` : '';
     const fundo = Layers.fundoAvailable() ? `<fieldset class="fundo"><legend class="fundo__title">Fundo municipal</legend><div class="fundo__opts">
         <label class="check"><input type="radio" name="fundo" value="" checked><span>Nenhum</span></label>
         ${IM.FUNDOS.map(f => { const src = `${IM.fundoFonte(intel, f.key)} · por município, 5 classes por quantil`;
@@ -425,24 +450,80 @@ const UI = (() => {
         <summary><span class="section-title">Camadas</span>${ICON.chev}</summary>
         <div class="layers__body">
           ${checks ? `<div class="checks">${checks}</div>` : '<p class="empty">Sem camadas neste arquivo.</p>'}
+          ${rotas}
           ${fundo}
           <p class="note layers__note">${esc(LAYERS_NOTE)}</p>
         </div></details>`;
     sec.addEventListener('change', e => {
       const t = e.target;
-      if (t.dataset.layer) Layers.toggle(t.dataset.layer, t.checked);
+      if (t.dataset.layer === 'rotas') toggleRotas(t.checked);
+      else if (t.dataset.layer) Layers.toggle(t.dataset.layer, t.checked);
       else if (t.name === 'fundo') { Layers.setFundo(t.value || null); renderFundoLegend(); }
     });
   }
 
-  function renderFundoLegend() {
-    let el = $('#fundo-legend');
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'fundo-legend';
-      el.className = 'legend fundo-legend';
-      $('#map').after(el);
+  // Legendas das camadas (fundo municipal, rotas) empilhadas no canto inferior esquerdo do mapa.
+  function leftLegend(id, cls) {
+    let el = document.getElementById(id);
+    if (el) return el;
+    let stack = $('#legend-stack');
+    if (!stack) {
+      stack = document.createElement('div');
+      stack.id = 'legend-stack';
+      stack.className = 'legend-stack';
+      $('#map').after(stack);
     }
+    el = document.createElement('div');
+    el.id = id;
+    el.className = `legend ${cls}`;
+    el.hidden = true;
+    if (id === 'rotas-legend') stack.prepend(el); else stack.append(el);
+    return el;
+  }
+
+  // Liga/desliga as Rotas de Integração: enquadra a área das rotas (ou volta ao Brasil), esmaece a malha federal enquanto
+  // a camada está ligada e mostra a legenda da camada.
+  function toggleRotas(want) {
+    const sel = Layers.selected();
+    if (!want && sel && sel.key === 'rotas') closeCard();
+    Layers.toggle('rotas', want);
+    MapView.setBaseDim(Layers.isOn('rotas'));
+    renderRotasLegend();
+    if (want) MapView.fitAmericaSul(true, fitRotasLegend); else MapView.fitBrasil();
+  }
+
+  // Ao fim do enquadramento das rotas: se um rótulo direto de rota caiu sob a legenda das rotas (mapa estreito, p. ex.
+  // 1366 × 768, onde o zoom mínimo deixa a Rota 4 na altura da legenda), a legenda começa recolhida; o leitor pode abri-la.
+  function fitRotasLegend() {
+    const el = document.getElementById('rotas-legend'), det = el && el.querySelector('details');
+    if (!det || el.hidden || !det.open || !Layers.isOn('rotas')) return;
+    const b = el.getBoundingClientRect();
+    const sob = [...document.querySelectorAll('.leaflet-tooltip.rota-label')].some(l => {
+      const r = l.getBoundingClientRect();
+      return r.left < b.right && b.left < r.right && r.top < b.bottom && b.top < r.bottom;
+    });
+    if (sob) det.open = false;
+  }
+
+  function renderRotasLegend() {
+    const el = leftLegend('rotas-legend', 'rotas-legend'), R = IM.rotasOf(intel);
+    el.hidden = !(R && Layers.isOn('rotas'));
+    if (el.hidden) { el.innerHTML = ''; return; }
+    const rows = R.rotas.map((r, i) => `<button type="button" class="legend__row legend__btn" data-rota="${i}" title="Abrir o cartão da ${esc(IM.rotaTitulo(r))}">` +
+      `${rotaSwatch(r.id)}<span>${esc(IM.rotaTitulo(r))}</span></button>`).join('');
+    const tipos = new Set(IM.rotaLinhas(R).map(l => l.tipo));
+    const extras = ['hidrovia', 'cabotagem', 'pavimentacao', 'estudo'].filter(t => tipos.has(t))
+      .map(t => `<div class="legend__row">${rotaExtraSwatch(t)}<span>${esc(ROTAS_EXTRA[t].label)}</span></div>`).join('');
+    const fonte = IM.fonteRef(R.fonte, /Apresentação/);
+    // Recolhível (como "Camadas"), aberta por padrão.
+    el.innerHTML = `<details class="legend__det" open><summary><span class="section-title">Rotas de Integração</span>${ICON.chev}</summary>
+      <div class="legend__body">${rows}${extras ? `<div class="legend__sep"></div>${extras}` : ''}
+      <p class="legend__note" title="Fonte: ${esc(fonte)}">${esc(IM.rotasNota(R))}</p></div></details>`;
+    el.querySelectorAll('[data-rota]').forEach(b => b.addEventListener('click', () => Layers.open('rotas', Number(b.dataset.rota))));
+  }
+
+  function renderFundoLegend() {
+    const el = leftLegend('fundo-legend', 'fundo-legend');
     const f = Layers.fundoInfo();
     el.hidden = !f;
     if (!f) { el.innerHTML = ''; return; }
@@ -542,6 +623,8 @@ const UI = (() => {
         ])}<p class="card__src card__pad">Previsto × executado no ano · ANTT, acompanhamento anual de investimentos</p>${pointConc(r.ent, null)}`, r.fis);
     } else if (key === 'estconc') {
       openEstConc(r);
+    } else if (key === 'rotas') {
+      openRota(r);
     } else if (key === 'portos') {
       showCard(r.nome, `${r.tipoLabel || r.tipo} · ${r.uf || '—'}`,
         `${grid([['Tipo', r.tipoLabel || r.tipo], ['Tipo ANTAQ', r.tipoLabel && Model.normalize(r.tipoLabel) !== Model.normalize(r.tipo) ? r.tipo : null], ['UF', r.uf]])}
@@ -562,6 +645,22 @@ const UI = (() => {
         ['km declarado × mapeado', `${km(e.km_decl)} × ${km(e.km_map)}`], ['Grupo', e.grupo || e.controlador],
         ['Assinatura / fim', datas], ['Capex', capex],
       ])}${e.nota ? `<p class="card__src card__pad">${esc(e.nota)}</p>` : ''}${link}`, null);
+  }
+
+  // Cartão de uma Rota de Integração Sul-Americana (MPO): o traçado no mapa é esquemático.
+  function openRota(r) {
+    const join = a => (Array.isArray(a) && a.length ? a.join(', ') : null);
+    const list = (title, items) => (Array.isArray(items) && items.length
+      ? `<div class="card__intel"><h3 class="section-title">${esc(title)}</h3><ul class="flist">${items.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>` : '');
+    const cidades = Array.isArray(r.cidades) && r.cidades.length
+      ? `<div class="card__intel"><h3 class="section-title">Cidades e nós, na ordem do MPO</h3><p class="rota-cidades">${r.cidades.map(esc).join(' · ')}</p></div>` : '';
+    const link = r.fonte_url ? `<p class="card__src card__pad"><a class="link-btn" href="${esc(r.fonte_url)}" target="_blank" rel="noopener">Fonte: MPO${r.fonte_ref ? ` · ${esc(r.fonte_ref)}` : ''}</a></p>` : '';
+    showCard(IM.rotaTitulo(r), 'Rota de Integração Sul-Americana · MPO',
+      `<div class="card__badges"><span class="badge">${rotaSwatch(r.id, 24)}Traçado esquemático</span></div>
+      ${r.descricao ? `<p class="card__desc">${esc(r.descricao)}</p>` : ''}
+      ${grid([['Países', join(r.paises)], ['UFs', join(r.ufs)], ['Situação', r.previsao], ['Rodovias', join(r.rodovias)]])}
+      ${cidades}${list('Hidrovias', r.hidrovias)}${list('Obras e projetos', r.obras)}
+      <p class="card__src card__pad card__aviso">Traçado esquemático: linhas do mapa da apresentação do MPO de 01/07/2026, georreferenciadas por cidades; não é o eixo das vias.</p>${link}`, null);
   }
 
   function openMun(id) {
@@ -691,20 +790,41 @@ const UI = (() => {
   }
 
   // ---------- Legenda ----------
+  // Amostra da malha estadual sem dado no modo Tráfego (EST_NONE: cinza fino contínuo; 1 px na amostra para ficar legível).
+  function estNoneSwatch(width = 32) {
+    const s = EST_NONE;
+    return `<svg class="swatch" width="${width}" height="8" viewBox="0 0 ${width} 8" aria-hidden="true">` +
+      `<line x1="1" y1="4" x2="${width - 1}" y2="4" stroke="${s.color}" stroke-width="1" stroke-opacity="${s.opacity}"/></svg>`;
+  }
+
+  // Legenda de um modo quantitativo. Tráfego com a camada de rodovias estaduais ligada: as mesmas classes (quebras da malha
+  // federal) colorem as estaduais; a 1ª e a última faixa passam a cobrir também os valores estaduais.
   function quantLegend(mode) {
     const M = IM.MODES[mode], q = MapView.classes(mode) || { breaks: [], min: null, max: null };
+    const est = mode === 'trafego' ? Layers.estTrafego() : null;
     const fmt = RANGE_FMT[mode];
+    const both = (a, b, fn) => (a == null ? b : b == null ? a : fn(a, b));
+    const min = est ? both(q.min, est.min, Math.min) : q.min, max = est ? both(q.max, est.max, Math.max) : q.max;
     const rows = [];
     if (q.max != null) {
       for (let c = 0; c <= q.breaks.length; c++) {
-        const lo = c === 0 ? q.min : q.breaks[c - 1], hi = c === q.breaks.length ? q.max : q.breaks[c];
-        rows.push(`<div class="legend__row" data-class="${c}">${quantSwatch(c)}<span class="legend__range">${esc(fmt(lo))} – ${esc(fmt(hi))}</span></div>`);
+        const lo = c === 0 ? min : q.breaks[c - 1], hi = c === q.breaks.length ? max : q.breaks[c];
+        rows.push(`<div class="legend__row" data-class="${c}">${quantSwatch(c, mode)}<span class="legend__range">${esc(fmt(lo))} – ${esc(fmt(hi))}</span></div>`);
       }
     }
-    rows.push(`<div class="legend__row">${quantSwatch(-1)}<span>Sem dado</span></div>`);
-    return `<div class="legend__title">${esc(M.label)} <span>${esc(M.unidade)}</span></div>${rows.join('')}
+    rows.push(`<div class="legend__row">${quantSwatch(-1, mode)}<span>${est ? 'Sem dado (federal)' : 'Sem dado'}</span></div>`);
+    if (est) rows.push(`<div class="legend__row" data-est-none>${estNoneSwatch()}<span>Sem dado (estadual)</span></div>`);
+    const ref = M.ref ? M.ref(intel) : '—';
+    return `<div class="legend__title">${esc(M.label)} <span>${esc(M.unidade)}${ref !== '—' ? ` · ${esc(ref)}` : ''}</span></div>${rows.join('')}
       <div class="legend__tipo">${esc(TIPO_LABEL[M.tipo] || M.tipo)}</div>
+      ${est ? `<p class="legend__note" id="legend-est">Inclui rodovias estaduais (VMDa ${esc(String(est.ano))}), nas mesmas classes da malha federal, com traço mais fino.</p>` : ''}
       <div class="legend__src">Fonte: ${esc(M.fonte(intel))}</div>`;
+  }
+
+  // Malha estadual nas classes do Tráfego: só no modo Tráfego (as quebras são as da malha federal).
+  function syncEstTrafego() {
+    const q = MapView.colorMode() === 'trafego' ? MapView.classes('trafego') : null;
+    Layers.setTrafego(q && q.max != null ? q.breaks : null);
   }
 
   function renderLegend() {
@@ -740,6 +860,7 @@ const UI = (() => {
   // Troca o modo, redesenha a legenda e devolve o foco ao rádio marcado.
   function selectMode(m) {
     MapView.setColorMode(m);
+    syncEstTrafego();
     renderLegend();
     const b = $('#legend [role="radio"][aria-checked="true"]');
     if (b) b.focus();
@@ -753,8 +874,18 @@ const UI = (() => {
     });
   }
 
+  // Regras de CSS geradas dos tokens de dado (styles-map.js), para não repetir hex em styles.css.
+  function injectTokenCss() {
+    if (document.getElementById('data-tokens')) return;
+    const st = document.createElement('style');
+    st.id = 'data-tokens';
+    st.textContent = dataTokenCss();
+    document.head.appendChild(st);
+  }
+
   function init(data, idx, concData, intelData = null) {
     snv = data; index = idx; filters = Model.emptyFilters(); intel = intelData;
+    injectTokenCss();
     conc = concData; states = ConcModel.stateArray(conc, snv.fis.length); concFilters = ConcModel.emptyConcFilters();
     renderSearch();
     renderLayers();
@@ -764,6 +895,13 @@ const UI = (() => {
     MapView.onPick(j => { Layers.notePick(); openCard(j); });
     Layers.onPoint(openPoint);
     Layers.onMun(openMun);
+    // Ligar/desligar as estaduais muda a legenda do Tráfego (estaduais incluídas), venha a troca do painel ou da ficha.
+    // Desligar a camada da feição aberta no cartão (ex.: concessão estadual ao desligar "Rodovias estaduais") fecha o cartão.
+    Layers.onToggle((key, on, lost) => {
+      if (lost && !$('#card').hidden) closeCard();
+      if (key === 'estaduais' && QUANT_MODES.includes(MapView.colorMode())) renderLegend();
+    });
+    syncEstTrafego();
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape' && !$('#card').hidden) closeCard();
     });
