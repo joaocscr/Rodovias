@@ -408,13 +408,18 @@ const UI = (() => {
       sec.id = 'layers-section';
       $('#filters-section').before(sec);
     }
-    const avail = Layers.available();
+    const all = Layers.available(), avail = all.filter(d => d.key !== 'rotas'), rot = all.find(d => d.key === 'rotas');
     // Rodovias estaduais: sublegenda distingue a malha das concessões estaduais (clicáveis).
     const sub = d => (d.key === 'estaduais'
       ? `<div class="layer-sub"><span>${layerSwatch('estaduais-malha')}Malha estadual</span><span>${layerSwatch('estconc')}Concessões estaduais</span></div>` : '');
     // A fonte de cada camada fica no title (mouse) e num texto oculto ligado ao checkbox (teclado e leitor de tela).
-    const checks = avail.map(d => `<label class="check" title="${esc(d.title)}"><input type="checkbox" data-layer="${d.key}" aria-describedby="layer-src-${d.key}">${layerSwatch(d.key)}` +
-      `<span>${esc(d.label)}</span><span class="muted">${fmtInt.format(d.n)}</span></label><span class="visually-hidden" id="layer-src-${d.key}">Fonte: ${esc(d.title)}</span>${sub(d)}`).join('');
+    const check = (d, sw, label, n) => `<label class="check" title="${esc(d.title)}"><input type="checkbox" data-layer="${d.key}" aria-describedby="layer-src-${d.key}">${sw}` +
+      `<span>${esc(label)}</span><span class="muted">${esc(n)}</span></label><span class="visually-hidden" id="layer-src-${d.key}">Fonte: ${esc(d.title)}</span>`;
+    const checks = avail.map(d => check(d, layerSwatch(d.key), d.label, fmtInt.format(d.n)) + sub(d)).join('');
+    // Rotas de Integração (v3.1): grupo próprio; ligar enquadra a América do Sul e mostra a legenda da camada.
+    const rotas = rot ? `<fieldset class="fundo rotas-group"><legend class="fundo__title">${esc(rot.label)}</legend>
+        ${check(rot, rotasSwatch(), 'Rotas e países vizinhos', fmtInt.format(rot.n))}
+        <p class="note layers__note">Traçado esquemático · fonte MPO</p></fieldset>` : '';
     const fundo = Layers.fundoAvailable() ? `<fieldset class="fundo"><legend class="fundo__title">Fundo municipal</legend><div class="fundo__opts">
         <label class="check"><input type="radio" name="fundo" value="" checked><span>Nenhum</span></label>
         ${IM.FUNDOS.map(f => { const src = `${IM.fundoFonte(intel, f.key)} · por município, 5 classes por quantil`;
@@ -425,24 +430,63 @@ const UI = (() => {
         <summary><span class="section-title">Camadas</span>${ICON.chev}</summary>
         <div class="layers__body">
           ${checks ? `<div class="checks">${checks}</div>` : '<p class="empty">Sem camadas neste arquivo.</p>'}
+          ${rotas}
           ${fundo}
           <p class="note layers__note">${esc(LAYERS_NOTE)}</p>
         </div></details>`;
     sec.addEventListener('change', e => {
       const t = e.target;
-      if (t.dataset.layer) Layers.toggle(t.dataset.layer, t.checked);
+      if (t.dataset.layer === 'rotas') toggleRotas(t.checked);
+      else if (t.dataset.layer) Layers.toggle(t.dataset.layer, t.checked);
       else if (t.name === 'fundo') { Layers.setFundo(t.value || null); renderFundoLegend(); }
     });
   }
 
-  function renderFundoLegend() {
-    let el = $('#fundo-legend');
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'fundo-legend';
-      el.className = 'legend fundo-legend';
-      $('#map').after(el);
+  // Legendas das camadas (fundo municipal, rotas) empilhadas no canto inferior esquerdo do mapa.
+  function leftLegend(id, cls) {
+    let el = document.getElementById(id);
+    if (el) return el;
+    let stack = $('#legend-stack');
+    if (!stack) {
+      stack = document.createElement('div');
+      stack.id = 'legend-stack';
+      stack.className = 'legend-stack';
+      $('#map').after(stack);
     }
+    el = document.createElement('div');
+    el.id = id;
+    el.className = `legend ${cls}`;
+    el.hidden = true;
+    if (id === 'rotas-legend') stack.prepend(el); else stack.append(el);
+    return el;
+  }
+
+  // Liga/desliga as Rotas de Integração: enquadra a América do Sul (ou volta ao Brasil) e mostra a legenda da camada.
+  function toggleRotas(want) {
+    const sel = Layers.selected();
+    if (!want && sel && sel.key === 'rotas') closeCard();
+    Layers.toggle('rotas', want);
+    if (want) MapView.fitAmericaSul(); else MapView.fitBrasil();
+    renderRotasLegend();
+  }
+
+  function renderRotasLegend() {
+    const el = leftLegend('rotas-legend', 'rotas-legend'), R = IM.rotasOf(intel);
+    el.hidden = !(R && Layers.isOn('rotas'));
+    if (el.hidden) { el.innerHTML = ''; return; }
+    const rows = R.rotas.map((r, i) => `<button type="button" class="legend__row legend__btn" data-rota="${i}" title="Abrir o cartão da ${esc(IM.rotaTitulo(r))}">` +
+      `${rotaSwatch(r.id)}<span>${esc(IM.rotaTitulo(r))}</span></button>`).join('');
+    const tipos = new Set(IM.rotaLinhas(R).map(l => l.tipo));
+    const extras = ['hidrovia', 'cabotagem', 'pavimentacao', 'estudo'].filter(t => tipos.has(t))
+      .map(t => `<div class="legend__row">${rotaExtraSwatch(t)}<span>${esc(ROTAS_EXTRA[t].label)}</span></div>`).join('');
+    const fonte = IM.fonteRef(R.fonte, /Apresentação/);
+    el.innerHTML = `<h2 class="section-title">Rotas de Integração</h2>${rows}${extras ? `<div class="legend__sep"></div>${extras}` : ''}
+      <p class="legend__note" title="Fonte: ${esc(fonte)}">Traçado esquemático · fonte MPO</p>`;
+    el.querySelectorAll('[data-rota]').forEach(b => b.addEventListener('click', () => Layers.open('rotas', Number(b.dataset.rota))));
+  }
+
+  function renderFundoLegend() {
+    const el = leftLegend('fundo-legend', 'fundo-legend');
     const f = Layers.fundoInfo();
     el.hidden = !f;
     if (!f) { el.innerHTML = ''; return; }
@@ -542,6 +586,8 @@ const UI = (() => {
         ])}<p class="card__src card__pad">Previsto × executado no ano · ANTT, acompanhamento anual de investimentos</p>${pointConc(r.ent, null)}`, r.fis);
     } else if (key === 'estconc') {
       openEstConc(r);
+    } else if (key === 'rotas') {
+      openRota(r);
     } else if (key === 'portos') {
       showCard(r.nome, `${r.tipoLabel || r.tipo} · ${r.uf || '—'}`,
         `${grid([['Tipo', r.tipoLabel || r.tipo], ['Tipo ANTAQ', r.tipoLabel && Model.normalize(r.tipoLabel) !== Model.normalize(r.tipo) ? r.tipo : null], ['UF', r.uf]])}
@@ -562,6 +608,22 @@ const UI = (() => {
         ['km declarado × mapeado', `${km(e.km_decl)} × ${km(e.km_map)}`], ['Grupo', e.grupo || e.controlador],
         ['Assinatura / fim', datas], ['Capex', capex],
       ])}${e.nota ? `<p class="card__src card__pad">${esc(e.nota)}</p>` : ''}${link}`, null);
+  }
+
+  // Cartão de uma Rota de Integração Sul-Americana (MPO): o traçado no mapa é esquemático.
+  function openRota(r) {
+    const join = a => (Array.isArray(a) && a.length ? a.join(', ') : null);
+    const list = (title, items) => (Array.isArray(items) && items.length
+      ? `<div class="card__intel"><h3 class="section-title">${esc(title)}</h3><ul class="flist">${items.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>` : '');
+    const cidades = Array.isArray(r.cidades) && r.cidades.length
+      ? `<div class="card__intel"><h3 class="section-title">Cidades e nós, na ordem do MPO</h3><p class="rota-cidades">${r.cidades.map(esc).join(' · ')}</p></div>` : '';
+    const link = r.fonte_url ? `<p class="card__src card__pad"><a class="link-btn" href="${esc(r.fonte_url)}" target="_blank" rel="noopener">Fonte: MPO${r.fonte_ref ? ` · ${esc(r.fonte_ref)}` : ''}</a></p>` : '';
+    showCard(IM.rotaTitulo(r), 'Rota de Integração Sul-Americana · MPO',
+      `<div class="card__badges"><span class="badge">${rotaSwatch(r.id, 24)}Traçado esquemático</span></div>
+      ${r.descricao ? `<p class="card__desc">${esc(r.descricao)}</p>` : ''}
+      ${grid([['Países', join(r.paises)], ['UFs', join(r.ufs)], ['Situação', r.previsao], ['Rodovias', join(r.rodovias)]])}
+      ${cidades}${list('Hidrovias', r.hidrovias)}${list('Obras e projetos', r.obras)}
+      <p class="card__src card__pad card__aviso">Traçado esquemático: linhas do mapa da apresentação do MPO de 01/07/2026, georreferenciadas por cidades; não é o eixo das vias.</p>${link}`, null);
   }
 
   function openMun(id) {

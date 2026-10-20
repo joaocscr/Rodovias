@@ -3,7 +3,7 @@ const MapView = (() => {
   const BRASIL = [[-34.5, -74.5], [5.8, -32]];
   const DIM = 0.2;
   let map, snv, lines, halos, order, visible, pickCb = () => {}, hlGroup, hlRenderer, hlWanted = null, hlIds = null, ufLayer;
-  let mode = 'fisica', states = null, conc = null, haloRenderer, intel = null;
+  let mode = 'fisica', states = null, conc = null, haloRenderer, intel = null, saBounds = null;
   const quant = {};
 
   function decode(p) {
@@ -106,10 +106,15 @@ const MapView = (() => {
     snv = data;
     if (opts.states) { states = opts.states; conc = opts.conc; mode = 'concessoes'; }
     intel = opts.intel || null;
+    // Com as Rotas de Integração no arquivo, o mapa pode ir até a América do Sul inteira (países vizinhos e rotas).
+    const sa = IntelModel.rotasBounds(IntelModel.rotasOf(intel));
+    saBounds = sa ? L.latLngBounds(BRASIL).extend(sa) : null;
+    const maxBounds = L.latLngBounds(BRASIL).pad(0.3);
+    if (saBounds) maxBounds.extend(saBounds.pad(0.3));
     map = L.map(el, {
       zoomControl: false, attributionControl: false, preferCanvas: true,
       minZoom: 3.5, maxZoom: 13, zoomSnap: 0.5, zoomDelta: 0.5, wheelPxPerZoomLevel: 120,
-      maxBounds: L.latLngBounds(BRASIL).pad(0.3), maxBoundsViscosity: 0.8,
+      maxBounds, maxBoundsViscosity: 0.8,
     });
     map.createPane('ufs').style.zIndex = 200;
     map.createPane('halo').style.zIndex = 390;
@@ -185,8 +190,25 @@ const MapView = (() => {
     map.fitBounds(boundsOf(vis.length ? vis : ids), { padding: [64, 64], maxZoom: 11 });
   }
 
+  // Durante uma animação de zoom o Leaflet descarta um novo setView/fitBounds (mesmo sem animação). Ex.: desligar e religar
+  // as rotas em seguida. Aqui o último enquadramento pedido espera o fim da animação.
+  let pendingFit = null;
+  function fitSafe(bounds, opts) {
+    if (!map._animatingZoom) { map.fitBounds(bounds, opts); return; }
+    const waiting = !!pendingFit;
+    pendingFit = [bounds, opts];
+    if (waiting) return;
+    map.once('zoomend', () => { const f = pendingFit; pendingFit = null; fitSafe(f[0], f[1]); });
+  }
+
   function fitBrasil(animate = true) {
-    map.fitBounds(ufLayer.getBounds(), { padding: [16, 16], animate });
+    fitSafe(ufLayer.getBounds(), { padding: [16, 16], animate });
+  }
+
+  // Enquadra a América do Sul (países vizinhos + rotas + Brasil); sem o bloco de rotas, o Brasil.
+  function fitAmericaSul(animate = true) {
+    if (!saBounds) { fitBrasil(animate); return; }
+    fitSafe(saBounds, { padding: [16, 16], animate });
   }
 
   function setColorMode(m) {
@@ -199,7 +221,7 @@ const MapView = (() => {
   function entityFis(idx) { return (conc && conc.entFis[idx]) || []; }
 
   return {
-    init, setVisible, highlight, fitTo, fitBrasil, setColorMode,
+    init, setVisible, highlight, fitTo, fitBrasil, fitAmericaSul, setColorMode,
     colorMode() { return mode; },
     classes,
     classesCached(m) { return !!quant[m]; },

@@ -3,7 +3,7 @@ const Fontes = (() => {
   const IM = IntelModel;
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const BLOCO = { trafego: 'Tráfego', antt: 'ANTT', carga: 'Carga (PNL)', agro: 'Agro', municipios: 'Municípios', multimodal: 'Multimodal',
-    pipeline: 'Pipeline', estaduais: 'Estaduais' };
+    pipeline: 'Pipeline', estaduais: 'Estaduais', rotas: 'Rotas de Integração' };
   const TIPO = { medido: 'Medido', modelado: 'Modelado', cadastro: 'Cadastro' };
   let built = false;
 

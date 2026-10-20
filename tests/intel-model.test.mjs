@@ -766,3 +766,66 @@ test('fmtMt: t em Mt com 2 casas; abaixo de 0,005 Mt vira "< 0,01"; ausente = �
   assert.equal(IntelModel.fmtMt(0), '0,00');
   assert.equal(IntelModel.fmtMt(null), '—');
 });
+
+// ---------- v3.1, Task 4: Rotas de Integração Sul-Americana ----------
+// linha codificada: 1º par lon,lat ×1e5 absoluto, depois deltas
+const enc = pts => pts.flatMap(([lon, lat], k) => (k === 0 ? [lon * 1e5, lat * 1e5] : [(lon - pts[k - 1][0]) * 1e5, (lat - pts[k - 1][1]) * 1e5]));
+const rotasFake = {
+  fonte: [{ nome: 'MPO — Apresentação Rotas', periodo: '01/07/2026' }], esquematico: true,
+  paises: [
+    { nome: 'Chile', iso: 'CL', label: [-70, -30], p: [enc([[-75, -50], [-68, -50], [-68, -18], [-75, -50]])] },
+    { nome: 'Guiana Francesa', iso: 'GF', label: [-53, 4], p: [enc([[-54, 2], [-51.6, 2], [-52, 5.8], [-54, 2]])] },
+  ],
+  rotas: [{ id: 'r1', n: 1, nome: 'Ilha das Guianas' }, { id: 'r4', n: 4, nome: 'Bioceânica de Capricórnio' }],
+  linhas: [
+    { rota: 'r4', tipo: 'rota', p: enc([[-46, -24], [-57, -22], [-70.4, -23.4]]) },
+    { rota: 'r4', tipo: 'hidrovia', p: enc([[-57.5, -19], [-58, -25]]) },
+    { rota: null, tipo: 'cabotagem', p: enc([[-48, -1], [-44, -2]]) },
+    { rota: 'r1', tipo: 'desconhecido', p: enc([[-60, 0], [-59, 1]]) },
+    { rota: 'r1', tipo: 'rota', p: enc([[-60, 2]]) },
+  ],
+};
+
+test('rotasOf: só com rotas e linhas; rotaTitulo "Rota N · Nome"', () => {
+  assert.equal(IntelModel.rotasOf({ rotas: rotasFake }), rotasFake);
+  assert.equal(IntelModel.rotasOf({ rotas: { rotas: [], linhas: [] } }), null);
+  assert.equal(IntelModel.rotasOf({ rotas: { rotas: [{ id: 'r1' }] } }), null);
+  assert.equal(IntelModel.rotasOf(null), null);
+  assert.equal(IntelModel.rotaTitulo(rotasFake.rotas[1]), 'Rota 4 · Bioceânica de Capricórnio');
+  assert.equal(IntelModel.rotaTitulo(null), '—');
+});
+
+test('rotaLinhas: decodifica uma vez; descarta tipo desconhecido e linha de 1 ponto; rota null mantida', () => {
+  const ls = IntelModel.rotaLinhas(rotasFake);
+  assert.equal(ls, IntelModel.rotaLinhas(rotasFake)); // memo
+  assert.deepEqual(ls.map(l => [l.rota, l.tipo]), [['r4', 'rota'], ['r4', 'hidrovia'], [null, 'cabotagem']]);
+  const p = ls[0].ll;
+  assert.equal(p.length, 3);
+  close(p[2][0], -23.4, 1e-6); close(p[2][1], -70.4, 1e-6);
+  assert.deepEqual(IntelModel.rotaLinhas(null), []);
+});
+
+test('rotasBounds: caixa de países e linhas; null sem dado', () => {
+  const [[s, w], [n, e]] = IntelModel.rotasBounds(rotasFake);
+  close(s, -50, 1e-6); close(w, -75, 1e-6); close(n, 5.8, 1e-6); close(e, -44, 1e-6);
+  assert.equal(IntelModel.rotasBounds(null), null);
+  assert.equal(IntelModel.rotasBounds({ paises: [], linhas: [] }), null);
+});
+
+test('rotaLabelAnchor: vértice extremo no lado pedido; lado inválido ou sem linha = null', () => {
+  const ll = IntelModel.rotaLinhas(rotasFake).filter(l => l.rota === 'r4' && l.tipo === 'rota').map(l => l.ll);
+  const at = side => IntelModel.rotaLabelAnchor(ll, side).map(x => Math.round(x * 10) / 10);
+  assert.deepEqual(at('w'), [-23.4, -70.4]);
+  assert.deepEqual(at('e'), [-24, -46]);
+  assert.deepEqual(at('n'), [-22, -57]);
+  assert.deepEqual(at('s'), [-24, -46]);
+  assert.equal(IntelModel.rotaLabelAnchor(ll, 'x'), null);
+  assert.equal(IntelModel.rotaLabelAnchor([], 'w'), null);
+});
+
+test('paisLabel: nome se o país tem ≥ 5° de largura, senão a sigla ISO', () => {
+  assert.equal(IntelModel.paisLabel(rotasFake.paises[0]), 'Chile');
+  assert.equal(IntelModel.paisLabel(rotasFake.paises[1]), 'GF');
+  assert.equal(IntelModel.paisLabel(rotasFake.paises[1], 2), 'Guiana Francesa');
+  assert.equal(IntelModel.paisLabel(null), '—');
+});

@@ -95,3 +95,24 @@ test('tokens: todos hex válidos; CSS do pipeline gerado dos tokens', () => {
   const css = S.dataTokenCss();
   for (const [k, c] of Object.entries(S.PIPE_STATUS)) assert.ok(css.includes(`.chip[data-pstatus="${k}"]::before{background:${c}}`), k);
 });
+
+test('rotas: hidrovia não repete o "Em obra" federal; extras e amostras com tokens; rótulo na legenda', () => {
+  const X = S.ROTAS_EXTRA, obra = S.LINE_STYLES['Em obra de Pavimentação'];
+  assert.notEqual(X.hidrovia.dash, obra.dash);
+  assert.notEqual(X.hidrovia.dash, X.cabotagem.dash);
+  assert.notEqual(X.hidrovia.dash, X.estudo.dash);
+  assert.equal(X.hidrovia.color, S.DATA.blue);
+  assert.equal(X.pavimentacao.color, S.RAMPS.carga[3]);
+  const tokens = new Set(S.DATA_TOKENS);
+  for (const [k, x] of Object.entries(X)) {
+    assert.ok(tokens.has(x.color.toUpperCase()), k);
+    assert.ok(x.label && x.label.length > 3, k);
+    assert.ok(S.rotaExtraSwatch(k).includes(`stroke="${x.color}"`), k);
+    if (x.dash) assert.ok(S.rotaExtraSwatch(k).includes(`stroke-dasharray="${x.dash}"`), k);
+  }
+  for (const c of [S.ROTA_LINHA.casing, S.ROTAS_PAIS.fillColor, S.ROTAS_PAIS.color]) assert.ok(tokens.has(c.toUpperCase()), c);
+  for (const [id, c] of Object.entries(S.ROTAS)) {
+    assert.ok(S.rotaSwatch(id).includes(`stroke="${c}"`), id);
+    assert.ok(S.rotasSwatch().includes(`stroke="${c}"`), id);
+  }
+});

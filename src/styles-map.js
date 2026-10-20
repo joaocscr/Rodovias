@@ -26,14 +26,19 @@ const RAMPS = {
   carga: ['#fb7744', '#da5821', '#b43f00', '#8a2e00', '#621e00'],
   acidentes: ['#ff6f69', '#e34948', '#c1252c', '#9a0016', '#6e000c'],
 };
-// Elementos das Rotas além das 5 linhas (usados pela camada de rotas): hidrovia tracejada e cabotagem pontilhada no slot azul;
-// trecho em pavimentação em marrom (passo 4 da rampa laranja); trecho em estudos em cinza Galapagos tracejado.
+// Elementos das Rotas além das 5 linhas (usados pela camada de rotas): hidrovia em traço-ponto e cabotagem pontilhada no slot azul
+// (o traço-ponto não repete o "Em obra" federal, Bright Blue tracejado 6 4); trecho em pavimentação em marrom (passo 4 da rampa
+// laranja); trecho em estudos em cinza Galapagos tracejado. Toda linha com rótulo na legenda da camada.
 const ROTAS_EXTRA = {
-  hidrovia: { color: DATA.blue, weight: 2, dash: '6 4' },
-  cabotagem: { color: DATA.blue, weight: 2, dash: '1 5' },
-  pavimentacao: { color: RAMPS.carga[3], weight: 2.5, dash: null },
-  estudo: { color: COLORS.lightGrey, weight: 2, dash: '4 4' },
+  hidrovia: { color: DATA.blue, weight: 2.5, dash: '12 4 2 4', label: 'Hidrovia' },
+  cabotagem: { color: DATA.blue, weight: 2, dash: '1 5', cap: 'round', label: 'Cabotagem' },
+  pavimentacao: { color: RAMPS.carga[3], weight: 2.5, dash: null, label: 'Trecho em pavimentação' },
+  estudo: { color: COLORS.lightGrey, weight: 2, dash: '4 4', label: 'Trecho em estudos' },
 };
+// Linha de cada rota: 3 px na cor de ROTAS, sobre um contorno Snow White (+3 px) que a separa da malha federal embaixo.
+const ROTA_LINHA = { weight: 3, casing: COLORS.snowWhite, casingExtra: 3, casingOpacity: 0.9 };
+// Países vizinhos na camada de rotas: preenchimento Snow White e borda Light Grey (interface Galapagos, não é cor de dado).
+const ROTAS_PAIS = { fillColor: COLORS.snowWhite, fillOpacity: 1, color: COLORS.lightGrey, weight: 1, opacity: 0.6 };
 // Status do pipeline: etapas em rampa ordinal verde-água de 7 passos (avança = mais escuro); suspenso e cancelado com
 // as cores de status fixas (alerta / crítico), que não reaproveitam slots categóricos. Sempre com o texto do status.
 const PIPE_STATUS = {
@@ -182,6 +187,26 @@ function layerSwatch(key, size = 24) {
   }
 }
 
+// Amostras da camada de rotas: linha de uma rota (cor de ROTAS com o contorno), elemento extra (hidrovia etc.)
+// e o conjunto das 5 rotas (painel Camadas).
+function rotaSwatch(id, width = 32) {
+  const c = ROTAS[id] || COLORS.lightGrey, w = ROTA_LINHA.weight;
+  return `<svg class="swatch" width="${width}" height="10" viewBox="0 0 ${width} 10" aria-hidden="true">` +
+    `<line x1="2" y1="5" x2="${width - 2}" y2="5" stroke="${c}" stroke-width="${w + 1}" stroke-linecap="round"/></svg>`;
+}
+function rotaExtraSwatch(tipo, width = 32) {
+  const s = ROTAS_EXTRA[tipo];
+  if (!s) return '';
+  const dash = s.dash ? ` stroke-dasharray="${s.dash}"` : '';
+  return `<svg class="swatch" width="${width}" height="10" viewBox="0 0 ${width} 10" aria-hidden="true">` +
+    `<line x1="2" y1="5" x2="${width - 2}" y2="5" stroke="${s.color}" stroke-width="${s.weight}" stroke-linecap="${s.cap || (s.dash ? 'butt' : 'round')}"${dash}/></svg>`;
+}
+function rotasSwatch(size = 24) {
+  const ids = Object.keys(ROTAS), seg = (size - 4) / ids.length;
+  return `<svg class="swatch" width="${size}" height="16" viewBox="0 0 ${size} 16" aria-hidden="true">` +
+    ids.map((id, k) => `<line x1="${2 + k * seg}" y1="8" x2="${2 + (k + 1) * seg}" y2="8" stroke="${ROTAS[id]}" stroke-width="4"/>`).join('') + '</svg>';
+}
+
 // Amostra de preenchimento do fundo municipal (classe c; -1 = sem preenchimento).
 function fundoSwatch(c, width = 32) {
   const op = c >= 0 ? FUNDO_OPACITY[Math.min(c, FUNDO_OPACITY.length - 1)] : 0;
@@ -202,6 +227,6 @@ function dataTokenCss() {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { COLORS, DATA, DATA_SLOTS, ROTAS, RAMPS, ROTAS_EXTRA, PIPE_STATUS, QUANT_MODES, QUANT_STYLES, QUANT_NONE,
-    LAYER_STYLES, DATA_TOKENS, quantStyle, quantSwatch, layerSwatch, dataTokenCss };
+  module.exports = { COLORS, DATA, DATA_SLOTS, ROTAS, RAMPS, ROTAS_EXTRA, ROTA_LINHA, ROTAS_PAIS, PIPE_STATUS, QUANT_MODES, QUANT_STYLES, QUANT_NONE,
+    LAYER_STYLES, LINE_STYLES, DATA_TOKENS, quantStyle, quantSwatch, layerSwatch, rotaSwatch, rotaExtraSwatch, rotasSwatch, dataTokenCss };
 }

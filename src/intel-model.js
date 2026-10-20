@@ -375,6 +375,52 @@ const IntelModel = (() => {
     return f ? `${f.nome}${f.periodo ? ` · ${f.periodo}` : ''}` : DASH;
   }
 
+  // ---------- Rotas de Integração Sul-Americana (v3.1, MPO; traçado esquemático) ----------
+  const ROTA_TIPOS = ['rota', 'hidrovia', 'cabotagem', 'pavimentacao', 'estudo'];
+  const rotasOf = intel => (intel && intel.rotas && Array.isArray(intel.rotas.rotas) && intel.rotas.rotas.length
+    && Array.isArray(intel.rotas.linhas) ? intel.rotas : null);
+  const rotaTitulo = r => (r ? `Rota ${r.n} · ${r.nome}` : DASH);
+
+  // Linhas do bloco decodificadas uma vez: [{rota: 'r1' | null, tipo, ll: [[lat, lng], ...]}], sem tipos desconhecidos
+  // nem linhas com menos de 2 pontos.
+  const rotasMemo = new WeakMap();
+  function rotaLinhas(rotas) {
+    if (!rotas || !Array.isArray(rotas.linhas)) return [];
+    if (!rotasMemo.has(rotas)) {
+      rotasMemo.set(rotas, rotas.linhas.filter(l => l && ROTA_TIPOS.includes(l.tipo))
+        .map(l => ({ rota: l.rota || null, tipo: l.tipo, ll: decodeLine(l.p) })).filter(l => l.ll.length >= 2));
+    }
+    return rotasMemo.get(rotas);
+  }
+
+  // Anéis de cada país vizinho (um anel externo por parte), [[lat, lng], ...].
+  const paisAneis = p => ((p && p.p) || []).map(decodeLine).filter(r => r.length >= 3);
+
+  // Caixa [[s, w], [n, e]] dos países vizinhos e das linhas das rotas (o "enquadrar a América do Sul"); null sem dado.
+  function rotasBounds(rotas) {
+    if (!rotas) return null;
+    const rings = [...(rotas.paises || []).flatMap(paisAneis), ...rotaLinhas(rotas).map(l => l.ll)];
+    const [s, w, n, e] = ringsBBox(rings);
+    return s === Infinity ? null : [[s, w], [n, e]];
+  }
+
+  // Âncora do rótulo direto de uma rota: o vértice mais extremo das linhas no lado pedido ('n', 's', 'e', 'w'),
+  // para o rótulo sair para fora do traçado (mar ou borda do continente). [lat, lng] ou null.
+  function rotaLabelAnchor(lines, side = 'w') {
+    const score = { n: ([lat]) => lat, s: ([lat]) => -lat, e: ([, lng]) => lng, w: ([, lng]) => -lng }[side];
+    if (!score) return null;
+    let best = null;
+    for (const l of lines || []) for (const pt of l) if (!best || score(pt) > score(best)) best = pt;
+    return best ? [best[0], best[1]] : null;
+  }
+
+  // Rótulo do país no mapa: o nome quando o país tem pelo menos minLarg graus de largura; senão a sigla ISO (Guianas, Uruguai).
+  function paisLabel(p, minLarg = 5) {
+    if (!p) return DASH;
+    const [, w, , e] = ringsBBox(paisAneis(p));
+    return Number.isFinite(w) && e - w >= minLarg ? p.nome : (p.iso || p.nome);
+  }
+
   // ---------- Ficha com ANTT, ficha estadual, Projetos com esfera e pipeline (Task 11) ----------
   const anttOf = intel => (intel && intel.antt) || null;
   const capasOf = intel => (anttOf(intel) && anttOf(intel).capas) || {};
@@ -747,6 +793,7 @@ const IntelModel = (() => {
     rodLabel, decodeLine, estConcLines, distToSegment, pointRadius, lineWeight, PORTO_TIPOS, portoTipo, monthLabel, mesX, xMes, fmtMesX, anosLabel,
     FUNDOS, PRODUTOS, fundoFonte, fundoValues,
     fundoClasses, munInfo, pointInRings, ringsBBox, fonteRef,
+    ROTA_TIPOS, rotasOf, rotaTitulo, rotaLinhas, paisAneis, rotasBounds, rotaLabelAnchor, paisLabel,
     anttCapa, anttAnteriores, anttSeries, pracasDe, obrasResumo, pipelineRows, filterPipeline, pipelineCounts, statusLabel, pipelineDe,
     EST_ESTADOS, QUALIDADE_RECORTE, qualidadeRecorte, estaduaisRows, byEsfera, estIndex, trechosLabel,
     trafegoKpis, pracasRanking, pracasSerie, abcrSazonal, acidentesPorUf, taxaPorBrUf,
