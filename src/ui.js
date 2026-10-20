@@ -30,7 +30,13 @@ const UI = (() => {
 
   const ANOS = [2023, 2024, 2025, 2026, 2027];
   let snv, index, filters, showAllUf = false, refreshTimer = null;
-  let conc, states, concFilters;
+  let conc, states, concFilters, intel = null;
+  const IM = IntelModel;
+  const MODE_LIST = [['concessoes', 'Concessões'], ['fisica', 'Situação física'], ['trafego', 'Tráfego'],
+    ['pesados', 'Pesados'], ['carga', 'Carga agrícola'], ['acidentes', 'Acidentes']];
+  const TIPO_LABEL = { modelado: 'Estimativa de modelo', medido: 'Contagem medida' };
+  // Faixas da legenda por modo quantitativo.
+  const RANGE_FMT = { trafego: IM.fmtInt, pesados: IM.fmtInt, carga: IM.fmtT, acidentes: x => IM.fmtDec(x, 2) };
   let suggestions = [], activeSug = -1, activeSearch = null;
 
   const $ = sel => document.querySelector(sel);
@@ -310,6 +316,7 @@ const UI = (() => {
       <div class="kpi"><span class="kpi__value" id="kpi-km">${Model.fmtKm(a.km)}</span>
         <span class="kpi__sub" id="kpi-n">${fmtInt.format(a.n)} ${a.n === 1 ? 'trecho' : 'trechos'}</span></div>
       <p class="note">Extensão oficial do SNV. Trechos coincidentes entre BRs contados uma vez.</p>
+      ${intelStats(a.intel)}
       <h3 class="section-title">Por estado da concessão</h3>${concBars(a.porEstado, a.km)}
       <h3 class="section-title">Por situação</h3>${bars(a.porSituacao, 'situacao')}
       <h3 class="section-title">Por administração</h3>${bars(a.porAdm, 'adm')}
@@ -324,6 +331,79 @@ const UI = (() => {
     }));
     const t = $('#toggle-uf');
     if (t) t.addEventListener('click', () => { showAllUf = !showAllUf; renderStats(a); });
+  }
+
+  // ---------- Camadas de inteligência (v3) ----------
+  const vmdaOf = () => (intel && intel.trafego && intel.trafego.vmda) || null;
+  const acidOf = () => (intel && intel.trafego && intel.trafego.acidentes) || null;
+  const cargaOf = () => (intel && intel.carga && intel.carga.gsa ? intel.carga : null);
+  // [2024, 2025] -> "2024–25"; um ano só -> "2024".
+  function anosLabel(anos) {
+    if (!Array.isArray(anos) || !anos.length) return '';
+    const a = Math.min(...anos), b = Math.max(...anos);
+    return a === b ? String(a) : `${a}–${String(b).slice(-2)}`;
+  }
+  const vmdaRef = () => { const v = vmdaOf(); return v ? `VMDa ${v.ano}` : 'VMDa'; };
+  const prfRef = () => { const a = acidOf(); const y = a && anosLabel(a.anos); return y ? `PRF ${y}` : 'PRF'; };
+  const pnlRef = () => { const c = cargaOf(); return c ? `${c.cenario || 'PNL 2035'} ${c.ano_base}` : 'PNL 2035'; };
+  const kmTxt = km => `${fmtKmNum.format(km)} km com dado`;
+
+  // Bloco do painel "Números da seleção": só soma trechos com dado; cada número explica a fonte no title.
+  function intelStats(ag) {
+    if (!ag) return '';
+    const pctPes = ag.vkm > 0 ? ag.vkmPes / ag.vkm : null;
+    const tile = (id, value, sub, title) => `<div class="ikpi" title="${esc(title)}">
+        <span class="ikpi__value" id="${id}">${esc(value)}</span><span class="ikpi__sub">${esc(sub)}</span></div>`;
+    const cov = (km, base) => (km != null && ag.kmPav > 0 ? ` · ${kmTxt(km)} de ${fmtKmNum.format(base)} km` : '');
+    return `<div class="ikpis">
+      ${tile('kpi-vkm', IM.fmtVkm(ag.vkm),
+        `${pctPes == null ? '—' : IM.fmtPct(pctPes)} pesados · Tráfego ${vmdaRef()}, estimado${cov(ag.kmVmda, ag.kmPav)}`,
+        `Soma de VMDa × extensão nos trechos visíveis que têm estimativa; % de pesados = veíc·km pesados ÷ veíc·km total. Fonte: ${IM.MODES.trafego.fonte(intel)} — estimativa de modelo, não contagem.`)}
+      ${tile('kpi-acid', ag.acidAno == null ? '—' : `${IM.fmtInt(ag.acidAno)} acidentes/ano`,
+        `${ag.mortosAno == null ? '—' : IM.fmtInt(ag.mortosAno)} mortos/ano · ${prfRef()}, medido`,
+        `Média anual de acidentes e de mortos registrados pela PRF nos trechos visíveis. Fonte: ${IM.MODES.acidentes.fonte(intel)} — contagem medida de ocorrências.`)}
+      ${tile('kpi-tkm', IM.fmtTkm(ag.tkm),
+        `Carga agrícola · ${pnlRef()}, modelado${cov(ag.kmCarga, ag.kmPav)}`,
+        `Soma de carga agrícola (t/ano) × extensão nos trechos visíveis que casaram com a rede do PNL. Fonte: ${IM.MODES.carga.fonte(intel)} — estimativa de modelo.`)}
+    </div>`;
+  }
+
+  // Bloco "Tráfego e segurança" do cartão; omitido se o físico não tem nenhum dado.
+  function intelBlock(j) {
+    const vm = vmdaOf(), ac = acidOf(), ca = cargaOf();
+    const val = (arr, k) => (arr && arr[k] != null && Number.isFinite(arr[k]) ? arr[k] : null);
+    const groups = [];
+    const group = (title, rows) => {
+      const body = rows.filter(([, v]) => v != null).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
+      if (body) groups.push(`<dt class="card__sub">${esc(title)}</dt>${body}`);
+    };
+    let tot = null;
+    if (vm) {
+      const l = val(vm.l, j), p = val(vm.p, j);
+      tot = l == null && p == null ? null : (l || 0) + (p || 0);
+      group(`VMDa · estimado, ${vm.ano}`, [
+        ['Leves', l == null ? null : IM.fmtVmd(l)],
+        ['Pesados', p == null ? null : IM.fmtVmd(p)],
+        ['Total', tot == null ? null : IM.fmtVmd(tot)],
+        ['% pesados', p != null && tot > 0 ? IM.fmtPct(p / tot) : null],
+      ]);
+    }
+    if (ac) {
+      const anos = (ac.anos && ac.anos.length) || 1;
+      const n = val(ac.n, j), m = val(ac.m, j);
+      const taxa = IM.taxaAcidentes(n, anos, tot, snv.fis[j].ext);
+      group(`Acidentes · ${prfRef()}, medido`, [
+        ['Acidentes/ano', n == null ? null : IM.fmtDec(n / anos, 1)],
+        ['Mortos/ano', m == null ? null : IM.fmtDec(m / anos, 1)],
+        ['Acidentes por 10⁶ veíc·km', taxa == null ? null : IM.fmtDec(taxa, 2)],
+      ]);
+    }
+    if (ca) {
+      const g = val(ca.gsa, j);
+      group(`Carga agrícola · modelo PNL, ${ca.ano_base}`, [['Carga agrícola', g == null ? null : `${IM.fmtT(g)}/ano`]]);
+    }
+    if (!groups.length) return '';
+    return `<div class="card__intel"><h3 class="section-title">Tráfego e segurança</h3><dl class="card__grid">${groups.join('')}</dl></div>`;
   }
 
   function scheduleRefresh(delay = 30) {
@@ -344,6 +424,7 @@ const UI = (() => {
     MapView.setVisible(visible);
     const a = Model.aggregate(snv, filters, visible);
     a.porEstado = ConcModel.kmPorEstado(conc, states, visible, snv);
+    a.intel = IM.aggregateIntel(intel, snv, visible);
     renderStats(a);
     let total = 0;
     const counts = GROUPS.map(g => [g.key, filters[g.key].size]).concat(['estado', 'ent', 'ano'].map(k => ['c-' + k, concFilters[k].size]));
@@ -393,7 +474,7 @@ const UI = (() => {
         ${row('Administração', adm)}
         ${row('Unidade local DNIT', d.ul[main[I_UL]])}
         ${row('Coincide com estadual', main[I_EST])}
-      </dl>${concBlock(j)}${coinc}`;
+      </dl>${concBlock(j)}${intelBlock(j)}${coinc}`;
     card.hidden = false;
     $('#card-close').addEventListener('click', closeCard);
     MapView.highlight([...(activeSearch ? activeSearch.ids : []), j]);
@@ -419,21 +500,58 @@ const UI = (() => {
   }
 
   // ---------- Legenda ----------
+  function quantLegend(mode) {
+    const M = IM.MODES[mode], q = MapView.classes(mode) || { breaks: [], min: null, max: null };
+    const fmt = RANGE_FMT[mode];
+    const rows = [];
+    if (q.max != null) {
+      for (let c = 0; c <= q.breaks.length; c++) {
+        const lo = c === 0 ? q.min : q.breaks[c - 1], hi = c === q.breaks.length ? q.max : q.breaks[c];
+        rows.push(`<div class="legend__row" data-class="${c}">${quantSwatch(c)}<span class="legend__range">${esc(fmt(lo))} – ${esc(fmt(hi))}</span></div>`);
+      }
+    }
+    rows.push(`<div class="legend__row">${quantSwatch(-1)}<span>Sem dado</span></div>`);
+    return `<div class="legend__title">${esc(M.label)} <span>${esc(M.unidade)}</span></div>${rows.join('')}
+      <div class="legend__tipo">${esc(TIPO_LABEL[M.tipo] || M.tipo)}</div>
+      <div class="legend__src">Fonte: ${esc(M.fonte(intel))}</div>`;
+  }
+
   function renderLegend() {
     const mode = MapView.colorMode();
-    const items = mode === 'concessoes'
-      ? conc.estados.map(x => `<div class="legend__row">${concStyleSwatch(x.key)}<span>${esc(x.label)}</span></div>`).join('')
-      : LEGEND_ITEMS.map(([sit, label]) => `<div class="legend__row">${styleSwatch(sit)}<span>${label}</span></div>`).join('') +
-        `<div class="legend__sep"></div><div class="legend__row">${haloSwatch()}<span>Concessão federal</span></div>`;
-    $('#legend').innerHTML = `<div class="mode-switch" role="group" aria-label="Modo de cor do mapa">
-        <button type="button" data-mode="concessoes" aria-pressed="${mode === 'concessoes'}">Concessões</button>
-        <button type="button" data-mode="fisica" aria-pressed="${mode === 'fisica'}">Situação física</button></div>
-      <h2 class="section-title">Legenda</h2>${items}
-      <div class="legend__src">Fonte: DNIT · SNV ${esc(snv.versao)}${mode === 'concessoes' ? ` · RoadShow ${esc(conc.versaoRoadshow)}` : ''}</div>`;
-    $('#legend').querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => {
-      MapView.setColorMode(b.dataset.mode);
-      renderLegend();
-    }));
+    let items;
+    if (QUANT_MODES.includes(mode)) items = quantLegend(mode);
+    else {
+      items = mode === 'concessoes'
+        ? conc.estados.map(x => `<div class="legend__row">${concStyleSwatch(x.key)}<span>${esc(x.label)}</span></div>`).join('')
+        : LEGEND_ITEMS.map(([sit, label]) => `<div class="legend__row">${styleSwatch(sit)}<span>${label}</span></div>`).join('') +
+          `<div class="legend__sep"></div><div class="legend__row">${haloSwatch()}<span>Concessão federal</span></div>`;
+      items += `<div class="legend__src">Fonte: DNIT · SNV ${esc(snv.versao)}${mode === 'concessoes' ? ` · RoadShow ${esc(conc.versaoRoadshow)}` : ''}</div>`;
+    }
+    $('#legend').innerHTML = `<h2 class="section-title">Cor das rodovias</h2>
+      <div class="mode-switch" role="radiogroup" aria-label="Cor das rodovias">${MODE_LIST.map(([k, label]) =>
+        `<button type="button" role="radio" data-mode="${k}" aria-checked="${mode === k}" tabindex="${mode === k ? 0 : -1}">${label}</button>`).join('')}</div>
+      <h2 class="section-title">Legenda</h2>${items}`;
+    const group = $('#legend .mode-switch');
+    group.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => selectMode(b.dataset.mode)));
+    group.addEventListener('keydown', e => {
+      const keys = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
+      const i = MODE_LIST.findIndex(([k]) => k === MapView.colorMode());
+      let next = null;
+      if (e.key in keys) next = (i + keys[e.key] + MODE_LIST.length) % MODE_LIST.length;
+      else if (e.key === 'Home') next = 0;
+      else if (e.key === 'End') next = MODE_LIST.length - 1;
+      if (next == null) return;
+      e.preventDefault();
+      selectMode(MODE_LIST[next][0]);
+    });
+  }
+
+  // Troca o modo, redesenha a legenda e devolve o foco ao rádio marcado.
+  function selectMode(m) {
+    MapView.setColorMode(m);
+    renderLegend();
+    const b = $('#legend [role="radio"][aria-checked="true"]');
+    if (b) b.focus();
   }
 
   function initDrawer() {
@@ -444,8 +562,8 @@ const UI = (() => {
     });
   }
 
-  function init(data, idx, concData) {
-    snv = data; index = idx; filters = Model.emptyFilters();
+  function init(data, idx, concData, intelData = null) {
+    snv = data; index = idx; filters = Model.emptyFilters(); intel = intelData;
     conc = concData; states = ConcModel.stateArray(conc, snv.fis.length); concFilters = ConcModel.emptyConcFilters();
     renderSearch();
     renderFilters();

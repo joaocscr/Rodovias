@@ -1,8 +1,9 @@
 // Camadas de inteligência (v3): métricas por físico, classes de cor, agregados, geometria municipal e formatos. Puro: sem DOM.
 const IntelModel = (() => {
   const DASH = '—';
-  const nf = d => new Intl.NumberFormat('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
-  const f0 = nf(0), f1 = nf(1), f2 = nf(2);
+  const NF = {};
+  const nf = d => NF[d] || (NF[d] = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d }));
+  const f0 = nf(0), f1 = nf(1);
   const has = v => v != null && Number.isFinite(v);
 
   function rows(block) {
@@ -31,7 +32,12 @@ const IntelModel = (() => {
     },
     acidentes: {
       label: 'Acidentes', unidade: 'acid./km/ano', tipo: 'medido',
-      fonte: intel => { const a = acidOf(intel); return a && a.n ? `PRF, DATATRAN ${a.anos.join(' e ')} (medido)` : DASH; },
+      fonte: intel => {
+        const a = acidOf(intel);
+        if (!a || !a.n) return DASH;
+        const anos = Array.isArray(a.anos) && a.anos.length ? ` ${a.anos.join(' e ')}` : '';
+        return `PRF, DATATRAN${anos} (medido)`;
+      },
     },
   };
 
@@ -158,30 +164,29 @@ const IntelModel = (() => {
     });
   }
 
-  const fmtInt = x => (x == null ? DASH : f0.format(x));
-  const fmtVmd = x => (x == null ? DASH : `${f0.format(x)} veíc./dia`);
-  function fmtT(x) {
-    if (x == null) return DASH;
-    if (x >= 1e6) return `${f1.format(x / 1e6)} Mt`;
-    if (x >= 1e3) return `${f0.format(x / 1e3)} mil t`;
-    return `${f0.format(x)} t`;
-  }
-  const fmtPct = x => (x == null ? DASH : `${f1.format(x * 100)}%`);
-  function fmtBRL(x) {
-    if (x == null) return DASH;
-    if (x >= 1e9) return `R$ ${f2.format(x / 1e9)} bi`;
-    if (x >= 1e6) return `R$ ${f1.format(x / 1e6)} mi`;
-    return `R$ ${f0.format(x)}`;
-  }
-  function fmtVkm(x) {
-    if (x == null) return DASH;
-    if (x >= 1e9) return `${f1.format(x / 1e9)} bi veíc·km/dia`;
-    if (x >= 1e6) return `${f1.format(x / 1e6)} mi veíc·km/dia`;
-    return `${f0.format(x)} veíc·km/dia`;
+  // Escolhe a unidade depois de arredondar: 999.600 t vira "1,0 Mt", não "1.000 mil t".
+  const round = (v, d) => Math.round(v * 10 ** d) / 10 ** d;
+  function scaled(x, units) {
+    if (!has(x)) return DASH;
+    const ax = Math.abs(x);
+    let i = 0;
+    while (i + 1 < units.length && ax >= units[i + 1][0]) i++;
+    while (i + 1 < units.length && round(ax / units[i][0], units[i][1]) >= units[i + 1][0] / units[i][0]) i++;
+    const [div, d, pre, suf] = units[i];
+    return `${pre}${nf(d).format(x / div)}${suf}`;
   }
 
+  const fmtInt = x => (has(x) ? f0.format(x) : DASH);
+  const fmtDec = (x, d = 2) => (has(x) ? nf(d).format(x) : DASH);
+  const fmtVmd = x => (has(x) ? `${f0.format(x)} veíc./dia` : DASH);
+  const fmtT = x => scaled(x, [[1, 0, '', ' t'], [1e3, 0, '', ' mil t'], [1e6, 1, '', ' Mt']]);
+  const fmtPct = x => (has(x) ? `${f1.format(x * 100)}%` : DASH);
+  const fmtBRL = x => scaled(x, [[1, 0, 'R$ ', ''], [1e6, 1, 'R$ ', ' mi'], [1e9, 2, 'R$ ', ' bi']]);
+  const fmtVkm = x => scaled(x, [[1, 0, '', ' veíc·km/dia'], [1e6, 1, '', ' mi veíc·km/dia'], [1e9, 1, '', ' bi veíc·km/dia']]);
+  const fmtTkm = x => scaled(x, [[1, 0, '', ' t·km/ano'], [1e6, 1, '', ' mi t·km/ano'], [1e9, 1, '', ' bi t·km/ano'], [1e12, 1, '', ' tri t·km/ano']]);
+
   return { MODES, rows, metricArray, quantileBreaks, classOf, aggregateIntel, taxaAcidentes, pointsOfFis, decodeTopo,
-    fmtInt, fmtVmd, fmtT, fmtPct, fmtBRL, fmtVkm };
+    fmtInt, fmtDec, fmtVmd, fmtT, fmtPct, fmtBRL, fmtVkm, fmtTkm };
 })();
 
 if (typeof module !== 'undefined') module.exports = IntelModel;

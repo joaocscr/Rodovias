@@ -161,3 +161,41 @@ test('formatos pt-BR', () => {
     assert.equal(IntelModel[f](undefined), '—', f);
   }
 });
+
+test('MODES.acidentes.fonte sem anos não quebra', () => {
+  const semAnos = { trafego: { acidentes: { tipo: 'medido', n: [1, 2] } } };
+  assert.doesNotThrow(() => IntelModel.MODES.acidentes.fonte(semAnos));
+  assert.equal(IntelModel.MODES.acidentes.fonte(semAnos), 'PRF, DATATRAN (medido)');
+  assert.equal(IntelModel.MODES.acidentes.fonte({ trafego: { acidentes: { n: [1], anos: [] } } }), 'PRF, DATATRAN (medido)');
+  assert.equal(IntelModel.MODES.acidentes.fonte(intel), 'PRF, DATATRAN 2024 e 2025 (medido)');
+});
+
+test('formatos escolhem a unidade depois de arredondar', () => {
+  assert.equal(IntelModel.fmtT(999600), '1,0 Mt');
+  assert.equal(IntelModel.fmtT(999400), '999 mil t');
+  assert.equal(IntelModel.fmtT(999.6), '1 mil t');
+  assert.equal(IntelModel.fmtT(999.4), '999 t');
+  assert.equal(IntelModel.fmtBRL(999.96e6), 'R$ 1,00 bi');
+  assert.equal(IntelModel.fmtBRL(999.94e6), 'R$ 999,9 mi');
+  assert.equal(IntelModel.fmtBRL(999999.6), 'R$ 1,0 mi');
+  assert.equal(IntelModel.fmtVkm(999.96e6), '1,0 bi veíc·km/dia');
+  assert.equal(IntelModel.fmtVkm(999999.6), '1,0 mi veíc·km/dia');
+  assert.equal(IntelModel.fmtTkm(999.96e9), '1,0 tri t·km/ano');
+});
+
+test('formatos: NaN e infinito viram travessão', () => {
+  for (const f of ['fmtInt', 'fmtVmd', 'fmtT', 'fmtPct', 'fmtBRL', 'fmtVkm', 'fmtTkm', 'fmtDec']) {
+    assert.equal(IntelModel[f](NaN), '—', f);
+    assert.equal(IntelModel[f](Infinity), '—', f);
+    assert.equal(IntelModel[f](null), '—', f);
+  }
+});
+
+test('fmtDec e fmtTkm', () => {
+  assert.equal(IntelModel.fmtDec(0.2), '0,20');
+  assert.equal(IntelModel.fmtDec(1234.5, 1), '1.234,5');
+  assert.equal(IntelModel.fmtDec(3, 0), '3');
+  assert.equal(IntelModel.fmtTkm(123456), '123.456 t·km/ano');
+  assert.equal(IntelModel.fmtTkm(2.5e6), '2,5 mi t·km/ano');
+  assert.equal(IntelModel.fmtTkm(1.234e11), '123,4 bi t·km/ano');
+});

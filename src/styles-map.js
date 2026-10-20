@@ -71,3 +71,25 @@ function concStyleSwatch(key, width = 32) {
   return `<svg class="swatch" width="${width}" height="10" viewBox="0 0 ${width} 10" aria-hidden="true">${halo}` +
     `<line x1="1" y1="5" x2="${width - 1}" y2="5" stroke="${s.color}" stroke-width="${Math.min(s.weight, 4)}" stroke-opacity="${s.opacity}" stroke-linecap="round"${dash}/></svg>`;
 }
+
+// Modos quantitativos (v3): 5 classes por quantil, espessura 1,5 → 6 px e tons de azul por opacidade; classe maior por cima.
+const QUANT_MODES = ['trafego', 'pesados', 'carga', 'acidentes'];
+const QUANT_STYLES = [
+  { color: COLORS.brightBlue, weight: 1.5, dash: null, opacity: 0.45, z: 1 },
+  { color: COLORS.brightBlue, weight: 2.625, dash: null, opacity: 0.7, z: 2 },
+  { color: COLORS.deepBlue, weight: 3.75, dash: null, opacity: 0.75, z: 3 },
+  { color: COLORS.deepBlue, weight: 4.875, dash: null, opacity: 0.9, z: 4 },
+  { color: COLORS.deepBlue, weight: 6, dash: null, opacity: 1, z: 5 },
+];
+const QUANT_NONE = { color: COLORS.lightGrey, weight: 1, dash: '2 4', opacity: 0.5, z: 0 };
+
+function quantStyle(c) { return c < 0 ? QUANT_NONE : QUANT_STYLES[Math.min(c, QUANT_STYLES.length - 1)]; }
+
+function quantSwatch(c, width = 32) {
+  const s = quantStyle(c);
+  const dash = s.dash ? ` stroke-dasharray="${s.dash}"` : '';
+  const pad = Math.max(1, s.weight / 2);
+  return `<svg class="swatch" width="${width}" height="8" viewBox="0 0 ${width} 8" aria-hidden="true">` +
+    `<line x1="${pad}" y1="4" x2="${width - pad}" y2="4" stroke="${s.color}" stroke-width="${s.weight}"` +
+    ` stroke-opacity="${s.opacity}" stroke-linecap="${s.dash ? 'butt' : 'round'}"${dash}/></svg>`;
+}
