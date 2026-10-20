@@ -76,6 +76,18 @@ def load_intel(intel_dir=INTEL):
     return intel
 
 
+def relatorio_intel(intel):
+    """Imprime uma linha por bloco INTEL com o tamanho em KB (JSON compacto) e o total."""
+    kb = lambda n: f"{n / 1e3:,.1f}".replace(",", "X").replace(".", ",").replace("X", ".")  # noqa: E731
+    total = 0
+    for nome, dados in intel.items():
+        n = len(json.dumps(dados, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
+        total += n
+        print(f"  intel/{nome}: {kb(n)} KB")
+    print(f"  intel total: {kb(total)} KB")
+    return total
+
+
 def build_from_base(base_dir, out, intel=None):
     """Build sem o shapefile: SNV e CONC congelados em data/base/ (gerados pelo modo --shp)."""
     payload = json.loads((Path(base_dir) / "snv.json").read_text(encoding="utf-8"))
@@ -84,6 +96,7 @@ def build_from_base(base_dir, out, intel=None):
     size = assemble(payload, conc, intel, out)
     print(f"base: SNV {payload['versao']} ({len(payload['trechos'])} registros, {len(payload['fis'])} físicos) | "
           f"intel: {', '.join(intel) or 'nenhum bloco'}")
+    relatorio_intel(intel)
     print(f"arquivo: {out} ({size / 1e6:.2f} MB)")
     if size > MAX_BYTES:
         sys.exit(f"Falha: arquivo maior que {MAX_BYTES / 1e6:.0f} MB")
@@ -111,10 +124,12 @@ def build(shp, out, tol, rascunho=False):
     BASE.mkdir(parents=True, exist_ok=True)
     for name, obj in [("snv.json", payload), ("conc.json", conc)]:
         (BASE / name).write_text(json.dumps(obj, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
-    size = assemble(payload, conc, load_intel(), out)
+    intel = load_intel()
+    size = assemble(payload, conc, intel, out)
     print(f"registros: {len(records)} | trechos físicos: {len(groups)}")
     print(f"extensão bruta: {br(raw_km)} km | deduplicada: {br(dedup_km)} km")
     print(f"vértices: {v_before:,} -> {v_after:,} (tol {tol})".replace(",", "."))
+    relatorio_intel(intel)
     print(f"arquivo: {out} ({size / 1e6:.2f} MB)")
     q = {}
     for r in report:
