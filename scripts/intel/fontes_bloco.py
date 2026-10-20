@@ -26,8 +26,8 @@ ACESSO = "2026-10-20"
 BASE = [
     {"nome": "SNV 202607A, Sistema Nacional de Viação (DNIT)",
      "url": "https://www.gov.br/dnit/pt-br/assuntos/atlas-e-mapas/pnv-e-snv", "periodo": "versão 202607A (jul/2026)",
-     "acesso": ACESSO, "licenca": "Informação pública (LAI, Lei 12.527/2011)",
-     "nota": "Shapefile obtido pelo Drive do usuário (arquivo 202607A.zip); congelado em data/base/snv.json."},
+     "acesso": ACESSO, "licenca": "não declarada na fonte",
+     "nota": "arquivo 202607A.zip obtido do Google Drive do usuário; congelado em data/base/snv.json."},
     {"nome": "RoadShow 2026-2027 v40 (Ministério dos Transportes)",
      "url": "https://www.gov.br/transportes/pt-br/assuntos/concessoes/concessoes-rodoviarias-2027",
      "periodo": "14/10/2026", "acesso": ACESSO, "licenca": "Informação pública (LAI, Lei 12.527/2011)",
@@ -87,7 +87,7 @@ def fontes_dos_blocos(intel_dir=INTEL):
 
 
 def montar(intel_dir=INTEL):
-    return {"fontes": fontes_dos_blocos(intel_dir), "indisponiveis": INDISPONIVEIS, "base": BASE}
+    return {"fontes": fontes_dos_blocos(intel_dir), "indisponiveis": list(INDISPONIVEIS), "base": list(BASE)}
 
 
 def montar_manifesto(manifest_dir=MANIFEST_DIR):

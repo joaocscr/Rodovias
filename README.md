@@ -2,7 +2,7 @@
 
 Mapa interativo dos trechos do **SNV (Sistema Nacional de Viação, DNIT)**, versão 202607A, sobre o mapa das UFs do Brasil, com os dados de mercado do **RoadShow 2026-2027** do Ministério dos Transportes (v40, 14/10/2026) para estudar as concessões rodoviárias federais. Na v3, o mapa ganha camadas de tráfego, praças de pedágio, carga, agro, multimodal, rodovias estaduais e a carteira de projetos. Feito para análise interna, no design system Galapagos.
 
-**Abrir:** dê duplo clique em [`mapa-rodovias.html`](mapa-rodovias.html). É um arquivo único (até 15 MB; hoje ~9,7 MB) que roda offline: dados, código, estilos e fontes estão embutidos.
+**Abrir:** dê duplo clique em [`mapa-rodovias.html`](mapa-rodovias.html). É um arquivo único (até 15 MB; cerca de 10 MB (limite 15 MB)) que roda offline: dados, código, estilos e fontes estão embutidos.
 
 ## Abas
 
@@ -30,8 +30,8 @@ Cada bloco fica em `data/intel/<bloco>.json` (versionado) e é embutido no HTML 
 | `carga` | ONTL/Infra S.A., PNL 2035 (cenário-base) | ano-base 2017 | modelado |
 | `agro` e `municipios` | IBGE (PAM, estoques, malha municipal) | 2025 | medido |
 | `multimodal` | BaseFerro, ANTAQ, ANTT SIADE, IBGE Logística, Comex Stat, CONAB | 2024 a set/2026 | medido |
-| `estaduais` | Infra S.A. (malha estadual), ARTESP, AGERGS, Ager-MT, ABCR | CIDE 2021 e fichas de 2024–2026 | medido |
-| `pipeline` | MT (carteira v40), ANTT, BNDES Hub, portais estaduais, imprensa | 14/10/2026 a out/2026 | sem rótulo (carteira curada) |
+| `estaduais` | Infra S.A. (malha estadual), ARTESP, AGERGS, Ager-MT, ABCR | CIDE 2021 (malha); fichas, imprensa e releases de 2019–2026 | medido |
+| `pipeline` | MT (carteira v40), ANTT, BNDES Hub, portais estaduais, imprensa | out/2025 a out/2026 | sem rótulo (carteira curada) |
 | `fontes` | lista de todas as fontes, as da base e as indisponíveis | gerado a partir dos blocos | não se aplica |
 
 O bloco `fontes` relaciona também o que **não** foi possível obter, com o motivo (por exemplo, o portal PNCT do DNIT, o painel de cargas da ANTT, que só existe em Power BI, e o PNL 2050 por link de rodovia).
@@ -70,7 +70,7 @@ python scripts/intel/fontes_bloco.py   # data/intel/fontes.json e data/intel/man
 python scripts/build.py                # HTML único; imprime o tamanho de cada bloco em KB
 ```
 
-Os brutos ficam em `data/raw/` (fora do git, ~1 GB) e o build nunca os lê. O manifesto (`data/intel/manifest.json`, com URL, data de acesso, tamanho e SHA-256 de cada arquivo baixado) e os JSON processados estão também na pasta Rodovias do Google Drive, subpasta `v3-dados`. O manifesto não vai para o HTML; o bloco `fontes` vai. O pipeline de concessões vem de `data/intel/pipeline.csv`, editado à mão; `python scripts/intel/pipeline.py build` valida o CSV e regenera o JSON.
+Os brutos ficam em `data/raw/` (fora do git, ~3,4 GB em disco; o manifesto lista 254 arquivos, ~1,1 GB baixados) e o build nunca os lê. O manifesto (`data/intel/manifest.json`, com URL, data de acesso, tamanho e SHA-256 de cada arquivo baixado) e os JSON processados estão também na pasta Rodovias do Google Drive, subpasta `v3-dados`. O manifesto não vai para o HTML; o bloco `fontes` vai. O pipeline de concessões vem de `data/intel/pipeline.csv`, editado à mão; `python scripts/intel/pipeline.py build` valida o CSV e regenera o JSON.
 
 ## Regenerar com um SNV novo
 
