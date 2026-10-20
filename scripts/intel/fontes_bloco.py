@@ -9,6 +9,7 @@
 
 Uso: python scripts/intel/fontes_bloco.py [build]
 """
+import copy
 import json
 import sys
 from pathlib import Path
@@ -27,7 +28,7 @@ BASE = [
     {"nome": "SNV 202607A, Sistema Nacional de Viação (DNIT)",
      "url": "https://www.gov.br/dnit/pt-br/assuntos/atlas-e-mapas/pnv-e-snv", "periodo": "versão 202607A (jul/2026)",
      "acesso": ACESSO, "licenca": "não declarada na fonte",
-     "nota": "arquivo 202607A.zip obtido do Google Drive do usuário; congelado em data/base/snv.json."},
+     "nota": "arquivo 202607A.zip obtido do Google Drive do usuário; o rodapé do site do DNIT declara CC BY-ND 3.0, mas a página não cita a versão 202607A; congelado em data/base/snv.json."},
     {"nome": "RoadShow 2026-2027 v40 (Ministério dos Transportes)",
      "url": "https://www.gov.br/transportes/pt-br/assuntos/concessoes/concessoes-rodoviarias-2027",
      "periodo": "14/10/2026", "acesso": ACESSO, "licenca": "Informação pública (LAI, Lei 12.527/2011)",
@@ -87,7 +88,7 @@ def fontes_dos_blocos(intel_dir=INTEL):
 
 
 def montar(intel_dir=INTEL):
-    return {"fontes": fontes_dos_blocos(intel_dir), "indisponiveis": list(INDISPONIVEIS), "base": list(BASE)}
+    return {"fontes": fontes_dos_blocos(intel_dir), "indisponiveis": copy.deepcopy(INDISPONIVEIS), "base": copy.deepcopy(BASE)}
 
 
 def montar_manifesto(manifest_dir=MANIFEST_DIR):

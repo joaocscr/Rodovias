@@ -71,6 +71,15 @@ def test_indisponiveis_e_base(fontes):
     assert all(b["url"].startswith("http") or b["url"] == "" for b in fontes["base"])
 
 
+def test_montar_devolve_copias_profundas():
+    m = fontes_bloco.montar()
+    antes = json.dumps([fontes_bloco.INDISPONIVEIS, fontes_bloco.BASE], sort_keys=True)
+    m["indisponiveis"][0]["motivo"] = "x"
+    m["indisponiveis"].append({})
+    m["base"][0]["nome"] = "x"
+    assert json.dumps([fontes_bloco.INDISPONIVEIS, fontes_bloco.BASE], sort_keys=True) == antes
+
+
 def test_fontes_json_esta_em_dia_com_os_blocos(fontes):
     assert fontes_bloco.montar() == fontes
 
