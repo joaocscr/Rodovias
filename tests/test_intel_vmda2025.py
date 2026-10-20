@@ -209,8 +209,19 @@ def test_fonte_em_linguagem_clara(d):
             assert not achado, (k, achado.group(0))
 
 
-def test_manifesto_registra_o_arquivo_do_drive():
+def _item_do_drive():
     itens = json.loads(MANIFEST.read_text(encoding="utf-8"))
-    it = next(i for i in itens if i["url"] == DRIVE)
+    return next(i for i in itens if i["url"] == DRIVE)
+
+
+def test_manifesto_registra_o_arquivo_do_drive():
+    it = _item_do_drive()
     assert it["dominio"] == "vmda2025" and "fornecida pelo usuário" in it["descricao"]
-    assert (ROOT / it["arquivo"]).stat().st_size == it["bytes"] and len(it["sha256"]) == 64
+    assert it["bytes"] > 0 and len(it["sha256"]) == 64
+    assert ROOT / it["arquivo"] == vmda2025.ZIP
+
+
+@pytest.mark.skipif(not vmda2025.ZIP.exists(), reason="sem o bruto do VMDa 2025 em data/raw/")
+def test_bruto_do_drive_confere_com_o_manifesto():
+    it = _item_do_drive()
+    assert (ROOT / it["arquivo"]).stat().st_size == it["bytes"]

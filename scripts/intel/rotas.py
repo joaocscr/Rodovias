@@ -61,7 +61,7 @@ COR_ROTA = {(0.99, 0.76, 0.0): "1", (0.92, 0.38, 0.62): "2", (0.0, 0.64, 0.33): 
             (0.0, 0.55, 0.82): "5", (0.68, 0.14, 0.13): "4"}
 COR_TRECHO = {(0.58, 0.36, 0.0): "brown", (0.29, 0.29, 0.29): "gray"}
 FAIXA_MIN = 20  # itens: faixa preenchida na cor de uma rota (descarta as bolinhas da legenda, com 4)
-COR_RIO, COR_CABOTAGEM, COR_FERROVIA = (0.19, 0.32, 0.63), (0.16, 0.26, 0.47), (0.44, 0.44, 0.43)
+COR_RIO, COR_CABOTAGEM = (0.19, 0.32, 0.63), (0.16, 0.26, 0.47)
 
 # --- bloco ------------------------------------------------------------------------------------------------------
 TIPO_POR_KIND = {"rota": "rota", "hidrovia_overlay": "hidrovia", "cabotagem": "cabotagem",
@@ -139,7 +139,8 @@ ROTAS = [
         "rodovias": ["BR-364", "BR-317", "BR-070", "BR-425", "BR-163", "IIRSA Sur (Peru)"],
         "hidrovias": ["Rio Madeira: Porto Velho–Manaus"],
         "obras": ["Construção do contorno de Brasiléia, na BR-317",
-                  "Duas pontes na BR-425, entre Nova Mamoré e Guajará-Mirim (RO)",
+                  ("Duas pontes na BR-425, entre Nova Mamoré e Guajará-Mirim (RO), inauguradas segundo o "
+                   "relatório 2024"),
                   "Ponte Brasil–Bolívia sobre o rio Mamoré, em Guajará-Mirim (RO)",
                   "Duplicação da BR-364 entre Vilhena e Porto Velho",
                   "Dragagem do rio Madeira",
@@ -258,9 +259,10 @@ def _lonlat(x, y):
     return [round((x - CX[1]) / CX[0], 3), round((y - CY[1]) / CY[0], 3)]
 
 
-def extrair(pdf=PDF, dest=None):
-    """Separa as linhas da p. 7 por cor/espessura → GeoJSON georreferenciado (kind/rota); grava em `dest` se dado.
+def extrair(pdf=PDF):
+    """Separa as linhas da p. 7 por cor/espessura → GeoJSON georreferenciado (kind/rota).
 
+    Ferrovias de fundo ficam de fora.
     Quase todas as rotas são traços (stroke). O ramal Tumaco–Puerto Asís–Putumayo (Rota 2) e dois trechos da Rota 1
     perto de Macapá/Belém vêm como faixas preenchidas: delas se tira o eixo."""
     import warnings
@@ -269,10 +271,11 @@ def extrair(pdf=PDF, dest=None):
     import pymupdf
     from shapely.geometry import LineString
 
-    warnings.filterwarnings("ignore")
-    page = pymupdf.open(pdf)[PAGINA]
-    rotas_, trechos, rios, cab, ferro = [], [], [], [], []
-    for d in page.get_drawings():
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        drawings = pymupdf.open(pdf)[PAGINA].get_drawings()
+    rotas_, trechos, rios, cab = [], [], [], []
+    for d in drawings:
         f = tuple(round(x, 2) for x in d["fill"]) if d.get("fill") else None
         if d["type"] == "f" and f in COR_ROTA and len(d["items"]) >= FAIXA_MIN:
             rotas_.append((COR_ROTA[f], _eixo(_achatar(d["items"]))))
@@ -292,8 +295,6 @@ def extrair(pdf=PDF, dest=None):
             rios.append(pts)
         elif c == COR_CABOTAGEM and w == 1.94 and da and da != "[] 0":
             cab.append(pts)
-        elif c == COR_FERROVIA and w == 1.94:
-            ferro.append(pts)
     # hidrovia: trecho de rio desenhado sobre a linha de uma rota (≥ 70% de 15 amostras a < 2,5 pt)
     rv = np.array([q for _, p in rotas_ for q in p])
     hid = []
@@ -313,14 +314,7 @@ def extrair(pdf=PDF, dest=None):
 
     fs = [feat("rota", r, p) for r, p in rotas_] + [feat("trecho_" + k, None, p) for k, p in trechos]
     fs += [feat("hidrovia_overlay", None, p) for p in hid] + [feat("cabotagem", None, p, 0.02) for p in cab]
-    fs += [feat("ferrovia_fundo", None, p, 0.02) for p in ferro]
-    out = {"type": "FeatureCollection", "features": fs,
-           "_note": "Extracted from MPO apresentacao-rotas-de-integracao-01-07-26 p.7 (vector). Georef: plate carree "
-                    "fit on 70 city markers, RMS ~1.7px (~9 km). Schematic cartographic generalisation."}
-    if dest:
-        Path(dest).parent.mkdir(parents=True, exist_ok=True)
-        Path(dest).write_text(json.dumps(out, separators=(",", ":")), encoding="utf-8")
-    return out
+    return {"type": "FeatureCollection", "features": fs}
 
 
 # --- montagem -------------------------------------------------------------------------------------------------
@@ -420,8 +414,9 @@ def _fontes():
          "periodo": "2026", "acesso": ac.get(URL_IMAGEM[1], hoje), "licenca": LICENCA_MPO,
          "nota": "Nós (cidades e portos) de cada rota, na ordem do traçado, e a situação no Brasil (previsão de "
                  "conclusão)."},
-        {"nome": "Natural Earth — Admin 0 Countries 1:50m", "url": URL_NE, "periodo": "versão do ramo master",
-         "acesso": ac.get(URL_NE, hoje), "licenca": LICENCA_NE,
+        {"nome": "Natural Earth — Admin 0 Countries 1:50m", "url": URL_NE,
+         "periodo": "versão publicada no repositório oficial (out/2026)", "acesso": ac.get(URL_NE, hoje),
+         "licenca": LICENCA_NE,
          "nota": "Contorno dos países vizinhos, simplificado (cerca de 0,005°). O Brasil fica fora (o mapa já tem as "
                  "UFs); a Guiana Francesa sai do polígono da França; ilhas pequenas e distantes ficam de fora."},
     ]

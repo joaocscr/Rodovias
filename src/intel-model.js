@@ -20,6 +20,9 @@ const IntelModel = (() => {
   // VMDa 2025 (v3.1, DNIT, modelado): total e sentidos por físico, total por linha da malha estadual; sem leves/pesados.
   // Só conta como presente com o array fis.t. Sem ele, Tráfego e veíc·km voltam ao VMDa 2023 (leves + pesados).
   const v25Of = intel => (intel && intel.vmda2025 && intel.vmda2025.fis && Array.isArray(intel.vmda2025.fis.t) ? intel.vmda2025 : null);
+  // Total do VMDa 2025 (federal e estadual, mesma regra): 0 = sem dado, como no build do bloco (volume zero fica sem valor).
+  // Assim um 0 nunca entra no veíc·km nem na cobertura, e no mapa os dois ficam em "Sem dado".
+  const v25Total = x => (has(x) && x > 0 ? x : null);
   const vmda23Fonte = intel => { const v = vmdaOf(intel); return v ? `Infra S.A./DNIT, VMDa ${v.ano} (modelado)` : DASH; };
   const vmda23Ref = intel => { const v = vmdaOf(intel); return v ? `VMDa ${v.ano}, modelado` : DASH; };
 
@@ -58,7 +61,7 @@ const IntelModel = (() => {
     const out = new Array(nFis);
     if (mode === 'trafego' && v25Of(intel)) {
       const t = v25Of(intel).fis.t;
-      for (let j = 0; j < nFis; j++) out[j] = has(t[j]) ? t[j] : null;
+      for (let j = 0; j < nFis; j++) out[j] = v25Total(t[j]);
       return out;
     }
     if (mode === 'trafego' || mode === 'pesados') {
@@ -116,10 +119,11 @@ const IntelModel = (() => {
     return t ? (d[t[I_SUP]] ?? null) : null;
   }
 
-  // Volume total do físico j usado no Tráfego e no veíc·km: VMDa 2025 quando o bloco existe, senão leves + pesados 2023.
+  // Volume total do físico j usado no Tráfego e no veíc·km: VMDa 2025 quando o bloco existe (0 = sem dado), senão
+  // leves + pesados 2023.
   function volTotal(intel, j) {
     const v = v25Of(intel);
-    if (v) return has(v.fis.t[j]) ? v.fis.t[j] : null;
+    if (v) return v25Total(v.fis.t[j]);
     const vm = vmdaOf(intel);
     return vm ? sumNullable(vm.l && vm.l[j], vm.p && vm.p[j]) : null;
   }
@@ -179,7 +183,7 @@ const IntelModel = (() => {
     const l = vm ? at(vm.l, j) : null, p = vm ? at(vm.p, j) : null;
     const tot = sumNullable(l, p);
     const pctPes = p != null && tot > 0 ? p / tot : null;
-    const t25 = v25 ? at(v25.fis.t, j) : null;
+    const t25 = v25 ? v25Total(v25.fis.t[j]) : null;
     const vol = volTotal(intel, j);
     const anos = nAnos(ac);
     const n = ac ? at(ac.n, j) : null, m = ac ? at(ac.m, j) : null, ext = snv.fis[j].ext;
@@ -202,14 +206,14 @@ const IntelModel = (() => {
   }
 
   // VMDa 2025 das linhas da malha estadual, na ordem de estaduais.malha: {ano, t, ns, ext}; null sem um dos blocos
-  // ou com tamanhos diferentes (o total vale por posição).
+  // ou com tamanhos diferentes (o total vale por posição). t: 0 = sem dado, como na malha federal (v25Total).
   function estTrafego(intel) {
     const v = intel && intel.vmda2025, e = v && v.estaduais, m = intel && intel.estaduais && intel.estaduais.malha;
     if (!e || !Array.isArray(e.t) || !m || !Array.isArray(m.p) || e.t.length !== m.p.length) return null;
     const iExt = Array.isArray(m.campos) ? m.campos.indexOf('ext') : -1, linhas = Array.isArray(m.linhas) ? m.linhas : [];
     return {
       ano: v.ano,
-      t: e.t.map(x => (has(x) && x > 0 ? x : null)),
+      t: e.t.map(v25Total),
       ns: e.t.map((_, i) => (Array.isArray(e.ns) && e.ns[i] ? 1 : 0)),
       ext: e.t.map((_, i) => (iExt >= 0 && linhas[i] && has(linhas[i][iExt]) ? linhas[i][iExt] : null)),
     };

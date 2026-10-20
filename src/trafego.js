@@ -70,7 +70,7 @@ const Trafego = (() => {
     const f = [k.nPracas != null && fontePracas(), fVmda, ac && fonte(tr, /PRF/)].filter(Boolean);
     const km = x => IM.fmtInt(x);
     const note = k.vkmEst != null
-      ? `Rodovias estaduais: linhas da malha estadual (pavimentadas e fora das BRs), ${km(k.kmEst)} km com estimativa de ${km(k.kmEstTotal)} km; veíc·km/dia = Σ VMDa × extensão.`
+      ? `Rodovias estaduais: trechos da malha estadual pavimentados, duplicados ou em obras de pavimentação, mais os usados por concessões estaduais; ficam fora os trechos com código ou jurisdição federal e os que se sobrepõem a rodovias federais do SNV em mais de 80% da extensão. ${km(k.kmEst)} km com estimativa de ${km(k.kmEstTotal)} km; veíc·km/dia = Σ VMDa × extensão.`
       : '';
     return card('t-kpis', 'Tráfego e segurança em números',
       `Praças medidas pela ANTT, volume modelado da malha federal${k.vkmEst != null ? ' e da estadual' : ''} e acidentes registrados pela PRF`,

@@ -5,7 +5,7 @@ Spec: `docs/superpowers/specs/2026-10-20-v3.1-rotas-paleta-vmda2025-design.md` �
 ## Regras
 
 - **Interface Galapagos.** Fundo, texto, botões, painéis, malha federal base (modos Concessões e Situação física), praças de pedágio, fundo municipal e realce de seleção continuam com `COLORS` (`#183C80`, `#0071BB`, `#231F20`, `#525254`, `#F7F7F8`).
-- **Cores de dado só dos tokens** `DATA`, `ROTAS`, `RAMPS`, `ROTAS_EXTRA` e `PIPE_STATUS` de `src/styles-map.js` (lista completa em `DATA_TOKENS`). O e2e confere que as linhas do mapa em cada modo e as feições de cada camada ligada só usam esses tokens (`MapView.lineColors()`, `Layers.colorsUsed()`).
+- **Cores de dado só dos tokens** `DATA`, `ROTAS`, `RAMPS`, `ROTAS_EXTRA` e `PIPE_STATUS` de `src/styles-map.js` (lista completa em `DATA_TOKENS`); os estilos de "sem dado" (`QUANT_NONE`, `EST_NONE`) usam o Light Grey da interface. O e2e confere que as linhas do mapa em cada modo e as feições de cada camada ligada só usam esses tokens (`MapView.lineColors()`, `Layers.colorsUsed()`).
 - **Cor fixa por entidade**, nunca por posição. Toda cor de dado tem legenda ou rótulo; o texto fica na cor de texto, nunca na cor da série.
 - **Superfície de validação:** fundo do mapa `#F7F7F8` (`--surface "#F7F7F8"`, modo claro; o app não tem tema escuro).
 - Contraste abaixo de 3:1 (WARN "relief") é aceito porque toda cor tem legenda no painel ou na legenda do mapa; amarelo, magenta, verde-água e laranja ficam nesse caso.
@@ -70,12 +70,20 @@ Cinco passos claro → escuro, um tom por modo; cor sólida por classe (opacidad
 | Carga agrícola | `#fb7744` | `#da5821` | `#b43f00` | `#8a2e00` | `#621e00` |
 | Acidentes | `#ff6f69` | `#e34948` | `#c1252c` | `#9a0016` | `#6e000c` |
 
+`quantStyle(c, modo)` só aceita os quatro modos de `QUANT_MODES`; um modo desconhecido lança erro em vez de cair em silêncio na rampa do Tráfego (sem modo, o padrão continua sendo o Tráfego).
+
+### Malha estadual no modo Tráfego (`EST_TRAF`, `EST_NONE`)
+
+Com a camada de rodovias estaduais ligada no modo Tráfego, cada linha estadual com VMDa 2025 usa a cor da sua classe na rampa do Tráfego, nas mesmas quebras da malha federal, com espessura × 0,55 da federal na mesma classe (`EST_TRAF.weightFactor`; 1,5 → 6 px vira 0,825 → 3,3 px, também × `zoomFactor`). Assim a malha federal continua lendo como a rede principal, e a legenda diz "com traço mais fino".
+
+"Sem dado (estadual)" (`EST_NONE`): Light Grey `#525254`, 0,75 px, opacidade 0,5, **contínuo**. O "sem dado" federal (`QUANT_NONE`) é Light Grey 1 px, opacidade 0,5, **tracejado** `2 4`. A legenda mostra as duas linhas ("Sem dado (federal)" e "Sem dado (estadual)"). Nos dois casos, um VMDa 2025 igual a 0 conta como sem dado (`IntelModel`, mesma regra para federal e estadual).
+
 ## Camadas (atribuição fixa)
 
 | Camada | Cor | Hex | Marca |
 |---|---|---|---|
 | Concessões estaduais | magenta (slot 5) | `#e87ba4` | 3 px com halo Spacial Grey `#231F20` 35 % (+3 px) |
-| Malha estadual | verde (slot 6) | `#008300` | 1 px, opacidade 0,6 |
+| Malha estadual | verde (slot 6) | `#008300` | 1 px, opacidade 0,6 (no modo Tráfego, rampa do Tráfego × 0,55: ver "Malha estadual no modo Tráfego") |
 | Ferrovias em operação | amarelo (slot 4) | `#eda100` | 2 px tracejado `6 3` |
 | Fluxos ferroviários de grãos (SIADE) | vermelho (slot 8) | `#e34948` | origem → destino, 1–8 px ∝ t, opacidade 0,8 |
 | Portos e ETCs | violeta (slot 7) | `#6250d6` | quadrado (organizado/público) ou círculo (TUP/ETC), borda `#F7F7F8` |
@@ -91,13 +99,22 @@ O slot 1 (azul) fica fora das camadas: é quase igual ao Bright Blue da malha fe
 - Portos (violeta) × malha federal e praças (Bright Blue): ΔE normal 11,6, CVD 4,9. Quadrado ou círculo com borda clara contra linha ou círculo proporcional.
 - Concessões estaduais (magenta) × SIADE (vermelho): ΔE 13,2 normal e 12,3 CVD. Halo escuro e traçado na rodovia contra reta origem → destino.
 - Malha estadual (verde) × SIADE (vermelho): CVD 7,2. Linha fina contra reta larga.
-- Obras (laranja) × SIADE (vermelho): ΔE 7,1 normal. Ponto contra linha.
+- Obras (laranja) × SIADE (vermelho): ΔE 7,1 normal e 5,6 CVD (deutan), abaixo dos dois pisos. Ponto contra linha.
 
-**Limite conhecido.** Uma camada pode coincidir com a rampa do modo ativo: obras em laranja no modo Carga agrícola, portos em violeta no modo Pesados, SIADE em vermelho no modo Acidentes. Com 8 matizes, 4 rampas e 7 camadas, alguma coincidência é inevitável. As quatro camadas de linha (estaduais, concessões estaduais, ferrovias, SIADE) usam matizes fora das rampas dos modos sempre que possível; as de ponto distinguem-se pela forma.
+O teste `tests/palette.test.mjs` confere todos os pares prioritários acima (normal ≥ 15 e CVD ≥ 8) e os valores dos pares secundários.
+
+**Limite conhecido: camadas × rampas.** Duas camadas usam **exatamente o mesmo hex** de um passo de rampa:
+
+- Fluxos SIADE = `#e34948` = passo 2 da rampa de Acidentes.
+- Portos e ETCs = `#6250d6` = passo 3 da rampa de Pesados.
+
+Isso acontece porque cada rampa foi construída no matiz OKLCH do slot categórico (spec §4: um tom por modo) e, onde o slot cai na escada de luminosidade, o próprio slot é o passo (ver "Rampas"). Trocar o hex da camada quebraria a cor fixa por entidade; trocar o passo quebraria a escada. Então, no modo Acidentes, um fluxo SIADE tem a mesma cor de um trecho da classe 2, e no modo Pesados um porto tem a cor de um trecho da classe 3. O que os separa é a marca: SIADE é uma reta origem → destino com opacidade 0,8 (não segue a rodovia) e o porto é um quadrado ou círculo com borda Snow White. Cada um tem a sua entrada no painel Camadas.
+
+Obras (laranja `#eb6834`) não está na rampa de Carga agrícola (L 0,671 fica entre os passos 1 e 2), mas tem o mesmo matiz e fica perto dos dois (ΔE normal 4,6 com `#fb7744` e 4,9 com `#da5821`); é ponto, não linha. Malha estadual, concessões estaduais e ferrovias não estão em nenhuma rampa. Com 8 matizes, 4 rampas e 7 camadas, alguma coincidência é inevitável.
 
 ## Status do pipeline (`PIPE_STATUS`)
 
-Cada chip de status da seção Pipeline (aba Projetos) ganha um ponto colorido antes do texto. As etapas seguem uma rampa ordinal verde-água de 7 passos: quanto mais avançada a etapa, mais escuro o ponto. Suspenso e cancelado usam as cores de status fixas do método (alerta e crítico), que não reaproveitam slots categóricos. O CSS é gerado dos tokens (`dataTokenCss()`, injetado por `UI.init`). O texto do status continua no chip e na tabela.
+Cada chip de status da seção Pipeline (aba Projetos) e a coluna Status de cada linha da tabela ganham o mesmo ponto colorido antes do texto, com o mesmo token. As etapas seguem uma rampa ordinal verde-água de 7 passos: quanto mais avançada a etapa, mais escuro o ponto. Suspenso e cancelado usam as cores de status fixas do método (alerta e crítico), que não reaproveitam slots categóricos. O CSS é gerado dos tokens (`dataTokenCss()`, injetado por `UI.init`). O texto do status continua no chip e na célula.
 
 | Status | Hex |
 |---|---|

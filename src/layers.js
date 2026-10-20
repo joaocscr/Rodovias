@@ -18,9 +18,9 @@ const Layers = (() => {
     nw: ['left', [-8, -8]], sw: ['left', [-8, 8]], ne: ['right', [8, -8]], se: ['right', [8, 8]] };
   const POINT_KEYS = ['pracas', 'portos', 'sats', 'obras']; // de cima para baixo (prioridade do clique)
   const HIT_PAD = 3, LINE_TOL = 5;
-  // Malha estadual no modo Tráfego (v3.1): linhas com VMDa 2025 na rampa e nas classes do modo (quebras da malha federal,
-  // mesma espessura); sem dado em cinza fino contínuo (o "sem dado" federal é tracejado).
-  const EST_NONE = { color: COLORS.lightGrey, weight: 0.75, opacity: 0.5 };
+  // Malha estadual no modo Tráfego (v3.1): linhas com VMDa 2025 na rampa e nas classes do modo (quebras da malha federal),
+  // com espessura × EST_TRAF.weightFactor (0,55) da federal na mesma classe; sem dado em EST_NONE, cinza fino contínuo (o
+  // "sem dado" federal é tracejado). Os dois estilos ficam em styles-map.js (docs/paleta.md).
   let map = null, intel = null, trafBreaks = null;
   let pointCb = () => {}, munCb = () => {}, toggleCb = () => {};
   const built = {}, on = {}, rowsCache = {}, fundoCache = {};
@@ -175,9 +175,10 @@ const Layers = (() => {
     et.t.forEach(v => { if (v != null) { n++; if (v < min) min = v; if (v > max) max = v; } else semDado++; });
     for (const c of [...byClass.keys()].sort((x, y) => x - y)) {
       const s = c < 0 ? EST_NONE : quantStyle(c, 'trafego');
-      const pl = L.polyline(byClass.get(c), polyOpts(b.rend, { color: s.color, weight: s.weight, opacity: s.opacity }));
+      const w = c < 0 ? s.weight : s.weight * EST_TRAF.weightFactor;
+      const pl = L.polyline(byClass.get(c), polyOpts(b.rend, { color: s.color, weight: w, opacity: s.opacity }));
       group.addLayer(pl);
-      lines.push({ pl, w: s.weight });
+      lines.push({ pl, w });
     }
     const porClasse = Object.fromEntries([...byClass.entries()].map(([c, ls]) => [c, ls.length]));
     return { group, lines, breaks, ano: et.ano, n, semDado, min: n ? min : null, max: n ? max : null, porClasse };
@@ -185,7 +186,7 @@ const Layers = (() => {
 
   const estTrafWanted = () => !!(trafBreaks && built.estaduais && built.estaduais.dec && IM.estTrafego(intel));
 
-  // Espessura das classes acompanha o zoom, como a malha federal (zoomFactor).
+  // Espessura das classes acompanha o zoom, como a malha federal (zoomFactor); a razão estadual/federal fica em 0,55.
   function estTrafWeights() {
     const t = built.estaduais && built.estaduais.traf;
     if (!t || !map.hasLayer(t.group)) return;

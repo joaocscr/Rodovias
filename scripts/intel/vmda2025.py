@@ -147,8 +147,8 @@ def casar(lk, cand, linhas):
     linhas = np.asarray(linhas, dtype=object)
     pts = np.concatenate([shapely.line_interpolate_point(linhas, f, normalized=True) for f in PONTOS])
     (src, dst), dist = tree.query_nearest(pts, return_distance=True, all_matches=False)
-    idx = np.empty(len(pts), dtype=int)
-    dd = np.empty(len(pts))
+    idx = np.full(len(pts), -1, dtype=int)  # ponto sem vizinho (geometria vazia): índice -1 e distância infinita,
+    dd = np.full(len(pts), np.inf)  # que nunca passa de MAX_M
     idx[src], dd[src] = cand[dst], dist  # sem max_distance: um resultado por ponto
     n = len(linhas)
     idx, dd = idx.reshape(len(PONTOS), n), dd.reshape(len(PONTOS), n)

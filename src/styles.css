@@ -493,6 +493,13 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
   content: ""; flex: none; width: 10px; height: 10px; margin-right: 8px; border-radius: 50%;
   box-shadow: 0 0 0 1px var(--color-snow-white);
 }
+/* Mesmo ponto na coluna Status da tabela do pipeline (status sem token: sem ponto). */
+.pstatus { display: inline-flex; align-items: center; }
+.pstatus[data-pdot]::before {
+  content: ""; flex: none; width: 10px; height: 10px; margin-right: 8px; border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--color-snow-white);
+}
+.pstatus[data-pdot=""]::before { content: none; }
 .pipeline .table-wrap { max-height: calc(100vh - 240px); }
 .pipe-obs { margin-top: 8px; font-weight: 400; color: var(--color-spacial-grey); }
 .pipe-obs > summary { display: inline-flex; align-items: center; min-height: 24px; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--color-bright-blue); }

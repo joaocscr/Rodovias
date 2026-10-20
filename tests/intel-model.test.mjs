@@ -354,6 +354,21 @@ test('VMDa 2025: estTrafego alinha o total às linhas da malha estadual; tamanho
   assert.equal(IntelModel.estTrafego(null), null);
 });
 
+test('VMDa 2025: 0 = sem dado, na malha federal e na estadual (mesma regra)', () => {
+  const z = { ...intel, vmda2025: { ...v25, fis: { t: [0, null, 800, 300], c: [0, null, 400, 150], d: [0, null, 400, 150], ns: [0, 0, 1, 0] },
+    estaduais: { t: [0, null, 200], ns: [0, 0, 1] } } };
+  // federal: o 0 sai do mapa (null), do veíc·km e da cobertura; o cartão mostra o total como sem dado
+  assert.deepEqual(IntelModel.metricArray(z, snv, 'trafego'), [null, null, 800, 300]);
+  const a = IntelModel.aggregateIntel(z, snv, vis);
+  assert.equal(a.vkm, 800 * 0);
+  assert.equal(a.kmVmda, 0);
+  const f0 = IntelModel.fisIntel(z, snv, 0);
+  assert.deepEqual([f0.t25, f0.c25, f0.d25, f0.vkm, f0.pes25], [null, null, null, null, null]);
+  // estadual: idem
+  const malha = { campos: ['ext'], linhas: [[10], [2.5], [4]], p: [[], [], []] };
+  assert.deepEqual(IntelModel.estTrafego({ estaduais: { malha }, vmda2025: z.vmda2025 }).t, [null, null, 200]);
+});
+
 // ---------- Task 10: camadas e cartões de ponto ----------
 test('rodLabel: BR- como está, número vira <uf>-<n>, senão o texto original', () => {
   assert.equal(IntelModel.rodLabel('BR-101', 'RJ'), 'BR-101');

@@ -930,6 +930,16 @@ test('(e, f) Pipeline: ≥ 60 linhas por data prevista, filtros, contagem por st
   const pipeTok = await page.evaluate(() => PIPE_STATUS);
   assert.ok(dots.length >= 5);
   for (const [k, bg] of dots) assert.equal(bg, rgb(pipeTok[k]), k);
+  // o mesmo ponto (mesmo token) em cada linha da tabela, ao lado do texto do status
+  const rowDots = await page.$$eval('#pipe-table tbody tr td:nth-child(6) .pstatus', ss => ss.map(s =>
+    [s.dataset.pdot, s.textContent, getComputedStyle(s, '::before').backgroundColor, getComputedStyle(s, '::before').width]));
+  assert.equal(rowDots.length, await page.locator('#pipe-table tbody tr').count());
+  const lbl = await page.evaluate(() => Object.fromEntries(window.INTEL.pipeline.itens.map(i => [i.status, IntelModel.statusLabel(window.INTEL, i.status)])));
+  for (const [k, txt, bg, w] of rowDots) {
+    assert.equal(bg, rgb(pipeTok[k]), k);
+    assert.equal(w, '10px', k);
+    assert.equal(txt, lbl[k], k);
+  }
   // filtro de esfera e de status
   await page.selectOption('#pipe-esfera', 'estadual');
   const nE = await page.evaluate(() => window.INTEL.pipeline.itens.filter(i => i.esfera === 'estadual').length);
@@ -1074,6 +1084,10 @@ test('(b) Tráfego: ≥ 5 gráficos, "Fonte:" em cada cartão, KPIs do modelo, s
   const kSrc = await page.textContent('#card-t-kpis');
   assert.match(kSrc, /DNIT — VMDa 2025 .* · 2025 · modelado/);
   assert.match(kSrc, /Rodovias estaduais: .* km com estimativa de .* km/);
+  // cobertura exata: a malha inclui duplicados e em obras (não só "pavimentadas") e não afirma "fora das BRs"
+  assert.match(kSrc, /pavimentados, duplicados ou em obras de pavimentação, mais os usados por concessões estaduais/);
+  assert.match(kSrc, /se sobrepõem a rodovias federais do SNV em mais de 80% da extensão/);
+  assert.doesNotMatch(kSrc, /fora das BRs/);
   // a taxa de acidentes segue com o VMDa 2023 (leves/pesados), rotulada
   assert.match(await page.textContent('#card-t-taxa'), /÷ VMDa 2023/);
   // períodos das fontes em pt-BR
@@ -1256,6 +1270,14 @@ test('(d) Fontes: ≥ 30 fontes, ≥ 9 indisponíveis com motivo, bases v1/v2 e 
   const tipoDe = await page.$$eval('#fontes-table tbody tr', trs => trs.map(tr => [tr.children[0].textContent, tr.children[1].textContent, tr.children[5].textContent]));
   for (const [b, n, tp] of tipoDe) {
     if (b === 'Municípios' || b === 'Estaduais' || /Capas das concessões/.test(n)) assert.equal(tp, 'Cadastro', n);
+  }
+  // v3.1: blocos novos com nome legível (nunca a chave interna), VMDa 2025 modelado e rotas como cadastro
+  const blocos = new Set(tipoDe.map(r => r[0]));
+  assert.ok(blocos.has('Tráfego (VMDa 2025)') && blocos.has('Rotas de Integração'), [...blocos].join());
+  for (const b of blocos) assert.doesNotMatch(b, /^[a-z0-9]+$/, b);
+  for (const [b, n, tp] of tipoDe) {
+    if (b === 'Tráfego (VMDa 2025)') assert.equal(tp, 'Modelado', n);
+    if (b === 'Rotas de Integração') assert.equal(tp, 'Cadastro', n);
   }
 });
 
@@ -1509,6 +1531,7 @@ test('sem o bloco rotas: sem grupo no painel, "enquadrar a América do Sul" cai 
 // ---------- v3.1, Task 5: VMDa 2025 no front ----------
 // Cores das estaduais (camada ligada) e classes desenhadas.
 const estColors = p => p.evaluate(() => (Layers.colorsUsed().estaduais || []).slice().sort());
+const closeTo = (a, b, eps = 1e-9) => assert.ok(Number.isFinite(a) && Math.abs(a - b) < eps, `${a} != ${b}`);
 
 test('VMDa 2025: no modo Tráfego, as estaduais (camada ligada) usam a rampa e as classes federais; sem dado em cinza fino', async t => {
   await page.evaluate(() => { location.hash = '#mapa'; });
@@ -1557,18 +1580,34 @@ test('VMDa 2025: no modo Tráfego, as estaduais (camada ligada) usam a rampa e a
   assert.equal(rows[4].split(' – ')[1], lim[1]);
   assert.equal(await page.getAttribute('#legend [data-est-none] svg line', 'stroke'), '#525254');
   assert.equal(await page.getAttribute('#legend [data-est-none] svg line', 'stroke-dasharray'), null);
-  // espessura acompanha o zoom como a federal (classe 4 = 6 px × zoomFactor)
+  // espessura acompanha o zoom como a federal, × 0,55 da federal na mesma classe (classe 4: federal 6 px × zoomFactor,
+  // estadual 6 × 0,55 × zoomFactor); a malha federal continua a rede principal
+  assert.equal(await page.evaluate(() => EST_TRAF.weightFactor), 0.55);
   await page.evaluate(() => { MapView.map.setZoom(7, { animate: false }); });
   await page.waitForTimeout(100);
   const w = await page.evaluate(() => {
-    const ws = [];
+    const est = [], fed = [];
     MapView.map.eachLayer(l => {
       const r = l.options && l.options.renderer;
-      if (l instanceof L.Polyline && r && r.options.pane === 'l-estaduais' && l.options.color === RAMPS.trafego[4]) ws.push(l.options.weight);
+      if (!(l instanceof L.Polyline) || !r || l.options.color !== RAMPS.trafego[4]) return;
+      (r.options.pane === 'l-estaduais' ? est : fed).push(l.options.weight);
     });
-    return { ws, f: zoomFactor(MapView.map.getZoom()) };
+    return { est, fed: [...new Set(fed)], f: zoomFactor(MapView.map.getZoom()) };
   });
-  assert.ok(w.ws.length === 1 && Math.abs(w.ws[0] - 6 * w.f) < 1e-9, JSON.stringify(w));
+  assert.ok(w.est.length === 1 && Math.abs(w.est[0] - 6 * 0.55 * w.f) < 1e-9, JSON.stringify(w));
+  assert.ok(w.fed.length === 1 && Math.abs(w.fed[0] - 6 * w.f) < 1e-9, JSON.stringify(w));
+  closeTo(w.est[0] / w.fed[0], 0.55);
+  // demais classes: mesma razão (pesos-base da rampa × 0,55); sem dado estadual fica com a espessura própria (0,75 px)
+  const wc = await page.evaluate(() => {
+    const out = {};
+    MapView.map.eachLayer(l => {
+      const r = l.options && l.options.renderer;
+      if (l instanceof L.Polyline && r && r.options.pane === 'l-estaduais') out[l.options.color] = l.options.weight;
+    });
+    return { out, f: zoomFactor(MapView.map.getZoom()), base: QUANT_STYLES.map(s => s.weight) };
+  });
+  for (let c = 0; c < 5; c++) closeTo(wc.out[(await page.evaluate(k => RAMPS.trafego[k], c))], wc.base[c] * 0.55 * wc.f);
+  closeTo(wc.out['#525254'], 0.75 * wc.f);
   await page.evaluate(() => MapView.fitBrasil(false));
   // outro modo: estaduais voltam ao verde e a legenda não fala delas; de volta ao Tráfego, coloridas de novo
   await mode('pesados');

@@ -6,3 +6,4 @@ xlrd>=2.0
 shapely>=2.2
 pyproj>=3.8
 numpy>=2.5
+pymupdf>=2.0

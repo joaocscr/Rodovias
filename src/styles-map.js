@@ -123,12 +123,18 @@ const QUANT_STYLES = [
   { weight: 6, dash: null, opacity: 1, z: 5 },
 ];
 const QUANT_NONE = { color: COLORS.lightGrey, weight: 1, dash: '2 4', opacity: 0.5, z: 0 };
+// Malha estadual no modo Tráfego (VMDa 2025): cor da classe na rampa do Tráfego, nas quebras da malha federal, com
+// espessura × 0,55 da federal na mesma classe (a federal continua lendo como a rede principal). Sem dado (estadual):
+// Light Grey fino e contínuo, para não confundir com o "sem dado" federal (QUANT_NONE, tracejado).
+const EST_TRAF = { weightFactor: 0.55 };
+const EST_NONE = { color: COLORS.lightGrey, weight: 0.75, opacity: 0.5 };
 // Estilo completo por modo e classe, montado uma vez: {color, weight, dash, opacity, z}.
 const QUANT_MODE_STYLES = Object.fromEntries(QUANT_MODES.map(m =>
   [m, QUANT_STYLES.map((s, c) => Object.assign({ color: RAMPS[m][c] }, s))]));
 
 function quantStyle(c, mode = 'trafego') {
-  const st = QUANT_MODE_STYLES[mode] || QUANT_MODE_STYLES.trafego;
+  const st = QUANT_MODE_STYLES[mode];
+  if (!st) throw new Error(`quantStyle: modo quantitativo desconhecido "${mode}"`);
   return c < 0 ? QUANT_NONE : st[Math.min(c, st.length - 1)];
 }
 
@@ -221,13 +227,15 @@ const DATA_TOKENS = [...new Set([
   ...Object.values(ROTAS_EXTRA).map(x => x.color), ...Object.values(PIPE_STATUS),
 ].map(c => c.toUpperCase()))];
 
-// CSS gerado dos tokens: ponto colorido por status nos chips do pipeline (o texto do status continua no chip).
+// CSS gerado dos tokens: ponto colorido por status nos chips do pipeline e na coluna Status da tabela, com o mesmo token
+// (o texto do status continua no chip e na célula).
 function dataTokenCss() {
   return Object.entries(PIPE_STATUS).map(([k, c]) =>
-    `.chip[data-pstatus="${k}"]::before{background:${c}}`).join('\n');
+    `.chip[data-pstatus="${k}"]::before,.pstatus[data-pdot="${k}"]::before{background:${c}}`).join('\n');
 }
 
 if (typeof module !== 'undefined') {
   module.exports = { COLORS, DATA, DATA_SLOTS, ROTAS, RAMPS, ROTAS_EXTRA, ROTA_LINHA, ROTAS_PAIS, PIPE_STATUS, QUANT_MODES, QUANT_STYLES, QUANT_NONE,
+    EST_TRAF, EST_NONE,
     LAYER_STYLES, LINE_STYLES, CONC_STYLES, DATA_TOKENS, quantStyle, quantSwatch, layerSwatch, rotaSwatch, rotaExtraSwatch, rotasSwatch, dataTokenCss };
 }

@@ -93,7 +93,9 @@ test('camadas: cada uma com cor documentada (token), atribuição fixa', () => {
 test('tokens: todos hex válidos; CSS do pipeline gerado dos tokens', () => {
   for (const c of S.DATA_TOKENS) assert.match(c, HEX);
   const css = S.dataTokenCss();
-  for (const [k, c] of Object.entries(S.PIPE_STATUS)) assert.ok(css.includes(`.chip[data-pstatus="${k}"]::before{background:${c}}`), k);
+  for (const [k, c] of Object.entries(S.PIPE_STATUS)) {
+    assert.ok(css.includes(`.chip[data-pstatus="${k}"]::before,.pstatus[data-pdot="${k}"]::before{background:${c}}`), k);
+  }
 });
 
 test('rotas: hidrovia e estudos não repetem estilos federais (Em obra, Leito natural); extras e amostras com tokens; rótulo na legenda', () => {
@@ -123,4 +125,78 @@ test('rotas: hidrovia e estudos não repetem estilos federais (Em obra, Leito na
     assert.ok(S.rotaSwatch(id).includes(`stroke="${c}"`), id);
     assert.ok(S.rotasSwatch().includes(`stroke="${c}"`), id);
   }
+});
+
+// ΔE do par (a, b) lido do relatório do validador (all-pairs de 2 cores): pior CVD (protan/deutan) e visão normal.
+// O validador fica sem alteração; com 2 cores o "pior par" é o próprio par.
+function pairDE(a, b) {
+  const r = validate([a, b], { mode: 'light', surface: SURFACE, pairs: 'all' });
+  const num = name => Number(/ΔE ([\d.]+)/.exec(r.report.find(x => x[0] === name)[2])[1]);
+  return { cvd: num('CVD separation'), normal: num('Normal-vision floor') };
+}
+
+test('pares prioritários de docs/paleta.md: todos passam os dois pisos (normal ≥ 15, CVD ≥ 8)', () => {
+  const L = S.LAYER_STYLES, C = S.COLORS;
+  const prioritarios = {
+    'malha × concessões estaduais': [L.estaduais.color, L.estConc.color],
+    'concessões estaduais × federal Bright Blue': [L.estConc.color, C.brightBlue],
+    'concessões estaduais × federal Deep Blue': [L.estConc.color, C.deepBlue],
+    'ferrovias × SIADE': [L.ferrovias.color, L.siade.color],
+    'ferrovias × portos': [L.ferrovias.color, L.portos.fillColor],
+    'SIADE × portos': [L.siade.color, L.portos.fillColor],
+    'portos × obras': [L.portos.fillColor, L.obras.fillColor],
+    'portos × SATs': [L.portos.fillColor, L.sats.color],
+    'obras × SATs': [L.obras.fillColor, L.sats.color],
+    'ferrovias × malha': [L.ferrovias.color, L.estaduais.color],
+    'concessões estaduais × ferrovias': [L.estConc.color, L.ferrovias.color],
+  };
+  for (const [k, [a, b]] of Object.entries(prioritarios)) {
+    const d = pairDE(a, b);
+    assert.ok(d.normal >= 15 && d.cvd >= 8, `${k}: ${JSON.stringify(d)}`);
+  }
+});
+
+test('pares secundários de docs/paleta.md: abaixo de um piso, com os valores documentados', () => {
+  const L = S.LAYER_STYLES, C = S.COLORS;
+  const near = (x, y) => Math.abs(x - y) < 0.05;
+  const sec = [
+    ['portos × Bright Blue', L.portos.fillColor, C.brightBlue, { normal: 11.6, cvd: 4.9 }],
+    ['concessões estaduais × SIADE', L.estConc.color, L.siade.color, { normal: 13.2, cvd: 12.3 }],
+    ['malha estadual × SIADE', L.estaduais.color, L.siade.color, { cvd: 7.2 }],
+    ['obras × SIADE', L.obras.fillColor, L.siade.color, { normal: 7.1, cvd: 5.6 }],
+  ];
+  for (const [k, a, b, doc] of sec) {
+    const d = pairDE(a, b);
+    assert.ok(d.normal < 15 || d.cvd < 8, `${k}: ${JSON.stringify(d)}`);
+    for (const [m, v] of Object.entries(doc)) assert.ok(near(d[m], v), `${k} ${m}: ${d[m]} != ${v}`);
+  }
+});
+
+test('camadas × rampas: SIADE e portos são o mesmo hex de um passo de rampa; obras fora da rampa laranja', () => {
+  const L = S.LAYER_STYLES;
+  assert.equal(L.siade.color, S.RAMPS.acidentes[1]);
+  assert.equal(L.portos.fillColor, S.RAMPS.pesados[2]);
+  assert.ok(!S.RAMPS.carga.includes(L.obras.fillColor));
+  // as outras camadas de linha (malha, concessões estaduais, ferrovias) não estão em nenhuma rampa
+  const ramp = new Set(Object.values(S.RAMPS).flat());
+  for (const c of [L.estaduais.color, L.estConc.color, L.ferrovias.color]) assert.ok(!ramp.has(c), c);
+});
+
+test('quantStyle: modo desconhecido lança erro (não cai na rampa do Tráfego)', () => {
+  assert.throws(() => S.quantStyle(0, 'inexistente'), /modo quantitativo desconhecido/);
+  assert.throws(() => S.quantStyle(-1, 'concessoes'), /desconhecido/);
+  assert.throws(() => S.quantSwatch(0, 'situacao'), /desconhecido/);
+  // sem modo, o padrão continua sendo o Tráfego
+  assert.equal(S.quantStyle(0), S.quantStyle(0, 'trafego'));
+  assert.equal(S.quantStyle(0).color, S.RAMPS.trafego[0]);
+});
+
+test('malha estadual no modo Tráfego: espessura × 0,55 da federal; sem dado (estadual) em cinza fino contínuo', () => {
+  assert.equal(S.EST_TRAF.weightFactor, 0.55);
+  assert.deepEqual(S.EST_NONE, { color: S.COLORS.lightGrey, weight: 0.75, opacity: 0.5 });
+  assert.equal(S.EST_NONE.dash, undefined);
+  // o "sem dado" federal é tracejado; o estadual não, e é mais fino
+  assert.ok(S.QUANT_NONE.dash);
+  assert.ok(S.EST_NONE.weight < S.QUANT_NONE.weight);
+  assert.ok(new Set(S.DATA_TOKENS).has(S.EST_NONE.color.toUpperCase()));
 });

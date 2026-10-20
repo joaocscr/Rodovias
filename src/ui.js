@@ -364,10 +364,14 @@ const UI = (() => {
     </div>`;
   }
 
-  // Bloco "Tráfego e segurança" do cartão (números de IntelModel.fisIntel); omitido se o físico não tem nenhum dado.
-  // Trecho planejado (superfície PLA): tráfego e acidentes vêm marcados "trecho planejado no SNV".
-  // VMDa 2025 (DNIT): total, sentidos crescente/decrescente do SNV, pesados estimados (× % de pesados 2023) e veíc·km;
-  // "uso restrito (área urbana)" quando o modelo marca o trecho como não simulável. O VMDa 2023 (leves/pesados) segue abaixo.
+  // Bloco "Tráfego e segurança" do cartão (números de IntelModel.fisIntel). Cada grupo omite as linhas sem valor e some
+  // quando fica vazio. Com o bloco vmda2025, o grupo VMDa 2025 aparece sempre (Total "—" quando o físico não tem valor),
+  // então o bloco só é omitido sem o vmda2025 e sem nenhum dado nos outros grupos.
+  // - VMDa 2025 (DNIT): total, sentidos crescente/decrescente do SNV, pesados estimados (total × % de pesados 2023) e veíc·km;
+  //   "uso restrito (área urbana)" quando o modelo marca o trecho como não simulável.
+  // - VMDa 2023 (leves/pesados): leves, pesados, total e % pesados; o veíc·km fica aqui só sem o bloco 2025.
+  // - Acidentes (PRF): por ano, por km e por 10⁶ veíc·km (taxa sobre o VMDa 2023). Carga: modelo PNL.
+  // Trecho planejado (superfície PLA): os grupos VMDa 2025, VMDa 2023 e Acidentes vêm marcados "trecho planejado no SNV".
   function intelBlock(j) {
     const vm = vmdaOf(), v25 = IM.v25Of(intel), ac = acidOf(), ca = cargaOf(), f = IM.fisIntel(intel, snv, j);
     const pla = IM.fisSup(snv, j) === 'PLA' ? '<span class="tag-nv">trecho planejado no SNV</span>' : '';
@@ -773,9 +777,9 @@ const UI = (() => {
   }
 
   // ---------- Legenda ----------
-  // Amostra da malha estadual sem dado no modo Tráfego (cinza fino contínuo; 1 px na amostra para ficar legível).
+  // Amostra da malha estadual sem dado no modo Tráfego (EST_NONE: cinza fino contínuo; 1 px na amostra para ficar legível).
   function estNoneSwatch(width = 32) {
-    const s = Layers.EST_NONE;
+    const s = EST_NONE;
     return `<svg class="swatch" width="${width}" height="8" viewBox="0 0 ${width} 8" aria-hidden="true">` +
       `<line x1="1" y1="4" x2="${width - 1}" y2="4" stroke="${s.color}" stroke-width="1" stroke-opacity="${s.opacity}"/></svg>`;
   }
@@ -800,7 +804,7 @@ const UI = (() => {
     const ref = M.ref ? M.ref(intel) : '—';
     return `<div class="legend__title">${esc(M.label)} <span>${esc(M.unidade)}${ref !== '—' ? ` · ${esc(ref)}` : ''}</span></div>${rows.join('')}
       <div class="legend__tipo">${esc(TIPO_LABEL[M.tipo] || M.tipo)}</div>
-      ${est ? `<p class="legend__note" id="legend-est">Inclui rodovias estaduais (VMDa ${esc(String(est.ano))}), nas mesmas classes da malha federal.</p>` : ''}
+      ${est ? `<p class="legend__note" id="legend-est">Inclui rodovias estaduais (VMDa ${esc(String(est.ano))}), nas mesmas classes da malha federal, com traço mais fino.</p>` : ''}
       <div class="legend__src">Fonte: ${esc(M.fonte(intel))}</div>`;
   }
 
