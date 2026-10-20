@@ -1,0 +1,101 @@
+[
+ {
+  "dominio": "rotas",
+  "descricao": "Apresentação Rotas de Integração Sul-Americana, 01/07/2026 (PDF vetorial; p. 7 mapa geral, p. 10-20 por rota)",
+  "url": "https://www.gov.br/planejamento/pt-br/assuntos/articulacao-institucional/repositorio-de-arquivos-legislacao-eleitoral/apresentacao-rotas-de-integracao-01-07-26-defeso.pdf/@@display-file/file",
+  "arquivo": "data/raw/rotas/apresentacao_rotas_2026-07-01.pdf",
+  "bytes": 19072297,
+  "sha256": "b1301b3b224ad48a8c4ccf3874c4e15b6d5683a82a128218b50a4f467ed21e28",
+  "periodo": "01/07/2026",
+  "licenca": "Publicação oficial do MPO (gov.br); licença não declarada no documento",
+  "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "rotas",
+  "descricao": "Relatório 2025 — Rotas de Integração Sul-Americana",
+  "url": "https://www.gov.br/planejamento/pt-br/assuntos/articulacao-institucional/publicacoes/relatorio-2025-rotas-de-integracao-sul-americana/@@download/file",
+  "arquivo": "data/raw/rotas/relatorio_2025.pdf",
+  "bytes": 15594934,
+  "sha256": "80db315d9c59ef0895d60514c8d4c2fc7c3c66b6f8ebfeb050552976e212e49e",
+  "periodo": "2025",
+  "licenca": "Publicação oficial do MPO (gov.br); licença não declarada no documento",
+  "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "rotas",
+  "descricao": "Relatório 2024 — Rotas de Integração Sul-Americana",
+  "url": "https://www.gov.br/planejamento/pt-br/assuntos/articulacao-institucional/publicacoes/relatorio-2024-rotas-de-integracao-sul-americana/@@download/file",
+  "arquivo": "data/raw/rotas/relatorio_2024.pdf",
+  "bytes": 28891484,
+  "sha256": "7bc9fadd099320ec3bd562397331c4216686aa2e9715fa595ec980e784ec802f",
+  "periodo": "2024",
+  "licenca": "Publicação oficial do MPO (gov.br); licença não declarada no documento",
+  "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "rotas",
+  "descricao": "Imagem oficial da Rota 1 (nós, portos e trechos)",
+  "url": "https://www.gov.br/planejamento/pt-br/assuntos/assuntos-internacionais-e-desenvolvimento/rotas-de-integracao-sul-americana/imagens/rota-1.jpg/@@images/image",
+  "arquivo": "data/raw/rotas/govbr_rota-1.jpg",
+  "bytes": 512169,
+  "sha256": "2f02dc7cefb977c535f4cc9614dc23266caec3a6c5414f408cd414443216885c",
+  "periodo": "2026",
+  "licenca": "Publicação oficial do MPO (gov.br); licença não declarada no documento",
+  "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "rotas",
+  "descricao": "Imagem oficial da Rota 2 (nós, portos e trechos)",
+  "url": "https://www.gov.br/planejamento/pt-br/assuntos/assuntos-internacionais-e-desenvolvimento/rotas-de-integracao-sul-americana/imagens/rota-2.jpg/@@images/image",
+  "arquivo": "data/raw/rotas/govbr_rota-2.jpg",
+  "bytes": 256125,
+  "sha256": "737b8d2573ed35db96e98ed38e034667a55ddb202625a4dfa79d366e7448278d",
+  "periodo": "2026",
+  "licenca": "Publicação oficial do MPO (gov.br); licença não declarada no documento",
+  "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "rotas",
+  "descricao": "Imagem oficial da Rota 3 (nós, portos e trechos)",
+  "url": "https://www.gov.br/planejamento/pt-br/assuntos/assuntos-internacionais-e-desenvolvimento/rotas-de-integracao-sul-americana/imagens/rota-3.jpg/@@images/image",
+  "arquivo": "data/raw/rotas/govbr_rota-3.jpg",
+  "bytes": 593977,
+  "sha256": "7c4ed4250eeb05fbc84da59218171c0ae52c6660903d83e6ab96426819621c36",
+  "periodo": "2026",
+  "licenca": "Publicação oficial do MPO (gov.br); licença não declarada no documento",
+  "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "rotas",
+  "descricao": "Imagem oficial da Rota 4 (nós, portos e trechos)",
+  "url": "https://www.gov.br/planejamento/pt-br/assuntos/assuntos-internacionais-e-desenvolvimento/rotas-de-integracao-sul-americana/imagens/rota-4.jpg/@@images/image",
+  "arquivo": "data/raw/rotas/govbr_rota-4.jpg",
+  "bytes": 636115,
+  "sha256": "7b58fa3e82f032a9aaccb1ea95d397f49e2ebfb90f97ea01ff75f79063868e7c",
+  "periodo": "2026",
+  "licenca": "Publicação oficial do MPO (gov.br); licença não declarada no documento",
+  "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "rotas",
+  "descricao": "Imagem oficial da Rota 5 (nós, portos e trechos)",
+  "url": "https://www.gov.br/planejamento/pt-br/assuntos/assuntos-internacionais-e-desenvolvimento/rotas-de-integracao-sul-americana/imagens/rota-5.jpg/@@images/image",
+  "arquivo": "data/raw/rotas/govbr_rota-5.jpg",
+  "bytes": 524615,
+  "sha256": "e7e39497e6c9fe06700b70a4948f64ab5c2e49f8ba2f0a7f2f41f96e4fb92eae",
+  "periodo": "2026",
+  "licenca": "Publicação oficial do MPO (gov.br); licença não declarada no documento",
+  "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "rotas",
+  "descricao": "Natural Earth 1:50m, Admin 0 – Countries (GeoJSON)",
+  "url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_countries.geojson",
+  "arquivo": "data/raw/rotas/ne/ne_50m_admin_0_countries.geojson",
+  "bytes": 3083490,
+  "sha256": "3e458fc036ad0a66411f2c1e6cac49c5d7bfb81cb1123bc513b22511a2b7fdeb",
+  "periodo": "versão do ramo master",
+  "licenca": "Domínio público (Natural Earth)",
+  "acesso": "2026-10-20"
+ }
+]
