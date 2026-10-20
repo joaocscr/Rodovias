@@ -29,7 +29,7 @@ def test_estrutura_e_fonte(dados):
         for k in ("nome", "url", "periodo", "acesso", "licenca", "nota"):
             assert f.get(k), k
     nota = " ".join(f["nota"] for f in fontes)
-    assert "TO_" in nota and "PNL 2035" in nota and "2017" in nota
+    assert "granel sólido agrícola" in nota.lower() and "PNL 2035" in nota and "2017" in nota
     assert any("Cenario-base-PNL00M2017" in f["url"] for f in fontes)
 
 

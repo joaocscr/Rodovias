@@ -322,17 +322,19 @@ def fontes():
         {"nome": "Infra S.A. / DNIT — VMDa 2023 (volume médio diário anual modelado, Leves e Pesados)",
          "url": VMDA_LAYER, "periodo": "2023 (SNV 202401A)", "acesso": _acesso(VMDA_LAYER),
          "licenca": "Dados abertos Infra S.A.", "tipo": "modelado",
-         "nota": "Estimativa modelada por subtrecho, não contagem. Junção por código SNV e km ponderado, com "
-                 "fallback BR+UF+km; coincidentes = maior total; total 0 (não simulável) e trechos fora do "
-                 "modelo ficam sem valor (null)."},
+         "nota": "Estimativa modelada por subtrecho, não é contagem. Cada trecho recebeu o valor pelo código do "
+                 "SNV e pelo km ponderado ou, na falta, pela rodovia, UF e km; onde há trechos coincidentes vale o de "
+                 "maior volume total. Trechos com volume total zero (não simulável) e trechos fora do modelo ficam "
+                 "sem valor."},
         {"nome": "PRF — DATATRAN, acidentes por ocorrência", "url": PRF_PAGINA, "periodo": "2024 e 2025 (anos completos)",
          "acesso": _acesso(prf_url(2025)), "licenca": "CC BY-ND 3.0 (PRF, dados abertos)", "tipo": "medido",
-         "nota": "Totais somados de 2024 e 2025; 2026 (parcial) fora. Físico por BR+UF+km se a coordenada está a "
-                 "até 5 km, senão snap até 500 m; ocorrências sem físico (cerca de 1%) não entram."},
+         "nota": "Soma dos acidentes de 2024 e 2025; 2026, ainda parcial, não entra. Cada ocorrência foi ligada ao "
+                 "trecho federal pela rodovia, UF e km quando a coordenada está a até 5 km do ponto; senão, ao trecho "
+                 "mais próximo, até 500 m. Cerca de 1% das ocorrências não encontrou trecho e ficou de fora."},
         {"nome": "ABCR — Índice ABCR de fluxo de veículos pedagiados (série original, Brasil)", "url": ABCR_URL,
-         "periodo": "2016-10 a 2026-09", "acesso": _acesso(ABCR_URL), "licenca": "Divulgação pública ABCR (citar a fonte)",
-         "tipo": "medido", "nota": "Número-índice 1999=100 em praças de pedágio; mede variação, não volume. "
-                                   "Leves, pesados e total."},
+         "periodo": "out/2016 a set/2026", "acesso": _acesso(ABCR_URL), "licenca": "Divulgação pública ABCR (citar a fonte)",
+         "tipo": "medido", "nota": "Número-índice com base 1999 = 100 em praças de pedágio; mede variação, não volume. "
+                                   "Séries de leves, pesados e total."},
     ]
 
 

@@ -293,7 +293,7 @@ def _acesso():
     return min((i["acesso"] for i in m.items), default=dt.date.today().isoformat())
 
 
-def build():
+def fontes():
     a = _acesso()
 
     def f(nome, url, periodo, nota, licenca=LIC_GOV):
@@ -301,22 +301,29 @@ def build():
 
     fonte = [
         f("Ministério dos Transportes / ONTL — BaseFerro (BIT)", ARQUIVOS[0][0], "abr/2024",
-          "Só trechos 'Em Operação'; unidos por sigla e operadora e simplificados (~0,002°)."),
+          "Só trechos em operação, unidos por sigla e operadora e simplificados."),
         f("ANTAQ — Instalações portuárias", ARQUIVOS[1][0], "06/05/2025",
           "Só Brasil; tipo como na fonte (ETC = 'Estação de transbordo de cargas'). Coordenadas da própria ANTAQ."),
         f("ANTT — SIADE, produção origem-destino", ARQUIVOS[2][0], "2025",
-          "Toneladas úteis (TU) somadas no ano por estação de origem, destino e produto; pares ≥ 50.000 t. "
-          "Fertilizantes agrupa adubos, cloreto de potássio, fosfato e ureia."),
+          "Toneladas úteis (TU) somadas no ano por estação de origem, estação de destino e produto; só pares "
+          "com 50.000 t ou mais. Fertilizantes reúne adubos, cloreto de potássio, fosfato e ureia."),
         f("IBGE — Logística dos Transportes 2024, fluxos ferroviários O/D", ARQUIVOS[3][0], "2024",
-          "Usado só para georreferenciar as estações do SIADE (nome + UF); sem casamento → sede do município.",
+          "Usado só para localizar as estações do SIADE no mapa (por nome e UF); quando não há correspondência, "
+          "vale a sede do município.",
           licenca="Dados abertos IBGE: uso livre com citação da fonte"),
-        f("MDIC — Comex Stat, base bruta de exportações", ARQUIVOS[4][0], "jan–dez/2025",
-          "kg líquido por SH4 × UF de origem da mercadoria × URF de despacho × via. A URF é a unidade da Receita do "
-          "despacho, não o ponto de entrada rodoviário."),
+        f("MDIC — Comex Stat, base bruta de exportações", ARQUIVOS[4][0], "jan/2025 a dez/2025",
+          "Quilos líquidos por produto (código SH4), UF de origem da mercadoria, unidade da Receita Federal (URF) "
+          "de despacho e via de transporte. A URF é a unidade onde ocorreu o despacho, não o ponto de entrada "
+          "rodoviário."),
         f("CONAB — Boletim Logístico", ARQUIVOS[7][0], "ago/2026 (boletim de set/2026)",
-          "Fretes rodoviários de grãos (R$/t) e distância (km). Extraído do PDF; 'aprox' = origem atribuída por "
-          "proximidade na célula mesclada (revisar)."),
+          "Fretes rodoviários de grãos (R$/t) e distância (km), extraídos do PDF do boletim. Na origem "
+          "aproximada, a rota foi atribuída por proximidade, porque o boletim traz a origem numa célula mesclada."),
     ]
+    return fonte
+
+
+def build():
+    fonte = fontes()
     ferrovias = build_ferrovias()
     obj = {"fonte": fonte, "tipo": "medido", "ferrovias": ferrovias, "portos": build_portos(), "siade": build_siade(),
            "exportacao": build_exportacao(), "fretes": build_fretes()}

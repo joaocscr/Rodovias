@@ -1,4 +1,5 @@
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -109,3 +110,35 @@ def test_build_embute_fontes_e_nao_o_manifesto(tmp_path, capsys):
     saida = capsys.readouterr().out
     assert "intel/fontes:" in saida and "intel/manifest" not in saida and "intel total:" in saida
     assert all(f"intel/{b}:" in saida for b in _blocos())
+
+
+# Termos de implementação que não podem aparecer em texto visível ao usuário (nomes de campo, siglas de código).
+PROIBIDOS = re.compile(
+    r"TO_GSA|TO_TOTAL|V_TOTAL|GTYPE|dist_m|km_map|entFis|entEst|entGeo|fonte_url|verificado=|sigilo=|"
+    r"\b(?:fis|snap|null|JSON|CSV|campos|campo|periodo|revisar)\b|\(revisar\)|[≤≥]|data/|\d{4}-(?:0[1-9]|1[0-2])\b|\w+_\w+",
+    re.IGNORECASE)
+
+
+def _textos_visiveis(fontes):
+    for f in fontes["fontes"]:
+        yield ("fonte", f["bloco"], f["nome"]), f["nome"]
+        yield ("periodo", f["bloco"], f["nome"]), f["periodo"]
+        yield ("nota", f["bloco"], f["nome"]), f["nota"]
+    for b in fontes["base"]:
+        for k in ("nome", "periodo", "nota"):
+            yield ("base", k, b["nome"]), b[k]
+    for i in fontes["indisponiveis"]:
+        for k in ("nome", "motivo"):
+            yield ("indisponivel", k, i["nome"]), i[k]
+
+
+def test_notas_das_fontes_em_linguagem_clara(fontes):
+    """Nome, período e nota de cada fonte são frases em pt-BR: sem nomes de campo, siglas de código nem AAAA-MM."""
+    for onde, texto in _textos_visiveis(fontes):
+        achado = PROIBIDOS.search(texto)
+        assert not achado, (onde, achado.group(0), texto)
+
+
+def test_periodo_em_formato_pt_br(fontes):
+    for f in fontes["fontes"] + fontes["base"]:
+        assert not re.search(r"\d{4}-\d{2}", f["periodo"]), f["periodo"]

@@ -124,12 +124,13 @@ def _fonte():
         "periodo": "ano-base 2017 (cenário-base do PNL 2035)",
         "acesso": acesso,
         "licenca": "Dado público da ONTL/Infra S.A.; licença não declarada na fonte",
-        "nota": ("Carregamento MODELADO (alocação em rede) do PNL 2035, cenário-base com ano-base 2017; não é contagem. "
-                 "gsa = TO_GSA (granel sólido agrícola, t/ano), total = TO_TOTAL_2 (todas as cargas, t/ano), "
-                 "veic = V_TOTAL__1 ÷ 365 (veículos de carga/dia; o campo é anual: ~31 t por veículo). O dicionário de "
-                 "dados não informa a periodicidade nem se o link já soma os dois sentidos; tratado como t/ano. Cada físico recebe a mediana do valor "
-                 "dos links rodoviários (GTYPE=1) mais próximos de 3 pontos (25/50/75% do comprimento); só vale com "
-                 "mediana das distâncias ≤ 100 m (dist_m, em m). Físicos planejados (PLA) e sem casamento ficam null."),
+        "nota": ("Carregamento MODELADO (alocação da carga na rede) do PNL 2035, cenário-base com ano-base 2017; não é "
+                 "contagem. Granel sólido agrícola e carga total são dados em toneladas por ano; os veículos de carga "
+                 "por dia vêm do valor anual dividido por 365 (cerca de 31 t por veículo). O dicionário de dados da "
+                 "fonte não informa a periodicidade nem se cada link já soma os dois sentidos; os valores foram tratados "
+                 "como t/ano. Cada trecho recebeu a mediana dos valores dos links rodoviários mais próximos em 3 pontos "
+                 "(a 25%, 50% e 75% do comprimento) e só tem valor quando a mediana das distâncias é de até 100 m. "
+                 "Trechos planejados (ainda não implantados) e trechos sem link correspondente ficam sem valor."),
     }
 
 

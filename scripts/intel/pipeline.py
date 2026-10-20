@@ -63,13 +63,13 @@ FONTE = [
     {"nome": "Carteira de Concessões Rodoviárias 2023-2027 (Ministério dos Transportes, v40)",
      "url": "https://www.gov.br/transportes/pt-br/assuntos/concessoes/concessoes-rodoviarias-2027",
      "periodo": "carteira de 14/10/2026", "acesso": ACESSO, "licenca": "Informação pública (LAI, Lei 12.527/2011)",
-     "nota": "PDF só imagem, transcrito à mão (slide 12 otimizações, slide 24 cronograma 2027, slide 26 estudos)."},
+     "nota": "O PDF da carteira é só imagem e foi transcrito à mão (slide 12, otimizações; slide 24, cronograma de 2027; slide 26, estudos)."},
     {"nome": "ANTT: Novos projetos em rodovias e Reestruturação de contratos de concessão",
      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias",
      "periodo": "páginas acessadas em 20/10/2026", "acesso": ACESSO,
      "licenca": "Informação pública (LAI, Lei 12.527/2011)",
-     "nota": "Algumas páginas estão desatualizadas em relação à carteira do MT (Régis, Integração do Sul)."},
-    {"nome": "BNDES Hub de Projetos (API aberta /cms/projetos)",
+     "nota": "Algumas páginas estão desatualizadas em relação à carteira do Ministério dos Transportes (Régis, Integração do Sul)."},
+    {"nome": "BNDES Hub de Projetos (dados abertos)",
      "url": "https://hubdeprojetos.bndes.gov.br/cms/projetos?__locale=pt",
      "periodo": "marcos até 26/06/2026 (federais) e out/2026 (RS)", "acesso": ACESSO,
      "licenca": "Dados públicos do BNDES",
@@ -80,7 +80,7 @@ FONTE = [
     {"nome": "Imprensa especializada (Agência iNFRA, O Tempo, Itatiaia, Atlas Público)",
      "url": "https://agenciainfra.com/", "periodo": "out/2025 a jul/2026", "acesso": ACESSO,
      "licenca": "Fatos noticiados, citados com link; sem reprodução de texto",
-     "nota": "Itens só com fonte de imprensa têm verificado=false e podem estar desatualizados."},
+     "nota": "Itens com fonte apenas de imprensa aparecem como não verificados e podem estar desatualizados."},
 ]
 
 # Arquivos brutos registrados no manifesto: (arquivo em data/raw/pipeline, URL, descrição, período)

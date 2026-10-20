@@ -207,13 +207,14 @@ def build_municipios():
 
     fonte = [
         _fonte("IBGE — Malha municipal (API de malhas v3, qualidade mínima)", ARQUIVOS[0][0], "malha vigente na API",
-               "TopoJSON quantizado; propriedade id = código IBGE de 7 dígitos. A malha da API é anterior a 2025."),
+               "Malha compactada (coordenadas arredondadas); cada município é identificado pelo código IBGE de 7 "
+               "dígitos. A malha da API é anterior a 2025."),
         _fonte("IBGE — Malha municipal 2025, Mato Grosso", ARQUIVOS[3][0], "2025",
-               "Polígonos de Boa Esperança do Norte (5101837), Sorriso e Nova Ubiratã substituídos pela malha 2025, "
-               "simplificados (~0,003°); bordas com vizinhos podem ter frestas pequenas."),
+               "Os limites de Boa Esperança do Norte (5101837), Sorriso e Nova Ubiratã foram substituídos pelos da "
+               "malha 2025 e simplificados; as bordas com municípios vizinhos podem ter pequenas frestas."),
         _fonte("IBGE — Metadados da malha e localidades", ARQUIVOS[1][0], "2025",
-               "Centroides oficiais do /metadados; Boa Esperança do Norte pelo polígono 2025. Nomes e UF de "
-               "/localidades/municipios (5.571)."),
+               "Centroides oficiais do serviço de metadados da malha; o de Boa Esperança do Norte vem do limite de "
+               "2025. Nomes e UF dos 5.571 municípios vêm do serviço de localidades do IBGE."),
     ]
     return {"fonte": fonte, "tipo": "medido", "topo": topo, "ids": ids, "nomes": nomes, "uf": ufs, "centro": centro}
 
@@ -240,12 +241,12 @@ def build_agro(ids):
 
     fonte = [
         _fonte("IBGE — Produção Agrícola Municipal (PAM), SIDRA tabelas 1612, 839 e 1613", ARQUIVOS[4][0], "2025",
-               "Quantidade produzida (t). Algodão = herbáceo em caroço; café = total (arábica + canéfora); milho por "
-               "safra (tabela 839). '-' = 0; '...' = sem dado (null)."),
+               "Quantidade produzida (t). Algodão herbáceo em caroço; café total (arábica e canéfora); milho por "
+               "safra (tabela 839). Na fonte, '-' significa zero e '...' significa sem dado."),
         _fonte("IBGE — Pesquisa de Estoques, SIDRA tabela 5459", ARQUIVOS[7][0], "2º semestre 2025",
-               "Capacidade útil (t) de armazéns graneleiros/granelizados e silos. 'X' = sigilo (null, sigilo=1); "
-               "município fora da tabela = 0. A soma municipal publicada fica abaixo do total Brasil por causa do "
-               "sigilo."),
+               "Capacidade útil (t) de armazéns graneleiros ou granelizados e silos. Valores sigilosos ('X' na "
+               "fonte) ficam sem valor e marcados como sigilo; município fora da tabela conta como zero. A soma "
+               "municipal publicada fica abaixo do total do Brasil por causa do sigilo."),
     ]
     return {"fonte": fonte, "tipo": "medido", "ids": ids, "ano": 2025, "produtos": produtos,
             "armazenagem": {"periodo": "2º sem/2025", "cap": cap, "sigilo": sig, "total_brasil": br}}

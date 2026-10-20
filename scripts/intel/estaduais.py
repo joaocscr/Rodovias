@@ -774,26 +774,28 @@ OUTRAS = [
 
 def _fontes(acesso):
     return [
-        {"nome": "Infra S.A. — Rodovias Estaduais (camada Hosted/Rodovias_Estaduais, CIDE 2021 + Base DNIT 2002)",
-         "url": INFRA_LAYER, "periodo": "CIDE 2021 (PA cide2020; AC, AL, AP, PI, RJ, RN, RR Base DNIT 2002)",
+        {"nome": "Infra S.A. — Rodovias Estaduais (camada Rodovias Estaduais: CIDE 2021 e Base DNIT 2002)",
+         "url": INFRA_LAYER, "periodo": "CIDE 2021 (PA: CIDE 2020; AC, AL, AP, PI, RJ, RN e RR: Base DNIT 2002)",
          "acesso": acesso, "licenca": "Dado público federal (Infra S.A.); licença não declarada na camada",
-         "nota": ("Malha estadual sem as feições federais, sem as sem UF e sem as que ficam > 80% a até 55 m do SNV "
-                  "(coincidentes). Só PAV/DUP/EOP, mais as feições usadas por concessões. sre = 10 primeiros "
-                  "caracteres do código SRE; geometria DP 0,0003°. Acentos perdidos na origem ('?') mantidos. A camada "
-                  "ano-base 2024 (Rodovias_Estaduais/FeatureServer/0) não respondeu no recon (503).")},
-        {"nome": "ARTESP — dados abertos (CKAN malha-rodoviaria: KMZ por lote) e fichas das concessionárias",
-         "url": ARTESP_CKAN, "periodo": "KMZ e fichas consultados em 10/2026; capex ref. 2024 (Via Raposo 2025)",
+         "nota": ("Malha estadual sem os trechos federais, sem os trechos sem UF e sem os que ficam em mais de 80% da "
+                  "extensão a até 55 m do SNV (coincidentes). Só trechos pavimentados, duplicados ou em obras de "
+                  "pavimentação, mais os trechos usados por concessões. O código SRE foi reduzido aos 10 primeiros "
+                  "caracteres e o desenho foi simplificado (tolerância de cerca de 30 m). Os acentos perdidos na "
+                  "origem ('?') foram mantidos. A camada com ano-base 2024 não respondeu nas consultas (erro 503).")},
+        {"nome": "ARTESP — dados abertos (malha rodoviária por lote) e fichas das concessionárias",
+         "url": ARTESP_CKAN, "periodo": "arquivos e fichas consultados em out/2026; investimentos com referência em 2024 (Via Raposo, 2025)",
          "acesso": acesso, "licenca": "CC-BY (CKAN ARTESP); fichas: página pública",
-         "nota": ("Geometria = pasta 'Traçado' dos KMZ; a extensão desenhada conta uma vez as pistas a até 100 m. Fichas: "
-                  "controlador, início, prazo, extensão, investimentos e trechos com km (https://www.artesp.sp.gov.br/"
-                  "artesp/setor-regulado/rodovia/concessionarias).")},
+         "nota": ("O desenho vem da pasta 'Traçado' dos arquivos KMZ da ARTESP; a extensão desenhada conta uma só "
+                  "vez as pistas que ficam a até 100 m umas das outras. As fichas trazem controlador, início, prazo, "
+                  "extensão, investimentos e trechos com km (https://www.artesp.sp.gov.br/artesp/setor-regulado/"
+                  "rodovia/concessionarias).")},
         {"nome": "AGERGS — Rodovias concedidas (trechos SRE RSC-287 e Bloco 3)", "url": AGERGS_XLSX,
          "periodo": "2024", "acesso": acesso, "licenca": "Página pública do regulador",
          "nota": "Códigos SRE e km dos subtrechos da Rota de Santa Maria e dos Caminhos da Serra Gaúcha."},
         {"nome": "Ager-MT — Rodovias pedagiadas", "url": AGER_MT, "periodo": "2026", "acesso": acesso,
          "licenca": "Página pública do regulador",
          "nota": ("Concessionária, rodovias, municípios, contrato, extensão, assinatura e vigência. O recorte usa os "
-                  "polígonos municipais do IBGE (data/intel/municipios.json); Sinfra-MT para o número dos lotes.")},
+                  "limites municipais do IBGE; o número dos lotes vem da Sinfra-MT.")},
         {"nome": "ABCR — Melhores Rodovias, fichas das concessionárias", "url": ABCR_LISTA, "periodo": "2026",
          "acesso": acesso, "licenca": "Página pública ABCR",
          "nota": ("Fonte complementar: preenche datas, acionistas e trechos onde ARTESP/AGERGS são omissos, nunca os "
@@ -802,9 +804,9 @@ def _fontes(acesso):
         {"nome": "Reguladores e governos estaduais (Agência Minas, AGERBA, ARPE, AGETRANSP, B3) e imprensa (MS, PA, PI)",
          "url": "https://www.agenciaminas.mg.gov.br/", "periodo": "2006–2026",
          "acesso": acesso, "licenca": "Páginas públicas; conteúdo jornalístico: só fatos citados",
-         "nota": ("Cada entidade traz em fonte_url a página usada. Só entram como vigentes concessões com assinatura, "
+         "nota": ("Cada concessão traz o link da página usada. Só entram como vigentes concessões com assinatura, "
                   "início de operação ou contrato identificado; datas da ABCR incoerentes entre si (assinatura depois "
-                  "do início, fim que não confere com o prazo) são descartadas e citadas na nota.")},
+                  "do início, fim que não confere com o prazo) são descartadas e citadas na nota da concessão.")},
     ]
 
 

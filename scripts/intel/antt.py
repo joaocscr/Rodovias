@@ -741,34 +741,40 @@ def fontes():
     return [
         {"nome": "ANTT — Praças de pedágio (cadastro) e volume de tráfego por praça",
          "url": ds("volume-trafego-praca-pedagio"),
-         "periodo": "2024-01 a 2026-08", "acesso": acesso(rp + "praca/dados-dos-pracas-de-pedagio6_2026.csv"),
+         "periodo": "jan/2024 a ago/2026", "acesso": acesso(rp + "praca/dados-dos-pracas-de-pedagio6_2026.csv"),
          "licenca": LICENCA,
-         "nota": "Mensal consolidado. VMD 2025 = soma dos dois sentidos ÷ dias dos meses com dado; leves = Passeio, "
-                 "pesados = Comercial (inclui ônibus), moto à parte. Pares free flow da RIOSP agregados no pórtico de "
-                 "entrada. Snap ao SNV ≤ 500 m na mesma BR."},
+         "nota": "Dados mensais consolidados. O VMD de 2025 soma os dois sentidos e divide pelos dias dos meses com "
+                 "dado; leves são os veículos de passeio, pesados os comerciais (inclui ônibus), e as motos aparecem à "
+                 "parte. Os pares de free flow da RIOSP foram somados no pórtico de entrada. Cada praça foi ligada ao "
+                 "trecho federal mais próximo, até 500 m, na mesma rodovia."},
         {"nome": "ANTT — Receita por praça de pedágio", "url": ds("receita-por-praca"), "periodo": "2025",
          "acesso": acesso(rp + "receita-por-praca/receita_por_praca_2025.csv"), "licenca": LICENCA,
-         "nota": "R$ nominais, soma dos meses de 2025."},
+         "nota": "Valores nominais em R$, somados nos meses de 2025."},
         {"nome": "ANTT — Tráfego nos equipamentos de contagem (SAT)", "url": ds("volume-sat"), "periodo": "2025",
          "acesso": acesso(*[str(f.relative_to(ROOT)) for f in sat_files()]), "licenca": LICENCA,
-         "nota": "Mensal consolidado; deduplicado por (entidade, SAT, mês, sentido, faixa, velocidade, tipo). VMD = "
-                 "todos os tipos ÷ dias dos meses com dado; % pesados e moto sobre os identificados. Excluídos SATs "
-                 "com < 6 meses, > 30% não identificado ou VMD < 100; SAT com < 6 meses em 2025 usa 2025-09..2026-08 "
-                 "(campo periodo). Snap ≤ 500 m na mesma BR; acessos/alças (rodovia fora do SNV) ≤ 100 m de qualquer "
-                 "físico, com o código do acesso em br. O sentido não é confiável como cobertura."},
+         "nota": "Dados mensais consolidados, sem registros repetidos (mesma entidade, SAT, mês, sentido, faixa, "
+                 "velocidade e tipo de veículo). O VMD soma todos os tipos e divide pelos dias dos meses com dado; as "
+                 "porcentagens de pesados e de motos consideram só os veículos identificados. Ficaram de fora os SATs "
+                 "com menos de 6 meses de dados, com mais de 30% de veículos não identificados ou com VMD abaixo de "
+                 "100. O SAT com menos de 6 meses em 2025 usa o período de set/2025 a ago/2026, indicado em cada "
+                 "equipamento. Cada SAT foi ligado ao trecho federal mais próximo, até 500 m, na mesma rodovia; "
+                 "acessos e alças (vias que não estão no SNV) foram ligados ao trecho mais próximo, até 100 m, com o "
+                 "código do acesso no lugar da rodovia. O sentido informado não é confiável para medir cobertura."},
         {"nome": "ANTT — Capas das concessões rodoviárias", "url": GOVBR, "periodo": "out/2026",
          "acesso": acesso(rp + "capas/lista.html"), "licenca": "Conteúdo público gov.br",
-         "nota": "36 ativas e 10 encerradas; datas em AAAA-MM-DD quando legíveis. Encerradas apontam o sucessor."},
+         "nota": "36 concessões ativas e 10 encerradas; as datas só aparecem quando legíveis na capa. As "
+                 "encerradas indicam a concessão sucessora."},
         {"nome": "ANTT — Receita de pedágio, investimentos e custos operacionais", "url": ds("receita-pedagio"),
-         "periodo": "2010-2025",
+         "periodo": "2010 a 2025",
          "acesso": acesso(rp + "receita-pedagio/receita_de_pedagio.csv", rp + "investimentos/investimentos.csv",
                           rp + "custos-operacionais/custos_operacionais.csv"),
-         "licenca": LICENCA, "nota": "R$ nominais por concessão e ano; ausente = null."},
+         "licenca": LICENCA, "nota": "Valores nominais em R$, por concessão e ano; anos sem informação ficam sem valor."},
         {"nome": "ANTT — Acompanhamento anual de investimentos", "url": ds("acompanhamento-anual"),
-         "periodo": "planejamentos 2023-2026",
+         "periodo": "planejamentos de 2023 a 2026",
          "acesso": acesso(rp + "acompanhamento-anual/acompanhamento-anual-investimentos.csv"), "licenca": LICENCA,
-         "nota": "Última versão por (concessionária, id SIGICOR). previsto = acumulado anterior + previsto no ano; "
-                 "executado = acumulado executado (fração 0–1, físico). Ponto interpolado no físico pelo km inicial."},
+         "nota": "Vale a última versão enviada por cada concessionária para cada investimento (código SIGICOR). "
+                 "Previsto = acumulado até o ano anterior + previsto no ano; executado = avanço físico acumulado, de 0 "
+                 "a 100%. Cada obra foi posicionada no trecho federal pelo km inicial."},
     ]
 
 

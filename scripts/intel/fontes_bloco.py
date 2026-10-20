@@ -28,22 +28,22 @@ BASE = [
     {"nome": "SNV 202607A, Sistema Nacional de Viação (DNIT)",
      "url": "https://www.gov.br/dnit/pt-br/assuntos/atlas-e-mapas/pnv-e-snv", "periodo": "versão 202607A (jul/2026)",
      "acesso": ACESSO, "licenca": "não declarada na fonte",
-     "nota": "arquivo 202607A.zip obtido do Google Drive do usuário; o rodapé do site do DNIT declara CC BY-ND 3.0, mas a página não cita a versão 202607A; congelado em data/base/snv.json."},
+     "nota": "Arquivo 202607A.zip fornecido pelo usuário (Google Drive). O rodapé do site do DNIT declara CC BY-ND 3.0, mas a página não cita a versão 202607A. Base incorporada ao painel."},
     {"nome": "RoadShow 2026-2027 v40 (Ministério dos Transportes)",
      "url": "https://www.gov.br/transportes/pt-br/assuntos/concessoes/concessoes-rodoviarias-2027",
      "periodo": "14/10/2026", "acesso": ACESSO, "licenca": "Informação pública (LAI, Lei 12.527/2011)",
-     "nota": "PDF extraído e curado à mão em data/roadshow/; congelado em data/base/conc.json."},
+     "nota": "PDF extraído e conferido à mão; base incorporada ao painel como cadastro das concessões."},
 ]
 
 INDISPONIVEIS = [
     {"nome": "DNIT, portal PNCT (contagem contínua e VMDa nacional)", "url": "https://servicos.dnit.gov.br/dadospnct",
      "motivo": "Inacessível em todas as tentativas (conexão resetada ou 503); sem contagem por posto, o VMDa vem do modelo da Infra S.A."},
-    {"nome": "Infra S.A., SNV_VMDA_2021",
+    {"nome": "Infra S.A., SNV VMDa 2021",
      "url": "https://geo.infrasa.gov.br/server/rest/services/Hosted/SNV_VMDA_2021/FeatureServer",
-     "motivo": "Timeout sistemático; dispensável, porque o VMDa 2023 é mais recente."},
-    {"nome": "Infra S.A., Rodovias_Estaduais ano-base 2024",
+     "motivo": "Sem resposta em todas as tentativas; dispensável, porque o VMDa 2023 é mais recente."},
+    {"nome": "Infra S.A., Rodovias Estaduais, ano-base 2024",
      "url": "https://geo.infrasa.gov.br/server/rest/services/Rodovias_Estaduais/FeatureServer/0",
-     "motivo": "Nenhuma consulta respondeu; foi usada a camada Hosted/Rodovias_Estaduais (CIDE 2021 e Base DNIT 2002)."},
+     "motivo": "Nenhuma consulta respondeu; foi usada a camada de Rodovias Estaduais com CIDE 2021 e Base DNIT 2002."},
     {"nome": "DNIT, Andamento de Obras", "url": "https://servicos.dnit.gov.br/",
      "motivo": "Conexão resetada em todas as tentativas; as obras vêm dos dados abertos da ANTT."},
     {"nome": "PPI, Programa de Parcerias de Investimentos", "url": "https://www.ppi.gov.br/",
@@ -55,7 +55,7 @@ INDISPONIVEIS = [
     {"nome": "Infra S.A., carregamento PNL 2050 por link", "url": "https://ontl.infrasa.gov.br/",
      "motivo": "Sem carregamento por link de rodovia; só por LAI (observatorio@infrasa.gov.br), não solicitado."},
     {"nome": "OpenStreetMap, Overpass API", "url": "https://overpass-api.de/api/interpreter",
-     "motivo": "Connection reset e 504; PI-397/262 (Transcerrados) ficou fora da malha estadual."},
+     "motivo": "Conexão interrompida e erro 504; PI-397/262 (Transcerrados) ficou fora da malha estadual."},
 ]
 
 
