@@ -461,3 +461,26 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 .layer-sub { display: flex; flex-wrap: wrap; gap: 0 16px; padding: 0 0 8px 24px; font-size: 14px; color: var(--color-light-grey); }
 .layer-sub span { display: inline-flex; align-items: center; gap: 8px; }
 .card__src a.link-btn { padding: 0; }
+
+/* v3 (Task 11): ficha com ANTT, ficha estadual, pipeline */
+.fpad { margin-top: 8px; }
+.ftext a.link-btn, .flist a.link-btn, .fgrid a.link-btn, .ficha__foot a.link-btn { padding: 0; height: auto; }
+.flist { list-style: none; margin: 8px 0 0; padding: 0; font-size: 14px; }
+.flist li { padding: 8px 0; border-top: 1px solid var(--line); }
+.fserie + .fserie { margin-top: 16px; }
+.fserie__name { margin: 16px 0 8px; font-size: 14px; font-weight: 600; color: var(--color-deep-blue); }
+.fchart { width: 100%; overflow-x: auto; }
+.fchart svg { max-width: 100%; height: auto; display: block; }
+.fgrid dd .base--dark { color: var(--color-spacial-grey); }
+.table-wrap--static { max-height: none; overflow: visible; }
+.grid--static th, .grid--static tfoot td { position: static; }
+.grid--static tbody tr, .grid tbody tr.is-static { cursor: default; }
+.grid--static tbody tr:hover, .grid tbody tr.is-static:hover { background: none; }
+.grid td.wrap { white-space: normal; min-width: 160px; }
+.tag-nv {
+  display: inline-flex; align-items: center; height: 24px; padding: 0 8px; margin-left: 4px; border-radius: 12px; white-space: nowrap;
+  border: 1px solid var(--color-light-grey); color: var(--color-light-grey); font-size: 14px; font-weight: 600; background: var(--color-snow-white);
+}
+#pipe-counts { margin-bottom: 16px; }
+#pipe-counts .chip b { margin-left: 4px; font-variant-numeric: tabular-nums; }
+.pipeline .table-wrap { max-height: calc(100vh - 240px); }

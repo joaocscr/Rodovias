@@ -342,6 +342,117 @@ const IntelModel = (() => {
     return f ? `${f.nome}${f.periodo ? ` · ${f.periodo}` : ''}` : DASH;
   }
 
+  // ---------- Ficha com ANTT, ficha estadual, Projetos com esfera e pipeline (Task 11) ----------
+  const anttOf = intel => (intel && intel.antt) || null;
+  const capasOf = intel => (anttOf(intel) && anttOf(intel).capas) || {};
+
+  function anttCapa(intel, id) {
+    const c = capasOf(intel)[id];
+    return c ? Object.assign({ id }, c) : null;
+  }
+
+  // Contratos encerrados que passaram o trecho para id (sucessor === id ou sucessores contém id).
+  function anttAnteriores(intel, id) {
+    return Object.entries(capasOf(intel))
+      .filter(([k, c]) => k !== id && c && (c.sucessor === id || (Array.isArray(c.sucessores) && c.sucessores.includes(id))))
+      .map(([k, c]) => Object.assign({ id: k }, c));
+  }
+
+  // Séries anuais (R$ nominais) do contrato e de cada contrato anterior; só as que têm ao menos um valor.
+  function anttSeries(intel, id) {
+    const series = (anttOf(intel) && anttOf(intel).series) || {};
+    const own = anttCapa(intel, id);
+    const list = [{ id, nome: own ? own.nome : null, anterior: false }]
+      .concat(anttAnteriores(intel, id).map(c => ({ id: c.id, nome: c.nome, anterior: true })));
+    return list.filter(x => series[x.id]).map(x => {
+      const s = series[x.id];
+      return Object.assign(x, { anos: s.anos || [], receita: s.receita || [], investimento: s.investimento || [], custo: s.custo || [] });
+    }).filter(x => ['receita', 'investimento', 'custo'].some(k => x[k].some(has)));
+  }
+
+  function pracasDe(intel, id) {
+    const linhas = rows(anttOf(intel) && anttOf(intel).pracas).filter(p => p.ent === id)
+      .map(p => Object.assign(p, { pctPes: has(p.pesados) && has(p.vmd) && p.vmd > 0 ? p.pesados / p.vmd : null }))
+      .sort((a, b) => (has(b.vmd) ? b.vmd : -1) - (has(a.vmd) ? a.vmd : -1));
+    const rec = linhas.filter(p => has(p.receita));
+    return { linhas, receita: rec.length ? rec.reduce((s, p) => s + p.receita, 0) : null };
+  }
+
+  // Obras ANTT da entidade: concluídas (executado ≥ 1), em andamento (0 < executado < 1), não iniciadas (0), sem dado;
+  // top = as n de maior previsto ainda não concluídas.
+  function obrasResumo(intel, id, n = 10) {
+    const list = rows(anttOf(intel) && anttOf(intel).obras).filter(o => o.ent === id);
+    const r = { total: list.length, concluidas: 0, andamento: 0, naoIniciadas: 0, semDado: 0, top: [] };
+    for (const o of list) {
+      if (!has(o.executado)) r.semDado++;
+      else if (o.executado >= 1) r.concluidas++;
+      else if (o.executado > 0) r.andamento++;
+      else r.naoIniciadas++;
+    }
+    r.top = list.filter(o => !(has(o.executado) && o.executado >= 1))
+      .sort((a, b) => (has(b.previsto) ? b.previsto : -1) - (has(a.previsto) ? a.previsto : -1)).slice(0, n);
+    return r;
+  }
+
+  const pipeOf = intel => (intel && intel.pipeline && Array.isArray(intel.pipeline.itens) ? intel.pipeline : null);
+
+  // Itens do pipeline por data prevista crescente ("AAAA-MM" ou "AAAA-MM-DD"); sem data no fim; empate pelo nome.
+  function pipelineRows(intel) {
+    const p = pipeOf(intel);
+    if (!p) return [];
+    return [...p.itens].sort((a, b) => {
+      const x = a.data_prevista || '', y = b.data_prevista || '';
+      if (!x || !y) return x === y ? String(a.nome).localeCompare(String(b.nome), 'pt-BR') : x ? -1 : 1;
+      return x < y ? -1 : x > y ? 1 : String(a.nome).localeCompare(String(b.nome), 'pt-BR');
+    });
+  }
+
+  function filterPipeline(items, { esfera, status } = {}) {
+    return items.filter(i => (!esfera || !esfera.size || esfera.has(i.esfera)) && (!status || !status.size || status.has(i.status)));
+  }
+
+  // Contagem por status, na ordem de pipeline.status; só status presentes.
+  function pipelineCounts(items, statusList) {
+    const n = new Map();
+    for (const i of items) n.set(i.status, (n.get(i.status) || 0) + 1);
+    const known = (statusList || []).filter(s => n.has(s.key)).map(s => ({ key: s.key, label: s.label, n: n.get(s.key) }));
+    const extra = [...n.keys()].filter(k => !(statusList || []).some(s => s.key === k)).map(k => ({ key: k, label: String(k), n: n.get(k) }));
+    return known.concat(extra);
+  }
+
+  function statusLabel(intel, key) {
+    if (key == null || key === '') return DASH;
+    const p = pipeOf(intel), s = p && (p.status || []).find(x => x.key === key);
+    return s ? s.label : String(key);
+  }
+
+  const pipelineDe = (intel, id) => pipelineRows(intel).filter(i => i.ent === id);
+
+  const EST_ESTADOS = [{ key: 'estadual_vigente', label: 'Contrato estadual vigente' }, { key: 'estadual_encerrado', label: 'Contrato estadual encerrado' }];
+  const estEnts = intel => (intel && intel.estaduais && Array.isArray(intel.estaduais.entidades) ? intel.estaduais.entidades : []);
+
+  // Concessões estaduais no formato de ConcModel.comparatorRows (campos sem equivalente = null).
+  function estaduaisRows(intel) {
+    return estEnts(intel).map((e, k) => {
+      const rod = (e.rodovias || []).filter(Boolean);
+      return {
+        idx: null, k, esfera: 'estadual', id: e.id, nome: e.nome, brsUfs: rod.length ? `${rod.join('/')}/${e.uf || ''}`.replace(/\/$/, '') : (e.uf || null),
+        estado: e.estado === 'encerrado' ? 'estadual_encerrado' : 'estadual_vigente', dataChave: e.assinatura || null,
+        km: has(e.km_decl) ? e.km_decl : null, capex: has(e.capex_bi) ? e.capex_bi : null, opex: null, dataBase: e.capex_ref || null,
+        capexKm: null, wacc: null, tkm: null, desagio: null, participantes: null, vencedor: e.grupo || null,
+        ano: null, tipo: null, ufs: e.uf ? [e.uf] : [], ficha: {},
+      };
+    });
+  }
+
+  const byEsfera = (list, esfera) => (!esfera || !esfera.size ? list : list.filter(r => esfera.has(r.esfera)));
+  const estIndex = (intel, id) => estEnts(intel).findIndex(e => e.id === id);
+
+  function trechosLabel(trechos) {
+    if (!Array.isArray(trechos)) return [];
+    return trechos.filter(t => t && t.rod).map(t => (has(t.km_i) && has(t.km_f) ? `${t.rod}: km ${f1.format(t.km_i)} a ${f1.format(t.km_f)}` : t.rod));
+  }
+
   // Escolhe a unidade depois de arredondar: 999.600 t vira "1,0 Mt", não "1.000 mil t".
   const round = (v, d) => Math.round(v * 10 ** d) / 10 ** d;
   function scaled(x, units) {
@@ -367,6 +478,8 @@ const IntelModel = (() => {
     rows, metricArray, quantileBreaks, classOf, aggregateIntel, fisIntel, taxaAcidentes, pointsOfFis, decodeTopo,
     rodLabel, decodeLine, estConcLines, distToSegment, pointRadius, lineWeight, PORTO_TIPOS, portoTipo, monthLabel, FUNDOS, PRODUTOS, fundoFonte, fundoValues,
     fundoClasses, munInfo, pointInRings, ringsBBox, fonteRef,
+    anttCapa, anttAnteriores, anttSeries, pracasDe, obrasResumo, pipelineRows, filterPipeline, pipelineCounts, statusLabel, pipelineDe,
+    EST_ESTADOS, estaduaisRows, byEsfera, estIndex, trechosLabel,
     fmtInt, fmtDec, fmtVmd, fmtT, fmtPct, fmtBRL, fmtVkm, fmtTkm };
 })();
 

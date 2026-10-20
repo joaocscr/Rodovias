@@ -534,6 +534,259 @@ test('clique real numa rodovia continua abrindo o cartão do trecho depois de um
   await page.evaluate(() => MapView.fitBrasil(false));
 });
 
+// ---------- Task 11: ficha com ANTT, ficha estadual, Projetos com esfera e pipeline ----------
+async function go(hash) {
+  await page.evaluate(h => { location.hash = h; }, hash);
+  await page.waitForTimeout(250);
+}
+const fichaText = () => page.textContent('#ficha');
+const blockTitles = () => page.$$eval('#ficha .fblock h3', hs => hs.map(h => h.textContent));
+
+test('(a) ficha Nova Rota do Oeste: ANTT, controladora, gráfico de receita e praças por VMD', async () => {
+  await go('#mapa'); await go('#ficha/nova-rota-do-oeste');
+  const t = await fichaText();
+  assert.match(t, /ANTT/);
+  assert.match(t, /MTPAR/);
+  for (const re of [/Controladora/, /Trecho/, /Extensão/, /850,9 km/, /12\/03\/2014/, /30 anos/, /003\/2013/, /06\/09\/2015/, /21\/set/]) assert.match(t, re);
+  const url = await page.evaluate(() => window.INTEL.antt.capas['nova-rota-do-oeste'].url);
+  const link = page.locator('#ficha a', { hasText: 'Página da concessão na ANTT' });
+  assert.equal(await link.getAttribute('href'), url);
+  assert.equal(await link.getAttribute('target'), '_blank');
+  assert.ok(await page.locator('#ficha-antt-serie svg.chart').count() >= 1);
+  assert.match(await page.getAttribute('#ficha-antt-serie svg.chart', 'aria-label'), /Receita/);
+  assert.match(await page.textContent('#ficha-antt-serie'), /R\$ nominais · ANTT/);
+  assert.match(await page.textContent('#ficha-antt-serie .chart-legend'), /Receita.*Investimento.*Custo/);
+  const n = await page.locator('#ficha-pracas tbody tr').count();
+  assert.ok(n >= 1, String(n));
+  const exp = await page.evaluate(() => IntelModel.pracasDe(window.INTEL, 'nova-rota-do-oeste'));
+  assert.equal(n, exp.linhas.length);
+  assert.deepEqual(await page.$$eval('#ficha-pracas tbody tr td:first-child', tds => tds.map(td => td.textContent)), exp.linhas.map(p => p.nome));
+  const vmds = exp.linhas.map(p => p.vmd);
+  assert.deepEqual(vmds, [...vmds].sort((a, b) => b - a));
+  assert.match(await page.textContent('#ficha-pracas tfoot'), new RegExp(exp.receita ? (await page.evaluate(v => IntelModel.fmtBRL(v), exp.receita)).replace(/[$.]/g, '\\$&') : '—'));
+  assert.match(t, /Contagem medida · ANTT 2025/);
+  assert.doesNotMatch(t, /undefined|NaN/);
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(250);
+  assert.equal(await page.evaluate(() => location.hash), '#mapa');
+});
+
+test('(a) contrato anterior listado e com série rotulada; obras e pipeline na ficha', async () => {
+  const r = await page.evaluate(() => {
+    const ids = window.CONC.entidades.map(e => e.id);
+    const ant = ids.find(id => IntelModel.anttAnteriores(window.INTEL, id).length && IntelModel.anttSeries(window.INTEL, id).some(s => s.anterior));
+    const obra = ids.find(id => IntelModel.obrasResumo(window.INTEL, id).total >= 12);
+    const pipe = ids.find(id => IntelModel.pipelineDe(window.INTEL, id).length);
+    return { ant, antNome: ant && IntelModel.anttAnteriores(window.INTEL, ant)[0].nome, obra, obras: obra && IntelModel.obrasResumo(window.INTEL, obra), pipe,
+      pipeItem: pipe && IntelModel.pipelineDe(window.INTEL, pipe)[0], pipeLabel: pipe && IntelModel.statusLabel(window.INTEL, IntelModel.pipelineDe(window.INTEL, pipe)[0].status) };
+  });
+  assert.ok(r.ant && r.obra && r.pipe, JSON.stringify(r).slice(0, 200));
+  await go('#ficha/' + r.ant);
+  assert.ok((await fichaText()).includes(`Contrato anterior: ${r.antNome} (encerrado)`));
+  assert.ok((await page.textContent('#ficha-antt-serie')).includes(r.antNome));
+  assert.ok(await page.locator('#ficha-antt-serie svg.chart').count() >= 1);
+
+  await go('#ficha/' + r.obra);
+  const o = r.obras;
+  const kv = await page.$$eval('#ficha-obras dl.fgrid dt', dts => Object.fromEntries(dts.map(dt => [dt.textContent, dt.nextElementSibling.textContent])));
+  assert.equal(kv['Concluídas'], String(o.concluidas));
+  assert.equal(kv['Em andamento'], String(o.andamento));
+  assert.equal(kv['Não iniciadas'], String(o.naoIniciadas));
+  assert.equal(await page.locator('#ficha-obras tbody tr').count(), Math.min(10, o.top.length));
+  assert.ok(o.concluidas + o.andamento + o.naoIniciadas + o.semDado === o.total);
+
+  await go('#ficha/' + r.pipe);
+  const pt = await page.textContent('#ficha-pipeline');
+  assert.ok(pt.includes(r.pipeLabel), pt);
+  if (r.pipeItem.fonte_url) assert.equal(await page.locator(`#ficha-pipeline a[href="${r.pipeItem.fonte_url}"]`).count(), 1);
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(250);
+});
+
+test('(b) ficha sem capa ANTT não mostra o bloco ANTT; nenhuma ficha mostra "undefined" ou "NaN"', async () => {
+  const id = await page.evaluate(() => window.CONC.entidades.find(e => e.estado === 'projeto2027' && !IntelModel.anttCapa(window.INTEL, e.id) &&
+    !IntelModel.anttAnteriores(window.INTEL, e.id).length).id);
+  await go('#ficha/' + id);
+  const titles = await blockTitles();
+  assert.ok(!titles.some(h => /ANTT|Receita, investimento|Praças da concessão/.test(h)), titles.join(' | '));
+  assert.doesNotMatch(await fichaText(), /undefined|NaN/);
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(250);
+  const bad = await page.evaluate(() => {
+    const ids = window.CONC.entidades.map(e => e.id).concat(window.INTEL.estaduais.entidades.map(e => e.id));
+    const out = [];
+    for (const id of ids) {
+      if (!Ficha.exists(id)) { out.push('não existe: ' + id); continue; }
+      Ficha.open(id);
+      if (/undefined|NaN|\[object/.test(document.getElementById('ficha').textContent)) out.push(id);
+      Ficha.close(true);
+    }
+    return out;
+  });
+  assert.deepEqual(bad, []);
+  await go('#mapa');
+});
+
+test('(c) ficha estadual: etiqueta, campos e "Ver no mapa" liga a camada, realça e enquadra', async () => {
+  const s = await page.evaluate(() => {
+    const e = window.INTEL.estaduais, lines = IntelModel.estConcLines(e, window.SNV);
+    const k = e.entidades.findIndex((x, i) => lines[i].length && x.regulador && x.fonte_url && x.trechos && x.trechos.length);
+    const nm = e.entidades.findIndex((x, i) => x.qualidade === 'nao_mapeado' && !lines[i].length);
+    const flat = lines[k].flat();
+    return { k, e: e.entidades[k], nm: nm >= 0 ? e.entidades[nm].id : null,
+      center: [flat.reduce((a, p) => a + p[0], 0) / flat.length, flat.reduce((a, p) => a + p[1], 0) / flat.length] };
+  });
+  assert.ok(s.k >= 0);
+  await go('#projetos'); await go('#ficha/' + s.e.id);
+  assert.equal(await page.isVisible('#ficha'), true);
+  const t = await fichaText();
+  assert.ok(t.includes(s.e.nome));
+  assert.ok(t.includes(`Concessão estadual · ${s.e.uf} · ${s.e.regulador}`), t.slice(0, 300));
+  for (const re of [/Poder concedente/, /Rodovias/, /Trechos/, /km declarado × mapeado/, /Qualidade do recorte/, /Assinatura/, /Fim/, /Prazo/]) assert.match(t, re);
+  assert.ok(t.includes(s.e.trechos[0].rod));
+  assert.equal(await page.locator(`#ficha a[href="${s.e.fonte_url}"]`).count() >= 1, true);
+  assert.doesNotMatch(t, /undefined|NaN/);
+  // Esc volta à aba anterior
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(250);
+  assert.equal(await page.evaluate(() => location.hash), '#projetos');
+  assert.equal(await page.isVisible('#ficha'), false);
+  // Ver no mapa
+  await go('#ficha/' + s.e.id);
+  assert.equal(await page.isDisabled('#ficha-map'), false);
+  await page.click('#ficha-map');
+  await page.waitForTimeout(400);
+  assert.equal(await page.evaluate(() => location.hash), '#mapa');
+  assert.equal(await page.isVisible('#ficha'), false);
+  assert.equal(await page.evaluate(() => Layers.isOn('estaduais')), true);
+  assert.equal(await page.isChecked('#layers-section input[data-layer="estaduais"]'), true);
+  assert.deepEqual(await page.evaluate(() => Layers.selected()), { key: 'estconc', i: s.k });
+  assert.equal(await page.evaluate(c => MapView.map.getBounds().contains(c), s.center), true);
+  assert.ok(await page.evaluate(() => MapView.map.getZoom()) >= 6);
+  await page.click('#card-close');
+  await page.locator('#layers-section input[data-layer="estaduais"]').uncheck();
+  // não mapeada sem geometria: botão desabilitado com explicação
+  if (s.nm) {
+    await go('#ficha/' + s.nm);
+    assert.equal(await page.isDisabled('#ficha-map'), true);
+    assert.match(await page.getAttribute('#ficha-map', 'title'), /sem traçado/i);
+    assert.match(await fichaText(), /sem traçado no mapa/i);
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(250);
+  }
+  await page.evaluate(() => MapView.fitBrasil(false));
+});
+
+test('(d) Projetos: coluna e filtro Esfera; Estadual mostra só estaduais e totais iguais à soma', async () => {
+  await go('#projetos');
+  const nEst = await page.evaluate(() => window.INTEL.estaduais.entidades.length);
+  const nFed = await page.evaluate(() => window.CONC.entidades.length);
+  assert.equal(await page.locator('#proj-table tbody tr').count(), nFed + nEst);
+  assert.ok((await page.$$eval('#proj-table thead th', ths => ths.map(t => t.textContent.trim()))).includes('Esfera'));
+  await page.selectOption('#proj-esfera', 'estadual');
+  assert.equal(await page.locator('#proj-table tbody tr').count(), nEst);
+  const r = await page.evaluate(() => {
+    const rows = Projetos.rowsShown(), nf = d => new Intl.NumberFormat('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
+    const km = rows.reduce((a, x) => a + (x.km || 0), 0), capex = rows.reduce((a, x) => a + (x.capex || 0), 0);
+    return { all: rows.every(x => x.esfera === 'estadual'), km: nf(1).format(km), capex: nf(2).format(capex),
+      shownKm: document.getElementById('proj-total-km').textContent, shownCapex: document.getElementById('proj-total-capex').textContent,
+      esferaCells: [...document.querySelectorAll('#proj-table tbody tr')].map(tr => tr.children[1].textContent) };
+  });
+  assert.equal(r.all, true);
+  assert.equal(r.shownKm, r.km);
+  assert.equal(r.shownCapex, r.capex);
+  assert.ok(r.esferaCells.every(c => c === 'Estadual'), r.esferaCells.slice(0, 3).join());
+  // estados estaduais têm chip próprio; "Contrato vigente anterior" (federal) não inclui estaduais
+  await page.selectOption('#proj-esfera', '');
+  await page.click('[data-f="estado"][data-v="estadual_vigente"]');
+  const v = await page.evaluate(() => Projetos.rowsShown().map(x => x.esfera));
+  assert.ok(v.length > 0 && v.every(x => x === 'estadual'));
+  assert.match(await page.textContent('#proj-table tbody'), /Contrato estadual vigente/);
+  await page.click('[data-f="estado"][data-v="estadual_vigente"]');
+  await page.click('[data-f="estado"][data-v="vigente"]');
+  assert.ok((await page.evaluate(() => Projetos.rowsShown().map(x => x.esfera))).every(x => x === 'federal'));
+  await page.click('[data-f="estado"][data-v="vigente"]');
+  // linha estadual abre a ficha estadual
+  await page.selectOption('#proj-esfera', 'estadual');
+  await page.locator('#proj-table tbody tr').first().click();
+  await page.waitForTimeout(250);
+  assert.match(await fichaText(), /Concessão estadual/);
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(250);
+  await page.selectOption('#proj-esfera', '');
+});
+
+test('(e, f) Pipeline: ≥ 60 linhas por data prevista, filtros, contagem por status, "não verificado", linha abre a ficha', async () => {
+  await go('#projetos');
+  const order = await page.evaluate(() => {
+    const ids = ['proj-table', 'pipeline', 'estudos-list'].map(id => document.getElementById(id));
+    return ids.every(Boolean) && (ids[0].compareDocumentPosition(ids[1]) & 4) && (ids[1].compareDocumentPosition(ids[2]) & 4) ? true : false;
+  });
+  assert.equal(order, true, 'Pipeline entre o comparador e os estudos pós-2027');
+  const rows = page.locator('#pipe-table tbody tr');
+  const n = await rows.count();
+  assert.ok(n >= 60, String(n));
+  const ds = await page.$$eval('#pipe-table tbody tr', trs => trs.map(tr => tr.dataset.data || ''));
+  const withD = ds.filter(Boolean);
+  assert.deepEqual(withD, [...withD].sort());
+  assert.ok(ds.slice(withD.length).every(d => d === ''), 'sem data no fim');
+  assert.deepEqual(await page.$$eval('#pipe-table thead th', ths => ths.map(t => t.textContent.trim())),
+    ['Nome', 'Esfera', 'UF', 'Rodovias', 'km', 'Status', 'Data prevista', 'Fonte']);
+  // (f) etiqueta "não verificado"
+  const nv = await page.evaluate(() => window.INTEL.pipeline.itens.filter(i => i.verificado === false).length);
+  assert.ok(nv > 0);
+  assert.equal(await page.locator('#pipe-table .tag-nv').count(), nv);
+  assert.equal(await page.locator('#pipe-table .tag-nv').first().textContent(), 'não verificado');
+  // contagem por status no topo
+  const counts = await page.evaluate(() => IntelModel.pipelineCounts(window.INTEL.pipeline.itens, window.INTEL.pipeline.status));
+  const top = await page.textContent('#pipe-counts');
+  for (const c of counts) assert.ok(top.includes(`${c.label} ${c.n}`), `${c.label} ${c.n}`);
+  // filtro de esfera e de status
+  await page.selectOption('#pipe-esfera', 'estadual');
+  const nE = await page.evaluate(() => window.INTEL.pipeline.itens.filter(i => i.esfera === 'estadual').length);
+  assert.equal(await rows.count(), nE);
+  assert.ok((await page.$$eval('#pipe-table tbody tr td:nth-child(2)', tds => tds.map(t => t.textContent))).every(t => t === 'Estadual'));
+  await page.selectOption('#pipe-esfera', '');
+  await page.click('#pipe-counts [data-pstatus="estudo"]');
+  const nS = await page.evaluate(() => window.INTEL.pipeline.itens.filter(i => i.status === 'estudo').length);
+  assert.equal(await rows.count(), nS);
+  assert.equal(await page.getAttribute('#pipe-counts [data-pstatus="estudo"]', 'aria-pressed'), 'true');
+  await page.click('#pipe-counts [data-pstatus="estudo"]');
+  assert.equal(await rows.count(), n);
+  // linha com ent abre #ficha/<ent>
+  const ent = await page.getAttribute('#pipe-table tbody tr[data-ent]', 'data-ent');
+  await page.locator('#pipe-table tbody tr[data-ent]').first().click();
+  await page.waitForTimeout(250);
+  assert.equal(await page.evaluate(() => location.hash), '#ficha/' + ent);
+  assert.equal(await page.isVisible('#ficha'), true);
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(250);
+  assert.equal(await page.evaluate(() => location.hash), '#projetos');
+  // link de fonte não navega para a ficha
+  assert.equal(await page.getAttribute('#pipe-table tbody tr a[href^="http"]', 'target'), '_blank');
+  await go('#mapa');
+});
+
+test('sem window.INTEL: Projetos e ficha da v2 sem esfera, pipeline nem ANTT, sem erros', async () => {
+  const errs = [], ext = [];
+  const p = await openPage(errs, ext, html => html.replace('window.INTEL=', 'window.INTEL_AUSENTE='));
+  await p.evaluate(() => { location.hash = '#projetos'; });
+  await p.waitForTimeout(250);
+  assert.equal(await p.locator('#proj-table tbody tr').count(), 54);
+  assert.equal(await p.locator('#pipeline').count(), 0);
+  assert.equal(await p.locator('#estudos-list li').count(), 27);
+  await p.evaluate(() => { location.hash = '#ficha/nova-rota-do-oeste'; });
+  await p.waitForTimeout(250);
+  assert.equal(await p.isVisible('#ficha'), true);
+  const titles = await p.$$eval('#ficha .fblock h3', hs => hs.map(h => h.textContent));
+  assert.ok(!titles.some(h => /ANTT|Praças da concessão|Pipeline/.test(h)));
+  await p.evaluate(() => { location.hash = '#ficha/sp-lt01-autoban'; });
+  await p.waitForTimeout(250);
+  assert.equal(await p.evaluate(() => location.hash), '#mapa');
+  assert.deepEqual(errs, []);
+  await p.context().close();
+});
+
 test('sem window.INTEL a seção Camadas não quebra', async () => {
   const errs = [], ext = [];
   const p = await openPage(errs, ext, html => html.replace('window.INTEL=', 'window.INTEL_AUSENTE='));

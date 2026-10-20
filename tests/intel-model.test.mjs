@@ -384,3 +384,130 @@ test('distToSegment: distância de ponto a segmento (pixels)', () => {
   assert.equal(IntelModel.distToSegment(13, 4, 0, 0, 10, 0), 5);
   assert.equal(IntelModel.distToSegment(3, 4, 0, 0, 0, 0), 5);
 });
+
+// ---------- Task 11: ficha com ANTT, ficha estadual, Projetos com esfera e pipeline ----------
+const antt = {
+  capas: {
+    novo: { nome: 'Novo', situacao: 'ativa', sucessor: null, controladora: 'C', url: 'https://x/novo' },
+    velho: { nome: 'Velho', situacao: 'encerrada', sucessor: 'novo', url: 'https://x/velho' },
+    partido: { nome: 'Partido', situacao: 'encerrada', sucessor: 'outro', sucessores: ['outro', 'novo'] },
+    solto: { nome: 'Solto', situacao: 'ativa', sucessor: null },
+  },
+  series: {
+    novo: { anos: [2024, 2025], receita: [10, 20], investimento: [1, null], custo: [null, 3] },
+    velho: { anos: [2024, 2025], receita: [5, null], investimento: [null, null], custo: [null, null] },
+    partido: { anos: [2024, 2025], receita: [null, null], investimento: [null, null], custo: [null, null] },
+  },
+  pracas: { campos: ['nome', 'ent', 'vmd', 'pesados', 'receita'], linhas: [
+    ['P1', 'novo', 100, 25, 1000], ['P2', 'novo', 300, null, null], ['P3', 'novo', null, null, 500], ['PX', 'outro', 900, 1, 9],
+  ] },
+  obras: { campos: ['ent', 'descricao', 'br', 'uf', 'km_i', 'km_f', 'previsto', 'executado'], linhas: [
+    ['novo', 'A', 'BR-1', 'MT', 1, 2, 1, 1], ['novo', 'B', 'BR-1', 'MT', 3, null, 0.5, 0.2], ['novo', 'C', 'BR-1', 'MT', 4, 5, 0.9, 0],
+    ['novo', 'D', 'BR-1', 'MT', 6, 7, null, null], ['novo', 'E', 'BR-1', 'MT', 8, 9, 1, 1.2], ['outro', 'Z', 'BR-2', 'PA', 0, 0, 1, 0],
+  ] },
+};
+
+test('anttCapa e anttAnteriores: sucessor ou sucessores apontando para o id', () => {
+  const I = { antt };
+  assert.equal(IntelModel.anttCapa(I, 'novo').controladora, 'C');
+  assert.equal(IntelModel.anttCapa(I, 'nada'), null);
+  assert.equal(IntelModel.anttCapa({}, 'novo'), null);
+  assert.deepEqual(IntelModel.anttAnteriores(I, 'novo').map(c => c.id), ['velho', 'partido']);
+  assert.deepEqual(IntelModel.anttAnteriores(I, 'outro').map(c => c.id), ['partido']);
+  assert.deepEqual(IntelModel.anttAnteriores(I, 'solto'), []);
+  assert.deepEqual(IntelModel.anttAnteriores(null, 'novo'), []);
+});
+
+test('anttSeries: série do contrato e dos anteriores (rotuladas), sem séries vazias', () => {
+  const s = IntelModel.anttSeries({ antt }, 'novo');
+  assert.deepEqual(s.map(x => [x.id, x.nome, x.anterior]), [['novo', 'Novo', false], ['velho', 'Velho', true]]);
+  assert.deepEqual(s[0].receita, [10, 20]);
+  assert.deepEqual(IntelModel.anttSeries({ antt }, 'solto'), []);
+  assert.deepEqual(IntelModel.anttSeries({}, 'novo'), []);
+});
+
+test('pracasDe: praças da entidade por VMD decrescente (sem VMD no fim), % pesados e soma da receita', () => {
+  const r = IntelModel.pracasDe({ antt }, 'novo');
+  assert.deepEqual(r.linhas.map(p => p.nome), ['P2', 'P1', 'P3']);
+  assert.equal(r.linhas[1].pctPes, 0.25);
+  assert.equal(r.linhas[0].pctPes, null);
+  assert.equal(r.receita, 1500);
+  assert.deepEqual(IntelModel.pracasDe({ antt }, 'nada'), { linhas: [], receita: null });
+  assert.deepEqual(IntelModel.pracasDe({}, 'novo'), { linhas: [], receita: null });
+});
+
+test('obrasResumo: concluídas (≥ 1), em andamento, não iniciadas e as maiores previstas ainda não concluídas', () => {
+  const o = IntelModel.obrasResumo({ antt }, 'novo', 10);
+  assert.deepEqual([o.total, o.concluidas, o.andamento, o.naoIniciadas, o.semDado], [5, 2, 1, 1, 1]);
+  assert.deepEqual(o.top.map(x => x.descricao), ['C', 'B', 'D']);
+  assert.deepEqual(IntelModel.obrasResumo({ antt }, 'novo', 1).top.map(x => x.descricao), ['C']);
+  assert.equal(IntelModel.obrasResumo({ antt }, 'nada').total, 0);
+  assert.equal(IntelModel.obrasResumo({}, 'novo').total, 0);
+});
+
+const pipeline = {
+  status: [{ key: 'estudo', label: 'Em estudo' }, { key: 'edital', label: 'Edital publicado' }, { key: 'leiloado', label: 'Leiloado' }],
+  itens: [
+    { id: 'a', nome: 'A', esfera: 'federal', status: 'estudo', data_prevista: null, ent: null, verificado: true },
+    { id: 'b', nome: 'B', esfera: 'estadual', status: 'edital', data_prevista: '2027-06', ent: null, verificado: false },
+    { id: 'c', nome: 'C', esfera: 'federal', status: 'estudo', data_prevista: '2026-11-12', ent: 'novo', verificado: true },
+    { id: 'd', nome: 'D', esfera: 'federal', status: 'leiloado', data_prevista: '2027-06-01', ent: 'novo', verificado: true },
+  ],
+};
+
+test('pipelineRows: ordenado por data prevista crescente, sem data no fim; filtro por esfera e status', () => {
+  const r = IntelModel.pipelineRows({ pipeline });
+  assert.deepEqual(r.map(x => x.id), ['c', 'b', 'd', 'a']);
+  assert.deepEqual(IntelModel.filterPipeline(r, { esfera: new Set(['federal']) }).map(x => x.id), ['c', 'd', 'a']);
+  assert.deepEqual(IntelModel.filterPipeline(r, { status: new Set(['estudo']) }).map(x => x.id), ['c', 'a']);
+  assert.deepEqual(IntelModel.filterPipeline(r, { esfera: new Set(['estadual']), status: new Set(['estudo']) }), []);
+  assert.deepEqual(IntelModel.filterPipeline(r, {}).length, 4);
+  assert.deepEqual(IntelModel.pipelineRows({}), []);
+});
+
+test('pipelineCounts, statusLabel e pipelineDe', () => {
+  const r = IntelModel.pipelineRows({ pipeline });
+  assert.deepEqual(IntelModel.pipelineCounts(r, pipeline.status), [
+    { key: 'estudo', label: 'Em estudo', n: 2 }, { key: 'edital', label: 'Edital publicado', n: 1 }, { key: 'leiloado', label: 'Leiloado', n: 1 }]);
+  assert.deepEqual(IntelModel.pipelineCounts(r.slice(0, 1), pipeline.status).map(x => x.key), ['estudo']);
+  assert.equal(IntelModel.statusLabel({ pipeline }, 'edital'), 'Edital publicado');
+  assert.equal(IntelModel.statusLabel({ pipeline }, 'xyz'), 'xyz');
+  assert.equal(IntelModel.statusLabel({}, null), '—');
+  assert.deepEqual(IntelModel.pipelineDe({ pipeline }, 'novo').map(x => x.id), ['c', 'd']);
+  assert.deepEqual(IntelModel.pipelineDe({}, 'novo'), []);
+});
+
+const estaduais = {
+  entidades: [
+    { id: 'sp-a', nome: 'A', esfera: 'estadual', uf: 'SP', rodovias: ['SP-330', 'SP-348'], estado: 'vigente', assinatura: '1998-05-01',
+      km_decl: 319.8, capex_bi: 14.3, capex_ref: '2024', grupo: 'Motiva', trechos: [{ rod: 'SP-330', km_i: 11, km_f: 158.5 }] },
+    { id: 'mt-b', nome: 'B', uf: 'MT', rodovias: [], estado: 'encerrado', assinatura: null, km_decl: null, capex_bi: null, capex_ref: null, grupo: null },
+  ],
+};
+
+test('estaduaisRows: mesmo formato de comparatorRows, esfera estadual e estados próprios', () => {
+  const r = IntelModel.estaduaisRows({ estaduais });
+  assert.equal(r.length, 2);
+  assert.deepEqual(r[0], {
+    idx: null, k: 0, esfera: 'estadual', id: 'sp-a', nome: 'A', brsUfs: 'SP-330/SP-348/SP', estado: 'estadual_vigente', dataChave: '1998-05-01',
+    km: 319.8, capex: 14.3, opex: null, dataBase: '2024', capexKm: null, wacc: null, tkm: null, desagio: null,
+    participantes: null, vencedor: 'Motiva', ano: null, tipo: null, ufs: ['SP'], ficha: {},
+  });
+  assert.equal(r[1].brsUfs, 'MT');
+  assert.equal(r[1].estado, 'estadual_encerrado');
+  assert.equal(r[1].km, null);
+  assert.deepEqual(IntelModel.EST_ESTADOS.map(s => s.label), ['Contrato estadual vigente', 'Contrato estadual encerrado']);
+  assert.deepEqual(IntelModel.estaduaisRows({}), []);
+});
+
+test('byEsfera, estIndex e trechosLabel', () => {
+  const rows = [{ esfera: 'federal' }, { esfera: 'estadual' }];
+  assert.equal(IntelModel.byEsfera(rows, new Set()).length, 2);
+  assert.deepEqual(IntelModel.byEsfera(rows, new Set(['estadual'])), [{ esfera: 'estadual' }]);
+  assert.equal(IntelModel.estIndex({ estaduais }, 'mt-b'), 1);
+  assert.equal(IntelModel.estIndex({ estaduais }, 'x'), -1);
+  assert.equal(IntelModel.estIndex(null, 'x'), -1);
+  assert.deepEqual(IntelModel.trechosLabel([{ rod: 'SP-330', km_i: 11, km_f: 158.5 }, { rod: 'SP-300', km_i: null, km_f: null }]),
+    ['SP-330: km 11,0 a 158,5', 'SP-300']);
+  assert.deepEqual(IntelModel.trechosLabel(null), []);
+});

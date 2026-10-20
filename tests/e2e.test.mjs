@@ -273,6 +273,8 @@ test('v2: Esc fecha a ficha e volta ao hash anterior', async () => {
 
 test('v2: comparador com 54 linhas, ordenação, filtro e totais', async () => {
   await go('#projetos');
+  // v3: com concessões estaduais no arquivo, os 39 + 4 + 11 da v2 são a esfera federal
+  if (await page.locator('#proj-esfera').count()) await page.selectOption('#proj-esfera', 'federal');
   assert.equal(await page.locator('#proj-table tbody tr').count(), 54);
   await page.click('[data-sort="capexKm"]');
   let vals = await page.evaluate(() => Projetos.rowsShown().map(r => r.capexKm));
@@ -295,6 +297,7 @@ test('v2: comparador com 54 linhas, ordenação, filtro e totais', async () => {
   await page.keyboard.press('Escape');
   await page.click('[data-f="estado"][data-v="projeto2027"]');
   assert.equal(await page.locator('#estudos-list li').count(), 27);
+  if (await page.locator('#proj-esfera').count()) await page.selectOption('#proj-esfera', '');
 });
 
 test('v2: aba Mercado tem gráficos com fonte e tooltip', async () => {
