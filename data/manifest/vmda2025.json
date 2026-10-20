@@ -1,0 +1,13 @@
+[
+ {
+  "dominio": "vmda2025",
+  "descricao": "VMDa – Modelagem 2025 (shapefile com volume por link e dicionário de dados); camada VGeo/DNIT fornecida pelo usuário",
+  "url": "https://drive.google.com/file/d/1gnXpMWMLs4uZ9mWZf2SxlNe6R8LcdFha/view",
+  "arquivo": "data/raw/trafego/vmda2025/vgeo_vmda2025.zip",
+  "bytes": 183024446,
+  "sha256": "a91a75d1bd338b58b75f10a420378c9c5f83783c94e9bc5b95058727c0d0ce63",
+  "periodo": "2025",
+  "licenca": "Dado público federal (DNIT); licença não declarada na fonte",
+  "acesso": "2026-10-20"
+ }
+]
