@@ -334,9 +334,7 @@ const UI = (() => {
   }
 
   // ---------- Camadas de inteligência (v3) ----------
-  const vmdaOf = () => (intel && intel.trafego && intel.trafego.vmda) || null;
-  const acidOf = () => (intel && intel.trafego && intel.trafego.acidentes) || null;
-  const cargaOf = () => (intel && intel.carga && intel.carga.gsa ? intel.carga : null);
+  const vmdaOf = () => IM.vmdaOf(intel), acidOf = () => IM.acidOf(intel), cargaOf = () => IM.cargaOf(intel);
   // [2024, 2025] -> "2024–25"; um ano só -> "2024".
   function anosLabel(anos) {
     if (!Array.isArray(anos) || !anos.length) return '';
@@ -368,40 +366,29 @@ const UI = (() => {
     </div>`;
   }
 
-  // Bloco "Tráfego e segurança" do cartão; omitido se o físico não tem nenhum dado.
+  // Bloco "Tráfego e segurança" do cartão (números de IntelModel.fisIntel); omitido se o físico não tem nenhum dado.
   function intelBlock(j) {
-    const vm = vmdaOf(), ac = acidOf(), ca = cargaOf();
-    const val = (arr, k) => (arr && arr[k] != null && Number.isFinite(arr[k]) ? arr[k] : null);
+    const vm = vmdaOf(), ac = acidOf(), ca = cargaOf(), f = IM.fisIntel(intel, snv, j);
     const groups = [];
     const group = (title, rows) => {
       const body = rows.filter(([, v]) => v != null).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
       if (body) groups.push(`<dt class="card__sub">${esc(title)}</dt>${body}`);
     };
-    let tot = null;
+    const fmt = (v, fn) => (v == null ? null : fn(v));
     if (vm) {
-      const l = val(vm.l, j), p = val(vm.p, j);
-      tot = l == null && p == null ? null : (l || 0) + (p || 0);
       group(`VMDa · estimado, ${vm.ano}`, [
-        ['Leves', l == null ? null : IM.fmtVmd(l)],
-        ['Pesados', p == null ? null : IM.fmtVmd(p)],
-        ['Total', tot == null ? null : IM.fmtVmd(tot)],
-        ['% pesados', p != null && tot > 0 ? IM.fmtPct(p / tot) : null],
+        ['Leves', fmt(f.l, IM.fmtVmd)], ['Pesados', fmt(f.p, IM.fmtVmd)],
+        ['Total', fmt(f.tot, IM.fmtVmd)], ['% pesados', fmt(f.pctPes, IM.fmtPct)],
       ]);
     }
     if (ac) {
-      const anos = (ac.anos && ac.anos.length) || 1;
-      const n = val(ac.n, j), m = val(ac.m, j);
-      const taxa = IM.taxaAcidentes(n, anos, tot, snv.fis[j].ext);
       group(`Acidentes · ${prfRef()}, medido`, [
-        ['Acidentes/ano', n == null ? null : IM.fmtDec(n / anos, 1)],
-        ['Mortos/ano', m == null ? null : IM.fmtDec(m / anos, 1)],
-        ['Acidentes por 10⁶ veíc·km', taxa == null ? null : IM.fmtDec(taxa, 2)],
+        ['Acidentes/ano', fmt(f.acidAno, x => IM.fmtDec(x, 1))],
+        ['Mortos/ano', fmt(f.mortosAno, x => IM.fmtDec(x, 1))],
+        ['Acidentes por 10⁶ veíc·km', fmt(f.taxa, x => IM.fmtDec(x, 2))],
       ]);
     }
-    if (ca) {
-      const g = val(ca.gsa, j);
-      group(`Carga agrícola · modelo PNL, ${ca.ano_base}`, [['Carga agrícola', g == null ? null : `${IM.fmtT(g)}/ano`]]);
-    }
+    if (ca) group(`Carga agrícola · modelo PNL, ${ca.ano_base}`, [['Carga agrícola', fmt(f.gsa, x => `${IM.fmtT(x)}/ano`)]]);
     if (!groups.length) return '';
     return `<div class="card__intel"><h3 class="section-title">Tráfego e segurança</h3><dl class="card__grid">${groups.join('')}</dl></div>`;
   }

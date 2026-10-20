@@ -200,6 +200,7 @@ const MapView = (() => {
     init, setVisible, highlight, fitTo, fitBrasil, setColorMode,
     colorMode() { return mode; },
     classes,
+    classesCached(m) { return !!quant[m]; },
     haloCount() { return halos.filter(h => h && map.hasLayer(h)).length; },
     fitEntity(idx) { fitTo(entityFis(idx)); },
     highlightEntity(idx) { highlight(entityFis(idx)); },

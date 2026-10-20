@@ -15,7 +15,8 @@ const IntelModel = (() => {
   const nAnos = acid => (acid && acid.anos && acid.anos.length) || 1;
   const vmdaOf = intel => (intel && intel.trafego && intel.trafego.vmda) || null;
   const acidOf = intel => (intel && intel.trafego && intel.trafego.acidentes) || null;
-  const cargaOf = intel => (intel && intel.carga) || null;
+  // Carga só conta como presente com o array GSA (é ele que vira métrica, agregado e cartão).
+  const cargaOf = intel => (intel && intel.carga && intel.carga.gsa ? intel.carga : null);
 
   const MODES = {
     trafego: {
@@ -28,7 +29,7 @@ const IntelModel = (() => {
     },
     carga: {
       label: 'Carga agrícola', unidade: 't/ano', tipo: 'modelado',
-      fonte: intel => { const c = cargaOf(intel); return c && c.gsa ? `ONTL/Infra S.A., PNL 2035, ano-base ${c.ano_base} (modelado)` : DASH; },
+      fonte: intel => { const c = cargaOf(intel); return c ? `ONTL/Infra S.A., PNL 2035, ano-base ${c.ano_base} (modelado)` : DASH; },
     },
     acidentes: {
       label: 'Acidentes', unidade: 'acid./km/ano', tipo: 'medido',
@@ -57,7 +58,7 @@ const IntelModel = (() => {
     }
     if (mode === 'carga') {
       const c = cargaOf(intel);
-      if (!c || !c.gsa) return none();
+      if (!c) return none();
       for (let j = 0; j < nFis; j++) out[j] = has(c.gsa[j]) ? c.gsa[j] : null;
       return out;
     }
@@ -96,7 +97,7 @@ const IntelModel = (() => {
 
   function aggregateIntel(intel, snv, visible) {
     const vm = vmdaOf(intel), ac = acidOf(intel), ca = cargaOf(intel);
-    const hasCarga = !!(ca && ca.gsa), hasMortos = !!(ac && ac.m && ac.m.length);
+    const hasCarga = !!ca, hasMortos = !!(ac && ac.m && ac.m.length);
     const r = {
       vkm: vm ? 0 : null, vkmPes: vm ? 0 : null, kmVmda: vm ? 0 : null, kmPav: 0,
       acidAno: ac && ac.n ? 0 : null, mortosAno: hasMortos ? 0 : null,
@@ -120,6 +121,24 @@ const IntelModel = (() => {
       if (hasCarga && has(ca.gsa[j])) { r.tkm += ca.gsa[j] * ext; r.kmCarga += ext; }
     }
     return r;
+  }
+
+  // Números de um físico para o cartão; mesmas regras de aggregateIntel (null = sem dado).
+  function fisIntel(intel, snv, j) {
+    const vm = vmdaOf(intel), ac = acidOf(intel), ca = cargaOf(intel);
+    const at = (arr, k) => (arr && has(arr[k]) ? arr[k] : null);
+    const l = vm ? at(vm.l, j) : null, p = vm ? at(vm.p, j) : null;
+    const tot = sumNullable(l, p);
+    const anos = nAnos(ac);
+    const n = ac ? at(ac.n, j) : null, m = ac ? at(ac.m, j) : null;
+    return {
+      l, p, tot,
+      pctPes: p != null && tot > 0 ? p / tot : null,
+      acidAno: n == null ? null : n / anos,
+      mortosAno: m == null ? null : m / anos,
+      taxa: taxaAcidentes(n, anos, tot, snv.fis[j].ext),
+      gsa: ca ? at(ca.gsa, j) : null,
+    };
   }
 
   // Acidentes por 10^6 veíc·km.
@@ -185,7 +204,8 @@ const IntelModel = (() => {
   const fmtVkm = x => scaled(x, [[1, 0, '', ' veíc·km/dia'], [1e6, 1, '', ' mi veíc·km/dia'], [1e9, 1, '', ' bi veíc·km/dia']]);
   const fmtTkm = x => scaled(x, [[1, 0, '', ' t·km/ano'], [1e6, 1, '', ' mi t·km/ano'], [1e9, 1, '', ' bi t·km/ano'], [1e12, 1, '', ' tri t·km/ano']]);
 
-  return { MODES, rows, metricArray, quantileBreaks, classOf, aggregateIntel, taxaAcidentes, pointsOfFis, decodeTopo,
+  return { MODES, has, sumNullable, nAnos, vmdaOf, acidOf, cargaOf,
+    rows, metricArray, quantileBreaks, classOf, aggregateIntel, fisIntel, taxaAcidentes, pointsOfFis, decodeTopo,
     fmtInt, fmtDec, fmtVmd, fmtT, fmtPct, fmtBRL, fmtVkm, fmtTkm };
 })();
 

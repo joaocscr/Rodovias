@@ -179,6 +179,25 @@ test('(g) troca de modo em menos de 300 ms', async t => {
   }
 });
 
+test('(g) primeira troca (cache frio) para cada modo quantitativo em menos de 300 ms', async t => {
+  const errs = [], ext = [];
+  const p = await openPage(errs, ext);
+  for (const m of ['trafego', 'pesados', 'carga', 'acidentes']) {
+    const r = await p.evaluate(m => new Promise(resolve => {
+      const cold = MapView.classesCached(m) === false;
+      const t0 = performance.now();
+      document.querySelector(`#legend [data-mode="${m}"]`).click();
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve({ ms: performance.now() - t0, cold })));
+    }), m);
+    t.diagnostic(`${m} (frio): ${r.ms.toFixed(0)} ms`);
+    assert.equal(r.cold, true, `${m} já estava em cache`);
+    assert.equal(await p.evaluate(() => MapView.colorMode()), m);
+    assert.ok(r.ms < 300, `${m} (frio): levou ${r.ms.toFixed(0)} ms`);
+  }
+  assert.deepEqual(errs, []);
+  await p.context().close();
+});
+
 test('(i) volta ao modo Concessões com legenda e halo da v2', async () => {
   await mode('concessoes');
   assert.equal(await page.evaluate(() => MapView.colorMode()), 'concessoes');

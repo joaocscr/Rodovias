@@ -309,8 +309,17 @@ test('v2: aba Regulatório com índice, otimizações e estudos', async () => {
   await go('#regulatorio');
   assert.equal(await page.locator('.reg__toc a').count(), 8);
   await page.locator('.reg__toc a', { hasText: 'Matriz de riscos' }).click();
-  await page.waitForTimeout(500);
-  const top = await page.evaluate(() => document.getElementById('reg-riscos').getBoundingClientRect().top);
+  // A rolagem é suave: espera a posição parar (10 quadros iguais seguidos, até 3 s) em vez de um tempo fixo.
+  const top = await page.evaluate(() => new Promise(resolve => {
+    const el = document.getElementById('reg-riscos'), t0 = performance.now();
+    let last = NaN, still = 0;
+    (function tick() {
+      const t = el.getBoundingClientRect().top;
+      still = t === last ? still + 1 : 0;
+      last = t;
+      if (still >= 10 || performance.now() - t0 > 3000) resolve(t); else requestAnimationFrame(tick);
+    })();
+  }));
   assert.ok(top < 200, String(top));
   assert.equal(await page.locator('#otimizacoes tbody tr').count(), 11);
   await page.locator('#page-regulatorio [data-estudo]:not([disabled])').first().click();

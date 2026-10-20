@@ -199,3 +199,46 @@ test('fmtDec e fmtTkm', () => {
   assert.equal(IntelModel.fmtTkm(2.5e6), '2,5 mi t·km/ano');
   assert.equal(IntelModel.fmtTkm(1.234e11), '123,4 bi t·km/ano');
 });
+
+test('acessores e utilitários exportados', () => {
+  assert.equal(IntelModel.has(0), true);
+  assert.equal(IntelModel.has(NaN), false);
+  assert.equal(IntelModel.has(null), false);
+  assert.equal(IntelModel.sumNullable(null, null), null);
+  assert.equal(IntelModel.sumNullable(3, null), 3);
+  assert.equal(IntelModel.sumNullable(3, 4), 7);
+  assert.equal(IntelModel.vmdaOf(intel).ano, 2023);
+  assert.deepEqual(IntelModel.acidOf(intel).anos, [2024, 2025]);
+  assert.equal(IntelModel.cargaOf(intel).ano_base, 2017);
+  assert.equal(IntelModel.cargaOf({ carga: { tipo: 'modelado' } }), null);
+  for (const f of ['vmdaOf', 'acidOf', 'cargaOf']) {
+    assert.equal(IntelModel[f](null), null, f);
+    assert.equal(IntelModel[f]({}), null, f);
+  }
+  assert.equal(IntelModel.nAnos(IntelModel.acidOf(intel)), 2);
+  assert.equal(IntelModel.nAnos({}), 1);
+});
+
+test('fisIntel: números do cartão, coerentes com aggregateIntel', () => {
+  const f0 = IntelModel.fisIntel(intel, snv, 0);
+  assert.equal(f0.l, 1000); assert.equal(f0.p, 200); assert.equal(f0.tot, 1200);
+  close(f0.pctPes, 200 / 1200);
+  close(f0.acidAno, 2); close(f0.mortosAno, 1);
+  close(f0.taxa, IntelModel.taxaAcidentes(4, 2, 1200, 10));
+  assert.equal(f0.gsa, 100);
+  // ext 0: taxa null; pesados 0 com total > 0 -> 0%
+  const f2 = IntelModel.fisIntel(intel, snv, 2);
+  assert.equal(f2.taxa, null); assert.equal(f2.pctPes, 0); assert.equal(f2.gsa, null);
+  // sem VMDa: tot/pctPes/taxa null, acidentes seguem
+  const f3 = IntelModel.fisIntel(intel, snv, 3);
+  assert.equal(f3.tot, null); assert.equal(f3.pctPes, null); assert.equal(f3.taxa, null);
+  close(f3.acidAno, 5);
+  // soma de fisIntel bate com aggregateIntel
+  const a = IntelModel.aggregateIntel(intel, snv, vis);
+  let vkm = 0, acid = 0;
+  for (let j = 0; j < 3; j++) { const f = IntelModel.fisIntel(intel, snv, j); vkm += (f.tot || 0) * snv.fis[j].ext; acid += f.acidAno || 0; }
+  assert.equal(vkm, a.vkm); close(acid, a.acidAno);
+  // sem INTEL: tudo null
+  assert.deepEqual(IntelModel.fisIntel(null, snv, 0),
+    { l: null, p: null, tot: null, pctPes: null, acidAno: null, mortosAno: null, taxa: null, gsa: null });
+});
