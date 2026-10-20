@@ -99,13 +99,48 @@ def test_polo_goiania_presente(blk):
     assert p["rodovias"] == ["GO-020", "GO-060", "GO-070", "GO-080"] and p["verificado"] is True
 
 
-def test_status_mapeados_do_rascunho_com_nota(blk):
+def test_status_revisados(blk):
     por_id = {i["id"]: i for i in blk["itens"]}
-    assert por_id["rs-bloco-2"]["status"] == "cancelado"
     assert por_id["mg-lote8-vetor-norte"]["status"] == "suspenso"
     assert por_id["fed-rota-dos-sertoes"]["status"] == "leiloado"
-    for k in ("rs-bloco-2", "mg-lote8-vetor-norte"):
-        assert "Status" in por_id[k]["obs"]
+    # audiência suspensa não é projeto suspenso
+    demais = por_id["mt-fase2-demais"]
+    assert demais["status"] == "consulta_publica" and "suspensa (imprensa)" in demais["obs"]
+    # a página oficial do RS não registra o leilão deserto: fonte é a imprensa e a página oficial vai em obs
+    b2 = por_id["rs-bloco-2"]
+    assert b2["status"] == "cancelado" and b2["verificado"] is False
+    assert "portaltela.com" in b2["fonte_url"] and "https://parcerias.rs.gov.br/rodovias-649f2b1de5fe5" in b2["obs"]
+
+
+def test_obs_sem_linguagem_de_processo(blk):
+    proibido = re.compile(r"rascunho|mapeado|Status mapeado|N[ÃA]O VERIFICADO|S[ÓO] NOT[ÍI]CIA|Não usar no mapa|"
+                          r"inacess[ií]vel|conc\.json|data_prevista", re.I)
+    for i in blk["itens"]:
+        assert not proibido.search(i["obs"]), (i["id"], i["obs"])
+
+
+def test_data_prevista_com_ent_segue_conc(blk, conc):
+    """Com `ent`, a data segue conc.json: leilão (agendado/estudo/tcu/consulta/edital), assinatura (leiloado/contrato)."""
+    E = {e["id"]: e for e in conc["entidades"]}
+    n = 0
+    for i in blk["itens"]:
+        if i["ent"] is None:
+            continue
+        e = E[i["ent"]]
+        if i["status"] == "leiloado":
+            esperado = e["assinatura_aditivo"] or e["assinatura"]
+        elif i["status"] == "contrato":
+            esperado = e["assinatura"]
+        else:
+            esperado = e["leilao"]
+        assert i["data_prevista"] == esperado, (i["id"], i["data_prevista"], esperado)
+        n += 1
+    assert n == 18
+
+
+def test_contrato_vigente_tem_data_de_assinatura(blk):
+    por_id = {i["id"]: i for i in blk["itens"]}
+    assert por_id["rs-bloco-3"]["data_prevista"] == "2022-12-22"
 
 
 def test_csv_gera_o_json_publicado(blk):
@@ -121,9 +156,14 @@ def test_validacao_rejeita_status_e_ent_invalidos():
     ok = pipeline.item_de_linha(linha, {"rota-arco-norte"}, 27)
     assert ok["uf"] == ["MT"] and ok["km"] == 10.0 and ok["ent"] is None and ok["estudo"] is None
     for campo, valor in [("status", "agendado"), ("ent", "nao-existe"), ("verificado", "talvez"),
-                         ("esfera", "municipal"), ("estudo", "99"), ("data_prevista", "breve")]:
+                         ("esfera", "municipal"), ("estudo", "99"), ("data_prevista", "breve"),
+                         ("uf", "MT;XX"), ("uf", ""), ("rodovias", "BR-163;nao detalhadas"), ("rodovias", "BR163"),
+                         ("km", "0"), ("km", "-5"), ("data_prevista", "2026-02-30"), ("data_prevista", "2026-13")]:
         with pytest.raises(ValueError):
             pipeline.item_de_linha({**linha, campo: valor}, {"rota-arco-norte"}, 27)
+    for campo, valor in [("data_prevista", "2026-12"), ("data_prevista", "2026-02-28"), ("km", ""),
+                         ("rodovias", "")]:
+        pipeline.item_de_linha({**linha, campo: valor}, {"rota-arco-norte"}, 27)
 
 
 @pytest.mark.skipif(not RASCUNHO.exists(), reason="data/raw/ ausente")
