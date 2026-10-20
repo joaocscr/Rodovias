@@ -1,0 +1,13 @@
+[
+ {
+  "dominio": "carga",
+  "descricao": "PNL 2035, cenário-base 2017 (shapefile com carregamento por link + dicionário de dados)",
+  "url": "https://ontl.infrasa.gov.br/wp-content/uploads/2024/05/Cenario-base-PNL00M2017.zip",
+  "arquivo": "data/raw/graos/multimodal/pnl2035_cenario_base.zip",
+  "bytes": 120949105,
+  "sha256": "fb205bb15da63e1f504976d79f71e218e3a1c616d90c3d1c0b04ba3fa0536f48",
+  "periodo": "2017 (cenário-base do PNL 2035)",
+  "licenca": "Dado público da ONTL/Infra S.A.; licença não declarada na fonte",
+  "acesso": "2026-10-20"
+ }
+]
