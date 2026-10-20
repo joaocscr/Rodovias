@@ -73,7 +73,7 @@ python scripts/intel/fontes_bloco.py   # data/intel/fontes.json e data/intel/man
 python scripts/build.py                # HTML único; imprime o tamanho de cada bloco em KB
 ```
 
-Os brutos ficam em `data/raw/` (fora do git, ~3,4 GB em disco; o manifesto lista 254 arquivos, ~1,1 GB baixados) e o build nunca os lê. O manifesto (`data/intel/manifest.json`, com URL, data de acesso, tamanho e SHA-256 de cada arquivo baixado) fica também na pasta Rodovias do Google Drive, subpasta `v3-dados`, junto com `data/intel/fontes.json` e `data/intel/pipeline.csv` (o conector só leva arquivos pequenos); os demais JSON processados ficam só no repositório. O manifesto não vai para o HTML; o bloco `fontes` vai. O pipeline de concessões vem de `data/intel/pipeline.csv`, editado à mão; `python scripts/intel/pipeline.py build` valida o CSV e regenera o JSON.
+Os brutos ficam em `data/raw/` (fora do git, ~3,4 GB em disco; o manifesto lista 254 arquivos, ~1,1 GB baixados) e o build nunca os lê. O manifesto (`data/intel/manifest.json`, com URL, data de acesso, tamanho e SHA-256 de cada arquivo baixado) fica no repositório; na pasta Rodovias do Google Drive, subpasta `v3-dados`, estão uma versão em planilha dele (`manifesto-fontes-v3.csv`, sem os hashes), `fontes.json` e `pipeline.csv`. Os demais JSON processados ficam só no repositório. O manifesto não vai para o HTML; o bloco `fontes` vai. O pipeline de concessões vem de `data/intel/pipeline.csv`, editado à mão; `python scripts/intel/pipeline.py build` valida o CSV e regenera o JSON.
 
 ## Regenerar com um SNV novo
 
