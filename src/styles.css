@@ -419,3 +419,42 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 .card__intel .card__grid { border-top: 0; padding: 0; }
 .card__grid dt.card__sub { grid-column: 1 / -1; margin-top: 8px; font-weight: 600; color: var(--color-deep-blue); }
 .card__grid dt.card__sub:first-child { margin-top: 0; }
+
+/* ---------- v3: camadas de sobreposição, fundo municipal e cartões de ponto ---------- */
+.layers > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+.layers > summary::-webkit-details-marker { display: none; }
+.layers > summary .section-title { margin: 0; }
+.layers > summary .chev { transition: transform var(--transition); color: var(--color-light-grey); }
+.layers[open] > summary .chev { transform: rotate(180deg); }
+.layers__body { padding-top: 8px; }
+.layers .check { min-height: 32px; }
+.layers .check .muted { font-size: 14px; }
+.fundo { margin: 8px 0 0; padding: 8px 0 0; border: 0; border-top: 1px solid var(--line); }
+.fundo__title { padding: 0; margin-bottom: 4px; font-size: 14px; font-weight: 600; color: var(--color-spacial-grey); }
+.fundo__opts { display: grid; grid-template-columns: 1fr 1fr; gap: 0 8px; }
+.fundo .check input { accent-color: var(--color-deep-blue); }
+.layers__note { margin: 8px 0 0; }
+.leaflet-container.layers-hover { cursor: pointer; }
+.leaflet-tooltip.pt-tip {
+  padding: 4px 8px; border: 1px solid var(--line); border-radius: var(--radius-sm); box-shadow: var(--shadow);
+  background: var(--color-snow-white); color: var(--color-spacial-grey); font-family: var(--font-body); font-size: 14px; white-space: nowrap;
+}
+.leaflet-tooltip.pt-tip::before { display: none; }
+.fundo-legend { left: 16px; right: auto; width: 288px; }
+.legend__note { margin: 8px 0 0; font-size: 14px; line-height: 20px; color: var(--color-light-grey); }
+.card__chart { padding: 16px 24px; border-top: 1px solid var(--line); }
+.card__svg { overflow-x: auto; }
+.card__svg svg { display: block; }
+.card__src { margin: 8px 0 0; font-size: 14px; color: var(--color-light-grey); }
+.card__pad { margin: 0; padding: 0 24px 16px; }
+.card__meas { padding: 16px 24px; border-top: 1px solid var(--line); }
+.meas-list { margin: 0; padding: 0; list-style: none; }
+.meas {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; width: calc(100% + 16px); margin: 0 -8px; padding: 8px;
+  border: 0; border-radius: var(--radius-sm); background: transparent; text-align: left; cursor: pointer; transition: background var(--transition);
+}
+.meas:hover { background: var(--tint); }
+.meas:active { background: var(--tint-strong); }
+.meas__name { font-size: 14px; font-weight: 600; color: var(--color-deep-blue); min-width: 0; }
+.meas__kind { display: block; font-size: 14px; font-weight: 400; color: var(--color-light-grey); }
+.meas__v { flex: none; font-size: 14px; font-variant-numeric: tabular-nums; }

@@ -242,3 +242,119 @@ test('fisIntel: números do cartão, coerentes com aggregateIntel', () => {
   assert.deepEqual(IntelModel.fisIntel(null, snv, 0),
     { l: null, p: null, tot: null, pctPes: null, acidAno: null, mortosAno: null, taxa: null, gsa: null });
 });
+
+// ---------- Task 10: camadas e cartões de ponto ----------
+test('rodLabel: BR- como está, número vira <uf>-<n>, senão o texto original', () => {
+  assert.equal(IntelModel.rodLabel('BR-101', 'RJ'), 'BR-101');
+  assert.equal(IntelModel.rodLabel('151', 'PR'), 'PR-151');
+  assert.equal(IntelModel.rodLabel('092', 'PR'), 'PR-092');
+  assert.equal(IntelModel.rodLabel('ACESSOPARASP-278', 'PR'), 'ACESSOPARASP-278');
+  assert.equal(IntelModel.rodLabel('151', null), '151');
+  assert.equal(IntelModel.rodLabel(null, 'PR'), '—');
+  assert.equal(IntelModel.rodLabel('', 'PR'), '—');
+});
+
+test('decodeLine: primeiro par absoluto ×1e5, depois deltas -> [lat, lng]', () => {
+  assert.deepEqual(IntelModel.decodeLine([-4700000, -1500000, 100, -200, 50, 0]),
+    [[-15, -47], [-15.002, -46.999], [-15.002, -46.9985]]);
+  assert.deepEqual(IntelModel.decodeLine([]), []);
+  assert.deepEqual(IntelModel.decodeLine(null), []);
+});
+
+test('pointRadius: ∝ √VMD entre 3 e 10 px; sem VMD = mínimo', () => {
+  assert.equal(IntelModel.pointRadius(100, 100), 10);
+  assert.equal(IntelModel.pointRadius(25, 100), 5);
+  close(IntelModel.pointRadius(49, 100), 7);
+  assert.equal(IntelModel.pointRadius(1, 100), 3);
+  assert.equal(IntelModel.pointRadius(null, 100), 3);
+  assert.equal(IntelModel.pointRadius(0, 100), 3);
+  assert.equal(IntelModel.pointRadius(50, 0), 3);
+  assert.equal(IntelModel.pointRadius(400, 100), 10);
+});
+
+test('lineWeight: espessura ∝ t, mínimo 1 px', () => {
+  assert.equal(IntelModel.lineWeight(100, 100), 8);
+  assert.equal(IntelModel.lineWeight(50, 100), 4);
+  assert.equal(IntelModel.lineWeight(1, 100), 1);
+  assert.equal(IntelModel.lineWeight(null, 100), 1);
+  assert.equal(IntelModel.lineWeight(10, 0), 1);
+});
+
+test('portoTipo: só os 4 tipos, com rótulos curtos', () => {
+  assert.equal(IntelModel.portoTipo('Porto Organizado'), 'Porto Organizado');
+  assert.equal(IntelModel.portoTipo('Terminal de uso privado'), 'TUP');
+  assert.equal(IntelModel.portoTipo('Estação de transbordo de cargas'), 'ETC');
+  assert.equal(IntelModel.portoTipo('Porto Público'), 'Porto público');
+  for (const t of ['IP4', 'Registro - Terminal de uso privado', 'TNA', 'Plataforma Marítima', null]) assert.equal(IntelModel.portoTipo(t), null, t);
+});
+
+test('monthLabel: AAAA-MM -> mmm/aaaa', () => {
+  assert.equal(IntelModel.monthLabel('2024-01'), 'jan/2024');
+  assert.equal(IntelModel.monthLabel('2026-09'), 'set/2026');
+  assert.equal(IntelModel.monthLabel('x'), 'x');
+});
+
+const agroIntel = {
+  municipios: { ids: ['1', '2', '3', '4', '5', '6', '7'], nomes: ['A', 'B', 'C', 'D', 'E', 'F', 'G'], uf: ['MT', 'MT', 'GO', 'GO', 'PR', 'PR', 'SP'] },
+  agro: {
+    ids: ['1', '2', '3', '4', '5', '6', '7'], ano: 2025,
+    produtos: {
+      soja: [10, 20, 30, 40, 50, 0, null], milho1: [1, null, 0, 2, null, 3, null], milho2: [5, null, 1, null, null, 0, null],
+      cana: [0, 0, 0, 0, 0, 0, 0], algodao: [], trigo: [], cafe: [],
+    },
+    armazenagem: { periodo: '2º sem/2025', cap: [100, null, 0, 300, 400, 500, 600], sigilo: [0, 1, 0, 0, 0, 0, 0] },
+  },
+};
+
+test('FUNDOS: 7 opções na ordem, com fonte', () => {
+  assert.deepEqual(IntelModel.FUNDOS.map(f => f.label), ['Soja', 'Milho', 'Cana', 'Algodão', 'Café', 'Trigo', 'Armazenagem']);
+  assert.equal(IntelModel.fundoFonte(agroIntel, 'soja'), 'IBGE PAM 2025');
+  assert.equal(IntelModel.fundoFonte(agroIntel, 'armazenagem'), 'IBGE Estoques 2º sem/2025');
+  assert.equal(IntelModel.fundoFonte({}, 'soja'), '—');
+});
+
+test('fundoValues: produto, milho = 1ª + 2ª safra, armazenagem; ausente -> null', () => {
+  assert.deepEqual(IntelModel.fundoValues(agroIntel, 'soja'), [10, 20, 30, 40, 50, 0, null]);
+  assert.deepEqual(IntelModel.fundoValues(agroIntel, 'milho'), [6, null, 1, 2, null, 3, null]);
+  assert.deepEqual(IntelModel.fundoValues(agroIntel, 'armazenagem'), [100, null, 0, 300, 400, 500, 600]);
+  assert.equal(IntelModel.fundoValues({}, 'soja'), null);
+  assert.equal(IntelModel.fundoValues(agroIntel, 'xyz'), null);
+});
+
+test('fundoClasses: quantis sobre valores > 0; zero e sem dado = -1', () => {
+  const v = [10, 20, 30, 40, 50, 0, null];
+  const q = IntelModel.fundoClasses(v, 5);
+  assert.deepEqual(q.breaks, IntelModel.quantileBreaks(v, 5));
+  assert.deepEqual([...q.cls], [0, 1, 2, 3, 4, -1, -1]);
+  assert.equal(q.min, 10); assert.equal(q.max, 50);
+  const z = IntelModel.fundoClasses([0, 0, null], 5);
+  assert.deepEqual([...z.cls], [-1, -1, -1]);
+  assert.equal(z.max, null);
+});
+
+test('munInfo: nome, UF, 7 produtos e armazenagem com sigilo', () => {
+  const m = IntelModel.munInfo(agroIntel, '2');
+  assert.equal(m.nome, 'B'); assert.equal(m.uf, 'MT');
+  assert.equal(m.prod.soja, 20); assert.equal(m.prod.milho1, null);
+  assert.deepEqual(Object.keys(m.prod), ['soja', 'milho1', 'milho2', 'cana', 'algodao', 'trigo', 'cafe']);
+  assert.equal(m.cap, null); assert.equal(m.sigilo, true);
+  const a = IntelModel.munInfo(agroIntel, '1');
+  assert.equal(a.cap, 100); assert.equal(a.sigilo, false); assert.equal(a.prod.algodao, null);
+  assert.equal(IntelModel.munInfo(agroIntel, '999'), null);
+});
+
+test('pointInRings: par-ímpar, buraco excluído; ringsBBox', () => {
+  const outer = [[0, 0], [0, 10], [10, 10], [10, 0], [0, 0]], hole = [[4, 4], [4, 6], [6, 6], [6, 4], [4, 4]];
+  assert.equal(IntelModel.pointInRings(1, 1, [outer, hole]), true);
+  assert.equal(IntelModel.pointInRings(5, 5, [outer, hole]), false);
+  assert.equal(IntelModel.pointInRings(11, 5, [outer, hole]), false);
+  assert.deepEqual(IntelModel.ringsBBox([outer, hole]), [0, 0, 10, 10]);
+});
+
+test('fonteRef: "nome · período" da fonte que casa', () => {
+  const f = [{ nome: 'ANTT — Praças', periodo: '2024-01 a 2026-08' }, { nome: 'ANTT — SAT', periodo: '2025' }];
+  assert.equal(IntelModel.fonteRef(f, /SAT/), 'ANTT — SAT · 2025');
+  assert.equal(IntelModel.fonteRef({ nome: 'X', periodo: '2021' }, /X/), 'X · 2021');
+  assert.equal(IntelModel.fonteRef(f, /nada/), '—');
+  assert.equal(IntelModel.fonteRef(null, /x/), '—');
+});

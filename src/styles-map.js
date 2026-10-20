@@ -93,3 +93,48 @@ function quantSwatch(c, width = 32) {
     `<line x1="${pad}" y1="4" x2="${width - pad}" y2="4" stroke="${s.color}" stroke-width="${s.weight}"` +
     ` stroke-opacity="${s.opacity}" stroke-linecap="${s.dash ? 'butt' : 'round'}"${dash}/></svg>`;
 }
+
+// Camadas de sobreposição (v3, Task 10): só cores da marca; opacidade e espessura variam.
+const LAYER_STYLES = {
+  estaduais: { color: COLORS.lightGrey, weight: 1, opacity: 0.6 },
+  estConc: { color: COLORS.deepBlue, weight: 2.5, opacity: 1 },
+  pracas: { fillColor: COLORS.brightBlue, fillOpacity: 0.85, color: COLORS.snowWhite, weight: 1, rmin: 3, rmax: 10, semDadoOpacity: 0.5 },
+  sats: { color: COLORS.deepBlue, weight: 1.5, radius: 3 },
+  obras: { fillColor: COLORS.spacialGrey, fillOpacity: 0.7, radius: 3 },
+  ferrovias: { color: COLORS.spacialGrey, weight: 1.5, dash: '6 3', opacity: 0.7 },
+  portos: { fillColor: COLORS.spacialGrey, fillOpacity: 1, color: COLORS.snowWhite, weight: 1, radius: 4 },
+  siade: { color: COLORS.brightBlue, opacity: 0.5, wmin: 1, wmax: 8 },
+  // Seleção: traço sobre um halo Snow White, para destacar inclusive sobre o fundo municipal escuro.
+  selecao: { color: COLORS.deepBlue, weight: 2.5, opacity: 1, halo: COLORS.snowWhite, haloWeight: 6 },
+  selecaoMun: { color: COLORS.spacialGrey, weight: 2.5, opacity: 1, halo: COLORS.snowWhite, haloWeight: 6 },
+};
+// Fundo municipal: Deep Blue com opacidade por classe; sem dado / zero sem preenchimento.
+const FUNDO_OPACITY = [0.12, 0.25, 0.4, 0.55, 0.7];
+const FUNDO_BORDER = { color: COLORS.lightGrey, weight: 0.3, opacity: 0.3 };
+// Portos organizados e públicos em quadrado; TUP e ETC em círculo.
+const PORTO_QUADRADO = new Set(['Porto Organizado', 'Porto público']);
+
+// Amostra SVG de cada camada (painel "Camadas").
+function layerSwatch(key, size = 24) {
+  const c = size / 2, s = LAYER_STYLES;
+  const svg = body => `<svg class="swatch" width="${size}" height="16" viewBox="0 0 ${size} 16" aria-hidden="true">${body}</svg>`;
+  const line = (st, w, dash) => `<line x1="2" y1="8" x2="${size - 2}" y2="8" stroke="${st.color}" stroke-opacity="${st.opacity}" stroke-width="${w}"${dash ? ` stroke-dasharray="${dash}"` : ''}/>`;
+  switch (key) {
+    case 'estaduais': return svg(line(s.estaduais, 1.5) + `<line x1="${c}" y1="8" x2="${size - 2}" y2="8" stroke="${s.estConc.color}" stroke-width="2.5"/>`);
+    case 'pracas': return svg(`<circle cx="${c - 4}" cy="8" r="3" fill="${s.pracas.fillColor}" fill-opacity="${s.pracas.fillOpacity}" stroke="${s.pracas.color}"/>` +
+      `<circle cx="${c + 4}" cy="8" r="6" fill="${s.pracas.fillColor}" fill-opacity="${s.pracas.fillOpacity}" stroke="${s.pracas.color}"/>`);
+    case 'sats': return svg(`<circle cx="${c}" cy="8" r="3.5" fill="none" stroke="${s.sats.color}" stroke-width="${s.sats.weight}"/>`);
+    case 'obras': return svg(`<circle cx="${c}" cy="8" r="3" fill="${s.obras.fillColor}" fill-opacity="${s.obras.fillOpacity}"/>`);
+    case 'ferrovias': return svg(line(s.ferrovias, s.ferrovias.weight + 0.5, s.ferrovias.dash));
+    case 'portos': return svg(`<rect x="${c - 8}" y="4" width="8" height="8" fill="${s.portos.fillColor}"/><circle cx="${c + 5}" cy="8" r="4" fill="${s.portos.fillColor}"/>`);
+    case 'siade': return svg(`<line x1="2" y1="12" x2="${size - 2}" y2="4" stroke="${s.siade.color}" stroke-opacity="${s.siade.opacity}" stroke-width="4" stroke-linecap="round"/>`);
+    default: return svg('');
+  }
+}
+
+// Amostra de preenchimento do fundo municipal (classe c; -1 = sem preenchimento).
+function fundoSwatch(c, width = 32) {
+  const op = c >= 0 ? FUNDO_OPACITY[Math.min(c, FUNDO_OPACITY.length - 1)] : 0;
+  return `<svg class="swatch" width="${width}" height="16" viewBox="0 0 ${width} 16" aria-hidden="true">` +
+    `<rect x="0.5" y="0.5" width="${width - 1}" height="15" rx="2" fill="${COLORS.deepBlue}" fill-opacity="${op}" stroke="${COLORS.lightGrey}" stroke-opacity="0.4"/></svg>`;
+}

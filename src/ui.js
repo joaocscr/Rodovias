@@ -393,6 +393,181 @@ const UI = (() => {
     return `<div class="card__intel"><h3 class="section-title">Tráfego e segurança</h3><dl class="card__grid">${groups.join('')}</dl></div>`;
   }
 
+  // ---------- Camadas de sobreposição (v3, Task 10) ----------
+  const LAYERS_NOTE = 'Medido: praças, SATs (ANTT), PAM, Estoques. Modelado: VMDa, carga PNL.';
+  const PROD_LABEL = { soja: 'Soja', milho1: 'Milho 1ª safra', milho2: 'Milho 2ª safra', cana: 'Cana-de-açúcar', algodao: 'Algodão', trigo: 'Trigo', cafe: 'Café' };
+  const munReady = () => !!(intel && intel.municipios && intel.municipios.topo && intel.agro && intel.agro.ids);
+
+  function renderLayers() {
+    let sec = $('#layers-section');
+    if (!sec) {
+      sec = document.createElement('section');
+      sec.className = 'panel__section';
+      sec.id = 'layers-section';
+      $('#filters-section').before(sec);
+    }
+    const avail = Layers.available();
+    const checks = avail.map(d => `<label class="check" title="${esc(d.title)}"><input type="checkbox" data-layer="${d.key}">${layerSwatch(d.key)}` +
+      `<span>${esc(d.label)}</span><span class="muted">${fmtInt.format(d.n)}</span></label>`).join('');
+    const fundo = munReady() ? `<fieldset class="fundo"><legend class="fundo__title">Fundo municipal</legend><div class="fundo__opts">
+        <label class="check"><input type="radio" name="fundo" value="" checked><span>Nenhum</span></label>
+        ${IM.FUNDOS.map(f => `<label class="check" title="${esc(`${IM.fundoFonte(intel, f.key)} · por município, 5 classes por quantil`)}"><input type="radio" name="fundo" value="${f.key}"><span>${esc(f.label)}</span></label>`).join('')}
+      </div></fieldset>` : '';
+    sec.innerHTML = `<details class="layers" id="layers" open>
+        <summary><h2 class="section-title">Camadas</h2>${ICON.chev}</summary>
+        <div class="layers__body">
+          ${checks ? `<div class="checks">${checks}</div>` : '<p class="empty">Sem camadas neste arquivo.</p>'}
+          ${fundo}
+          <p class="note layers__note">${esc(LAYERS_NOTE)}</p>
+        </div></details>`;
+    sec.addEventListener('change', e => {
+      const t = e.target;
+      if (t.dataset.layer) Layers.toggle(t.dataset.layer, t.checked);
+      else if (t.name === 'fundo') { Layers.setFundo(t.value || null); renderFundoLegend(); }
+    });
+  }
+
+  function renderFundoLegend() {
+    let el = $('#fundo-legend');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'fundo-legend';
+      el.className = 'legend fundo-legend';
+      $('#map').after(el);
+    }
+    const f = Layers.fundoInfo();
+    el.hidden = !f;
+    if (!f) { el.innerHTML = ''; return; }
+    const rows = [];
+    if (f.max != null) {
+      for (let c = 0; c <= f.breaks.length; c++) {
+        const lo = c === 0 ? f.min : f.breaks[c - 1], hi = c === f.breaks.length ? f.max : f.breaks[c];
+        rows.push(`<div class="legend__row" data-class="${c}">${fundoSwatch(c)}<span class="legend__range">${esc(IM.fmtT(lo))} – ${esc(IM.fmtT(hi))}</span></div>`);
+      }
+    }
+    rows.push(`<div class="legend__row">${fundoSwatch(-1)}<span>Sem dado ou zero</span></div>`);
+    const sig = f.key === 'armazenagem'
+      ? `<p class="legend__note">Sigilo: o IBGE não divulga a capacidade de municípios com poucos informantes (${fmtInt.format(f.sigilo)} municípios); ficam sem preenchimento.</p>`
+      : `<p class="legend__note">Produção ${esc(String(f.ano))} por município; sem dado ("...") ou zero ficam sem preenchimento.</p>`;
+    el.innerHTML = `<h2 class="section-title">Fundo municipal</h2>
+      <div class="legend__title">${esc(f.label)} <span>${f.key === 'armazenagem' ? 't de capacidade útil' : `t · ${esc(String(f.ano))}`}</span></div>
+      ${rows.join('')}${sig}<div class="legend__tipo">Dado medido</div><div class="legend__src">Fonte: ${esc(f.fonte)}</div>`;
+  }
+
+  // Cartão de ponto (praça, SAT, obra, porto) ou município, no mesmo #card do trecho.
+  function showCard(title, code, body, hl) {
+    const card = $('#card');
+    card.innerHTML = `<div class="card__head">
+        <div><h2 class="card__title">${esc(title)}</h2><span class="card__code">${esc(code)}</span></div>
+        <button class="icon-btn" type="button" id="card-close" aria-label="Fechar">${ICON.close}</button>
+      </div>${body}`;
+    card.hidden = false;
+    card.scrollTop = 0;
+    $('#card-close').addEventListener('click', closeCard);
+    const base = activeSearch ? activeSearch.ids : [];
+    MapView.highlight(hl != null ? [...base, hl] : base.length ? base : null);
+  }
+
+  const grid = rows => {
+    const body = rows.filter(([, v]) => v != null && v !== '' && v !== '—').map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
+    return body ? `<dl class="card__grid">${body}</dl>` : '';
+  };
+
+  // Concessão do ponto: nome da entidade do RoadShow (com "Ver ficha" quando há ficha) ou o nome ANTT.
+  function pointConc(ent, nomeAntt) {
+    const e = ent && conc ? conc.entidades.find(x => x.id === ent) : null;
+    const nome = e ? e.nome : nomeAntt;
+    if (!nome) return '';
+    const link = e && typeof Ficha !== 'undefined' && Ficha.exists(ent) ? `<a class="btn" href="#ficha/${esc(ent)}">Ver ficha</a>` : '';
+    return `<div class="card__conc"><h3 class="section-title">Concessão</h3><div class="conc-item">
+      <span class="conc-item__name">${esc(nome)}${e && nomeAntt && Model.normalize(nomeAntt) !== Model.normalize(e.nome) ? `<span class="conc-item__sub">ANTT: ${esc(nomeAntt)}</span>` : ''}</span>${link}</div></div>`;
+  }
+
+  const kmFmt = v => (IM.has(v) ? fmtKmNum.format(v) : null);
+  const rodUf = r => `${IM.rodLabel(r.br, r.uf)}${r.uf ? ` / ${r.uf}` : ''}`;
+  const pctOf = (a, b) => (IM.has(a) && IM.has(b) && b > 0 ? a / b : null);
+  const periodoFmt = p => {
+    const m = /^(\d{4}-\d{2})\/(\d{4}-\d{2})$/.exec(String(p || ''));
+    return m ? `${IM.monthLabel(m[1])} a ${IM.monthLabel(m[2])}` : p ? String(p) : null;
+  };
+
+  // Série mensal leves × pesados da praça i (Charts.linesSvg com x = ano + mês/12; dicas reescritas como "jan/2024").
+  function pracaChart(i) {
+    const p = intel.antt.pracas, meses = p.serie_meses || [], sl = (p.serie_l || [])[i] || [], sp = (p.serie_p || [])[i] || [];
+    const xOf = ym => { const [y, m] = ym.split('-').map(Number); return y + (m - 1) / 12; };
+    const pts = arr => meses.map((ym, k) => ({ x: xOf(ym), y: arr[k] })).filter(q => IM.has(q.y));
+    const series = [{ name: 'Leves', points: pts(sl) }, { name: 'Pesados', points: pts(sp) }];
+    if (!series[0].points.length && !series[1].points.length) return '';
+    const label = x => { const y = Math.floor(x + 1e-6); return IM.monthLabel(`${y}-${String(Math.round((x - y) * 12) + 1).padStart(2, '0')}`); };
+    const svg = Charts.linesSvg(series, { width: 312, height: 200, format: v => IM.fmtInt(v), unit: ' veíc./dia', title: 'Tráfego mensal da praça: leves e pesados' })
+      .replace(/<title>(Leves|Pesados) ([\d.]+):/g, (_, n, x) => `<title>${n} ${label(Number(x))}:`);
+    const per = meses.length ? `${IM.monthLabel(meses[0])} a ${IM.monthLabel(meses[meses.length - 1])}` : '';
+    return `<div class="card__chart"><h3 class="section-title">Tráfego mensal · ${esc(per)}</h3>
+      ${Charts.legendHtml([['Leves', Charts.C.deep], ['Pesados', Charts.C.bright]])}<div class="card__svg">${svg}</div>
+      <p class="card__src">Contagem medida · ANTT (média diária do mês, dois sentidos)</p></div>`;
+  }
+
+  function openPoint(key, i) {
+    const r = Layers.rowsOf(key)[i];
+    if (!r) return;
+    if (key === 'pracas') {
+      showCard(r.nome, `Praça de pedágio · ${rodUf(r)}${kmFmt(r.km) ? ` · km ${kmFmt(r.km)}` : ''}`,
+        `<div class="card__badges"><span class="badge">Contagem medida · ANTT</span></div>
+        ${grid([
+          ['VMD 2025', IM.fmtVmd(r.vmd)], ['Leves', IM.fmtVmd(r.leves)], ['Pesados', IM.fmtVmd(r.pesados)], ['Motos', IM.fmtVmd(r.moto)],
+          ['% pesados', IM.fmtPct(pctOf(r.pesados, r.vmd))], ['Eixos médios do comercial', IM.has(r.eixos) ? IM.fmtDec(r.eixos, 1) : null],
+          ['Receita 2025', IM.fmtBRL(r.receita)], ['Meses com dado em 2025', IM.has(r.meses) ? String(r.meses) : null],
+        ])}${pointConc(r.ent, r.conc)}${pracaChart(i)}`, r.fis);
+    } else if (key === 'sats') {
+      showCard(`SAT ${r.id}`, `Equipamento de contagem · ${rodUf(r)}`,
+        `<div class="card__badges"><span class="badge">Contagem medida · ANTT</span></div>
+        ${grid([
+          ['VMD', IM.fmtVmd(r.vmd)], ['% pesados', IM.fmtPct(r.pes)], ['% motos', IM.fmtPct(r.moto)],
+          ['Período', periodoFmt(r.periodo)], ['Meses com dado', IM.has(r.meses) ? String(r.meses) : null],
+        ])}${pointConc(r.ent, r.conc)}`, r.fis);
+    } else if (key === 'obras') {
+      const km = kmFmt(r.km_i) ? `km ${kmFmt(r.km_i)}${kmFmt(r.km_f) && r.km_f !== r.km_i ? `–${kmFmt(r.km_f)}` : ''}` : null;
+      showCard(r.descricao || r.tipo || 'Obra', `Obra ANTT · ${rodUf(r)}`,
+        `${grid([
+          ['Tipo', r.tipo], ['Rodovia', rodUf(r)], ['Localização', km], ['Ano', IM.has(r.ano) ? String(r.ano) : null],
+          ['Previsto', IM.fmtPct(r.previsto)], ['Executado', IM.fmtPct(r.executado)],
+        ])}<p class="card__src card__pad">Previsto × executado no ano · ANTT, acompanhamento anual de investimentos</p>${pointConc(r.ent, null)}`, r.fis);
+    } else if (key === 'portos') {
+      showCard(r.nome, `${r.tipoLabel || r.tipo} · ${r.uf || '—'}`,
+        `${grid([['Tipo', r.tipoLabel || r.tipo], ['Tipo ANTAQ', r.tipoLabel && r.tipoLabel !== r.tipo ? r.tipo : null], ['UF', r.uf]])}
+        <p class="card__src card__pad">ANTAQ, instalações portuárias</p>`, null);
+    }
+  }
+
+  function openMun(id) {
+    const m = IM.munInfo(intel, id);
+    if (!m) return;
+    const t = v => (IM.has(v) ? `${IM.fmtInt(v)} t` : '—');
+    const prod = IM.PRODUTOS.map(p => `<dt>${esc(PROD_LABEL[p])}</dt><dd>${esc(t(m.prod[p]))}</dd>`).join('');
+    const arm = m.sigilo ? 'sigilo' : t(m.cap);
+    showCard(`${m.nome} / ${m.uf}`, `Município · IBGE ${m.id}`,
+      `<dl class="card__grid"><dt class="card__sub">Produção ${esc(String(m.ano || ''))} · IBGE PAM, medido</dt>${prod}
+        <dt class="card__sub">Armazenagem · IBGE Estoques ${esc(m.periodoArm || '')}</dt><dt>Capacidade útil</dt><dd>${esc(arm)}</dd></dl>
+      ${m.sigilo ? '<p class="card__src card__pad">Sigilo: o IBGE não divulga a capacidade quando há poucos informantes no município.</p>' : ''}`, null);
+  }
+
+  // Lista "Medições no trecho" (praças e SATs do físico j), clicável.
+  function measBlock(j) {
+    const items = [];
+    for (const key of ['pracas', 'sats']) {
+      const rows = Layers.rowsOf(key);
+      for (const i of IM.pointsOfFis(rows, j)) {
+        const r = rows[i];
+        items.push(`<li><button type="button" class="meas" data-pt="${key}" data-i="${i}">
+          <span class="meas__name">${esc(key === 'pracas' ? r.nome : `SAT ${r.id}`)}<span class="meas__kind">${key === 'pracas' ? 'Praça de pedágio' : 'SAT'}</span></span>
+          <span class="meas__v">${esc(IM.fmtVmd(r.vmd))}</span></button></li>`);
+      }
+    }
+    if (!items.length) return '';
+    return `<div class="card__meas"><h3 class="section-title">Medições no trecho</h3><ul class="meas-list">${items.join('')}</ul>
+      <p class="card__src">VMD medido 2025 · ANTT</p></div>`;
+  }
+
   function scheduleRefresh(delay = 30) {
     clearTimeout(refreshTimer);
     refreshTimer = setTimeout(refresh, delay);
@@ -461,9 +636,12 @@ const UI = (() => {
         ${row('Administração', adm)}
         ${row('Unidade local DNIT', d.ul[main[I_UL]])}
         ${row('Coincide com estadual', main[I_EST])}
-      </dl>${concBlock(j)}${intelBlock(j)}${coinc}`;
+      </dl>${concBlock(j)}${intelBlock(j)}${measBlock(j)}${coinc}`;
     card.hidden = false;
+    card.scrollTop = 0;
     $('#card-close').addEventListener('click', closeCard);
+    card.querySelectorAll('[data-pt]').forEach(b => b.addEventListener('click', () => Layers.open(b.dataset.pt, Number(b.dataset.i))));
+    Layers.clearSelection();
     MapView.highlight([...(activeSearch ? activeSearch.ids : []), j]);
   }
 
@@ -483,6 +661,7 @@ const UI = (() => {
   // Fecha o cartão e volta ao realce da busca (ou a nenhum).
   function closeCard() {
     $('#card').hidden = true;
+    Layers.clearSelection();
     MapView.highlight(activeSearch ? activeSearch.ids : null);
   }
 
@@ -553,15 +732,18 @@ const UI = (() => {
     snv = data; index = idx; filters = Model.emptyFilters(); intel = intelData;
     conc = concData; states = ConcModel.stateArray(conc, snv.fis.length); concFilters = ConcModel.emptyConcFilters();
     renderSearch();
+    renderLayers();
     renderFilters();
     renderLegend();
     initDrawer();
-    MapView.onPick(j => openCard(j));
+    MapView.onPick(j => { Layers.notePick(); openCard(j); });
+    Layers.onPoint(openPoint);
+    Layers.onMun(openMun);
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape' && !$('#card').hidden) closeCard();
     });
     refresh();
   }
 
-  return { init, refresh, showOnMap, states: () => states };
+  return { init, refresh, showOnMap, openPoint, openMun, states: () => states };
 })();

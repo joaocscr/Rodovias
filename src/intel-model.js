@@ -183,6 +183,143 @@ const IntelModel = (() => {
     });
   }
 
+  // ---------- Camadas de sobreposição e cartões de ponto ----------
+  // Rótulo de rodovia de um ponto ANTT: "BR-101" como está; só número vira "<uf>-<n>" (rodovias estaduais do PR); senão o texto.
+  function rodLabel(br, uf) {
+    if (br == null || br === '') return DASH;
+    const s = String(br);
+    if (/^BR-/.test(s)) return s;
+    if (/^\d+$/.test(s) && uf) return `${uf}-${s}`;
+    return s;
+  }
+
+  // Linha codificada (ferrovias, estaduais): primeiro par lon,lat absoluto ×1e5, depois deltas -> [[lat, lng], ...].
+  function decodeLine(p) {
+    const out = [];
+    if (!p) return out;
+    let x = 0, y = 0;
+    for (let i = 0; i + 1 < p.length; i += 2) {
+      x += p[i]; y += p[i + 1];
+      out.push([y / 1e5, x / 1e5]);
+    }
+    return out;
+  }
+
+  // Raio ∝ √valor (área ∝ valor), limitado a [rmin, rmax]; sem valor = rmin.
+  function pointRadius(v, vmax, rmin = 3, rmax = 10) {
+    if (!has(v) || v <= 0 || !has(vmax) || vmax <= 0) return rmin;
+    return Math.min(rmax, Math.max(rmin, rmax * Math.sqrt(v / vmax)));
+  }
+
+  // Espessura ∝ valor, com piso de wmin px.
+  function lineWeight(v, vmax, wmin = 1, wmax = 8) {
+    if (!has(v) || v <= 0 || !has(vmax) || vmax <= 0) return wmin;
+    return Math.min(wmax, Math.max(wmin, wmax * v / vmax));
+  }
+
+  // Tipos ANTAQ mostrados na camada "Portos e ETCs" (os demais ficam de fora).
+  const PORTO_TIPOS = {
+    'Porto Organizado': 'Porto Organizado', 'Terminal de uso privado': 'TUP',
+    'Estação de transbordo de cargas': 'ETC', 'Porto Público': 'Porto público',
+  };
+  const portoTipo = t => (t != null && Object.prototype.hasOwnProperty.call(PORTO_TIPOS, t) ? PORTO_TIPOS[t] : null);
+
+  const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  function monthLabel(ym) {
+    const m = /^(\d{4})-(\d{2})$/.exec(String(ym));
+    return m ? `${MESES[Number(m[2]) - 1]}/${m[1]}` : String(ym);
+  }
+
+  // Fundo municipal: produtos PAM (t) e capacidade de armazenagem (t).
+  const FUNDOS = [
+    { key: 'soja', label: 'Soja', prods: ['soja'] },
+    { key: 'milho', label: 'Milho', prods: ['milho1', 'milho2'] },
+    { key: 'cana', label: 'Cana', prods: ['cana'] },
+    { key: 'algodao', label: 'Algodão', prods: ['algodao'] },
+    { key: 'cafe', label: 'Café', prods: ['cafe'] },
+    { key: 'trigo', label: 'Trigo', prods: ['trigo'] },
+    { key: 'armazenagem', label: 'Armazenagem', prods: null },
+  ];
+  const PRODUTOS = ['soja', 'milho1', 'milho2', 'cana', 'algodao', 'trigo', 'cafe'];
+  const agroOf = intel => (intel && intel.agro && intel.agro.produtos ? intel.agro : null);
+  const fundoDef = key => FUNDOS.find(f => f.key === key) || null;
+
+  function fundoFonte(intel, key) {
+    const a = agroOf(intel), f = fundoDef(key);
+    if (!a || !f) return DASH;
+    if (!f.prods) return a.armazenagem ? `IBGE Estoques ${a.armazenagem.periodo}` : DASH;
+    return `IBGE PAM ${a.ano}`;
+  }
+
+  // Valores por município (ordem de agro.ids); milho soma as duas safras; null se o bloco ou o fundo não existe.
+  function fundoValues(intel, key) {
+    const a = agroOf(intel), f = fundoDef(key);
+    if (!a || !f) return null;
+    if (!f.prods) {
+      const cap = a.armazenagem && a.armazenagem.cap;
+      return cap ? a.ids.map((_, i) => (has(cap[i]) ? cap[i] : null)) : null;
+    }
+    const arrs = f.prods.map(p => a.produtos[p] || []);
+    return a.ids.map((_, i) => arrs.reduce((acc, arr) => sumNullable(acc, arr[i]), null));
+  }
+
+  // Classes por quantil sobre valores > 0; zero e sem dado ficam em -1 (sem preenchimento).
+  function fundoClasses(values, k = 5) {
+    const breaks = quantileBreaks(values, k);
+    const cls = new Int8Array(values.length);
+    let min = Infinity, max = -Infinity;
+    for (let i = 0; i < values.length; i++) {
+      const v = values[i];
+      cls[i] = has(v) && v > 0 ? classOf(v, breaks) : -1;
+      if (cls[i] >= 0) { min = Math.min(min, v); max = Math.max(max, v); }
+    }
+    return { breaks, cls, min: min === Infinity ? null : min, max: max === -Infinity ? null : max };
+  }
+
+  function munInfo(intel, id) {
+    const mu = intel && intel.municipios, a = agroOf(intel);
+    if (!mu || !mu.ids) return null;
+    const i = mu.ids.indexOf(String(id));
+    if (i < 0) return null;
+    const k = a ? a.ids.indexOf(String(id)) : -1;
+    const at = (arr, j) => (arr && j >= 0 && has(arr[j]) ? arr[j] : null);
+    const prod = {};
+    for (const p of PRODUTOS) prod[p] = a ? at(a.produtos[p], k) : null;
+    const arm = a && a.armazenagem;
+    return {
+      id: String(id), nome: mu.nomes[i], uf: mu.uf[i], ano: a ? a.ano : null, prod,
+      cap: arm ? at(arm.cap, k) : null, sigilo: !!(arm && arm.sigilo && k >= 0 && arm.sigilo[k]),
+      periodoArm: arm ? arm.periodo : null,
+    };
+  }
+
+  // Ponto (lat, lng) dentro dos anéis pela regra par-ímpar (buracos excluídos).
+  function pointInRings(lat, lng, rings) {
+    let inside = false;
+    for (const r of rings) {
+      for (let a = 0, b = r.length - 1; a < r.length; b = a++) {
+        const [ya, xa] = r[a], [yb, xb] = r[b];
+        if ((ya > lat) !== (yb > lat) && lng < (xb - xa) * (lat - ya) / (yb - ya) + xa) inside = !inside;
+      }
+    }
+    return inside;
+  }
+
+  function ringsBBox(rings) {
+    let s = Infinity, w = Infinity, n = -Infinity, e = -Infinity;
+    for (const r of rings) for (const [lat, lng] of r) {
+      if (lat < s) s = lat; if (lat > n) n = lat; if (lng < w) w = lng; if (lng > e) e = lng;
+    }
+    return [s, w, n, e];
+  }
+
+  // "nome · período" da primeira fonte cujo nome casa com re.
+  function fonteRef(fonte, re) {
+    const list = Array.isArray(fonte) ? fonte : fonte ? [fonte] : [];
+    const f = list.find(x => x && re.test(x.nome || ''));
+    return f ? `${f.nome}${f.periodo ? ` · ${f.periodo}` : ''}` : DASH;
+  }
+
   // Escolhe a unidade depois de arredondar: 999.600 t vira "1,0 Mt", não "1.000 mil t".
   const round = (v, d) => Math.round(v * 10 ** d) / 10 ** d;
   function scaled(x, units) {
@@ -206,6 +343,8 @@ const IntelModel = (() => {
 
   return { MODES, has, sumNullable, nAnos, vmdaOf, acidOf, cargaOf,
     rows, metricArray, quantileBreaks, classOf, aggregateIntel, fisIntel, taxaAcidentes, pointsOfFis, decodeTopo,
+    rodLabel, decodeLine, pointRadius, lineWeight, PORTO_TIPOS, portoTipo, monthLabel, FUNDOS, PRODUTOS, fundoFonte, fundoValues,
+    fundoClasses, munInfo, pointInRings, ringsBBox, fonteRef,
     fmtInt, fmtDec, fmtVmd, fmtT, fmtPct, fmtBRL, fmtVkm, fmtTkm };
 })();
 
