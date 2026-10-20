@@ -16,7 +16,7 @@ from snv import build_payload, check_group_consistency, group_physical, load_rec
 
 ROOT = Path(__file__).resolve().parent.parent
 MAX_BYTES = 15_000_000
-JS_FILES = ["vendor/leaflet/leaflet.js", "src/model.js", "src/conc-model.js", "src/styles-map.js", "src/charts.js", "src/map.js",
+JS_FILES = ["vendor/leaflet/leaflet.js", "src/model.js", "src/conc-model.js", "src/intel-model.js", "src/styles-map.js", "src/charts.js", "src/map.js",
             "src/ficha.js", "src/projetos.js", "src/mercado.js", "src/regulatorio.js", "src/ui.js", "src/tabs.js", "src/main.js"]
 ROADSHOW = ROOT / "data" / "roadshow"
 BASE = ROOT / "data" / "base"

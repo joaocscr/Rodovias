@@ -3,7 +3,7 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "test": "node --test tests/model.test.mjs tests/conc-model.test.mjs tests/charts.test.mjs",
+    "test": "node --test tests/model.test.mjs tests/conc-model.test.mjs tests/intel-model.test.mjs tests/charts.test.mjs",
     "test:e2e": "NODE_PATH=$(npm root -g) node --test tests/e2e.test.mjs"
   }
 }
