@@ -119,7 +119,24 @@ t (int) ou null (`"..."`); `"X"` → null com `sigilo=1`; `"-"` → 0.
 - [ ] PASS.
 
 ### Task 6: Malha e concessões estaduais (`scripts/intel/estaduais.py`)
-Detalhada após o recon `recon/estaduais.md` (ver ledger). Contrato acima; orçamento ≤ 4 MB.
+Insumo: `recon/estaduais.md` e brutos em `data/raw/estaduais/` (Infra S.A. `Hosted/Rodovias_Estaduais` cide2021 em `infrasa/hosted_pages/`, ARTESP KMZ + fichas em `artesp/`, AGERGS XLSX, ABCR `abcr/abcr_fichas.json`; scripts de protótipo citados no memo: `est_coinc.py`, `kmz_scan.py`, `abcr_parse.py`, `est_tests.py`).
+Contrato (substitui o provisório):
+```json
+{"fonte":[...],"tipo":"medido",
+ "malha":{"base":"Infra S.A. Hosted/Rodovias_Estaduais (cide2021)","campos":["uf","via","sre","sup","km_i","km_f","ext"],"linhas":[[...]],"p":[[linha codificada], ...]},
+ "entidades":[{"id":"sp-lt31-ecovias-noroeste","nome":"Ecovias Noroeste Paulista","esfera":"estadual","uf":"SP","poder":"Governo do Estado de SP","regulador":"ARTESP",
+   "lote":"31","rodovias":["SP-310"],"trechos":[{"rod":"SP-310","km_i":227.8,"km_f":454.3}],"grupo":"EcoRodovias","estado":"vigente|encerrado",
+   "km_decl":600.35,"km_map":612.8,"qualidade":"ok|aproximado|nao_mapeado","nota":"...","assinatura":"2023-05-01","fim":"2053-04-30","prazo":"30 anos",
+   "capex_bi":11.3,"capex_ref":"2024","geo_metodo":"kmz|sre|snv|rod_km|rod","fonte_url":"..."}],
+ "entEst":[[índices de malha.linhas]], "entFis":[[índices de fis do SNV]], "entGeo":[[linhas codificadas próprias]]}
+```
+Regras:
+- Malha: descartar feições com fração > 0,8 sobre o SNV (buffer ~55 m, como `est_coinc.py`) e as federais; manter só pavimentadas (`PAV`, `DUP`, `EOP`) **mais** qualquer feição usada por uma entidade estadual; `tipo_trech` limpo; `sre` = 10 primeiros caracteres; DP 0,0003°; codificação `snvbase.encode_line`. `uf`/`via` em texto ("SP", "SP-330"). Feições sem UF descartadas.
+- Entidades (todas as vigentes confirmadas do catálogo + as que só a ABCR traz): SP 25 contratos ARTESP + Rota Mogiana (geometria: Traçado do KMZ em `entGeo`; l19/l26/Mogiana por rod+km na malha SP), RS Rota de Santa Maria e Caminhos da Serra Gaúcha (por `sre` AGERGS; partes RSC/BRS também em `entFis` via SNV), MG (EPR Triângulo, EPR Sul de Minas, EPR Vias do Café, Via Nascentes, Ecovias Norte Minas; rodovias inteiras → `aproximado` salvo km), MT (Via Brasil MT-100 e MT-320/208, Lotes 1, 2, 5, 6, 8), MS (Way-306, MS-112 + BR-158/436 em `entFis`), BA (Bahia Norte, CLN BA-099, Estrada do Feijão BA-052), PA (Conquista do Pará), PE (Rota dos Coqueiros PE-024 km 0–6,5; Rota do Atlântico), RJ (Rota 116, Via Lagos: feições inteiras → `aproximado`), PI Transcerrados (`nao_mapeado` com nota). Não incluir Via Liberdade nem Ponte Binacional (já são entidades federais do RoadShow) nem os 6 lotes do PR (federais).
+- Qualidade: `ok` se |km_map − km_decl| ≤ 10% ou ≤ 10 km; `aproximado` até 35% ou quando o recorte é por rodovia inteira; senão `nao_mapeado` com nota. ABCR só como fonte complementar (nunca sobrescreve ARTESP/AGERGS).
+- Sem acentos recuperáveis na malha: manter como vem.
+- [ ] Testes `tests/test_intel_estaduais.py`: `malha.linhas` e `malha.p` do mesmo tamanho; nenhuma feição federal; ≥ 15.000 feições; todas as 27 UFs exceto as sem malha (registrar quais); estaduais.json ≤ 3,2 MB; ≥ 45 entidades, ids únicos, todas com `qualidade` e `fonte_url`; SP ≥ 26 entidades, todas com geometria (`entGeo` ou `entEst` não vazios) exceto as marcadas `nao_mapeado`; RS Rota de Santa Maria `ok` com km_map 204,5 ± 2; índices de `entEst` válidos; `entFis` válidos (< 6.815).
+- [ ] Gera `data/intel/estaduais.json`; PASS.
 
 ### Task 7: Fontes e build (`scripts/intel/fontes_bloco.py`, `scripts/build.py`)
 - [ ] `fontes.json` consolidado; manifesto `data/intel/manifest.json` (união de `data/manifest/*.json`); README atualizado com o fluxo `python -m scripts.intel.<d> all` + `python scripts/build.py`; build imprime tamanho por bloco; teste de tamanho total ≤ 15 MB.
