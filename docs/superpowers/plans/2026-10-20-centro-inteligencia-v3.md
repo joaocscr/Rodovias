@@ -124,8 +124,20 @@ Detalhada após o recon `recon/estaduais.md` (ver ledger). Contrato acima; orça
 ### Task 7: Fontes e build (`scripts/intel/fontes_bloco.py`, `scripts/build.py`)
 - [ ] `fontes.json` consolidado; manifesto `data/intel/manifest.json` (união de `data/manifest/*.json`); README atualizado com o fluxo `python -m scripts.intel.<d> all` + `python scripts/build.py`; build imprime tamanho por bloco; teste de tamanho total ≤ 15 MB.
 
-### Task 8: `src/intel-model.js` (puro) + testes `tests/intel-model.test.mjs`
-- [ ] Quantis/classes (5) sobre valores não nulos; agregados da seleção (veíc·km, acidentes/ano, t·km) dada máscara de visíveis; decoder TopoJSON → anéis [lat,lng]; formatação (`fmtInt`, `fmtVmd`, `fmtT`, `fmtPct`); praças/SATs/obras de um físico; taxa de acidentes por 10⁶ veíc·km.
+### Task 8: `src/intel-model.js` (puro) + `tests/intel-model.test.mjs`
+Módulo `IntelModel` no padrão de `src/conc-model.js` (IIFE, sem DOM, `if (typeof module !== 'undefined') module.exports = IntelModel;`), registrado em `scripts/build.py` `JS_FILES` logo após `src/conc-model.js` e em `package.json` `test`.
+API (todas testadas com fixtures pequenas, sem ler `data/intel`):
+- `rows(block)` → objetos a partir de `{campos, linhas}`.
+- `MODES` = `{trafego, pesados, carga, acidentes}`, cada um `{label, unidade, tipo:'modelado'|'medido', fonte(intel) → texto curto}`.
+- `metricArray(intel, snv, mode)` → array de 6.815 números ou `null`: `trafego` = `l+p`; `pesados` = `p`; `carga` = `gsa`; `acidentes` = `n / anos / ext` (acidentes por km por ano; `ext` de `snv.fis[j].ext`, null se ext = 0). Bloco ausente → todos null.
+- `quantileBreaks(values, k = 5)` → `k-1` cortes crescentes sobre os valores não nulos e > 0 (quantis por posição, arredondados a 2 algarismos significativos, sem cortes repetidos; menos valores distintos → menos cortes).
+- `classOf(v, breaks)` → `-1` (null), `0..breaks.length`.
+- `aggregateIntel(intel, snv, visible)` → `{vkm, vkmPes, kmVmda, kmPav, acidAno, mortosAno, tkm, kmCarga}`: soma só físicos visíveis; `vkm = Σ (l+p)·ext`, `vkmPes = Σ p·ext`, `acidAno = Σ n / anos`, `tkm = Σ gsa·ext` (t·km/ano). Campos de bloco ausente = null.
+- `taxaAcidentes(nTotal, anos, vmd, ext)` → acidentes por 10⁶ veíc·km: `nTotal / anos / (vmd · ext · 365) · 1e6`, null se vmd ou ext ausentes/0.
+- `pointsOfFis(rows, j)` → índices das linhas com `fis === j` (praças, SATs, obras).
+- `decodeTopo(topo, name = 'mun')` → `[{id, rings: [[[lat, lng], ...], ...]}]` para Polygon e MultiPolygon (todos os anéis achatados), aplicando `transform` (scale/translate) e deltas dos arcos; arco negativo `~i` invertido; ponto repetido na junção de arcos removido.
+- Formatos pt-BR: `fmtInt(12345)` → `12.345`; `fmtVmd(12345)` → `12.345 veíc./dia`; `fmtT(27463308)` → `27,5 Mt`, `850000` → `850 mil t`, `950` → `950 t`; `fmtPct(0.33)` → `33,0%`; `fmtBRL(7.34e9)` → `R$ 7,34 bi`, `8.5e8` → `R$ 850,0 mi`; `fmtVkm(1.2e9)` → `1,2 bi veíc·km/dia`; null/undefined → `—` em todos.
+- [ ] RED → GREEN → `npm test` verde (incluindo os testes v2).
 
 ### Task 9: Mapa — modos de cor quantitativos, legenda, painel de números
 - [ ] Seletor de modo (Concessões, Situação física, Tráfego, Pesados, Carga agrícola, Acidentes); estilo por classe (espessura + tom/opacidade); legenda com faixas e "sem dado"; painel com os agregados novos; e2e.
