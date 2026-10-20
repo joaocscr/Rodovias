@@ -140,7 +140,16 @@ API (todas testadas com fixtures pequenas, sem ler `data/intel`):
 - [ ] RED → GREEN → `npm test` verde (incluindo os testes v2).
 
 ### Task 9: Mapa — modos de cor quantitativos, legenda, painel de números
-- [ ] Seletor de modo (Concessões, Situação física, Tráfego, Pesados, Carga agrícola, Acidentes); estilo por classe (espessura + tom/opacidade); legenda com faixas e "sem dado"; painel com os agregados novos; e2e.
+Arquivos: `src/styles-map.js`, `src/map.js`, `src/ui.js`, `src/main.js`, `src/styles.css`, `src/template.html` (título), novo `tests/e2e-intel.test.mjs` (mesmo harness de `tests/e2e.test.mjs`: Chromium, `file://`, bloqueio de rede, captura de erros) + `package.json` `test:e2e` rodando os dois arquivos.
+- `main.js` passa `window.INTEL` (pode faltar: tudo degrada para "sem dado") a `MapView.init` e `UI.init`.
+- Modos: o `mode-switch` vira um seletor "Cor das rodovias" com 6 opções na ordem Concessões · Situação física · Tráfego · Pesados · Carga agrícola · Acidentes (rótulos exatos), acessível (`role="radiogroup"` ou `<select>`), `MapView.setColorMode(m)` com `m ∈ {concessoes, fisica, trafego, pesados, carga, acidentes}`.
+- Modos quantitativos (usam `IntelModel.metricArray` + `quantileBreaks` + `classOf`, calculados uma vez por modo): 5 classes; espessura crescente (1,5 → 6 px antes do `zoomFactor`) e cor das 5 classes em azul: classes 0–1 `#0071BB` com opacidade 0,45/0,7, classes 2–4 `#183C80` com opacidade 0,75/0,9/1; classe maior desenhada por cima (z). Sem dado: `#525254`, 1 px, tracejado `2 4`, opacidade 0,5. Halo de concessão não aparece nesses modos.
+- Legenda nos modos quantitativos: título do modo + unidade, 5 linhas com faixa `a – b` formatada (`IntelModel` formats), linha "Sem dado", rótulo "Estimativa de modelo" ou "Contagem medida" (de `MODES[m].tipo`), e a fonte curta (`MODES[m].fonte(intel)`) com ano.
+- Painel "Números da seleção": abaixo do KPI de km, novo bloco com `aggregateIntel` (só itens com dado): veíc·km/dia e % de pesados (Tráfego VMDa 2023), acidentes/ano e mortos/ano (PRF 2024–25), carga agrícola t·km/ano (PNL 2035 base 2017), cada um com `title` explicando a fonte. IDs: `#kpi-vkm`, `#kpi-acid`, `#kpi-tkm`.
+- Cartão do trecho: bloco "Tráfego e segurança" com VMDa leves, pesados, total, % pesados (rótulo "estimado, 2023"), acidentes/ano, mortos/ano, taxa por 10⁶ veíc·km, carga agrícola t/ano (rótulo "modelo PNL, 2017"); omitido se nada houver.
+- Título da página e do topo: "Rodovias do Brasil · Centro de Inteligência"; subtítulo mantém SNV e RoadShow.
+- Performance: trocar de modo < 300 ms (medir no e2e com `performance.now()`), filtro segue < 200 ms.
+- e2e (`tests/e2e-intel.test.mjs`): (a) seletor tem os 6 rótulos na ordem; (b) modo Tráfego → legenda com 5 faixas + "Sem dado" e "Estimativa de modelo"; (c) `MapView.colorMode()` = 'trafego'; (d) KPI `#kpi-vkm` igual a `IntelModel.fmtVkm(IntelModel.aggregateIntel(INTEL, SNV, mask).vkm)` com filtro UF = MT; (e) clicar num físico com VMDa (via `MapView.pick`) mostra "veíc./dia" no cartão; (f) modo Acidentes e Carga mudam a legenda; (g) troca de modo < 300 ms; (h) nenhum erro de console; (i) e2e da v2 seguem verdes (o modo padrão continua Concessões).
 
 ### Task 10: Mapa — camadas e cartões
 - [ ] Painel "Camadas" (estaduais, concessões estaduais, praças, SATs, obras, ferrovias, portos, fundo municipal por produto/armazenagem); cartões de ponto; blocos novos no cartão do trecho; e2e.
