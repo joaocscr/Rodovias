@@ -37,7 +37,7 @@ def test_estrutura_do_item_e_fonte(blk):
     assert blk["fonte"] and all(f.get("nome") and f.get("url") and f.get("acesso") and f.get("licenca")
                                  and "periodo" in f and "nota" in f for f in blk["fonte"])
     ids = [i["id"] for i in blk["itens"]]
-    assert len(ids) == len(set(ids)) == 63
+    assert len(ids) == len(set(ids)) == 64
     for i in blk["itens"]:
         assert set(i) == {"id", "nome", "esfera", "uf", "rodovias", "km", "status", "data_prevista", "ent", "estudo",
                           "verificado", "fonte_url", "fonte_data", "obs"}

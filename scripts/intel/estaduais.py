@@ -13,6 +13,9 @@ Concessões estaduais (`entidades`, com `entEst`/`entFis`/`entGeo` paralelos):
 - RS: códigos SRE dos trechos da AGERGS (XLSX); partes RSC/BRS também como físicos do SNV.
 - MT: tabela "Rodovias Pedagiadas" da Ager-MT (rodovias + municípios) recortada pelos polígonos municipais do IBGE.
 - MG, MS, BA, PA, PE, RJ, PI: fichas ABCR (complementar) e curadoria; BRs delegadas pelo SNV (adm. estadual/convênio).
+Só é `vigente` a concessão com assinatura, início de operação ou contrato identificado. Datas incoerentes da ABCR
+(assinatura depois do início; fim que não confere com assinatura/início + prazo, ± 1 ano) são descartadas com nota; datas
+de fim estimadas não são gravadas.
 Qualidade: `ok` se |km_map − km_decl| ≤ 10% ou ≤ 10 km; `aproximado` até 35% ou quando o recorte é por rodovia
 inteira (ou por município); senão `nao_mapeado`, sempre com nota.
 
@@ -604,25 +607,26 @@ SP = [
     ("ecovias-raposo-castello", "34", "sp-lt34-ecovias-raposo-castello", "Ecovias Raposo Castello", "l34", "EcoRodovias",
      "ecovias-raposo-castello"),
     ("via-raposo", "35", "sp-lt35-via-raposo", "Via Raposo", "l35", "Pátria", None),
-    ("rota-mogiana", "37", "sp-lt37-rota-mogiana", "Rota Mogiana", "rod_km", None, None),
-    ("mota-engil", None, "sp-artesp-mota-engil", "Mota-Engil (ficha ARTESP sem conteúdo)", None, "Mota-Engil", None),
+    ("rota-mogiana", "37", "sp-lt37-rota-mogiana", "Rota Mogiana", "rod_km", "Azevedo & Travassos + Quimassa", None),
 ]
 NOTA_SP = {
-    "sp-lt03-tebe": "Contrato encerrado em 03/2025 (ficha ARTESP). As rodovias (SP-326, SP-351, SP-323) passaram à Ecovias "
-                    "Noroeste Paulista (LT.31); a ficha não traz km por trecho, então o lote não foi desenhado.",
-    "sp-artesp-mota-engil": "A ARTESP lista a concessionária Mota-Engil, mas a ficha é um placeholder vazio (sem lote, "
-                            "rodovias ou km). Pela imprensa, a Mota-Engil venceu em set/2025 a PPP do túnel imerso "
-                            "Santos–Guarujá; não confirmado na ficha. Sem traçado na malha.",
-    "sp-lt26-via-sp-serra": "Rodoanel Norte (SP-021 km 129,1–172), ausente da malha CIDE 2021. Geometria = todos os "
-                            "'Ativos Lineares' do KMZ l26 (eixo picotado + dispositivos, sem pasta Traçado).",
-    "sp-lt19-viarondon": "O KMZ l19 não tem pasta Traçado (só marginais e dispositivos): recorte pelos trechos da ficha "
-                         "(SP-300 e acessos SPA) sobre a malha SP da Infra por km. A extensão da ficha (660,6 km) não "
-                         "bate com a soma dos trechos da própria ficha (km_trechos) nem com a ABCR (413,37 km).",
-    "sp-lt37-rota-mogiana": "Sem KMZ publicado: recorte pelos 10 trechos com km da ficha ARTESP sobre a malha SP da Infra. "
-                            "Inclui as rodovias da Renovias (LT.11, prazo encerrado em 04/2026).",
+    "sp-lt03-tebe": "Contrato encerrado em 03/2025 (ficha ARTESP). As rodovias (SP-326, SP-351 e SP-323) passaram à Ecovias "
+                    "Noroeste Paulista (LT.31). A ficha não traz km por trecho, então o lote não foi desenhado.",
+    "sp-lt26-via-sp-serra": "Rodoanel Norte (SP-021, km 129,1 a 172), ainda ausente da malha estadual de 2021. O desenho usa "
+                            "todas as linhas do arquivo oficial da ARTESP, que traz o eixo em pedaços junto com alças e "
+                            "dispositivos; por isso a extensão desenhada passa da declarada.",
+    "sp-lt19-viarondon": "O arquivo oficial da ARTESP para o lote traz só marginais e dispositivos, sem o eixo. O desenho "
+                         "segue os trechos com km da ficha (SP-300 e acessos) sobre a malha estadual. A extensão da ficha "
+                         "(660,6 km) não bate com a soma dos trechos da própria ficha nem com a ABCR (413,37 km).",
+    "sp-lt37-rota-mogiana": "Sem traçado oficial publicado: desenho pelos 10 trechos com km da ficha ARTESP sobre a malha "
+                            "estadual. Inclui as rodovias da Renovias (LT.11, prazo encerrado em 04/2026). Leilão na B3 em "
+                            "27/02/2026 (https://www.b3.com.br/pt_br/noticias/leiloes-8AA8D0CC9C7094A7019CA0E114932F96.htm); "
+                            "contrato assinado em 27/08/2026.",
     "sp-lt11-renovias": "Prazo de 28 anos a partir de 04/1998 (ficha ARTESP): encerrado em 04/2026. As rodovias estão no "
                         "lote Rota Mogiana (LT.37).",
 }
+# datas e grupos de fontes oficiais que faltam na ficha ARTESP (a ABCR não sobrescreve)
+CURADO_SP = {"sp-lt37-rota-mogiana": {"assinatura": "2026-08-27"}}
 
 # Ager-MT: nome na tabela → (id, lote, grupo, municípios extras)
 MT = {
@@ -643,73 +647,74 @@ MT = {
     "Rota Dourada": ("mt-lote8-rota-dourada", "8", None, ()),
 }
 
+AGENCIA_MINAS = ("https://www.agenciaminas.mg.gov.br/noticia/governo-de-minas-assina-concessao-de-rodovias-do-triangulo-"
+                 "mineiro-e-sul-do-estado-115093")
+NOTA_BR_SNV = "o trecho coincide com rodovias federais do SNV e aparece desenhado sobre elas"
 # Demais UFs. `sel`: ("agergs", aba) | ("rodkm", uf, rod, a, b) | ("rod", uf, rod) | ("brkm", uf, br, a, b) | ("brest", uf, br)
+# Datas curadas (assinatura/inicio) vêm de fonte oficial ou do regulador e prevalecem sobre a ABCR.
 OUTRAS = [
     dict(id="rs-rota-de-santa-maria", nome="Rota de Santa Maria", uf="RS", poder="Governo do Estado do RS",
          regulador="AGERGS", rodovias=["RSC-287"], grupo="Sacyr", assinatura="2021-07-22", prazo="30 anos",
-         abcr="rota-de-santa-maria-estadual", fonte_url=AGERGS_PAGE, sel=[("agergs", 0)],
-         nota="Trechos SRE da AGERGS (RSC-287, Tabaí km 28,03 – Santa Maria km 232,54); a RSC-287 coincide com a BR-287 "
-              "planejada do SNV, por isso a geometria está em entFis. Contrato 20/2021."),
+         contrato="20/2021", abcr="rota-de-santa-maria-estadual", fonte_url=AGERGS_PAGE, sel=[("agergs", 0)],
+         nota="Trechos da AGERGS: RSC-287 de Tabaí (km 28,03) a Santa Maria (km 232,54). A RSC-287 é a BR-287 "
+              "planejada: " + NOTA_BR_SNV + "."),
     dict(id="rs-caminhos-da-serra-gaucha", nome="Caminhos da Serra Gaúcha", uf="RS", lote="Bloco 3",
          poder="Governo do Estado do RS", regulador="AGERGS",
-         rodovias=["ERS-122", "ERS-240", "RSC-287", "ERS-446", "RSC-453", "BRS-470"], grupo="Silva & Bertoli / Gregor",
+         rodovias=["ERS-122", "ERS-240", "RSC-287", "ERS-446", "RSC-453", "BRS-470"],
+         grupo="Integrasul (Silva & Bertoli / Gregor)", contrato="50/2022",
          abcr="caminhos-da-serra-gaucha-estadual", fonte_url=AGERGS_PAGE, sel=[("agergs", 1)],
-         nota="Trechos SRE da AGERGS (Bloco 3, contrato 50/2022). ERS na malha estadual; RSC-287/RSC-453 e BRS-470 "
-              "(convênio) como físicos do SNV."),
-    dict(id="mg-epr-triangulo", nome="EPR Triângulo", uf="MG", poder="Governo do Estado de MG", regulador="Seinfra-MG",
+         nota="Trechos da AGERGS (Bloco 3). As ERS estão na malha estadual; nas RSC-287, RSC-453 e BRS-470 (convênio) "
+              + NOTA_BR_SNV + "."),
+    dict(id="mg-epr-triangulo", nome="EPR Triângulo", uf="MG", lote="1", poder="Governo do Estado de MG",
+         regulador="Seinfra-MG",
          rodovias=["BR-365", "CMG-452", "BR-452", "LMG-798", "MG-190", "MG-462", "MG-427", "LMG-812", "LMG-782"],
-         grupo="EPR", abcr="epr-triangulo-estadual",
+         grupo="EPR (Equipav + Perfin)", assinatura="2022-11-16", prazo="30 anos", abcr="epr-triangulo-estadual",
+         fonte_url=AGENCIA_MINAS,
          sel=[("brest", "MG", "365"), ("brest", "MG", "452"), ("rod", "MG", "452"), ("rod", "MG", "798"),
               ("rod", "MG", "190"), ("rod", "MG", "462"), ("rod", "MG", "427"), ("rod", "MG", "812"),
               ("rod", "MG", "782")]),
-    dict(id="mg-epr-sul-de-minas", nome="EPR Sul de Minas", uf="MG", poder="Governo do Estado de MG",
+    dict(id="mg-epr-sul-de-minas", nome="EPR Sul de Minas", uf="MG", lote="2", poder="Governo do Estado de MG",
          regulador="Seinfra-MG", rodovias=["CMG-146", "MG-173", "MG-290", "MG-295", "MG-455", "BR-459", "MG-459",
                                             "LMG-877"],
-         grupo="EPR", abcr="epr-sul-de-minas-estadual",
+         grupo="EPR (Equipav + Perfin)", assinatura="2022-11-16", prazo="30 anos", abcr="epr-sul-de-minas-estadual",
+         fonte_url=AGENCIA_MINAS,
          sel=[("brest", "MG", "146"), ("rod", "MG", "146"), ("rod", "MG", "173"), ("rod", "MG", "290"),
               ("rod", "MG", "295"), ("rod", "MG", "455"), ("brest", "MG", "459"), ("rod", "MG", "459"),
               ("rod", "MG", "877")]),
-    dict(id="mg-epr-vias-do-cafe", nome="EPR Vias do Café", uf="MG", poder="Governo do Estado de MG",
+    dict(id="mg-epr-vias-do-cafe", nome="EPR Vias do Café", uf="MG", lote="3", poder="Governo do Estado de MG",
          regulador="Seinfra-MG", rodovias=["MG-167", "BR-265", "LMG-863", "CMG-491", "BR-146", "CMG-369"], grupo="EPR",
-         abcr="epr-vias-do-cafe-estadual",
+         inicio="2023-10-23", abcr="epr-vias-do-cafe-estadual",
          sel=[("rod", "MG", "167"), ("brest", "MG", "265"), ("rod", "MG", "863"), ("brest", "MG", "491"),
               ("rod", "MG", "491"), ("brest", "MG", "146"), ("brest", "MG", "369"), ("rod", "MG", "369")]),
     dict(id="mg-via-nascentes", nome="Via Nascentes", uf="MG", poder="Governo do Estado de MG", regulador="Seinfra-MG",
          rodovias=["MG-050", "BR-491", "BR-265"], grupo="Via Appia", abcr="via-nascentes-estadual",
          trechos=[("MG-050", 57.6, 402.0), ("BR-491", 0.0, 4.65), ("BR-265", 637.2, 659.5)],
          sel=[("rodkm", "MG", "050", 57.6, 402.0), ("brkm", "MG", "491", 0.0, 4.65), ("brkm", "MG", "265", 637.2, 659.5)],
-         nota="Trechos com km da ficha ABCR: MG-050 na malha estadual; BR-491 e BR-265 (delegadas) no SNV."),
+         nota="Trechos com km da ficha ABCR: MG-050 sobre a malha estadual; nas BR-491 e BR-265 (delegadas) "
+              + NOTA_BR_SNV + "."),
     dict(id="mg-ecovias-norte-minas", nome="Ecovias Norte Minas", uf="MG", poder="Governo do Estado de MG",
          regulador="Seinfra-MG", rodovias=["BR-135", "MG-231", "LMG-754"], grupo="EcoRodovias",
          abcr="ecovias-norte-minas-estadual",
          sel=[("brkm", "MG", "135", 363.6, 673.8), ("rod", "MG", "231"), ("rod", "MG", "754")],
-         nota="BR-135 entre Montes Claros (km 363,6) e o entroncamento com a BR-040 perto de Curvelo (km 673,8), pelos "
-              "nós do SNV que batem com a descrição da ABCR; MG-231 e LMG-754 por rodovia inteira."),
-    dict(id="mt-lote6-rodovia-multimodal", nome="Rodovia Multimodal (Lote 6)", uf="MT", lote="6",
-         poder="Governo do Estado de MT", regulador="Ager-MT",
-         rodovias=["MT-020", "MT-140", "MT-225", "MT-244", "MT-251"], grupo="CS Infra (Simpar)", km_decl=634.35,
-         prazo="30 anos",
-         fonte_url="https://atlaspublico.com.br/cvm/noticias/simpar-informa-vitoria-de-consorcio-com-participacao-88531",
-         sel=[("rod", "MT", "020"), ("rod", "MT", "140"), ("rod", "MT", "225"), ("rod", "MT", "244"),
-              ("rod", "MT", "251")],
-         nota="Leilão B3 em 30/10/2025 (634,35 km); em 21/09/2026 a Simpar informou que o Consórcio Rota Multimodal "
-              "(CS Infra 80%) foi declarado vencedor da concorrência 52/2025 (imprensa). Contrato não localizado em "
-              "fonte aberta; ainda fora da tabela da Ager-MT."),
+         nota="BR-135 entre Montes Claros (km 363,6) e o entroncamento com a BR-040 perto de Curvelo (km 673,8), como "
+              "descreve a ABCR; MG-231 e LMG-754 desenhadas por inteiro."),
     dict(id="ms-way-306", nome="Way-306", uf="MS", poder="Governo do Estado de MS", regulador="AGEMS",
-         rodovias=["MS-306"], grupo="Way Brasil", km_decl=218.1, prazo="30 anos",
+         rodovias=["MS-306"], grupo="Way Brasil", km_decl=218.1, prazo="30 anos", inicio="2020-04",
          trechos=[("MS-306", 0.0, 218.1)],
-         fonte_url="https://monitormercantil.com.br/way-306-vence-leilao-de-concessao-da-rodovia-ms-306/",
+         fonte_url=("https://correiodoestado.com.br/cidades/governo-assina-contrato-de-concessao-e-consorcio-inicia-"
+                    "obras-na-ms306-em-um-mes/369397"),
          sel=[("rodkm", "MS", "306", 0.0, 218.1)],
-         nota="MS-306 do km 0 (divisa MT, Placa de Mineiros) ao km 218,1 (BR-158, Cassilândia), pela imprensa; "
-              "concessão formalizada em 30/12/2019 (DOE), contrato de 2020."),
+         nota="MS-306 do km 0 (divisa com MT) ao km 218,1 (BR-158, Cassilândia). Contrato assinado no início de 2020 "
+              "(imprensa); a Way-306 opera a rodovia desde 04/2020, sob regulação da AGEMS (reajustes anuais de "
+              "pedágio). Data exata de assinatura não localizada."),
     dict(id="ms-way-112", nome="Way-112", uf="MS", poder="Governo do Estado de MS", regulador="AGEMS",
          rodovias=["MS-112", "BR-158", "BR-436"], grupo="Way Brasil", km_decl=412.4, assinatura="2023-03-23",
          prazo="30 anos", trechos=[("BR-158", 1.1, 194.9), ("BR-436", 0.0, 18.1)],
          fonte_url=("https://www.campograndenews.com.br/brasil/cidades/"
                     "governo-do-estado-assina-entrega-de-tres-rodovias-a-grupo-privado"),
          sel=[("rod", "MS", "112"), ("brkm", "MS", "158", 1.1, 194.9), ("brkm", "MS", "436", 0.0, 18.1)],
-         nota="MS-112 Três Lagoas–Cassilândia (rodovia inteira na malha estadual); BR-158 da MS-306 (Cassilândia) à "
-              "MS-444 (Selvíria) e BR-436 até o fim da ponte rodoferroviária, delegadas, no SNV."),
+         nota="MS-112 de Três Lagoas a Cassilândia desenhada por inteiro; BR-158 da MS-306 (Cassilândia) à MS-444 "
+              "(Selvíria) e BR-436 até o fim da ponte rodoferroviária, delegadas ao estado: " + NOTA_BR_SNV + "."),
     dict(id="ba-bahia-norte", nome="Bahia Norte", uf="BA", poder="Governo do Estado da BA", regulador="AGERBA",
          rodovias=["BA-093", "BA-512", "BA-521", "BA-524", "BA-526", "BA-535"], grupo="Monte Rodovias",
          abcr="bahia-norte-estadual",
@@ -718,44 +723,52 @@ OUTRAS = [
          regulador="AGERBA", rodovias=["BA-099"], grupo="Monte Rodovias", abcr="cln-estadual",
          sel=[("rod", "BA", "099")]),
     dict(id="ba-estrada-do-feijao", nome="Estrada do Feijão (Concef)", uf="BA", poder="Governo do Estado da BA",
-         regulador="AGERBA", rodovias=["BA-052"], grupo=None, km_decl=545.4,
-         fonte_url=("https://jornalgrandebahia.com.br/2021/01/requalificacao-da-estrada-do-feijao-fortalece-a-economia-"
-                    "turismo-e-geracao-de-empregos-na-bahia/"),
+         regulador="AGERBA", rodovias=["BA-052"], grupo=None, km_decl=545.4, contrato="01/2018",
+         fonte_url="https://www.ba.gov.br/agerba/sites/site-agerba/files/2025-11/Res312025.pdf",
          sel=[("rod", "BA", "052")],
-         nota="PPP (concessão patrocinada) 001/2018 Seinfra-BA, publicada em 27/12/2018: sistema BA-052 de Feira de "
-              "Santana a Xique-Xique e Barra (545,4 km, inclui acessos e a BA-160)."),
+         nota="Concessão patrocinada (PPP), Contrato de Concessão nº 01/2018 (Resolução AGERBA nº 31/2025, reajuste da "
+              "praça da BA-052). Sistema BA-052 de Feira de Santana a Xique-Xique e Barra, 545,4 km com acessos e a "
+              "BA-160 (imprensa)."),
     dict(id="pa-conquista-do-para", nome="Conquista do Pará (Rota do Pará)", uf="PA", poder="Governo do Estado do PA",
          regulador="ARCON-PA", rodovias=["PA-150", "PA-475", "PA-252", "PA-151", "PA-483"],
-         grupo="Consórcio Conquista do Pará", km_decl=526.0, prazo="30 anos",
-         fonte_url="https://dol.com.br/noticias/para/800191/alca-viaria-e-pa-150-sao-leiloadas-por-r-372-bilhoes",
+         grupo="Consórcio Conquista do Pará", km_decl=526.0, prazo="30 anos", inicio="2024-08",
+         contrato="Edital de Concessão 001/2023",
+         fonte_url="https://diariodopara.com.br/para/melhorias-em-rodovias-da-rota-do-para-ja-alcancam-mais-de-200-km",
          sel=[("rod", "PA", r) for r in ("150", "475", "252", "151", "483")],
-         nota="Leilão B3 em 15/03/2023 (526 km: PA-150 Morada Nova–Goianésia do Pará ≈ 333 km, PA-475, PA-252, PA-151 e "
-              "Alça Viária/PA-483); operação pela Rota do Pará desde 08/2024."),
+         nota="Leilão na B3 em 15/03/2023 (526 km: PA-150 entre Morada Nova e Goianésia do Pará, cerca de 333 km, "
+              "PA-475, PA-252, PA-151 e Alça Viária/PA-483). A Rota do Pará administra as rodovias desde 08/2024 "
+              "(imprensa); data de assinatura não localizada."),
     dict(id="pe-rota-dos-coqueiros", nome="Rota dos Coqueiros", uf="PE", poder="Governo do Estado de PE",
          regulador="ARPE", rodovias=["PE-024"], grupo="Monte Rodovias", abcr="rota-dos-coqueiros-estadual",
-         trechos=[("PE-024", 0.0, 6.5)], sel=[("rodkm", "PE", "024", 0.0, 6.5)]),
+         assinatura="2006-12-28", contrato="Concessão Patrocinada CGPE nº 001/2006",
+         fonte_url="https://www.legisweb.com.br/legislacao/?id=393234",
+         trechos=[("PE-024", 0.0, 6.5)], sel=[("rodkm", "PE", "024", 0.0, 6.5)],
+         nota="Contrato CGPE nº 001/2006, de 28/12/2006, citado na Resolução ARPE nº 160/2020."),
     dict(id="pe-rota-do-atlantico", nome="Rota do Atlântico", uf="PE", poder="Governo do Estado de PE",
          regulador="ARPE", rodovias=["Expressway de Suape"], grupo="Monte Rodovias", abcr="rota-do-atlantico-estadual",
          sel=[],
-         nota="Complexo Viário e Logístico de Suape (Expressway, TDR Norte/Sul, contornos e acessos): vias sem código "
-              "estadual na malha da Infra; não desenhado."),
+         nota="Complexo Viário e Logístico de Suape (Expressway, TDR Norte e Sul, contornos e acessos): vias sem código "
+              "estadual na malha da Infra S.A., por isso não desenhadas."),
     dict(id="rj-rota-116", nome="Rota 116", uf="RJ", poder="Governo do Estado do RJ", regulador="AGETRANSP",
          rodovias=["RJ-116", "RJ-104"], grupo="DTP Participações", abcr="rota-116-estadual",
+         fonte_url="https://www.agetransp.rj.gov.br/operadoras/rota116",
          trechos=[("RJ-116", 0.0, 40.0), ("RJ-116", 43.0, 78.5), ("RJ-116", 88.0, 138.0), ("RJ-104", 0.0, 1.0)],
          sel=[("rod", "RJ", "116")],
-         nota="A malha do RJ (Base DNIT 2002) não tem km: RJ-116 por feições inteiras; o km 0–1 da RJ-104 não foi "
-              "desenhado. Prazo de 25 anos desde 2001 (ABCR, sem data de fim; aditivos não verificados)."),
+         nota="A malha do RJ não tem km: a RJ-116 foi desenhada por inteiro e o km 0 a 1 da RJ-104 não foi desenhado. "
+              "Prazo original de 25 anos desde 2001 (terminaria por volta de 2026); há registro de prorrogação por mais "
+              "25 anos, sob análise do TCE-RJ (jul/2026). Data de fim não informada."),
     dict(id="rj-via-lagos", nome="Via Lagos", uf="RJ", poder="Governo do Estado do RJ", regulador="AGETRANSP",
-         rodovias=["RJ-124"], grupo="Motiva", abcr="vialagos-estadual", sel=[("rod", "RJ", "124")],
-         nota="RJ-124 Rio Bonito–São Pedro da Aldeia por feições inteiras (malha RJ sem km). A ficha ABCR traz poder "
-              "concedente 'Governo do Estado de São Paulo' (erro de cadastro; corrigido)."),
+         rodovias=["RJ-124"], grupo="Motiva", abcr="vialagos-estadual",
+         fonte_url="https://www.agetransp.rj.gov.br/operadoras/vialagos", sel=[("rod", "RJ", "124")],
+         nota="RJ-124 de Rio Bonito a São Pedro da Aldeia desenhada por inteiro (a malha do RJ não tem km). A ficha da "
+              "ABCR traz poder concedente 'Governo do Estado de São Paulo', erro de cadastro corrigido aqui."),
     dict(id="pi-transcerrados", nome="Transcerrados", uf="PI", poder="Governo do Estado do PI", regulador=None,
          rodovias=["PI-397", "PI-262"], grupo="Simpar (CS Infra)", km_decl=276.8, assinatura="2021-07-26",
-         prazo="30 anos",
+         prazo="30 anos", contrato="PPP 003/2021 (Suparc-PI)",
          fonte_url="https://www.moneytimes.com.br/consorcio-graos-do-piaui-assina-contrato-de-concessao-da-rodovia-transcerrados/",
          sel=[],
-         nota="PPP 003/2021 (Suparc-PI), Consórcio Grãos do Piauí. PI-397 e PI-262 não estão na malha estadual (o PI só "
-              "tem a Base DNIT 2002, sem códigos nem km) e o OSM não respondeu no recon; não desenhado."),
+         nota="Consórcio Grãos do Piauí. As PI-397 e PI-262 não estão na malha estadual da Infra S.A. (o PI só tem a "
+              "base de 2002, sem códigos nem km), por isso não foram desenhadas."),
 ]
 
 
@@ -771,7 +784,7 @@ def _fontes(acesso):
         {"nome": "ARTESP — dados abertos (CKAN malha-rodoviaria: KMZ por lote) e fichas das concessionárias",
          "url": ARTESP_CKAN, "periodo": "KMZ e fichas consultados em 10/2026; capex ref. 2024 (Via Raposo 2025)",
          "acesso": acesso, "licenca": "CC-BY (CKAN ARTESP); fichas: página pública",
-         "nota": ("Geometria = pasta 'Traçado' dos KMZ; km_map conta uma vez as pistas a até 100 m. Fichas: "
+         "nota": ("Geometria = pasta 'Traçado' dos KMZ; a extensão desenhada conta uma vez as pistas a até 100 m. Fichas: "
                   "controlador, início, prazo, extensão, investimentos e trechos com km (https://www.artesp.sp.gov.br/"
                   "artesp/setor-regulado/rodovia/concessionarias).")},
         {"nome": "AGERGS — Rodovias concedidas (trechos SRE RSC-287 e Bloco 3)", "url": AGERGS_XLSX,
@@ -786,10 +799,12 @@ def _fontes(acesso):
          "nota": ("Fonte complementar: preenche datas, acionistas e trechos onde ARTESP/AGERGS são omissos, nunca os "
                   "sobrescreve. Erros conhecidos (Noroeste assinada em 2008, Via Lagos com poder concedente SP) "
                   "descartados.")},
-        {"nome": "Imprensa e releases oficiais (MS, BA, PA, PI, MT Lote 6)",
-         "url": "https://www.sinfra.mt.gov.br/en/contratos-de-concessoes-rodoviarias", "periodo": "2019–2026",
-         "acesso": acesso, "licenca": "Conteúdo jornalístico/institucional; só fatos citados",
-         "nota": "Cada entidade traz a URL usada em fonte_url; km e datas conferidos em mais de uma matéria."},
+        {"nome": "Reguladores e governos estaduais (Agência Minas, AGERBA, ARPE, AGETRANSP, B3) e imprensa (MS, PA, PI)",
+         "url": "https://www.agenciaminas.mg.gov.br/", "periodo": "2006–2026",
+         "acesso": acesso, "licenca": "Páginas públicas; conteúdo jornalístico: só fatos citados",
+         "nota": ("Cada entidade traz em fonte_url a página usada. Só entram como vigentes concessões com assinatura, "
+                  "início de operação ou contrato identificado; datas da ABCR incoerentes entre si (assinatura depois "
+                  "do início, fim que não confere com o prazo) são descartadas e citadas na nota.")},
     ]
 
 
@@ -917,6 +932,56 @@ def _ager_mt():
     return rows
 
 
+def _ano_frac(d):
+    p = [int(x) for x in d.split("-")]
+    return p[0] + (p[1] - 1) / 12 + ((p[2] - 1) / 365 if len(p) > 2 else 0)
+
+
+def _br(d):
+    p = d.split("-")
+    return "/".join(reversed(p))
+
+
+def _antes(a, b):
+    """a é posterior a b? Compara na precisão comum ('2023-05' × '2023-05-20' empatam)."""
+    k = min(len(a), len(b))
+    return a[:k] > b[:k]
+
+
+def datas_coerentes(ass, ini, fim, anos, ini_oficial=False):
+    """Assinatura ≤ início de operação e (assinatura ou início) + prazo ≈ fim (± 1 ano).
+    Devolve (ass, ini, fim, avisos); o campo incoerente vira None e o aviso explica. Com `ini_oficial` (ficha ARTESP),
+    o início nunca é descartado."""
+    av = []
+
+    def bate(base):
+        return bool(base and fim and anos and abs(_ano_frac(base) + anos - _ano_frac(fim)) <= 1)
+
+    if ass and ini and _antes(ass, ini):
+        ok_a, ok_i = bate(ass), bate(ini)
+        if ini_oficial or (ok_i and not ok_a):
+            av.append(f"A data de assinatura informada ({_br(ass)}) é posterior ao início ({_br(ini)}) e foi descartada.")
+            ass = None
+        elif ok_a and not ok_i:
+            av.append(f"A data de início informada ({_br(ini)}) é anterior à assinatura ({_br(ass)}) e foi descartada.")
+            ini = None
+        else:
+            av.append(f"Assinatura ({_br(ass)}) e início ({_br(ini)}) são incoerentes entre si; as duas foram "
+                      "descartadas.")
+            ass = ini = None
+    base = ass or ini
+    if fim and anos and base and not bate(base):
+        av.append(f"A data de fim informada ({_br(fim)}) não confere com {_br(base)} + {_num(anos)} anos e foi "
+                  "descartada.")
+        fim = None
+    return ass, ini, fim, av
+
+
+def _junta_nota(*partes):
+    txt = " ".join(p for p in partes if p)
+    return txt or None
+
+
 def _entidades_sp(abcr, hoje):
     ents = []
     for slug, lote, eid, nome, geo, grupo, aslug in SP:
@@ -924,27 +989,38 @@ def _entidades_sp(abcr, hoje):
         f = parse_ficha_artesp(p) if p.exists() else None
         f = f or {}
         a = abcr.get(aslug) if aslug else None
+        cur = CURADO_SP.get(eid, {})
         ini = f.get("inicio_mes")
         anos = f.get("anos")
-        fim = f.get("termino") or _somar_anos(ini, anos)
-        ass = _abcr_data(a, "Data de Assinatura do contrato")
-        if ass and not (ini and abs(int(ass[:4]) - int(ini[:4])) <= 1):
-            ass = None                             # ABCR inconsistente com a ARTESP (ex.: Noroeste "2008")
-        fim_abcr = _abcr_data(a, "Data Fim de Operação")
-        if fim_abcr and fim and abs(int(fim_abcr[:4]) - int(fim[:4])) <= 1 and not f.get("termino"):
-            fim = fim_abcr
+        av = []
+        ass = cur.get("assinatura")
+        ass_abcr = _abcr_data(a, "Data de Assinatura do contrato")
+        if not ass and ass_abcr:
+            if ini and abs(int(ass_abcr[:4]) - int(ini[:4])) <= 1:
+                ass = ass_abcr
+            else:                                  # ABCR incoerente com a ARTESP (ex.: Noroeste "2008")
+                av.append(f"A ABCR informa assinatura em {_br(ass_abcr)}, incoerente com o início na ficha ARTESP "
+                          f"({_br(ini) if ini else 'sem data'}); data descartada.")
+        # fim: só o término explícito da ARTESP ou o fim da ABCR que confere com início + prazo da ARTESP
+        fim = f.get("termino") or _abcr_data(a, "Data Fim de Operação")
+        ass, ini, fim, av2 = datas_coerentes(ass, ini, fim, anos, ini_oficial=True)
+        if f.get("termino"):
+            fim = f["termino"]
+        fim_calc = f.get("termino") or _somar_anos(ini, anos)      # só para o estado; não vai para `fim`
         prazo = f"{_num(anos)} anos" if anos else None
         sel = []
         if geo == "rod_km":
             for rod, ka, kb in f.get("trechos", []):
                 m = re.match(r"SP[AIDM]?-(\d{3})(?:/(\d{3}))?", rod)
+                if not m:
+                    continue
                 if m.group(2):
                     sel.append(("rodkm", "SP", m.group(2), ka, kb, int(m.group(1))))
                 else:
                     sel.append(("rodkm", "SP", m.group(1), ka, kb))
         elif geo:
             sel.append(("kmz", geo.rstrip("*"), geo.endswith("*")))
-        estado = "encerrado" if fim and fim[:7] < hoje[:7] else "vigente"
+        estado = "encerrado" if fim_calc and fim_calc[:7] < hoje[:7] else "vigente"
         ents.append({
             "id": eid, "nome": nome, "esfera": "estadual", "uf": "SP", "poder": ESTADO_SP, "regulador": "ARTESP",
             "lote": lote, "rodovias": f.get("rods", []),
@@ -954,7 +1030,7 @@ def _entidades_sp(abcr, hoje):
             if f.get("trechos") else None, "assinatura": ass, "inicio": ini, "fim": fim, "prazo": prazo,
             "capex_bi": _num(f.get("capex_bi")), "capex_ref": f.get("capex_ref") if f.get("capex_bi") else None,
             "fonte_url": ARTESP_FICHA.format(slug), "abcr_url": a["link"] if a else None,
-            "nota": NOTA_SP.get(eid), "_sel": sel,
+            "nota": _junta_nota(NOTA_SP.get(eid), *av, *av2), "_sel": sel,
         })
     return ents
 
@@ -969,18 +1045,17 @@ def _entidades_mt(hoje):
         rr = re.findall(r"MT-(\d{3})", rods)
         mm = [m.strip() for m in munis.split("/") if m.strip()] + list(extra)
         ass = _data_br(data)
-        anos = _anos(vig)
-        fim = _somar_anos(ass, anos)
+        fim_calc = _somar_anos(ass, _anos(vig))   # só para o estado; a Ager-MT dá a vigência, não a data de fim
         ents.append({
             "id": eid, "nome": nome + (f" (Lote {lote})" if lote else ""), "esfera": "estadual", "uf": "MT",
             "poder": "Governo do Estado de MT", "regulador": "Ager-MT", "lote": lote,
             "rodovias": [f"MT-{r}" for r in rr], "trechos": [], "grupo": grupo, "estado":
-                "encerrado" if fim and fim < hoje else "vigente",
-            "km_decl": _num(_float_br(re.sub(r"[^\d.,]", "", ext))), "assinatura": ass, "inicio": None, "fim": fim,
+                "encerrado" if fim_calc and fim_calc < hoje else "vigente",
+            "km_decl": _num(_float_br(re.sub(r"[^\d.,]", "", ext))), "assinatura": ass, "inicio": None, "fim": None,
             "prazo": vig, "capex_bi": None, "capex_ref": None, "contrato": contrato,
             "fonte_url": AGER_MT, "municipios": mm,
-            "nota": f"Recorte das rodovias {', '.join('MT-' + r for r in rr)} pelos municípios {', '.join(mm)} "
-                    f"(tabela Ager-MT{'; lote da Sinfra-MT' if lote else ''}).",
+            "nota": f"Rodovias {', '.join('MT-' + r for r in rr)} desenhadas nos municípios {', '.join(mm)} "
+                    f"(tabela da Ager-MT{'; número do lote da Sinfra-MT' if lote else ''}).",
             "_sel": [("rod", "MT", r, tuple(mm)) for r in rr],
         })
     return ents
@@ -991,10 +1066,10 @@ def _entidades_outras(abcr, hoje):
     for c in OUTRAS:
         a = abcr.get(c.get("abcr")) if c.get("abcr") else None
         ass = c.get("assinatura") or _abcr_data(a, "Data de Assinatura do contrato")
+        ini = c.get("inicio") or _data_br((a or {}).get("Data de Início de Operação/Cobrança"))
         fim = c.get("fim") or _abcr_data(a, "Data Fim de Operação")
         prazo = c.get("prazo") or (_limpa((a or {}).get("Duração do Contrato de Concessão")) or None)
-        # fim estimado (assinatura + prazo) não decide o estado: a fonte não dá a data e pode haver aditivo de prazo
-        fim_est = _somar_anos(ass, _anos(prazo)) if not fim and ass and _anos(prazo) else None
+        ass, ini, fim, av = datas_coerentes(ass, ini, fim, _anos(prazo))
         km = c.get("km_decl") or (a or {}).get("km")
         tre = c.get("trechos") or []
         ents.append({
@@ -1002,12 +1077,11 @@ def _entidades_outras(abcr, hoje):
             "regulador": c["regulador"], "lote": c.get("lote"), "rodovias": c["rodovias"],
             "trechos": [{"rod": r, "km_i": _num(ka, 3), "km_f": _num(kb, 3)} for r, ka, kb in tre],
             "grupo": c.get("grupo"), "estado": "encerrado" if fim and fim < hoje else "vigente",
-            "km_decl": _num(km), "assinatura": ass, "inicio": None, "fim": fim or fim_est,
-            "fim_estimado": True if fim_est else None, "prazo": prazo,
-            "capex_bi": None, "capex_ref": None,
+            "km_decl": _num(km), "assinatura": ass, "inicio": ini, "fim": fim, "prazo": prazo,
+            "capex_bi": None, "capex_ref": None, "contrato": c.get("contrato"),
             "fonte_url": c.get("fonte_url") or (a or {}).get("link"), "abcr_url": (a or {}).get("link"),
             "trecho_texto": _limpa((a or {}).get("Trechos Concedidos")) or None,
-            "nota": c.get("nota"), "_sel": c["sel"],
+            "nota": _junta_nota(c.get("nota"), *av), "_sel": c["sel"],
         })
     return ents
 
@@ -1160,16 +1234,16 @@ def build(F=None):
         if e["qualidade"] != "ok" and not e.get("nota"):
             e["nota"] = _nota_padrao(e)
         elif e["qualidade"] != "ok" and e["km_map"] and e["km_decl"]:
-            e["nota"] += f" km_map {_fmt(e['km_map'])} × km declarado {_fmt(e['km_decl'])}."
+            e["nota"] += _extensoes(e)
         entEst.append(est)
         entFis.append(sorted(fis))
         entGeo.append(geo)
 
     ordem = ["id", "nome", "esfera", "uf", "poder", "regulador", "lote", "rodovias", "trechos", "grupo", "controlador",
              "estado", "km_decl", "km_trechos", "km_map", "qualidade", "recorte", "nota", "assinatura", "inicio", "fim",
-             "fim_estimado", "prazo",
+             "prazo",
              "capex_bi", "capex_ref", "geo_metodo", "fonte_url", "abcr_url", "contrato", "municipios", "trecho_texto"]
-    opcionais = {"controlador", "fim_estimado", "abcr_url", "contrato", "municipios", "trecho_texto", "km_trechos"}
+    opcionais = {"controlador", "abcr_url", "contrato", "municipios", "trecho_texto", "km_trechos"}
     saida = [{k: e.get(k) for k in ordem if k in e and not (k in opcionais and e.get(k) is None)} for e in ents]
     acesso = _acesso()
     doc = {"fonte": _fontes(acesso), "tipo": "medido",
@@ -1190,16 +1264,21 @@ def _fmt(x):
 
 def _nota_padrao(e):
     if e["recorte"] == "rodovia":
-        base = ("Recorte por rodovia inteira (km por trecho não publicados em fonte aberta lida); BRs só nos trechos de "
-                "administração estadual/convênio do SNV; trechos já atribuídos a recortes mais precisos foram tirados.")
+        base = ("Desenho pelas rodovias inteiras, porque os km de cada trecho não foram publicados em fonte aberta; nas "
+                "rodovias federais, só os trechos sob administração estadual ou convênio; trechos já desenhados com "
+                "km por outra concessão foram retirados.")
     elif e["recorte"] == "kmz":
-        base = ("Traçado do KMZ ARTESP; km_map mede o corredor (pistas a até 100 m contadas uma vez) e difere da "
+        base = ("Traçado oficial da ARTESP; a extensão desenhada conta uma vez as pistas paralelas e difere da "
                 "extensão da ficha.")
     else:
-        base = "Recorte por km."
+        base = "Desenho pelos km dos trechos."
+    return base + _extensoes(e)
+
+
+def _extensoes(e):
     if e.get("km_map") and e.get("km_decl"):
-        base += f" km_map {_fmt(e['km_map'])} × km declarado {_fmt(e['km_decl'])}."
-    return base
+        return f" Extensão desenhada {_fmt(e['km_map'])} km; declarada {_fmt(e['km_decl'])} km."
+    return ""
 
 
 def _acesso():
