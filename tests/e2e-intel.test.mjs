@@ -547,7 +547,14 @@ test('(a) ficha Nova Rota do Oeste: ANTT, controladora, gráfico de receita e pr
   const t = await fichaText();
   assert.match(t, /ANTT/);
   assert.match(t, /MTPAR/);
-  for (const re of [/Controladora/, /Trecho/, /Extensão/, /850,9 km/, /12\/03\/2014/, /30 anos/, /003\/2013/, /06\/09\/2015/, /21\/set/]) assert.match(t, re);
+  for (const re of [/Controladora/, /Trecho/, /Extensão/, /850,9 km/, /12\/03\/2014/, /003\/2013/, /06\/09\/2015/, /21\/set/]) assert.match(t, re);
+  // prazo é o vigente (com prorrogações), em caixa baixa
+  const kv = await page.$$eval('#ficha .fblock', bs => {
+    const b = bs.find(x => x.querySelector('h3').textContent === 'ANTT');
+    return Object.fromEntries([...b.querySelectorAll('dt')].map(dt => [dt.textContent, dt.nextElementSibling.textContent]));
+  });
+  assert.equal(kv['Prazo atual (com prorrogações)'], '30 anos');
+  assert.ok(!('Prazo' in kv));
   const url = await page.evaluate(() => window.INTEL.antt.capas['nova-rota-do-oeste'].url);
   const link = page.locator('#ficha a', { hasText: 'Página da concessão na ANTT' });
   assert.equal(await link.getAttribute('href'), url);
@@ -618,7 +625,7 @@ test('(b) ficha sem capa ANTT não mostra o bloco ANTT; nenhuma ficha mostra "un
     for (const id of ids) {
       if (!Ficha.exists(id)) { out.push('não existe: ' + id); continue; }
       Ficha.open(id);
-      if (/undefined|NaN|\[object/.test(document.getElementById('ficha').textContent)) out.push(id);
+      if (/undefined|NaN|\[object|\d (Anos|Meses)\b/.test(document.getElementById('ficha').textContent)) out.push(id);
       Ficha.close(true);
     }
     return out;
@@ -642,7 +649,9 @@ test('(c) ficha estadual: etiqueta, campos e "Ver no mapa" liga a camada, realç
   const t = await fichaText();
   assert.ok(t.includes(s.e.nome));
   assert.ok(t.includes(`Concessão estadual · ${s.e.uf} · ${s.e.regulador}`), t.slice(0, 300));
-  for (const re of [/Poder concedente/, /Rodovias/, /Trechos/, /km declarado × mapeado/, /Qualidade do recorte/, /Assinatura/, /Fim/, /Prazo/]) assert.match(t, re);
+  for (const re of [/Poder concedente/, /Rodovias/, /Trechos/, /km declarado × mapeado/, /Qualidade do recorte/, /Assinatura/, /Fim/]) assert.match(t, re);
+  const prazo = await page.$$eval('#ficha dt', dts => { const d = dts.find(x => x.textContent === 'Prazo atual (com prorrogações)'); return d ? d.nextElementSibling.textContent : null; });
+  assert.equal(prazo, s.e.prazo.replace(/\bAnos\b/, 'anos'));
   assert.ok(t.includes(s.e.trechos[0].rod));
   assert.equal(await page.locator(`#ficha a[href="${s.e.fonte_url}"]`).count() >= 1, true);
   assert.doesNotMatch(t, /undefined|NaN/);
@@ -752,6 +761,21 @@ test('(e, f) Pipeline: ≥ 60 linhas por data prevista, filtros, contagem por st
   assert.equal(await rows.count(), nS);
   assert.equal(await page.getAttribute('#pipe-counts [data-pstatus="estudo"]', 'aria-pressed'), 'true');
   await page.click('#pipe-counts [data-pstatus="estudo"]');
+  assert.equal(await rows.count(), n);
+  // status ativo ausente na nova esfera: o filtro é limpo (nunca um filtro invisível com a tabela vazia)
+  await page.click('#pipe-counts [data-pstatus="leilao_agendado"]');
+  const nL = await page.evaluate(() => window.INTEL.pipeline.itens.filter(i => i.status === 'leilao_agendado').length);
+  assert.equal(await rows.count(), nL);
+  await page.selectOption('#pipe-esfera', 'estadual');
+  const shownStatus = await page.$$eval('#pipe-counts [data-pstatus]', bs => bs.map(b => [b.dataset.pstatus, b.getAttribute('aria-pressed')]));
+  const visiblePressed = shownStatus.filter(([, a]) => a === 'true').map(([k]) => k);
+  const nRows = await rows.count();
+  assert.ok(nRows > 0, 'tabela vazia');
+  if (!shownStatus.some(([k]) => k === 'leilao_agendado')) {
+    assert.deepEqual(visiblePressed, []);
+    assert.equal(nRows, nE);
+  } else assert.deepEqual(visiblePressed, ['leilao_agendado']);
+  await page.selectOption('#pipe-esfera', '');
   assert.equal(await rows.count(), n);
   // linha com ent abre #ficha/<ent>
   const ent = await page.getAttribute('#pipe-table tbody tr[data-ent]', 'data-ent');

@@ -152,6 +152,8 @@ const Ficha = (() => {
 
   // ---------- v3: blocos ANTT e pipeline na ficha federal ----------
   const link = (url, text) => (url ? `<a class="link-btn" href="${esc(url)}" target="_blank" rel="noopener">${esc(text)}</a>` : esc(text));
+  // Prazo vigente (com prorrogações) em caixa baixa: "30 Anos" vira "30 anos".
+  const prazoTxt = v => (has(v) ? String(v).replace(/\b(Anos?|Meses|Dias?)\b/g, m => m.toLowerCase()) : null);
   const NV_TAG = '<span class="tag-nv">não verificado</span>';
   const nfMi = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
 
@@ -160,7 +162,7 @@ const Ficha = (() => {
     const capa = IM.anttCapa(intel, id), ant = IM.anttAnteriores(intel, id);
     const capaHtml = capa ? dl(rows({}, [
       ['Controladora', capa.controladora, 'txt'], ['Trecho', capa.trecho, 'txt'], ['Extensão', IM.has(capa.extensao_km) ? capa.extensao_km : null, 'km'],
-      ['Assinatura', capa.assinatura, 'data'], ['Início', capa.inicio, 'data'], ['Prazo', capa.prazo, 'txt'], ['Edital', capa.edital, 'txt'],
+      ['Assinatura', capa.assinatura, 'data'], ['Início', capa.inicio, 'data'], ['Prazo atual (com prorrogações)', prazoTxt(capa.prazo), 'txt'], ['Edital', capa.edital, 'txt'],
       ['Início da cobrança', capa.cobranca, 'data'], ['Data-base de reajuste', capa.database, 'txt'],
     ])) + (capa.url ? `<p class="ftext fpad">${link(capa.url, 'Página da concessão na ANTT')}</p>` : '') : '';
     const antHtml = ant.length ? `<ul class="flist">${ant.map(c => `<li>Contrato anterior: ${link(c.url, c.nome || c.id)} (encerrado)</li>`).join('')}</ul>` : '';
@@ -186,7 +188,7 @@ const Ficha = (() => {
     }).join('');
     return block('Receita, investimento e custo realizados', `<div id="ficha-antt-serie">
       ${Charts.legendHtml([['Receita', Charts.C.deep], ['Investimento', Charts.C.bright], ['Custo', Charts.C.grey]])}${charts}
-      <p class="page__src">R$ nominais · ANTT. Valores anuais em R$ milhões, 2010–2025, declarados pelas concessionárias à agência.</p></div>`, true);
+      <p class="page__src">R$ nominais · ANTT. Valores anuais em R$ milhões, só os anos com dado, declarados pelas concessionárias à agência.</p></div>`, true);
   }
 
   function pracasBlock(id) {
@@ -244,7 +246,7 @@ const Ficha = (() => {
     const contrato = dl(rows({}, [
       ['Poder concedente', e.poder, 'txt'], ['Regulador', e.regulador, 'txt'], ['Lote', e.lote, 'txt'], ['Grupo', grupo, 'txt'],
       ['Situação', estLabel(estado), 'txt'], ['Assinatura', e.assinatura, 'data'], ['Início', e.inicio, 'data'],
-      ['Fim', e.fim ? `${F.data(e.fim)}${e.fim_estimado ? ' (estimado)' : ''}` : null, 'txt'], ['Prazo', e.prazo, 'txt'], ['Capex', capex, 'txt'],
+      ['Fim', e.fim ? `${F.data(e.fim)}${e.fim_estimado ? ' (estimado)' : ''}` : null, 'txt'], ['Prazo atual (com prorrogações)', prazoTxt(e.prazo), 'txt'], ['Capex', capex, 'txt'],
     ]));
     const rod = dl(rows({}, [
       ['Rodovias', (e.rodovias || []).filter(Boolean).join(', '), 'txt'],
@@ -285,7 +287,10 @@ const Ficha = (() => {
   function showEstOnMap(k) {
     close(true);
     Tabs.go('#mapa');
-    setTimeout(() => {
+    // Enquadra só depois que a aba Mapa está exibida (hashchange é assíncrono) e o Leaflet recalculou o tamanho.
+    const whenMap = (fn, n = 0) => requestAnimationFrame(() => (Tabs.current().active === 'mapa' || n > 60 ? fn() : whenMap(fn, n + 1)));
+    whenMap(() => {
+      MapView.invalidate();
       const box = document.querySelector('#layers-section input[data-layer="estaduais"]');
       if (box) box.checked = true;
       Layers.toggle('estaduais', true);
@@ -293,7 +298,7 @@ const Ficha = (() => {
       const pts = estLines(k).flat();
       // à direita fica o cartão da concessão (~360 px): enquadra no espaço livre
       if (pts.length) MapView.map.fitBounds(L.latLngBounds(pts), { paddingTopLeft: [64, 64], paddingBottomRight: [424, 64], maxZoom: 11 });
-    }, 50);
+    });
   }
 
   function concSwatch(key) {

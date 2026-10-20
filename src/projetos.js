@@ -139,7 +139,10 @@ const Projetos = (() => {
   function renderPipeline() {
     if (!pipe.length) return;
     const byEsf = IM.filterPipeline(pipe, { esfera: pfilt.esfera });
-    document.getElementById('pipe-counts').innerHTML = IM.pipelineCounts(byEsf, intel.pipeline.status).map(c =>
+    const counts = IM.pipelineCounts(byEsf, intel.pipeline.status);
+    // Status selecionado que não existe na esfera escolhida sai do filtro (nunca um filtro ativo invisível).
+    for (const k of [...pfilt.status]) if (!counts.some(c => c.key === k)) pfilt.status.delete(k);
+    document.getElementById('pipe-counts').innerHTML = counts.map(c =>
       `<button type="button" class="chip" data-pstatus="${esc(c.key)}" aria-pressed="${pfilt.status.has(c.key)}">${esc(c.label)} <b>${nf0.format(c.n)}</b></button>`).join('');
     const list = IM.filterPipeline(byEsf, { status: pfilt.status });
     const fonte = i => `${i.fonte_url ? `<a class="link-btn" href="${esc(i.fonte_url)}" target="_blank" rel="noopener" title="${esc(i.fonte_data || '')}">fonte</a>` : dash}${
@@ -225,7 +228,7 @@ const Projetos = (() => {
       if (tr) Tabs.go('#ficha/' + tr.dataset.id);
     });
     el.addEventListener('keydown', ev => {
-      if (ev.key !== 'Enter') return;
+      if (ev.key !== 'Enter' || ev.target.closest('a')) return;
       const tr = ev.target.closest('tbody tr[data-id]'), pr = ev.target.closest('#pipe-table tbody tr[data-ent]');
       if (tr) Tabs.go('#ficha/' + tr.dataset.id);
       else if (pr) Tabs.go('#ficha/' + pr.dataset.ent);
