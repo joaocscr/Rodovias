@@ -578,16 +578,16 @@ def build_pracas():
         if br and br.startswith("BR") and g["lat"] is not None:
             fis, _ = S.snap(g["lon"], g["lat"], max_m=SNAP_M, br=br)
         m25 = [ym for ym in MESES if ym[:4] == "2025" and (k, ym) in mon.index]
-        vmd = leves = pes = moto = eixos = None
+        vmd = leves = pes = moto = eixos = meses25 = None
         if m25:
             dd = sum(days(ym) for ym in m25)
             tl, tm, tp = (sum(mon.loc[(k, ym), c] for ym in m25) for c in "lmp")
-            leves, moto, pes = round(tl / dd), round(tm / dd), round(tp / dd)
-            vmd = round((tl + tm + tp) / dd)
-            eixos = round(float(eix[k]), 1) if k in eix.index and eix[k] == eix[k] else None
+            vmd, leves, pes, moto, meses25 = vmd_2025(tl, tm, tp, dd, len(m25))
+            if vmd is not None:
+                eixos = round(float(eix[k]), 1) if k in eix.index and eix[k] == eix[k] else None
         receita = int(round(rec[k])) if rec.get(k) else None
         linhas.append([g["nome"], g["ent"], g["conc"], br, g["uf"] or None, ci(g["km"]), r5(g["lat"]), r5(g["lon"]),
-                       None if fis is None else int(fis), vmd, leves, pes, moto, eixos, receita, len(m25) or None])
+                       None if fis is None else int(fis), vmd, leves, pes, moto, eixos, receita, meses25])
         sl.append([round((mon.loc[(k, ym), "l"] + mon.loc[(k, ym), "m"]) / days(ym)) if (k, ym) in mon.index
                    else None for ym in MESES])
         sp.append([round(mon.loc[(k, ym), "p"] / days(ym)) if (k, ym) in mon.index else None for ym in MESES])
@@ -603,6 +603,17 @@ def build_pracas():
 SAT_ANO = 2025
 SAT_JANELA = ("2025-09", "2026-08")  # últimos 12 meses publicados: reserva para SATs com < 6 meses em 2025
 SAT_MIN_MESES, SAT_MAX_NI, SAT_MIN_VMD = 6, 0.30, 100
+
+
+def vmd_2025(leves, moto, pesados, dias, meses):
+    """Totais de 2025 de uma praça (leves, motos, pesados) nos `dias` dos `meses` com registro → (vmd, leves, pesados,
+    moto, meses) por dia, arredondados. VMD que arredonda para 0 (menos de 1 veículo/dia, ex.: praça em início de
+    operação com 9 veículos no mês) ou sem dias não é contagem: tudo None (como o VMDa 0 em trafego.py), para a praça
+    aparecer "sem dado" e não com VMD 0."""
+    vmd = round((leves + moto + pesados) / dias) if dias else 0
+    if vmd < 1:
+        return None, None, None, None, None
+    return vmd, round(leves / dias), round(pesados / dias), round(moto / dias), meses
 
 
 def sat_periodo(meses):

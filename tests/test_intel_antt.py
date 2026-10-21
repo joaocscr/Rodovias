@@ -60,6 +60,19 @@ def test_iso_data_e_extensao():
     assert antt.km_of("502 Km") == 502.0
 
 
+def test_vmd_2025_zero_vira_null():
+    """Praça cujo VMD de 2025 arredonda para 0 (menos de 1 veículo/dia) não tem VMD 0: não é contagem de tráfego, então
+    VMD, leves, pesados, motos e meses ficam null. Caso real: Free Flow Candeias - P01 (NOVA 364), só nov/2025, com
+    9 veículos no mês (VMD 0,3)."""
+    assert antt.vmd_2025(9.0, 0.0, 0.0, 30, 1) == (None, None, None, None, None)
+    assert antt.vmd_2025(0.0, 0.0, 0.0, 31, 1) == (None, None, None, None, None)
+    assert antt.vmd_2025(10.0, 3.0, 2.0, 30, 1) == (None, None, None, None, None)  # 0,5/dia arredonda para 0 também
+    assert antt.vmd_2025(3100.0, 310.0, 620.0, 31, 1) == (130, 100, 20, 10, 1)
+    assert antt.vmd_2025(0.0, 0.0, 0.0, 0, 0) == (None, None, None, None, None)
+    v = antt.vmd_2025(36500.0, 0.0, 0.0, 365, 12)
+    assert v == (100, 100, 0, 0, 12)
+
+
 def test_sat_periodo():
     a25 = [f"2025-{m:02d}" for m in range(1, 7)]
     assert antt.sat_periodo(set(a25)) == ("2025", a25)
@@ -138,6 +151,9 @@ def test_pracas(A, ENT):
         if r["vmd"] is not None:
             assert r["vmd"] == pytest.approx(r["leves"] + r["pesados"] + r["moto"], abs=2)
             assert 1 <= r["meses"] <= 12
+            assert r["vmd"] >= 1, (r["nome"], r["vmd"])  # VMD 0 não é contagem: fica null
+        else:
+            assert r["leves"] is r["pesados"] is r["moto"] is r["meses"] is None, r["nome"]
         assert r["eixos"] is None or 2 <= r["eixos"] <= 20
         assert r["receita"] is None or isinstance(r["receita"], int)
     assert sum(r["receita"] is not None for r in L) >= 150
