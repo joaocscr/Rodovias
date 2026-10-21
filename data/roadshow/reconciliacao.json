@@ -1,0 +1,501 @@
+{
+  "_leia_me": "Totais DECLARADOS no PDF do RoadShow (data/raw/roadshow.pdf), lidos da página indicada (numeração do RoadShow: 1 = primeira; só páginas ímpares, em português). Cada valor: `valor` como impresso, `casas` = nº de casas decimais impressas (a tolerância dos testes é 1 unidade da última casa impressa: 10^-casas), `pagina` de origem; `tambem_em` = outras páginas que repetem o valor; `impresso` = grafia do PDF quando difere do padrão pt-BR (ex.: '14.32'). Nova versão do RoadShow: releia cada valor na página, atualize este arquivo (e as páginas, se mudaram) e rode `python -m pytest tests/test_reconciliacao.py`. Divergência nova falha o teste; divergência conhecida está marcada xfail(strict=True) no teste, com o motivo, e passa a falhar se desaparecer (revisar o motivo).",
+  "roadshow": "RoadShow 2026-2027 (carteira até jul/2026)",
+  "contratos_vigentes": {
+    "_origem": "Tabela dos 39 contratos, pp. 3 e 5 (linha de total na p. 5); R$ bi de dez/2024.",
+    "n": {
+      "valor": 39,
+      "casas": 0,
+      "pagina": 5
+    },
+    "km": {
+      "valor": 19198,
+      "casas": 0,
+      "pagina": 5
+    },
+    "capex": {
+      "valor": 264,
+      "casas": 0,
+      "pagina": 5
+    },
+    "opex": {
+      "valor": 190,
+      "casas": 0,
+      "pagina": 5
+    },
+    "capex_opex": {
+      "valor": 455,
+      "casas": 0,
+      "pagina": 5
+    }
+  },
+  "grupos": {
+    "_origem": "Linha de total da tabela de grupos líderes, p. 17 (inclui '19.195,06 km' no destaque).",
+    "n_concessoes": {
+      "valor": 39,
+      "casas": 0,
+      "pagina": 17
+    },
+    "km": {
+      "valor": 19195,
+      "casas": 0,
+      "pagina": 17
+    },
+    "pct_km": {
+      "valor": 100,
+      "casas": 2,
+      "pagina": 17
+    },
+    "capex": {
+      "valor": 269.3,
+      "casas": 1,
+      "pagina": 17
+    },
+    "opex": {
+      "valor": 196.3,
+      "casas": 1,
+      "pagina": 17
+    },
+    "capex_opex": {
+      "valor": 465.63,
+      "casas": 2,
+      "pagina": 17
+    }
+  },
+  "leiloes_p97": {
+    "_origem": "Linha de total dos 25 leilões de 2023 a 2026, p. 97.",
+    "n": {
+      "valor": 25,
+      "casas": 0,
+      "pagina": 97
+    },
+    "km": {
+      "valor": 12198,
+      "casas": 0,
+      "pagina": 97
+    },
+    "capex": {
+      "valor": 169.04,
+      "casas": 2,
+      "pagina": 97
+    },
+    "opex": {
+      "valor": 113.6,
+      "casas": 1,
+      "pagina": 97
+    },
+    "capex_opex": {
+      "valor": 283.8,
+      "casas": 1,
+      "pagina": 97
+    }
+  },
+  "programa_por_ano": {
+    "_origem": "Concessões 2023 a 2027 (previsto e realizado), p. 125; R$ bi. 'capex_opex' = coluna 'Total'.",
+    "anos": {
+      "2023": {
+        "leiloes": {
+          "valor": 2,
+          "casas": 0,
+          "pagina": 125
+        },
+        "km": {
+          "valor": 1077,
+          "casas": 0,
+          "pagina": 125
+        },
+        "capex": {
+          "valor": 18.7,
+          "casas": 1,
+          "pagina": 125
+        },
+        "opex": {
+          "valor": 11.6,
+          "casas": 1,
+          "pagina": 125
+        },
+        "capex_opex": {
+          "valor": 30.3,
+          "casas": 1,
+          "pagina": 125
+        },
+        "duplicacao_km": {
+          "valor": 694,
+          "casas": 0,
+          "pagina": 125
+        },
+        "faixa_km": {
+          "valor": 349,
+          "casas": 0,
+          "pagina": 125
+        }
+      },
+      "2024": {
+        "leiloes": {
+          "valor": 7,
+          "casas": 0,
+          "pagina": 125
+        },
+        "km": {
+          "valor": 3221,
+          "casas": 0,
+          "pagina": 125
+        },
+        "capex": {
+          "valor": 48.1,
+          "casas": 1,
+          "pagina": 125
+        },
+        "opex": {
+          "valor": 33.5,
+          "casas": 1,
+          "pagina": 125
+        },
+        "capex_opex": {
+          "valor": 81.6,
+          "casas": 1,
+          "pagina": 125
+        },
+        "duplicacao_km": {
+          "valor": 951,
+          "casas": 0,
+          "pagina": 125
+        },
+        "faixa_km": {
+          "valor": 789,
+          "casas": 0,
+          "pagina": 125
+        }
+      },
+      "2025": {
+        "leiloes": {
+          "valor": 13,
+          "casas": 0,
+          "pagina": 125
+        },
+        "km": {
+          "valor": 6279,
+          "casas": 0,
+          "pagina": 125
+        },
+        "capex": {
+          "valor": 81.6,
+          "casas": 1,
+          "pagina": 125
+        },
+        "opex": {
+          "valor": 53.6,
+          "casas": 1,
+          "pagina": 125
+        },
+        "capex_opex": {
+          "valor": 135.2,
+          "casas": 1,
+          "pagina": 125
+        },
+        "duplicacao_km": {
+          "valor": 1331,
+          "casas": 0,
+          "pagina": 125
+        },
+        "faixa_km": {
+          "valor": 1182,
+          "casas": 0,
+          "pagina": 125
+        }
+      },
+      "2026": {
+        "leiloes": {
+          "valor": 7,
+          "casas": 0,
+          "pagina": 125
+        },
+        "km": {
+          "valor": 4383,
+          "casas": 0,
+          "pagina": 125
+        },
+        "capex": {
+          "valor": 53.8,
+          "casas": 1,
+          "pagina": 125
+        },
+        "opex": {
+          "valor": 36.2,
+          "casas": 1,
+          "pagina": 125
+        },
+        "capex_opex": {
+          "valor": 90,
+          "casas": 0,
+          "pagina": 125
+        },
+        "duplicacao_km": {
+          "valor": 855,
+          "casas": 0,
+          "pagina": 125
+        },
+        "faixa_km": {
+          "valor": 831,
+          "casas": 0,
+          "pagina": 125
+        }
+      },
+      "2027": {
+        "leiloes": {
+          "valor": 11,
+          "casas": 0,
+          "pagina": 125
+        },
+        "km": {
+          "valor": 4455,
+          "casas": 0,
+          "pagina": 125
+        },
+        "capex": {
+          "valor": 54.9,
+          "casas": 1,
+          "pagina": 125
+        },
+        "opex": {
+          "valor": 47.8,
+          "casas": 1,
+          "pagina": 125
+        },
+        "capex_opex": {
+          "valor": 102.7,
+          "casas": 1,
+          "pagina": 125
+        },
+        "duplicacao_km": {
+          "valor": 569,
+          "casas": 0,
+          "pagina": 125
+        },
+        "faixa_km": {
+          "valor": 550,
+          "casas": 0,
+          "pagina": 125
+        }
+      }
+    },
+    "total": {
+      "leiloes": {
+        "valor": 40,
+        "casas": 0,
+        "pagina": 125
+      },
+      "km": {
+        "valor": 19416,
+        "casas": 0,
+        "pagina": 125
+      },
+      "capex": {
+        "valor": 257,
+        "casas": 0,
+        "pagina": 125
+      },
+      "opex": {
+        "valor": 183,
+        "casas": 0,
+        "pagina": 125
+      },
+      "capex_opex": {
+        "valor": 440,
+        "casas": 0,
+        "pagina": 125
+      },
+      "duplicacao_km": {
+        "valor": 4400,
+        "casas": 0,
+        "pagina": 125
+      },
+      "faixa_km": {
+        "valor": 3701,
+        "casas": 0,
+        "pagina": 125
+      }
+    },
+    "realizado_ate_jul_2026": {
+      "_origem": "Leilões de 2026 realizados até jul/2026, p. 95.",
+      "leiloes": {
+        "valor": 3,
+        "casas": 0,
+        "pagina": 95
+      },
+      "km": {
+        "valor": 1620,
+        "casas": 0,
+        "pagina": 95
+      },
+      "capex": {
+        "valor": 20.68,
+        "casas": 2,
+        "pagina": 95
+      },
+      "opex": {
+        "valor": 14.96,
+        "casas": 2,
+        "pagina": 95
+      },
+      "capex_opex": {
+        "valor": 35.64,
+        "casas": 2,
+        "pagina": 95
+      }
+    }
+  },
+  "desagio": {
+    "_origem": "Análise de participações (p. 25) e deságio nos leilões (p. 27), 25 leilões de 2023 a 2026.",
+    "n_leiloes": {
+      "valor": 25,
+      "casas": 0,
+      "pagina": 25
+    },
+    "media": {
+      "valor": 12.36,
+      "casas": 2,
+      "pagina": 25,
+      "tambem_em": [
+        27
+      ]
+    },
+    "mediana": {
+      "valor": 14.32,
+      "casas": 2,
+      "pagina": 27,
+      "impresso": "14.32"
+    },
+    "maior": {
+      "valor": 25.9,
+      "casas": 1,
+      "pagina": 27
+    },
+    "menor": {
+      "valor": 0.0,
+      "casas": 1,
+      "pagina": 27
+    },
+    "leiloes_3_ou_mais_concorrentes": {
+      "valor": 14,
+      "casas": 0,
+      "pagina": 25
+    },
+    "pct_3_ou_mais_concorrentes": {
+      "valor": 56,
+      "casas": 0,
+      "pagina": 25
+    },
+    "faixas": {
+      "ge_18": {
+        "valor": 10,
+        "casas": 0,
+        "pagina": 27
+      },
+      "de_10_a_18": {
+        "valor": 6,
+        "casas": 0,
+        "pagina": 27
+      },
+      "de_0_a_10": {
+        "valor": 6,
+        "casas": 0,
+        "pagina": 27
+      },
+      "zero": {
+        "valor": 3,
+        "casas": 0,
+        "pagina": 27
+      }
+    },
+    "por_concorrentes": {
+      "5": {
+        "leiloes": {
+          "valor": 1,
+          "casas": 0,
+          "pagina": 25
+        },
+        "pct_total": {
+          "valor": 4.0,
+          "casas": 1,
+          "pagina": 25
+        },
+        "media": {
+          "valor": 19.7,
+          "casas": 2,
+          "pagina": 25,
+          "impresso": "19,70"
+        }
+      },
+      "4": {
+        "leiloes": {
+          "valor": 5,
+          "casas": 0,
+          "pagina": 25
+        },
+        "pct_total": {
+          "valor": 20.0,
+          "casas": 1,
+          "pagina": 25
+        },
+        "media": {
+          "valor": 17.3,
+          "casas": 2,
+          "pagina": 25,
+          "impresso": "17,30"
+        }
+      },
+      "3": {
+        "leiloes": {
+          "valor": 8,
+          "casas": 0,
+          "pagina": 25
+        },
+        "pct_total": {
+          "valor": 32.0,
+          "casas": 1,
+          "pagina": 25
+        },
+        "media": {
+          "valor": 18.47,
+          "casas": 2,
+          "pagina": 25
+        }
+      },
+      "2": {
+        "leiloes": {
+          "valor": 4,
+          "casas": 0,
+          "pagina": 25
+        },
+        "pct_total": {
+          "valor": 16.0,
+          "casas": 1,
+          "pagina": 25
+        },
+        "media": {
+          "valor": 17.65,
+          "casas": 2,
+          "pagina": 25
+        }
+      },
+      "1": {
+        "leiloes": {
+          "valor": 7,
+          "casas": 0,
+          "pagina": 25
+        },
+        "pct_total": {
+          "valor": 28.0,
+          "casas": 1,
+          "pagina": 25
+        },
+        "media": {
+          "valor": 0.18,
+          "casas": 2,
+          "pagina": 25
+        }
+      }
+    }
+  }
+}

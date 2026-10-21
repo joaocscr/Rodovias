@@ -23,3 +23,9 @@ Para uma nova versão do RoadShow:
 6. `python scripts/build.py`. O build pela base congelada relê `mercado.json` e `regulatorio.json` de `data/roadshow/` (`roadshow.curados`): não é preciso editar `data/base/conc.json` para atualizar esses blocos.
 
 `mercado.py` e `regulatorio.py` (rascunhos da primeira extração) preservam essas chaves se forem rodados de novo; rode `roadshow_v5.py` depois deles.
+
+## Reconciliação dos totais declarados (`data/roadshow/reconciliacao.json`)
+
+`tests/test_reconciliacao.py` recalcula, dos dados curados, os totais que o RoadShow imprime e compara com os declarados em `data/roadshow/reconciliacao.json`: 39 contratos (pp. 3 e 5), grupos (p. 17), 25 leilões (p. 97), programa por ano (p. 125) e deságio (pp. 25 e 27). Cada declarado traz `valor`, `casas` impressas (a tolerância é 1 unidade da última casa) e `pagina`.
+
+Para uma nova versão do RoadShow: releia os valores nas páginas indicadas (PDF em `data/raw/roadshow.pdf`; só páginas ímpares), atualize o JSON e rode `python -m pytest tests/test_reconciliacao.py`. Se o PDF estiver em `data/raw/`, o teste também confere que cada declarado aparece na página de origem. Divergências conhecidas do próprio RoadShow estão como `xfail(strict=True)` com o motivo (dicionário `DIVERGENCIAS` no teste): se uma deixar de existir o teste falha, e o motivo precisa ser revisado; divergência nova falha o teste comum e indica erro de transcrição (ou novo erro do RoadShow, a documentar).
