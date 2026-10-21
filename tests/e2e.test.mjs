@@ -513,7 +513,8 @@ test('v4: comparador tem a fonte do deságio e Fontes lista a verificação', as
   const i = ths.indexOf('Fonte do deságio');
   assert.equal(ths[i - 1], 'Deságio');
   const vals = await page.$$eval(`#proj-table tbody tr td:nth-child(${i + 1})`, t => [...new Set(t.map(x => x.textContent))]);
-  assert.ok(vals.includes('oficial') && vals.includes('RoadShow'), vals.join());
+  // desde que a Ponte São Borja virou "não localizado" (leilão por outorga), nenhum deságio fica só com o RoadShow
+  assert.ok(vals.includes('oficial') && vals.includes('não localizado em fonte oficial'), vals.join());
   await go('#fontes');
   assert.match(await page.textContent('#fontes-verif-cobertura'), /\d+ leilões conferidos; campos por origem: \d+ oficial/);
   const n = await page.locator('#fontes-verificacao-table tbody tr').count();
@@ -595,7 +596,7 @@ test('v4: série de deságio desenha pontos de 2007 a 2026 com legenda', async (
   assert.equal(await leg.locator('circle[fill="none"][stroke-dasharray]').count(), 1, 'imprensa: anel vazado tracejado');
   assert.equal(await leg.locator('line[stroke-dasharray]').count(), 1, 'linha de 18%');
   assert.match(txt, /Pontos marcados como limitados pelo edital: desconto máximo permitido, desempate por outorga \(2021\)/);
-  assert.match(await page.textContent('#serie-sem'), new RegExp(`^${esperado.sem} leilões sem deságio do vencedor localizado`));
+  assert.match(await page.textContent('#serie-sem'), new RegExp(`^${esperado.sem} ${esperado.sem === 1 ? 'leilão' : 'leilões'} sem deságio do vencedor localizado`));
   // Concorrentes × deságio: média dos valores exibidos ao lado da impressa; cartões das pp. 25 e 27 marcados
   const media = await page.evaluate(() => LeiloesModel.mediaDesagio(window.CONC.mercado.concorrentes_desagio.map(x => x.desagio)));
   const nf2 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
