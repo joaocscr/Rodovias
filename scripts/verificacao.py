@@ -21,7 +21,9 @@ ROADSHOW = ROOT / "data" / "roadshow"
 CAMPOS = ("leilao", "grupo_vencedor", "desagio", "assinatura", "assinatura_aditivo", "inicio_operacao",
           "tarifa_teto", "tarifa_vencedora", "prazo_anos")
 CAMPOS_DATA = ("leilao", "assinatura", "assinatura_aditivo", "inicio_operacao")
-CAMPOS_NUM = ("desagio", "tarifa_teto", "tarifa_vencedora", "prazo_anos")
+CAMPOS_NUM = ("desagio", "prazo_anos")
+# tarifas levam unidade e data-base ("R$ 4,083 por praça (jul/2007)"): texto livre não vazio
+CAMPOS_TEXTO = ("grupo_vencedor", "tarifa_teto", "tarifa_vencedora")
 # campo da camada → chave na linha de mercado.participantes (os demais têm o mesmo nome)
 PART_KEY = {"grupo_vencedor": "vencedor", "desagio": "desagio_vencedor", "leilao": "data"}
 # campo da camada → chave na linha de mercado.concorrentes_desagio (só o deságio existe ali)
@@ -93,7 +95,7 @@ def _erros_valor(campo, v):
         return f"{campo} deve ser data AAAA-MM-DD, veio {v!r}"
     if campo in CAMPOS_NUM and (isinstance(v, bool) or not isinstance(v, (int, float))):
         return f"{campo} deve ser número, veio {v!r}"
-    if campo == "grupo_vencedor" and (not isinstance(v, str) or not v.strip()):
+    if campo in CAMPOS_TEXTO and (not isinstance(v, str) or not v.strip()):
         return f"{campo} deve ser texto não vazio, veio {v!r}"
     return None
 

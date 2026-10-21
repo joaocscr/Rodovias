@@ -163,6 +163,17 @@ def test_validar_tipo_do_valor(conc):
         assert len(validar(verif([leilao(campos)]), conc)) == 1, campos
 
 
+def test_validar_tarifas_sao_texto(conc):
+    # tarifa leva unidade e data-base ("R$ 4,083 por praça (jul/2007)"): texto, não número
+    ok = {"tarifa_teto": {"valor": "R$ 4,083 por praça (jul/2007)", "fontes": ["antt"]},
+          "tarifa_vencedora": {"valor": "R$ 2,452 por praça (jul/2007)", "fontes": ["antt"]}}
+    assert validar(verif([leilao(ok)]), conc) == []
+    for campo in ("tarifa_teto", "tarifa_vencedora"):
+        for ruim in (4.083, "", "   "):
+            erros = validar(verif([leilao({campo: {"valor": ruim, "fontes": ["antt"]}})]), conc)
+            assert len(erros) == 1 and campo in erros[0] and "texto" in erros[0], (campo, ruim, erros)
+
+
 def test_validar_nome_sem_alias(conc):
     v = verif([leilao({"grupo_vencedor": {"valor": "Consórcio BRVias", "fontes": ["antt"]}})])
     erros = validar(v, conc, {"aliases": [{"nome": "Outro", "grupo": "Outro", "motivo": "mesmo nome"}]})
