@@ -2645,6 +2645,11 @@
             "agenciainfra-2025-07-16-ponte-sao-borja"
           ]
         },
+        "desagio": {
+          "valor": null,
+          "nao_localizado": true,
+          "fontes": []
+        },
         "prazo_anos": {
           "valor": 25,
           "fontes": [
@@ -2666,7 +2671,7 @@
       ],
       "notas": [
         {
-          "texto": "O critério do leilão foi a maior outorga fixa (em dólares), não o desconto na tarifa. A Plus Byte SRL venceu a sessão com US$ 29 milhões (ágio de 9,43%) e foi desclassificada em agosto de 2025 por não cumprir os requisitos de qualificação; a CS Infra S.A. (grupo Simpar), segunda colocada, ofertou US$ 26,6 milhões, ágio de 0,38% sobre a outorga mínima de US$ 26,5 milhões. Os 0,38% e 9,43% que o RoadShow imprime como deságio são esses ágios sobre a outorga.",
+          "texto": "O critério do leilão foi a maior outorga fixa (em dólares), não o desconto na tarifa. A Plus Byte SRL venceu a sessão com US$ 29 milhões (ágio de 9,43%) e foi desclassificada em agosto de 2025 por não cumprir os requisitos de qualificação; a CS Infra S.A. (grupo Simpar), segunda colocada, ofertou US$ 26,6 milhões, ágio de 0,38% sobre a outorga mínima de US$ 26,5 milhões. O leilão foi decidido pela outorga: os 0,38% (e os 9,43% da Plus Byte) que o RoadShow imprime como deságio são esses ágios sobre a outorga mínima, não desconto de tarifa — por isso o deságio fica como não aplicável (não localizado) e o ativo sai das séries e médias de deságio.",
           "fontes": [
             "b3-2025-07-16-ponte-sao-borja",
             "agenciainfra-2025-07-16-ponte-sao-borja",
