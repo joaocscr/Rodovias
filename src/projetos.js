@@ -14,7 +14,7 @@ const Projetos = (() => {
     ['nome', 'Nome', null, false], ['brsUfs', 'BRs/UFs', null, false], ['estado', 'Estado', 'estado', false],
     ['dataChave', 'Data-chave', 'data', false], ['km', 'km', 'km', true], ['capex', 'Capex (R$ bi)', 'bi', true],
     ['opex', 'Opex (R$ bi)', 'bi', true], ['dataBase', 'Data-base', null, false], ['capexKm', 'Capex/km (R$ mi)', 'mi', true],
-    ['wacc', 'WACC', 'pct', true], ['tkm', 'TKM (R$/km)', 'tkm', true], ['desagio', 'Deságio', 'pct', true],
+    ['wacc', 'WACC', 'pct', true], ['tkm', 'TKM (R$/km)', 'tkm', true], ['desagio', 'Deságio', 'pct', true], ['desagioOrigem', 'Fonte do deságio', null, false],
     ['participantes', 'Participantes', 'int', true], ['vencedor', 'Vencedor', null, false],
   ];
   const FICHA_COLS = [

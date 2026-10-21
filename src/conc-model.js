@@ -69,10 +69,59 @@ const ConcModel = (() => {
         km: e.km ?? null, capex: e.capex ?? null, opex: e.opex ?? null, dataBase: e.data_base || null,
         capexKm: e.capex != null && e.km ? e.capex * 1000 / e.km : null,
         wacc: f.wacc ?? null, tkm: f.tkm ?? null, desagio: e.desagio ?? null,
+        desagioOrigem: origemCampo(e, 'desagio'),
         participantes: e.participantes ?? null, vencedor: e.grupo_vencedor || null,
         ano: e.ano_programa ?? null, tipo: e.tipo, ufs: e.ufs, ficha: f,
       };
     });
+  }
+
+  // v4: origem do valor exibido de um campo de leilão (camada de verificação, `e.verif`), em texto puro.
+  const ORIGEM = { oficial: 'oficial', roadshow: 'RoadShow', imprensa: 'imprensa — não oficial' };
+  const NAO_LOCALIZADO = 'não localizado em fonte oficial';
+  function rotuloOrigem(tipo) { return ORIGEM[tipo] || NAO_LOCALIZADO; }
+  // Campo verificado: o tipo da fonte (ou "não localizado"); sem verificação, o valor é o do RoadShow; sem valor, null.
+  function origemCampo(e, campo) {
+    const v = e.verif && e.verif[campo];
+    if (v) return rotuloOrigem(v.nao_localizado ? null : v.tipo);
+    return e[campo] == null || e[campo] === '' ? null : ORIGEM.roadshow;
+  }
+
+  // Participantes da ficha com um só vencedor, o verificado (`grupo_vencedor` com `verif`). A linha do mesmo proponente
+  // (nome igual sem acento/caixa/pontuação/"Consórcio", um nome prefixo do outro, o nome entre parênteses, mesmo grupo
+  // em `aliases`; senão, a linha marcada pelo RoadShow com o mesmo deságio) passa a mostrar o nome e o deságio exibidos,
+  // com o que o RoadShow imprime em `roadshow` quando difere. Sem essa linha, o vencedor verificado entra no topo e a
+  // linha marcada pelo RoadShow perde a marca. Cópia: não altera a entidade.
+  const chaveNome = s => norm(s).replace(/^consorcio /, '').replace(/[^a-z0-9]/g, '');
+  function chaves(nome) {
+    const m = /^(.*?)\s*\(([^()]*)\)\s*$/.exec(nome);
+    return (m ? [m[1], m[2]] : [nome]).map(chaveNome).filter(k => k.length >= 3);
+  }
+  function mesmoNome(a, b, grupo) {
+    if (grupo(a) && grupo(a) === grupo(b)) return true;
+    const ka = chaves(a), kb = chaves(b);
+    return ka.some(x => kb.some(y => x === y || (Math.min(x.length, y.length) >= 4 && (x.startsWith(y) || y.startsWith(x)))));
+  }
+  const igual = (x, y) => x != null && y != null && Math.abs(x - y) < 0.005;
+  function participantesExibidos(e, aliases = []) {
+    const lista = (e.participantes_lista || []).map(p => Object.assign({}, p));
+    const v = e.verif || {};
+    if (!lista.length || !v.grupo_vencedor || !e.grupo_vencedor) return lista;
+    const grupos = new Map((aliases || []).map(a => [a.nome, a.grupo]));
+    const grupo = n => grupos.get(n) || null;
+    const rs = lista.find(p => p.vencedor);
+    const porNome = lista.filter(p => p.grupo && mesmoNome(e.grupo_vencedor, p.grupo, grupo));
+    const r = porNome.includes(rs) ? rs : porNome[0] || (rs && igual(rs.desagio, e.desagio) ? rs : null);
+    lista.forEach(p => { p.vencedor = false; });
+    const desagio = v.desagio ? (e.desagio ?? null) : (r && r.desagio != null ? r.desagio : (e.desagio ?? null));
+    if (!r) return [{ grupo: e.grupo_vencedor, desagio, vencedor: true, verificado: true }, ...lista];
+    const roadshow = {
+      grupo: chaveNome(r.grupo || '') === chaveNome(e.grupo_vencedor) ? null : r.grupo,
+      desagio: r.desagio == null || igual(r.desagio, desagio) ? null : r.desagio,
+    };
+    Object.assign(r, { grupo: e.grupo_vencedor, desagio, vencedor: true, verificado: true },
+      roadshow.grupo || roadshow.desagio != null ? { roadshow } : {});
+    return lista;
   }
 
   function filterRows(rows, { estado, uf, ano, tipo, q } = {}) {
@@ -113,7 +162,7 @@ const ConcModel = (() => {
   }
 
   return { PRIORITY, entitiesOfFis, stateOfFis, stateArray, emptyConcFilters, passes, kmPorEstado,
-    comparatorRows, filterRows, sortRows, totals, fmtBi, fmtPct, fmtData, brsUfs, dataChave, norm };
+    comparatorRows, rotuloOrigem, origemCampo, participantesExibidos, filterRows, sortRows, totals, fmtBi, fmtPct, fmtData, brsUfs, dataChave, norm };
 })();
 
 if (typeof module !== 'undefined') module.exports = ConcModel;

@@ -1261,6 +1261,25 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
   opacity: 1 !important;
 }
 
+/* v4 (Task 7): selo de origem dos campos de leilão (ficha, popover de divergência, aba Fontes) */
+.selo {
+  display: inline-flex; align-items: center; height: 20px; padding: 0 8px; margin-left: 8px; border-radius: 10px; white-space: nowrap;
+  vertical-align: middle; font-size: 12px; font-weight: 600; line-height: 1; border: 1px solid transparent;
+}
+.selo a { color: inherit; text-decoration: none; }
+.selo a:hover { text-decoration: underline; }
+.selo--oficial { background: var(--color-deep-blue); color: var(--color-snow-white); }
+.selo--roadshow { border-color: var(--color-bright-blue); color: var(--color-bright-blue); background: var(--color-snow-white); }
+.selo--imprensa { border: 1px dashed var(--color-light-grey); color: var(--color-spacial-grey); background: var(--color-snow-white); }
+.selo--nao-localizado { border: 1px dashed var(--color-light-grey); color: var(--color-light-grey); background: none; font-style: italic; }
+.fontes-table td .selo { margin-left: 0; }
+.notas-verif .ftext { white-space: normal; }
+.nota-fontes { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; color: var(--color-light-grey); }
+.nota-fontes li { padding: 0; border: 0; }
+.nota-fontes .selo { margin: 0 8px 0 0; }
+.notas-verif a.link-btn { display: inline; padding: 0; height: auto; white-space: normal; }
+.part-rs { display: block; font-size: 12px; color: var(--color-light-grey); white-space: normal; }
+
 </style>
 </head>
 <body>
@@ -1506,10 +1525,59 @@ const ConcModel = (() => {
         km: e.km ?? null, capex: e.capex ?? null, opex: e.opex ?? null, dataBase: e.data_base || null,
         capexKm: e.capex != null && e.km ? e.capex * 1000 / e.km : null,
         wacc: f.wacc ?? null, tkm: f.tkm ?? null, desagio: e.desagio ?? null,
+        desagioOrigem: origemCampo(e, 'desagio'),
         participantes: e.participantes ?? null, vencedor: e.grupo_vencedor || null,
         ano: e.ano_programa ?? null, tipo: e.tipo, ufs: e.ufs, ficha: f,
       };
     });
+  }
+
+  // v4: origem do valor exibido de um campo de leilão (camada de verificação, `e.verif`), em texto puro.
+  const ORIGEM = { oficial: 'oficial', roadshow: 'RoadShow', imprensa: 'imprensa — não oficial' };
+  const NAO_LOCALIZADO = 'não localizado em fonte oficial';
+  function rotuloOrigem(tipo) { return ORIGEM[tipo] || NAO_LOCALIZADO; }
+  // Campo verificado: o tipo da fonte (ou "não localizado"); sem verificação, o valor é o do RoadShow; sem valor, null.
+  function origemCampo(e, campo) {
+    const v = e.verif && e.verif[campo];
+    if (v) return rotuloOrigem(v.nao_localizado ? null : v.tipo);
+    return e[campo] == null || e[campo] === '' ? null : ORIGEM.roadshow;
+  }
+
+  // Participantes da ficha com um só vencedor, o verificado (`grupo_vencedor` com `verif`). A linha do mesmo proponente
+  // (nome igual sem acento/caixa/pontuação/"Consórcio", um nome prefixo do outro, o nome entre parênteses, mesmo grupo
+  // em `aliases`; senão, a linha marcada pelo RoadShow com o mesmo deságio) passa a mostrar o nome e o deságio exibidos,
+  // com o que o RoadShow imprime em `roadshow` quando difere. Sem essa linha, o vencedor verificado entra no topo e a
+  // linha marcada pelo RoadShow perde a marca. Cópia: não altera a entidade.
+  const chaveNome = s => norm(s).replace(/^consorcio /, '').replace(/[^a-z0-9]/g, '');
+  function chaves(nome) {
+    const m = /^(.*?)\s*\(([^()]*)\)\s*$/.exec(nome);
+    return (m ? [m[1], m[2]] : [nome]).map(chaveNome).filter(k => k.length >= 3);
+  }
+  function mesmoNome(a, b, grupo) {
+    if (grupo(a) && grupo(a) === grupo(b)) return true;
+    const ka = chaves(a), kb = chaves(b);
+    return ka.some(x => kb.some(y => x === y || (Math.min(x.length, y.length) >= 4 && (x.startsWith(y) || y.startsWith(x)))));
+  }
+  const igual = (x, y) => x != null && y != null && Math.abs(x - y) < 0.005;
+  function participantesExibidos(e, aliases = []) {
+    const lista = (e.participantes_lista || []).map(p => Object.assign({}, p));
+    const v = e.verif || {};
+    if (!lista.length || !v.grupo_vencedor || !e.grupo_vencedor) return lista;
+    const grupos = new Map((aliases || []).map(a => [a.nome, a.grupo]));
+    const grupo = n => grupos.get(n) || null;
+    const rs = lista.find(p => p.vencedor);
+    const porNome = lista.filter(p => p.grupo && mesmoNome(e.grupo_vencedor, p.grupo, grupo));
+    const r = porNome.includes(rs) ? rs : porNome[0] || (rs && igual(rs.desagio, e.desagio) ? rs : null);
+    lista.forEach(p => { p.vencedor = false; });
+    const desagio = v.desagio ? (e.desagio ?? null) : (r && r.desagio != null ? r.desagio : (e.desagio ?? null));
+    if (!r) return [{ grupo: e.grupo_vencedor, desagio, vencedor: true, verificado: true }, ...lista];
+    const roadshow = {
+      grupo: chaveNome(r.grupo || '') === chaveNome(e.grupo_vencedor) ? null : r.grupo,
+      desagio: r.desagio == null || igual(r.desagio, desagio) ? null : r.desagio,
+    };
+    Object.assign(r, { grupo: e.grupo_vencedor, desagio, vencedor: true, verificado: true },
+      roadshow.grupo || roadshow.desagio != null ? { roadshow } : {});
+    return lista;
   }
 
   function filterRows(rows, { estado, uf, ano, tipo, q } = {}) {
@@ -1550,7 +1618,7 @@ const ConcModel = (() => {
   }
 
   return { PRIORITY, entitiesOfFis, stateOfFis, stateArray, emptyConcFilters, passes, kmPorEstado,
-    comparatorRows, filterRows, sortRows, totals, fmtBi, fmtPct, fmtData, brsUfs, dataChave, norm };
+    comparatorRows, rotuloOrigem, origemCampo, participantesExibidos, filterRows, sortRows, totals, fmtBi, fmtPct, fmtData, brsUfs, dataChave, norm };
 })();
 
 if (typeof module !== 'undefined') module.exports = ConcModel;
@@ -3918,6 +3986,47 @@ const Layers = (() => {
 })();
 
 ;
+// v4: selo de origem dos campos de leilão (oficial / RoadShow / imprensa — não oficial / não localizado), com link
+// para a fonte e a lista de fontes no title. Só gera HTML (sem DOM): usado pela ficha e pela aba Fontes.
+const Selo = (() => {
+  const CM = typeof ConcModel !== 'undefined' ? ConcModel : require('./conc-model.js');
+  const esc = s => String(s).replace(/[&<>"'\n]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '\n': '&#10;' }[c]));
+
+  const rotulo = tipo => CM.rotuloOrigem(tipo);
+
+  // "ANTT — <título> (dd/mm/aaaa)"; RoadShow: "RoadShow, p. N".
+  function fonteTexto(f) {
+    if (!f) return '';
+    if (f.tipo === 'roadshow') return f.pagina != null ? `RoadShow, p. ${f.pagina}` : 'RoadShow';
+    const nome = [f.orgao, f.titulo].filter(Boolean).join(' — ');
+    return nome + (f.data ? ` (${CM.fmtData(f.data)})` : '');
+  }
+
+  // v = verif[campo] ({tipo, nao_localizado, fontes, limitado_pelo_edital?}); '' sem verificação.
+  function badge(v) {
+    if (!v) return '';
+    const tipo = v.nao_localizado || !['oficial', 'roadshow', 'imprensa'].includes(v.tipo) ? null : v.tipo;
+    const fontes = (v.fontes || []).filter(Boolean);
+    const linhas = fontes.map(fonteTexto).filter(Boolean);
+    if (v.limitado_pelo_edital) linhas.push('limitado pelo edital; desempate por outorga');
+    const url = tipo && (fontes.find(f => f.url) || {}).url;
+    const txt = esc(rotulo(tipo));
+    return `<span class="selo selo--${tipo || 'nao-localizado'}"${linhas.length ? ` title="${esc(linhas.join('\n'))}"` : ''}>${
+      url ? `<a href="${esc(url)}" target="_blank" rel="noopener">${txt}<\/a>` : txt}<\/span>`;
+  }
+
+  // Uma fonte com o selo do seu tipo e o texto (link quando há url): notas da verificação na ficha.
+  function fonte(f) {
+    const txt = esc(fonteTexto(f));
+    return `${badge({ tipo: f.tipo, fontes: [f] })} ${f.url ? `<a class="link-btn" href="${esc(f.url)}" target="_blank" rel="noopener">${txt}<\/a>` : txt}`;
+  }
+
+  return { rotulo, fonteTexto, badge, fonte };
+})();
+
+if (typeof module !== 'undefined') module.exports = Selo;
+
+;
 // Ficha do projeto/contrato: todos os campos do RoadShow, avisos de divergência, capex anual e cronograma.
 // v3: blocos ANTT (capa, séries realizadas, praças, obras) e pipeline na ficha federal; ficha de concessão estadual.
 const Ficha = (() => {
@@ -3929,8 +4038,9 @@ const Ficha = (() => {
     km: v => Model.fmtKm(v), bi: v => ConcModel.fmtBi(v), pct: v => ConcModel.fmtPct(v), data: v => ConcModel.fmtData(v),
     mi: v => `R$ ${fmt2.format(v)} mi`, mikm: v => `R$ ${fmt2.format(v)} mi/km`, int: v => fmtInt.format(v),
     tkm: v => `R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 }).format(v)}/km`,
-    txt: v => String(v), kmv: v => `${fmt1.format(v)} km`,
+    txt: v => String(v), kmv: v => `${fmt1.format(v)} km`, anos: v => `${fmtInt.format(v)} anos`,
   };
+  const fmtNum = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });
   const ICON_CLOSE = '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><\/svg>';
   const ICON_WARN = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 4l9 16H3z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 10v4M12 17v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><\/svg>';
 
@@ -3947,13 +4057,24 @@ const Ficha = (() => {
     const d = (e.divergencias || []).find(x => x.campo === campo);
     if (!d) return '';
     const i = e.divergencias.indexOf(d);
-    return `<button type="button" class="div-flag" data-div="${i}" aria-label="Divergência entre fontes do RoadShow" title="Divergência entre fontes">${ICON_WARN}<\/button>`;
+    return `<button type="button" class="div-flag" data-div="${i}" aria-label="Divergência entre fontes" title="Divergência entre fontes">${ICON_WARN}<\/button>`;
   }
 
-  // Linha da ficha: [rótulo, valor, formato, campo-para-divergência, html extra]
+  // Linha da ficha: [rótulo, valor, formato, campo (selo de origem e divergência), html extra]
+  // v4: campo verificado (`e.verif[campo]`) aparece mesmo sem valor ("—", não localizado em fonte oficial).
   function rows(e, list) {
-    return list.filter(([, v]) => has(v)).map(([label, v, f, campo, extra]) =>
-      `<dt>${esc(label)}<\/dt><dd>${esc((F[f] || F.txt)(v))}${campo ? flag(e, campo) : ''}${extra || ''}<\/dd>`).join('');
+    const verif = e.verif || {};
+    return list.filter(([, v, , campo]) => has(v) || (campo && verif[campo])).map(([label, v, f, campo, extra]) =>
+      `<dt>${esc(label)}<\/dt><dd>${has(v) ? esc((F[f] || F.txt)(v)) : '—'}${campo ? Selo.badge(verif[campo]) + flag(e, campo) : ''}${extra || ''}<\/dd>`).join('');
+  }
+
+  // v4: notas da verificação dos leilões e proponentes inabilitados, cada um com as fontes (selo do tipo + link).
+  function notasVerif(e) {
+    const fontes = fs => (fs && fs.length ? `<ul class="nota-fontes">${fs.map(f => `<li>${Selo.fonte(f)}<\/li>`).join('')}<\/ul>` : '');
+    const inab = i => `${i.grupo}: ${[has(i.desagio) ? F.pct(i.desagio) : null, `inabilitado${i.data ? ` em ${F.data(i.data)}` : ''}`].filter(Boolean).join(', ')}`;
+    const itens = (e.notas_verif || []).map(n => [n.texto, n.fontes]).concat((e.inabilitados || []).map(i => [inab(i), i.fontes]))
+      .map(([t, fs]) => `<li><p class="ftext">${esc(t)}<\/p>${fontes(fs)}<\/li>`);
+    return itens.length ? `<ul class="flist notas-verif">${itens.join('')}<\/ul>` : '';
   }
 
   function block(title, inner, wide = false) {
@@ -3990,11 +4111,15 @@ const Ficha = (() => {
       ['Empregos estimados', f.empregos, 'int'], ['Carga predominante', f.carga, 'txt'],
       ['Trecho', f.trecho_inicio && f.trecho_fim ? `${f.trecho_inicio} – ${f.trecho_fim}` : (e.trecho_cidades ? e.trecho_cidades.join(' – ') : null), 'txt'],
     ]));
+    const otim = e.tipo === 'otimizacao';  // otimização: assinatura do contrato original × do termo aditivo
     const leilao = dl(rows(e, [
       ['Situação', e.status_texto, 'txt'], ['Edital', e.edital, 'data', 'edital'], ['Leilão', e.leilao, 'data', 'leilao'],
       ['Participantes', e.participantes, 'int', 'participantes'], ['Deságio', e.desagio, 'pct', 'desagio'],
-      ['Vencedor', e.grupo_vencedor, 'txt', 'grupo_vencedor'], ['Assinatura', e.assinatura, 'data', 'assinatura'],
-      ['Termo aditivo', e.assinatura_aditivo, 'data'], ['Início da operação', e.inicio_operacao, 'data'],
+      ['Vencedor', e.grupo_vencedor, 'txt', 'grupo_vencedor'], ['Tarifa-teto', e.tarifa_teto, 'txt', 'tarifa_teto'],
+      ['Tarifa vencedora', e.tarifa_vencedora, 'txt', 'tarifa_vencedora'], ['Prazo da concessão', e.prazo_anos, 'anos', 'prazo_anos'],
+      [otim ? 'Assinatura do contrato original' : 'Assinatura', e.assinatura, 'data', 'assinatura'],
+      [otim ? 'Assinatura do termo aditivo (otimização)' : 'Termo aditivo', e.assinatura_aditivo, 'data', 'assinatura_aditivo'],
+      ['Início da operação', e.inicio_operacao, 'data', 'inicio_operacao'],
       ['Estruturador', e.estruturador, 'txt'], ['Concessionária', e.nome_contrato, 'txt'], ['Atualizado em', e.atualizado_em, 'data'],
     ]));
     const obras = dl(rows(e, [
@@ -4018,8 +4143,12 @@ const Ficha = (() => {
     const extras = has(f.extras) ? dl(f.extras.map(x => `<dt>${esc(x.rotulo)}<\/dt><dd>${esc(x.valor)}<\/dd>`).join('')) : '';
     const capexChart = has(f.capex_anual) ? `<div class="chart-box" id="ficha-capex"><\/div><p class="page__src">R$ mi por ano de concessão, ciclo de obras${f.data_base ? ` · data-base ${esc(f.data_base)}` : ''}.<\/p>` : '';
     const crono = has(e.cronograma) ? `<ul class="timeline">${e.cronograma.map(c => `<li><b>${esc(c.marco)}<\/b>${esc(F.data(c.data))}<\/li>`).join('')}<\/ul>` : '';
-    const part = has(e.participantes_lista) ? `<table class="grid" data-csv-name="ficha-participantes"><thead><tr><th>Proponente<\/th><th class="num">Deságio<\/th><\/tr><\/thead><tbody>${
-      e.participantes_lista.map(p => `<tr><td>${esc(p.grupo)}${p.vencedor ? ' <b>(vencedor)<\/b>' : ''}<\/td><td class="num">${esc(F.pct(p.desagio))}<\/td><\/tr>`).join('')}<\/tbody><\/table>` : '';
+    // v4: um só vencedor, o verificado; o que o RoadShow imprime na linha dele fica abaixo, quando difere
+    const plist = ConcModel.participantesExibidos(e, conc.grupos_alias);
+    const rsTxt = v => (v != null ? ` <span class="part-rs">RoadShow: ${esc(v)}<\/span>` : '');
+    const part = plist.length ? `<table class="grid" data-csv-name="ficha-participantes"><thead><tr><th>Proponente<\/th><th class="num">Deságio<\/th><\/tr><\/thead><tbody>${
+      plist.map(p => `<tr><td>${esc(p.grupo)}${p.vencedor ? ' <b>(vencedor)<\/b>' : ''}${p.verificado ? ' ' + Selo.badge(e.verif.grupo_vencedor) : ''}${rsTxt(p.roadshow && p.roadshow.grupo)}<\/td>
+        <td class="num">${esc(F.pct(p.desagio))}${p.verificado && e.verif.desagio ? ' ' + Selo.badge(e.verif.desagio) : ''}${rsTxt(p.roadshow && p.roadshow.desagio != null ? F.pct(p.roadshow.desagio) : null)}<\/td><\/tr>`).join('')}<\/tbody><\/table>` : '';
     const rel = (e.relaciona || []).map(id => conc.entidades.find(x => x.id === id)).filter(Boolean);
     const relHtml = rel.length ? `<ul class="timeline">${rel.map(r => `<li><a href="#ficha/${esc(r.id)}">${esc(r.nome)}<\/a> · ${esc(estadoLabel(r.estado))}<\/li>`).join('')}<\/ul>` : '';
     const qual = { ok: 'Recorte conferido (diferença ≤ 5% ou 10 km)', aproximado: 'Recorte aproximado', nao_mapeado: 'Trecho não mapeado no SNV', falha: 'Recorte com falha' }[e.qualidade] || '';
@@ -4052,12 +4181,14 @@ const Ficha = (() => {
         ${block('CAPEX anual', capexChart, true)}
         ${block('Cronograma', crono, true)}
         ${block('Participantes do leilão', part, true)}
+        ${block('Notas da verificação', notasVerif(e), true)}
         ${block('Itens relacionados', relHtml)}
         ${block('Trecho no mapa', trecho)}
         ${block('Outras informações da ficha', extras, true)}
         ${anttBlocks(e.id)}
         <p class="ficha__foot">Fonte: RoadShow 2026-2027 (${esc(conc.versaoRoadshow)}), Ministério dos Transportes${pages.length ? `, p. ${pages.join(', ')}` : ''}${
-  intel && (IM.anttCapa(intel, e.id) || IM.anttAnteriores(intel, e.id).length) ? '; ANTT (dados abertos e páginas das concessões)' : ''}.<\/p>
+  intel && (IM.anttCapa(intel, e.id) || IM.anttAnteriores(intel, e.id).length) ? '; ANTT (dados abertos e páginas das concessões)' : ''}${
+  e.verif && Object.keys(e.verif).length ? '; campos de leilão conferidos na verificação dos leilões (selo de origem em cada campo)' : ''}.<\/p>
       <\/div>`;
 
     if (capexChart) Charts.bars($('#ficha-capex'), f.capex_anual.map(a => ({ label: `Ano ${a.ano}`, value: a.valor })),
@@ -4066,7 +4197,7 @@ const Ficha = (() => {
     $('#ficha-map').addEventListener('click', () => showOnMap(idx));
     $('#ficha').querySelectorAll('[data-div]').forEach(b => b.addEventListener('click', ev => {
       ev.stopPropagation();
-      openPopover(b, e.divergencias[Number(b.dataset.div)]);
+      openPopover(b, e.divergencias[Number(b.dataset.div)], e);
     }));
   }
 
@@ -4238,19 +4369,29 @@ const Ficha = (() => {
     return typeof concStyleSwatch === 'function' ? concStyleSwatch(key, 24) : '';
   }
 
-  function openPopover(btn, d) {
+  function openPopover(btn, d, e) {
     closePopover();
     popover = document.createElement('div');
     popover.className = 'popover';
     popover.setAttribute('role', 'dialog');
-    popover.innerHTML = `<b>Divergência no RoadShow<\/b>
-      <p>Exibido: ${esc(d.exibido)}<\/p>
-      <ul>${d.alternativas.map(a => `<li>${esc(a.valor)} (p. ${esc(a.pagina)})<\/li>`).join('')}<\/ul>
+    const alts = (d.alternativas || []).filter(a => has(a.valor) && !/^[-–—]?$/.test(String(a.valor).trim()));
+    const origem = a => (a.pagina != null ? `p. ${a.pagina}` : a.fonte || 'RoadShow');
+    popover.innerHTML = `<b>Divergência entre fontes<\/b>
+      <p>Exibido: ${esc(valorTxt(d.campo, d.exibido))}${Selo.badge((e.verif || {})[d.campo])}<\/p>
+      ${alts.length ? `<ul>${alts.map(a => `<li>${esc(valorTxt(d.campo, a.valor))} (${esc(origem(a))})<\/li>`).join('')}<\/ul>` : ''}
       ${d.nota ? `<p>${esc(d.nota)}<\/p>` : ''}`;
     document.body.appendChild(popover);
     const r = btn.getBoundingClientRect();
     popover.style.top = `${Math.min(window.innerHeight - popover.offsetHeight - 16, r.bottom + 8)}px`;
     popover.style.left = `${Math.max(16, Math.min(window.innerWidth - popover.offsetWidth - 16, r.left - 160))}px`;
+  }
+  // Valor de divergência no formato do campo (datas, deságio, listas de BRs/UFs, números pt-BR).
+  function valorTxt(campo, v) {
+    if (!has(v)) return '—';
+    if (Array.isArray(v)) return v.join('/');
+    if (campo === 'desagio' && isNum(v)) return F.pct(v);
+    if (typeof v === 'string' && /^\d{4}-\d{2}(-\d{2})?$/.test(v)) return F.data(v);
+    return isNum(v) ? fmtNum.format(v) : String(v);
   }
   function closePopover() { if (popover) { popover.remove(); popover = null; } }
 
@@ -4318,7 +4459,7 @@ const Projetos = (() => {
     ['nome', 'Nome', null, false], ['brsUfs', 'BRs/UFs', null, false], ['estado', 'Estado', 'estado', false],
     ['dataChave', 'Data-chave', 'data', false], ['km', 'km', 'km', true], ['capex', 'Capex (R$ bi)', 'bi', true],
     ['opex', 'Opex (R$ bi)', 'bi', true], ['dataBase', 'Data-base', null, false], ['capexKm', 'Capex/km (R$ mi)', 'mi', true],
-    ['wacc', 'WACC', 'pct', true], ['tkm', 'TKM (R$/km)', 'tkm', true], ['desagio', 'Deságio', 'pct', true],
+    ['wacc', 'WACC', 'pct', true], ['tkm', 'TKM (R$/km)', 'tkm', true], ['desagio', 'Deságio', 'pct', true], ['desagioOrigem', 'Fonte do deságio', null, false],
     ['participantes', 'Participantes', 'int', true], ['vencedor', 'Vencedor', null, false],
   ];
   const FICHA_COLS = [
@@ -5120,6 +5261,7 @@ const Regulatorio = (() => {
 
 ;
 // Aba Fontes: de onde vem cada número (INTEL.fontes), as bases congeladas da v1/v2 e o que não foi possível obter neste ambiente.
+// v4: documentos da verificação dos leilões (CONC.verificacao), com a cobertura por tipo de fonte.
 const Fontes = (() => {
   const IM = IntelModel;
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -5137,7 +5279,24 @@ const Fontes = (() => {
       <tbody>${rows.map(r => `<tr>${cols.map(c => `<td${c[2] ? ` class="${c[2]}"` : ''}>${c[1](r)}<\/td>`).join('')}<\/tr>`).join('')}<\/tbody><\/table><\/div>`;
   }
 
-  function render(intel) {
+  // v4: verificação dos leilões — cobertura (campos por tipo da fonte mais forte) e a lista de documentos usados.
+  function verificacao(conc) {
+    const v = conc && conc.verificacao;
+    if (!v || !(v.fontes || []).length) return '';
+    const c = v.cobertura || {};
+    const n = k => IM.fmtInt(c[k] || 0);
+    const rs = f => f.tipo === 'roadshow';
+    return `<h2 class="fontes-h2" id="fontes-verificacao">Verificação dos leilões <span class="page__src">(${IM.fmtInt(v.fontes.length)} documentos)<\/span><\/h2>
+      <p class="page__src" id="fontes-verif-cobertura">Nos campos de leilão (data, vencedor, deságio, tarifas, prazo, assinatura e início da operação), o valor exibido vem de documento de órgão público quando existe; senão, do RoadShow; por último, de imprensa, marcada como não oficial.
+        ${n('leiloes')} leilões conferidos; campos por origem: ${n('oficial')} oficial, ${n('roadshow')} RoadShow, ${n('imprensa')} imprensa — não oficial e ${n('nao_localizado')} não localizado em fonte oficial.<\/p>
+      ${tabela('fontes-verificacao-table', v.fontes, [
+        ['Tipo', r => Selo.badge({ tipo: r.tipo, fontes: [] })], ['Órgão/veículo', r => txt(r.orgao || (rs(r) ? 'Ministério dos Transportes' : null)), 'wrap'],
+        ['Título', r => txt(r.titulo || (rs(r) ? Selo.fonteTexto(r) : null)), 'wrap fontes-nome'], ['Data', r => txt(r.data ? ConcModel.fmtData(r.data) : null)],
+        ['Link', r => (r.url ? link(r.url, 'abrir') : '—')], ['Acesso', r => txt(r.acesso ? ConcModel.fmtData(r.acesso) : null)],
+      ])}`;
+  }
+
+  function render(intel, conc) {
     const el = document.getElementById('page-fontes');
     const d = IM.fontesData(intel);
     const head = `<h1 class="page__title">Fontes dos dados<\/h1>
@@ -5147,7 +5306,7 @@ const Fontes = (() => {
         <p><b>Cadastro<\/b> é registro de infraestrutura ou de contratos, sem número medido nem modelado: a malha municipal do IBGE, a malha e as fichas das concessões estaduais, as páginas das concessões na ANTT, as ferrovias da BaseFerro, as instalações portuárias da ANTAQ e o traçado esquemático das Rotas de Integração Sul-Americana (MPO).<\/p>
         <p><b>Acesso<\/b> é a data em que o arquivo foi baixado da fonte para montar este mapa (dd/mm/aaaa). O dado pode ter sido atualizado na origem depois disso.<\/p><\/div>`;
     if (!d) {
-      el.innerHTML = `<div class="page__inner">${head}<p class="empty">A lista de fontes (bloco fontes) não está neste arquivo.<\/p><\/div>`;
+      el.innerHTML = `<div class="page__inner">${head}<p class="empty">A lista de fontes (bloco fontes) não está neste arquivo.<\/p>${verificacao(conc)}<\/div>`;
       return;
     }
     const fontes = tabela('fontes-table', d.fontes, [
@@ -5163,13 +5322,13 @@ const Fontes = (() => {
       ${tabela('fontes-indisp-table', d.indisponiveis, [['Fonte', r => link(r.url, r.nome), 'wrap fontes-nome'], ['Motivo', r => txt(r.motivo), 'wrap fontes-nota-col']])}` : '';
     el.innerHTML = `<div class="page__inner">${head}
       <h2 class="fontes-h2" id="fontes-lista">Fontes da v3 <span class="page__src">(${IM.fmtInt(d.fontes.length)})<\/span><\/h2>${fontes}
-      <p class="page__src fontes-legenda" id="fontes-legenda">Tipo: <b>Medido<\/b>, contagem ou registro observado; <b>Modelado<\/b>, estimativa de modelo; <b>Cadastro<\/b>, registro de infraestrutura ou de contratos, sem número medido nem modelado; "—": fonte de apoio (carteira ou notícia), sem número próprio.<\/p>${base}${indisp}<\/div>`;
+      <p class="page__src fontes-legenda" id="fontes-legenda">Tipo: <b>Medido<\/b>, contagem ou registro observado; <b>Modelado<\/b>, estimativa de modelo; <b>Cadastro<\/b>, registro de infraestrutura ou de contratos, sem número medido nem modelado; "—": fonte de apoio (carteira ou notícia), sem número próprio.<\/p>${verificacao(conc)}${base}${indisp}<\/div>`;
   }
 
-  function init(intel) {
+  function init(intel, conc = null) {
     if (built) return;
     built = true;
-    render(intel || null);
+    render(intel || null, conc);
   }
 
   return { init };
@@ -6290,7 +6449,7 @@ const Tabs = (() => {
   Tabs.on('cargas', () => Cargas.init(intel, snv));
   Tabs.on('mercado', () => Mercado.init(conc));
   Tabs.on('regulatorio', () => Regulatorio.init(conc));
-  Tabs.on('fontes', () => Fontes.init(intel));
+  Tabs.on('fontes', () => Fontes.init(intel, conc));
   Tabs.init({ isFicha: id => Ficha.exists(id) });
   Csv.init();  // depois da montagem inicial: botão em cada table.grid, inclusive as criadas depois
 })();

@@ -241,7 +241,9 @@ test('v2: aviso de divergência mostra páginas', async () => {
   const id = await page.evaluate(() => window.CONC.entidades.find(e => (e.divergencias || []).length).id);
   await go('#ficha/' + id);
   await page.locator('.div-flag').first().click();
-  assert.match(await page.textContent('.popover'), /p\. \d+/);
+  const t = await page.textContent('.popover');
+  assert.match(t, /Divergência entre fontes/);
+  assert.match(t, /p\. \d+/);
 });
 
 test('v2: ficha de contrato antigo sem undefined/null/NaN', async () => {
@@ -382,7 +384,7 @@ test('v2: gráfico de investimento por grupo usa o nome completo', async () => {
 });
 
 test('v4: toda table.grid visível tem botão CSV', async () => {
-  for (const hash of ['#projetos', '#mercado']) {
+  for (const hash of ['#projetos', '#mercado', '#fontes']) {
     await go(hash);
     const r = await page.evaluate(() => {
       const vis = [...document.querySelectorAll('table.grid')].filter(t => t.offsetParent !== null);
@@ -436,6 +438,88 @@ test('v4: CSV do pipeline exporta só o nome, sem a observação recolhida', asy
   assert.equal(linhas.length, nomes.length);
   linhas.forEach((l, i) => assert.equal(l.split('";"')[0], '"' + nomes[i].nome.replace(/"/g, '""'), `linha ${i + 1}`));
   assert.ok(!txt.includes('Observação'), 'sem texto de observação');
+});
+
+// v4: linha da ficha (dd) pelo rótulo (dt)
+const fichaDd = rotulo => page.evaluate(r => {
+  const dt = [...document.querySelectorAll('#ficha dt')].find(x => x.textContent === r);
+  return dt ? { html: dt.nextElementSibling.innerHTML, text: dt.nextElementSibling.textContent } : null;
+}, rotulo);
+const partLinhas = () => page.$$eval('#ficha table[data-csv-name="ficha-participantes"] tbody tr', trs => trs.map(tr => tr.textContent.replace(/\s+/g, ' ').trim()));
+const notasVerif = () => page.evaluate(() => {
+  const h = [...document.querySelectorAll('#ficha .fblock h3')].find(x => x.textContent === 'Notas da verificação');
+  return h ? h.parentElement.textContent.replace(/\s+/g, ' ') : null;
+});
+
+test('v4: ficha do Lote 5 do Paraná mostra selo e RoadShow na divergência', async () => {
+  await go('#ficha/rodovias-integradas-do-parana-lote-5');
+  const d = await fichaDd('Deságio');
+  assert.match(d.text, /^23,83%/);
+  assert.match(d.html, /class="selo selo--oficial"/);
+  assert.equal(await page.getAttribute('#ficha dd .selo--oficial a', 'target'), '_blank');
+  assert.match(await page.getAttribute('#ficha dd .selo--oficial', 'title'), /B3 — .*\(30\/10\/2025\)/);
+  await page.evaluate(() => {
+    const dt = [...document.querySelectorAll('#ficha dt')].find(x => x.textContent === 'Deságio');
+    dt.nextElementSibling.querySelector('.div-flag').click();
+  });
+  const t = await page.textContent('.popover');
+  assert.match(t, /Divergência entre fontes/);
+  assert.match(t, /Exibido: 23,83%/);
+  assert.match(t, /21,83% \(p\. 97\)/);
+  assert.ok(await notasVerif(), 'bloco de notas');
+  await page.keyboard.press('Escape');
+});
+
+test('v4: ficha da Rota da Celulose mostra nota de inabilitação', async () => {
+  await go('#ficha/rota-da-celulose');
+  const n = await notasVerif();
+  assert.match(n, /Consórcio K&G Rota da Celulose: 9,00%, inabilitado em 04\/08\/2025/);
+  assert.match(n, /Comunicado — Aviso de decisão de recurso/);
+  assert.ok(await page.locator('#ficha .notas-verif .selo--oficial').count() > 0);
+  // início da operação não localizado: linha com "—" e o selo
+  const ini = await fichaDd('Início da operação');
+  assert.match(ini.text, /^—não localizado em fonte oficial/);
+  // um só vencedor: o verificado, com o deságio exibido (8%); o que o RoadShow imprime (9%) fica abaixo
+  const linhas = await partLinhas();
+  assert.equal(linhas.filter(l => l.includes('(vencedor)')).length, 1);
+  assert.match(linhas[0], /^Consórcio Caminhos da Celulose \(vencedor\) oficial RoadShow: .*XP infra V.* 8,00% oficial RoadShow: 9,00%$/);
+});
+
+test('v4: vencedor verificado fora da lista do RoadShow entra no topo (Transbrasiliana)', async () => {
+  await go('#ficha/transbrasiliana');
+  const linhas = await partLinhas();
+  assert.equal(linhas.filter(l => l.includes('(vencedor)')).length, 1);
+  assert.match(linhas[0], /^Consórcio BRVias \(vencedor\) oficial .*39,99%/);
+  assert.ok(linhas.some(l => /^TPI – Triunfo .*Antigo Consórcio BRVIAS/.test(l) && !l.includes('(vencedor)')));
+});
+
+test('v4: otimização distingue contrato original e termo aditivo; popover sem alternativa "-"', async () => {
+  await go('#ficha/regis-bittencourt');
+  assert.match((await fichaDd('Assinatura do contrato original')).text, /^14\/02\/2008/);
+  assert.match((await fichaDd('Assinatura do termo aditivo (otimização)')).text, /^21\/12\/2026/);
+  await go('#ficha/via-liberdade');
+  await page.evaluate(() => {
+    const dt = [...document.querySelectorAll('#ficha dt')].find(x => x.textContent === 'Assinatura');
+    dt.nextElementSibling.querySelector('.div-flag').click();
+  });
+  const itens = await page.$$eval('.popover li', lis => lis.map(l => l.textContent));
+  assert.deepEqual(itens, ['20/01/2026 (p. 97)']);
+  await page.keyboard.press('Escape');
+});
+
+test('v4: comparador tem a fonte do deságio e Fontes lista a verificação', async () => {
+  await go('#projetos');
+  const ths = await page.$$eval('#proj-table thead th', t => t.map(x => x.textContent.trim().replace(/ [↑↓]$/, '')));
+  const i = ths.indexOf('Fonte do deságio');
+  assert.equal(ths[i - 1], 'Deságio');
+  const vals = await page.$$eval(`#proj-table tbody tr td:nth-child(${i + 1})`, t => [...new Set(t.map(x => x.textContent))]);
+  assert.ok(vals.includes('oficial') && vals.includes('RoadShow'), vals.join());
+  await go('#fontes');
+  assert.match(await page.textContent('#fontes-verif-cobertura'), /\d+ leilões conferidos; campos por origem: \d+ oficial/);
+  const n = await page.locator('#fontes-verificacao-table tbody tr').count();
+  assert.equal(n, await page.evaluate(() => window.CONC.verificacao.fontes.length));
+  assert.equal(await page.getAttribute('#fontes-verificacao-table', 'data-csv-name'), 'fontes-verificacao');
+  assert.ok(await page.locator('#fontes-verificacao-table .selo--imprensa').count() > 0);
 });
 
 test('nenhuma requisição externa', () => assert.deepEqual(external, []));

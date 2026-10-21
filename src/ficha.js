@@ -9,8 +9,9 @@ const Ficha = (() => {
     km: v => Model.fmtKm(v), bi: v => ConcModel.fmtBi(v), pct: v => ConcModel.fmtPct(v), data: v => ConcModel.fmtData(v),
     mi: v => `R$ ${fmt2.format(v)} mi`, mikm: v => `R$ ${fmt2.format(v)} mi/km`, int: v => fmtInt.format(v),
     tkm: v => `R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 }).format(v)}/km`,
-    txt: v => String(v), kmv: v => `${fmt1.format(v)} km`,
+    txt: v => String(v), kmv: v => `${fmt1.format(v)} km`, anos: v => `${fmtInt.format(v)} anos`,
   };
+  const fmtNum = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });
   const ICON_CLOSE = '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
   const ICON_WARN = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 4l9 16H3z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 10v4M12 17v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
 
@@ -27,13 +28,24 @@ const Ficha = (() => {
     const d = (e.divergencias || []).find(x => x.campo === campo);
     if (!d) return '';
     const i = e.divergencias.indexOf(d);
-    return `<button type="button" class="div-flag" data-div="${i}" aria-label="Divergência entre fontes do RoadShow" title="Divergência entre fontes">${ICON_WARN}</button>`;
+    return `<button type="button" class="div-flag" data-div="${i}" aria-label="Divergência entre fontes" title="Divergência entre fontes">${ICON_WARN}</button>`;
   }
 
-  // Linha da ficha: [rótulo, valor, formato, campo-para-divergência, html extra]
+  // Linha da ficha: [rótulo, valor, formato, campo (selo de origem e divergência), html extra]
+  // v4: campo verificado (`e.verif[campo]`) aparece mesmo sem valor ("—", não localizado em fonte oficial).
   function rows(e, list) {
-    return list.filter(([, v]) => has(v)).map(([label, v, f, campo, extra]) =>
-      `<dt>${esc(label)}</dt><dd>${esc((F[f] || F.txt)(v))}${campo ? flag(e, campo) : ''}${extra || ''}</dd>`).join('');
+    const verif = e.verif || {};
+    return list.filter(([, v, , campo]) => has(v) || (campo && verif[campo])).map(([label, v, f, campo, extra]) =>
+      `<dt>${esc(label)}</dt><dd>${has(v) ? esc((F[f] || F.txt)(v)) : '—'}${campo ? Selo.badge(verif[campo]) + flag(e, campo) : ''}${extra || ''}</dd>`).join('');
+  }
+
+  // v4: notas da verificação dos leilões e proponentes inabilitados, cada um com as fontes (selo do tipo + link).
+  function notasVerif(e) {
+    const fontes = fs => (fs && fs.length ? `<ul class="nota-fontes">${fs.map(f => `<li>${Selo.fonte(f)}</li>`).join('')}</ul>` : '');
+    const inab = i => `${i.grupo}: ${[has(i.desagio) ? F.pct(i.desagio) : null, `inabilitado${i.data ? ` em ${F.data(i.data)}` : ''}`].filter(Boolean).join(', ')}`;
+    const itens = (e.notas_verif || []).map(n => [n.texto, n.fontes]).concat((e.inabilitados || []).map(i => [inab(i), i.fontes]))
+      .map(([t, fs]) => `<li><p class="ftext">${esc(t)}</p>${fontes(fs)}</li>`);
+    return itens.length ? `<ul class="flist notas-verif">${itens.join('')}</ul>` : '';
   }
 
   function block(title, inner, wide = false) {
@@ -70,11 +82,15 @@ const Ficha = (() => {
       ['Empregos estimados', f.empregos, 'int'], ['Carga predominante', f.carga, 'txt'],
       ['Trecho', f.trecho_inicio && f.trecho_fim ? `${f.trecho_inicio} – ${f.trecho_fim}` : (e.trecho_cidades ? e.trecho_cidades.join(' – ') : null), 'txt'],
     ]));
+    const otim = e.tipo === 'otimizacao';  // otimização: assinatura do contrato original × do termo aditivo
     const leilao = dl(rows(e, [
       ['Situação', e.status_texto, 'txt'], ['Edital', e.edital, 'data', 'edital'], ['Leilão', e.leilao, 'data', 'leilao'],
       ['Participantes', e.participantes, 'int', 'participantes'], ['Deságio', e.desagio, 'pct', 'desagio'],
-      ['Vencedor', e.grupo_vencedor, 'txt', 'grupo_vencedor'], ['Assinatura', e.assinatura, 'data', 'assinatura'],
-      ['Termo aditivo', e.assinatura_aditivo, 'data'], ['Início da operação', e.inicio_operacao, 'data'],
+      ['Vencedor', e.grupo_vencedor, 'txt', 'grupo_vencedor'], ['Tarifa-teto', e.tarifa_teto, 'txt', 'tarifa_teto'],
+      ['Tarifa vencedora', e.tarifa_vencedora, 'txt', 'tarifa_vencedora'], ['Prazo da concessão', e.prazo_anos, 'anos', 'prazo_anos'],
+      [otim ? 'Assinatura do contrato original' : 'Assinatura', e.assinatura, 'data', 'assinatura'],
+      [otim ? 'Assinatura do termo aditivo (otimização)' : 'Termo aditivo', e.assinatura_aditivo, 'data', 'assinatura_aditivo'],
+      ['Início da operação', e.inicio_operacao, 'data', 'inicio_operacao'],
       ['Estruturador', e.estruturador, 'txt'], ['Concessionária', e.nome_contrato, 'txt'], ['Atualizado em', e.atualizado_em, 'data'],
     ]));
     const obras = dl(rows(e, [
@@ -98,8 +114,12 @@ const Ficha = (() => {
     const extras = has(f.extras) ? dl(f.extras.map(x => `<dt>${esc(x.rotulo)}</dt><dd>${esc(x.valor)}</dd>`).join('')) : '';
     const capexChart = has(f.capex_anual) ? `<div class="chart-box" id="ficha-capex"></div><p class="page__src">R$ mi por ano de concessão, ciclo de obras${f.data_base ? ` · data-base ${esc(f.data_base)}` : ''}.</p>` : '';
     const crono = has(e.cronograma) ? `<ul class="timeline">${e.cronograma.map(c => `<li><b>${esc(c.marco)}</b>${esc(F.data(c.data))}</li>`).join('')}</ul>` : '';
-    const part = has(e.participantes_lista) ? `<table class="grid" data-csv-name="ficha-participantes"><thead><tr><th>Proponente</th><th class="num">Deságio</th></tr></thead><tbody>${
-      e.participantes_lista.map(p => `<tr><td>${esc(p.grupo)}${p.vencedor ? ' <b>(vencedor)</b>' : ''}</td><td class="num">${esc(F.pct(p.desagio))}</td></tr>`).join('')}</tbody></table>` : '';
+    // v4: um só vencedor, o verificado; o que o RoadShow imprime na linha dele fica abaixo, quando difere
+    const plist = ConcModel.participantesExibidos(e, conc.grupos_alias);
+    const rsTxt = v => (v != null ? ` <span class="part-rs">RoadShow: ${esc(v)}</span>` : '');
+    const part = plist.length ? `<table class="grid" data-csv-name="ficha-participantes"><thead><tr><th>Proponente</th><th class="num">Deságio</th></tr></thead><tbody>${
+      plist.map(p => `<tr><td>${esc(p.grupo)}${p.vencedor ? ' <b>(vencedor)</b>' : ''}${p.verificado ? ' ' + Selo.badge(e.verif.grupo_vencedor) : ''}${rsTxt(p.roadshow && p.roadshow.grupo)}</td>
+        <td class="num">${esc(F.pct(p.desagio))}${p.verificado && e.verif.desagio ? ' ' + Selo.badge(e.verif.desagio) : ''}${rsTxt(p.roadshow && p.roadshow.desagio != null ? F.pct(p.roadshow.desagio) : null)}</td></tr>`).join('')}</tbody></table>` : '';
     const rel = (e.relaciona || []).map(id => conc.entidades.find(x => x.id === id)).filter(Boolean);
     const relHtml = rel.length ? `<ul class="timeline">${rel.map(r => `<li><a href="#ficha/${esc(r.id)}">${esc(r.nome)}</a> · ${esc(estadoLabel(r.estado))}</li>`).join('')}</ul>` : '';
     const qual = { ok: 'Recorte conferido (diferença ≤ 5% ou 10 km)', aproximado: 'Recorte aproximado', nao_mapeado: 'Trecho não mapeado no SNV', falha: 'Recorte com falha' }[e.qualidade] || '';
@@ -132,12 +152,14 @@ const Ficha = (() => {
         ${block('CAPEX anual', capexChart, true)}
         ${block('Cronograma', crono, true)}
         ${block('Participantes do leilão', part, true)}
+        ${block('Notas da verificação', notasVerif(e), true)}
         ${block('Itens relacionados', relHtml)}
         ${block('Trecho no mapa', trecho)}
         ${block('Outras informações da ficha', extras, true)}
         ${anttBlocks(e.id)}
         <p class="ficha__foot">Fonte: RoadShow 2026-2027 (${esc(conc.versaoRoadshow)}), Ministério dos Transportes${pages.length ? `, p. ${pages.join(', ')}` : ''}${
-  intel && (IM.anttCapa(intel, e.id) || IM.anttAnteriores(intel, e.id).length) ? '; ANTT (dados abertos e páginas das concessões)' : ''}.</p>
+  intel && (IM.anttCapa(intel, e.id) || IM.anttAnteriores(intel, e.id).length) ? '; ANTT (dados abertos e páginas das concessões)' : ''}${
+  e.verif && Object.keys(e.verif).length ? '; campos de leilão conferidos na verificação dos leilões (selo de origem em cada campo)' : ''}.</p>
       </div>`;
 
     if (capexChart) Charts.bars($('#ficha-capex'), f.capex_anual.map(a => ({ label: `Ano ${a.ano}`, value: a.valor })),
@@ -146,7 +168,7 @@ const Ficha = (() => {
     $('#ficha-map').addEventListener('click', () => showOnMap(idx));
     $('#ficha').querySelectorAll('[data-div]').forEach(b => b.addEventListener('click', ev => {
       ev.stopPropagation();
-      openPopover(b, e.divergencias[Number(b.dataset.div)]);
+      openPopover(b, e.divergencias[Number(b.dataset.div)], e);
     }));
   }
 
@@ -318,19 +340,29 @@ const Ficha = (() => {
     return typeof concStyleSwatch === 'function' ? concStyleSwatch(key, 24) : '';
   }
 
-  function openPopover(btn, d) {
+  function openPopover(btn, d, e) {
     closePopover();
     popover = document.createElement('div');
     popover.className = 'popover';
     popover.setAttribute('role', 'dialog');
-    popover.innerHTML = `<b>Divergência no RoadShow</b>
-      <p>Exibido: ${esc(d.exibido)}</p>
-      <ul>${d.alternativas.map(a => `<li>${esc(a.valor)} (p. ${esc(a.pagina)})</li>`).join('')}</ul>
+    const alts = (d.alternativas || []).filter(a => has(a.valor) && !/^[-–—]?$/.test(String(a.valor).trim()));
+    const origem = a => (a.pagina != null ? `p. ${a.pagina}` : a.fonte || 'RoadShow');
+    popover.innerHTML = `<b>Divergência entre fontes</b>
+      <p>Exibido: ${esc(valorTxt(d.campo, d.exibido))}${Selo.badge((e.verif || {})[d.campo])}</p>
+      ${alts.length ? `<ul>${alts.map(a => `<li>${esc(valorTxt(d.campo, a.valor))} (${esc(origem(a))})</li>`).join('')}</ul>` : ''}
       ${d.nota ? `<p>${esc(d.nota)}</p>` : ''}`;
     document.body.appendChild(popover);
     const r = btn.getBoundingClientRect();
     popover.style.top = `${Math.min(window.innerHeight - popover.offsetHeight - 16, r.bottom + 8)}px`;
     popover.style.left = `${Math.max(16, Math.min(window.innerWidth - popover.offsetWidth - 16, r.left - 160))}px`;
+  }
+  // Valor de divergência no formato do campo (datas, deságio, listas de BRs/UFs, números pt-BR).
+  function valorTxt(campo, v) {
+    if (!has(v)) return '—';
+    if (Array.isArray(v)) return v.join('/');
+    if (campo === 'desagio' && isNum(v)) return F.pct(v);
+    if (typeof v === 'string' && /^\d{4}-\d{2}(-\d{2})?$/.test(v)) return F.data(v);
+    return isNum(v) ? fmtNum.format(v) : String(v);
   }
   function closePopover() { if (popover) { popover.remove(); popover = null; } }
 

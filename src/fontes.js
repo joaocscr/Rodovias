@@ -1,4 +1,5 @@
 // Aba Fontes: de onde vem cada número (INTEL.fontes), as bases congeladas da v1/v2 e o que não foi possível obter neste ambiente.
+// v4: documentos da verificação dos leilões (CONC.verificacao), com a cobertura por tipo de fonte.
 const Fontes = (() => {
   const IM = IntelModel;
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -16,7 +17,24 @@ const Fontes = (() => {
       <tbody>${rows.map(r => `<tr>${cols.map(c => `<td${c[2] ? ` class="${c[2]}"` : ''}>${c[1](r)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
   }
 
-  function render(intel) {
+  // v4: verificação dos leilões — cobertura (campos por tipo da fonte mais forte) e a lista de documentos usados.
+  function verificacao(conc) {
+    const v = conc && conc.verificacao;
+    if (!v || !(v.fontes || []).length) return '';
+    const c = v.cobertura || {};
+    const n = k => IM.fmtInt(c[k] || 0);
+    const rs = f => f.tipo === 'roadshow';
+    return `<h2 class="fontes-h2" id="fontes-verificacao">Verificação dos leilões <span class="page__src">(${IM.fmtInt(v.fontes.length)} documentos)</span></h2>
+      <p class="page__src" id="fontes-verif-cobertura">Nos campos de leilão (data, vencedor, deságio, tarifas, prazo, assinatura e início da operação), o valor exibido vem de documento de órgão público quando existe; senão, do RoadShow; por último, de imprensa, marcada como não oficial.
+        ${n('leiloes')} leilões conferidos; campos por origem: ${n('oficial')} oficial, ${n('roadshow')} RoadShow, ${n('imprensa')} imprensa — não oficial e ${n('nao_localizado')} não localizado em fonte oficial.</p>
+      ${tabela('fontes-verificacao-table', v.fontes, [
+        ['Tipo', r => Selo.badge({ tipo: r.tipo, fontes: [] })], ['Órgão/veículo', r => txt(r.orgao || (rs(r) ? 'Ministério dos Transportes' : null)), 'wrap'],
+        ['Título', r => txt(r.titulo || (rs(r) ? Selo.fonteTexto(r) : null)), 'wrap fontes-nome'], ['Data', r => txt(r.data ? ConcModel.fmtData(r.data) : null)],
+        ['Link', r => (r.url ? link(r.url, 'abrir') : '—')], ['Acesso', r => txt(r.acesso ? ConcModel.fmtData(r.acesso) : null)],
+      ])}`;
+  }
+
+  function render(intel, conc) {
     const el = document.getElementById('page-fontes');
     const d = IM.fontesData(intel);
     const head = `<h1 class="page__title">Fontes dos dados</h1>
@@ -26,7 +44,7 @@ const Fontes = (() => {
         <p><b>Cadastro</b> é registro de infraestrutura ou de contratos, sem número medido nem modelado: a malha municipal do IBGE, a malha e as fichas das concessões estaduais, as páginas das concessões na ANTT, as ferrovias da BaseFerro, as instalações portuárias da ANTAQ e o traçado esquemático das Rotas de Integração Sul-Americana (MPO).</p>
         <p><b>Acesso</b> é a data em que o arquivo foi baixado da fonte para montar este mapa (dd/mm/aaaa). O dado pode ter sido atualizado na origem depois disso.</p></div>`;
     if (!d) {
-      el.innerHTML = `<div class="page__inner">${head}<p class="empty">A lista de fontes (bloco fontes) não está neste arquivo.</p></div>`;
+      el.innerHTML = `<div class="page__inner">${head}<p class="empty">A lista de fontes (bloco fontes) não está neste arquivo.</p>${verificacao(conc)}</div>`;
       return;
     }
     const fontes = tabela('fontes-table', d.fontes, [
@@ -42,13 +60,13 @@ const Fontes = (() => {
       ${tabela('fontes-indisp-table', d.indisponiveis, [['Fonte', r => link(r.url, r.nome), 'wrap fontes-nome'], ['Motivo', r => txt(r.motivo), 'wrap fontes-nota-col']])}` : '';
     el.innerHTML = `<div class="page__inner">${head}
       <h2 class="fontes-h2" id="fontes-lista">Fontes da v3 <span class="page__src">(${IM.fmtInt(d.fontes.length)})</span></h2>${fontes}
-      <p class="page__src fontes-legenda" id="fontes-legenda">Tipo: <b>Medido</b>, contagem ou registro observado; <b>Modelado</b>, estimativa de modelo; <b>Cadastro</b>, registro de infraestrutura ou de contratos, sem número medido nem modelado; "—": fonte de apoio (carteira ou notícia), sem número próprio.</p>${base}${indisp}</div>`;
+      <p class="page__src fontes-legenda" id="fontes-legenda">Tipo: <b>Medido</b>, contagem ou registro observado; <b>Modelado</b>, estimativa de modelo; <b>Cadastro</b>, registro de infraestrutura ou de contratos, sem número medido nem modelado; "—": fonte de apoio (carteira ou notícia), sem número próprio.</p>${verificacao(conc)}${base}${indisp}</div>`;
   }
 
-  function init(intel) {
+  function init(intel, conc = null) {
     if (built) return;
     built = true;
-    render(intel || null);
+    render(intel || null, conc);
   }
 
   return { init };
