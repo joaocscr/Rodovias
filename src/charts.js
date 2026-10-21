@@ -99,7 +99,7 @@ const Charts = (() => {
     const xs = pts.map(p => p.x), x0 = Math.floor(Math.min(...xs)), x1 = Math.max(Math.ceil(Math.max(...xs)), x0 + 1);
     const ty = ticks(Math.max(...pts.map(p => p.y), num(o.refY) ? o.refY : 0)), my = ty[ty.length - 1] || 1;
     const xOf = v => L + ((v - x0) / (x1 - x0)) * pw, yOf = v => T + ph - (v / my) * ph;
-    const FONTE = { oficial: 'fonte oficial', roadshow: 'RoadShow', imprensa: 'imprensa' };
+    const FONTE = { oficial: 'fonte oficial', roadshow: 'RoadShow', imprensa: 'imprensa — não oficial' };
     let body = yAxis(ty, L, w - R, yOf, fy).replace(/<line /g, '<line class="grid" ');
     const step = Math.max(1, Math.ceil((x1 - x0) / 8));
     for (let x = x0; x <= x1; x += step) body += `<text x="${xOf(x).toFixed(1)}" y="${h - B + 24}" text-anchor="middle" fill="${C.grey}">${x}</text>`;

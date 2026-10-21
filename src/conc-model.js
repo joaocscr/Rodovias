@@ -90,8 +90,9 @@ const ConcModel = (() => {
   // Participantes da ficha com um só vencedor, o verificado (`grupo_vencedor` com `verif`). A linha do mesmo proponente
   // (nome igual sem acento/caixa/pontuação/"Consórcio", um nome prefixo do outro, o nome entre parênteses, mesmo grupo
   // em `aliases`; senão, a linha marcada pelo RoadShow com o mesmo deságio) passa a mostrar o nome e o deságio exibidos,
-  // com o que o RoadShow imprime em `roadshow` quando difere. Sem essa linha, o vencedor verificado entra no topo e a
-  // linha marcada pelo RoadShow perde a marca. Cópia: não altera a entidade.
+  // com o que o RoadShow imprime em `roadshow` quando difere. Sem essa linha, o vencedor verificado entra no topo; a
+  // linha marcada pelo RoadShow sai da lista quando não tem deságio (o nome dela vai para `roadshow.grupo`) ou, com
+  // deságio próprio (é um lance), fica sem a marca. Cópia: não altera a entidade.
   const chaveNome = s => norm(s).replace(/^consorcio /, '').replace(/[^a-z0-9]/g, '');
   function chaves(nome) {
     const m = /^(.*?)\s*\(([^()]*)\)\s*$/.exec(nome);
@@ -114,7 +115,12 @@ const ConcModel = (() => {
     const r = porNome.includes(rs) ? rs : porNome[0] || (rs && igual(rs.desagio, e.desagio) ? rs : null);
     lista.forEach(p => { p.vencedor = false; });
     const desagio = v.desagio ? (e.desagio ?? null) : (r && r.desagio != null ? r.desagio : (e.desagio ?? null));
-    if (!r) return [{ grupo: e.grupo_vencedor, desagio, vencedor: true, verificado: true }, ...lista];
+    if (!r) {
+      const topo = { grupo: e.grupo_vencedor, desagio, vencedor: true, verificado: true };
+      // a linha marcada sem deságio não é um lance: é o rótulo do vencedor no RoadShow, que vira a sublinha do verificado
+      if (!rs || rs.desagio != null) return [topo, ...lista];
+      return [Object.assign(topo, { roadshow: { grupo: rs.grupo, desagio: null } }), ...lista.filter(p => p !== rs)];
+    }
     const roadshow = {
       grupo: chaveNome(r.grupo || '') === chaveNome(e.grupo_vencedor) ? null : r.grupo,
       desagio: r.desagio == null || igual(r.desagio, desagio) ? null : r.desagio,

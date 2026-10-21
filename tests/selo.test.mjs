@@ -34,3 +34,17 @@ test('badge escapa o texto das fontes', () => {
   const h = Selo.badge({ tipo: 'imprensa', fontes: [{ tipo: 'imprensa', orgao: 'A "B" <C>', titulo: null, data: null, url: null }] });
   assert.match(h, /title="A &quot;B&quot; &lt;C&gt;"/);
 });
+test('badge e fonte só geram link para http(s); outro esquema vira texto', () => {
+  for (const url of ['javascript:alert(1)', 'data:text/html,x', 'vbscript:x', ' javascript:x']) {
+    const f = { tipo: 'imprensa', orgao: 'Valor', titulo: 'T', data: null, url };
+    const b = Selo.badge({ tipo: 'imprensa', fontes: [f] });
+    assert.doesNotMatch(b, /<a |href=/, url);
+    assert.match(b, />imprensa — não oficial</);
+    const h = Selo.fonte(f);
+    assert.doesNotMatch(h, /<a |href=/, url);
+    assert.match(h, /Valor — T$/);
+  }
+  // pula a fonte com esquema inválido e usa a próxima http(s)
+  assert.match(Selo.badge({ tipo: 'oficial', fontes: [{ ...antt, url: 'javascript:x' }, antt] }), /href="https:\/\/www\.gov\.br\/antt\/x"/);
+  assert.match(Selo.fonte({ ...antt, url: 'HTTP://www.gov.br/antt/x' }), /class="link-btn" href="HTTP:\/\/www\.gov\.br\/antt\/x"/);
+});

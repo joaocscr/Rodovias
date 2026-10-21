@@ -94,6 +94,8 @@ test('dotsSvg: marca por tipo, referência só depois de refFromX, só cores da 
   assert.match(svg, /<circle[^>]*data-tipo="roadshow"[^>]*fill="#0071BB"/);
   assert.match(svg, /<circle[^>]*data-tipo="imprensa"[^>]*fill="none"[^>]*stroke="#525254"[^>]*stroke-dasharray/);
   assert.match(svg, /<title>Rota D[^<]*19.6%/);
+  // imprensa sempre como "imprensa — não oficial"
+  assert.match(svg, /<title>Rota C: 8\.1% · imprensa — não oficial<\/title>/);
   // eixo x começa no primeiro ano dos dados (2007), não em 0
   assert.match(svg, /text-anchor="middle"[^>]*>2007</);
   assert.match(svg, /text-anchor="middle"[^>]*>2010</);

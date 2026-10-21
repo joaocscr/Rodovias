@@ -25,10 +25,11 @@ const Mercado = (() => {
   }
   const roadshow = key => `RoadShow 2026-2027, p. ${pages(m.fontes[key])}`;
 
-  // Vencedor exibido (verificado); quando o grupo econômico tem outro nome, "nome (grupo)".
+  // Vencedor exibido (verificado); quando o grupo econômico tem outro nome, "nome (grupo)" — sem repetir o grupo que
+  // o nome já traz entre parênteses ("… S.A. (OHL Brasil)").
   function vencedorTxt(nome) {
     const g = LeiloesModel.grupoDe(nome, aliases);
-    return g && g !== nome ? `${nome} (${g})` : nome;
+    return g && g !== nome && !nome.endsWith(`(${g})`) ? `${nome} (${g})` : nome;
   }
 
   function proponentesTxt(p) {
@@ -37,13 +38,17 @@ const Mercado = (() => {
     return [...inab, ...(p.outros || []).map(o => `${esc(o.grupo)}${pct(o.desagio)}`)].join('; ') || '—';
   }
 
+  // v4: o valor do RoadShow que deixou de ser exibido fica abaixo do verificado, como na ficha
+  const rsTxt = t => (t != null && t !== '' ? ` <span class="part-rs">RoadShow: ${esc(t)}</span>` : '');
+
   function participantesTable(anoSel) {
     const rows = m.participantes.filter(p => !anoSel || String(p.ano) === anoSel);
     return `<div class="table-wrap" style="max-height:480px"><table class="grid" data-csv-name="participantes-leiloes"><thead><tr><th>Ano</th><th>Data</th><th>Lote</th><th>Vencedor</th><th class="num">Deságio vencedor</th><th>Fonte</th><th>Demais proponentes (deságio)</th></tr></thead><tbody>${
       rows.map(p => {
         const v = p.verif || {};
-        return `<tr><td>${p.ano}</td><td>${p.data ? ConcModel.fmtData(p.data) : '—'}</td><td class="wrap">${esc(p.lote)}</td><td class="wrap">${esc(vencedorTxt(p.vencedor))}</td>
-        <td class="num">${p.desagio_vencedor == null ? '—' : nf2.format(p.desagio_vencedor) + '%'}</td><td>${Selo.badge(v.desagio || v.grupo_vencedor) || '—'}</td>
+        const rsG = v.grupo_vencedor && v.grupo_vencedor.roadshow, rsD = v.desagio && v.desagio.roadshow;
+        return `<tr><td>${p.ano}</td><td>${p.data ? ConcModel.fmtData(p.data) : '—'}</td><td class="wrap">${esc(p.lote)}</td><td class="wrap">${esc(vencedorTxt(p.vencedor))}${rsTxt(rsG)}</td>
+        <td class="num">${p.desagio_vencedor == null ? '—' : nf2.format(p.desagio_vencedor) + '%'}${rsTxt(rsD == null ? null : nf2.format(rsD) + '%')}</td><td>${Selo.badge(v.desagio || v.grupo_vencedor) || '—'}</td>
         <td class="wrap wrap--wide">${proponentesTxt(p)}</td></tr>`;
       }).join('')}</tbody></table></div>`;
   }

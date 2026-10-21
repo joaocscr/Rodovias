@@ -99,13 +99,20 @@ test('rotuloOrigem e origemCampo', () => {
 });
 test('participantesExibidos: um só vencedor, o verificado', () => {
   const V = vf('oficial');
-  // proponente diferente (nome, grupo e deságio): o verificado entra no topo; a linha do RoadShow perde a marca
-  const lista = [{ grupo: 'TPI (Antigo Consórcio BRV)', desagio: null, vencedor: true }, { grupo: 'Outro', desagio: 4, vencedor: false }];
+  // proponente diferente (nome e grupo) e a linha do RoadShow sem deságio: o verificado entra no topo e a linha marcada
+  // sai da lista (não é um proponente derrotado); o nome que o RoadShow imprime fica na sublinha "RoadShow: …"
+  const lista = [{ grupo: 'TPI (Antigo Consórcio BRVIAS)', desagio: null, vencedor: true }, { grupo: 'Outro', desagio: 4, vencedor: false }];
   const fora = ConcModel.participantesExibidos(ent({ grupo_vencedor: 'Consórcio BRV', desagio: 39.99,
     participantes_lista: lista, verif: { grupo_vencedor: V, desagio: V } }));
   assert.deepEqual(fora.map(p => [p.grupo, p.desagio, p.vencedor, !!p.verificado]),
-    [['Consórcio BRV', 39.99, true, true], ['TPI (Antigo Consórcio BRV)', null, false, false], ['Outro', 4, false, false]]);
+    [['Consórcio BRV', 39.99, true, true], ['Outro', 4, false, false]]);
+  assert.deepEqual(fora[0].roadshow, { grupo: 'TPI (Antigo Consórcio BRVIAS)', desagio: null });
   assert.equal(lista[0].vencedor, true, 'não altera a entidade');
+  // a linha marcada pelo RoadShow com deságio próprio é um lance: fica na lista, sem a marca
+  const comLance = ConcModel.participantesExibidos(ent({ grupo_vencedor: 'Consórcio BRV', desagio: 39.99,
+    participantes_lista: [{ grupo: 'TPI', desagio: 5.68, vencedor: true }], verif: { grupo_vencedor: V, desagio: V } }));
+  assert.deepEqual(comLance.map(p => [p.grupo, p.desagio, p.vencedor, !!p.verificado, p.roadshow]),
+    [['Consórcio BRV', 39.99, true, true, undefined], ['TPI', 5.68, false, false, undefined]]);
   // mesmo proponente com outra grafia e deságio do RoadShow diferente: a linha dele, com o valor exibido
   const cel = ConcModel.participantesExibidos(ent({ grupo_vencedor: 'Consórcio Caminhos', desagio: 8,
     participantes_lista: [{ grupo: 'Consórcio Caminhos (Fundo XP)', desagio: 9, vencedor: true }, { grupo: 'BTG', desagio: null, vencedor: false }],

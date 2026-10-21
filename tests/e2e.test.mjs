@@ -440,6 +440,32 @@ test('v4: CSV do pipeline exporta só o nome, sem a observação recolhida', asy
   assert.ok(!txt.includes('Observação'), 'sem texto de observação');
 });
 
+test('v4: CSV protege células que começam como fórmula', async () => {
+  await go('#fontes');
+  // injeta numa linha visível valores que o Excel leria como fórmula e restaura depois
+  const orig = await page.evaluate(() => {
+    const tds = document.querySelectorAll('#fontes-verificacao-table tbody tr:first-child td');
+    const o = [tds[0].innerHTML, tds[1].innerHTML];
+    tds[0].textContent = '=HYPERLINK("http://x")';
+    tds[1].textContent = '-5';
+    return o;
+  });
+  try {
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.locator('.csv-btn:has(+ .table-wrap #fontes-verificacao-table)').click(),
+    ]);
+    const txt = (await import('node:fs')).readFileSync(await download.path(), 'utf8');
+    const l1 = txt.split('\r\n')[1];
+    assert.ok(l1.startsWith(`"'=HYPERLINK(""http://x"")";"'-5";`), l1);
+  } finally {
+    await page.evaluate(o => {
+      const tds = document.querySelectorAll('#fontes-verificacao-table tbody tr:first-child td');
+      tds[0].innerHTML = o[0]; tds[1].innerHTML = o[1];
+    }, orig);
+  }
+});
+
 // v4: linha da ficha (dd) pelo rótulo (dt)
 const fichaDd = rotulo => page.evaluate(r => {
   const dt = [...document.querySelectorAll('#ficha dt')].find(x => x.textContent === r);
@@ -489,14 +515,24 @@ test('v4: vencedor verificado fora da lista do RoadShow entra no topo (Transbras
   await go('#ficha/transbrasiliana');
   const linhas = await partLinhas();
   assert.equal(linhas.filter(l => l.includes('(vencedor)')).length, 1);
-  assert.match(linhas[0], /^Consórcio BRVias \(vencedor\) oficial .*39,99%/);
-  assert.ok(linhas.some(l => /^TPI – Triunfo .*Antigo Consórcio BRVIAS/.test(l) && !l.includes('(vencedor)')));
+  // o rótulo do vencedor no RoadShow fica na sublinha do verificado, não como proponente derrotado sem lance
+  assert.match(linhas[0], /^Consórcio BRVias \(vencedor\) oficial RoadShow: TPI – Triunfo .*\(Antigo Consórcio BRVIAS\) 39,99% oficial$/);
+  assert.ok(!linhas.slice(1).some(l => /Antigo Consórcio BRVIAS/.test(l)), linhas.join('\n'));
+  assert.ok(linhas.some(l => /^TPI triunfo participações 5,68%$/.test(l)), 'o lance da Triunfo continua');
+  assert.ok(!linhas.slice(1).some(l => /—$/.test(l)), 'nenhum proponente sem deságio');
+  await go('#ficha/autopista-litoral-do-sul');
+  const ls = await partLinhas();
+  assert.match(ls[0], /\(vencedor\) oficial RoadShow: Arteris \(Antiga OHL\) /);
+  assert.ok(!ls.slice(1).some(l => /Arteris/.test(l)), ls.join('\n'));
 });
 
 test('v4: otimização distingue contrato original e termo aditivo; popover sem alternativa "-"', async () => {
   await go('#ficha/regis-bittencourt');
   assert.match((await fichaDd('Assinatura do contrato original')).text, /^14\/02\/2008/);
   assert.match((await fichaDd('Assinatura do termo aditivo (otimização)')).text, /^21\/12\/2026/);
+  // o prazo verificado de uma otimização conta a partir do termo aditivo
+  assert.match((await fichaDd('Prazo (a partir do termo aditivo)')).text, /^15 anos/);
+  assert.equal(await fichaDd('Prazo da concessão'), null);
   await go('#ficha/via-liberdade');
   await page.evaluate(() => {
     const dt = [...document.querySelectorAll('#ficha dt')].find(x => x.textContent === 'Assinatura');
@@ -615,12 +651,13 @@ test('v4: Transbrasiliana 2007 aparece com o vencedor verificado', async () => {
   const tr = page.locator('#chart-part tbody tr', { hasText: 'Transbrasiliana' });
   const cells = await tr.locator('td').allTextContents();
   assert.equal(cells[1], '09/10/2007');
-  assert.equal(cells[3], 'Consórcio BRVias');
+  // o vencedor como o RoadShow imprime fica na sublinha "RoadShow: …" (não é apagado)
+  assert.match(cells[3], /^Consórcio BRVias RoadShow: TPI – Triunfo .*\(antigo Consórcio BRVias\)$/);
   assert.equal(cells[4], '39,99%');
   assert.equal(cells[5].trim(), 'oficial');
   assert.match(await tr.locator('td:nth-child(6) .selo--oficial a').getAttribute('href'), /^https:\/\//);
   assert.match(cells[6], /TPI Triunfo Participações \(5,68%\)/);
-  assert.doesNotMatch(cells[3], /TPI/);
+  assert.equal(await tr.locator('td:nth-child(4) .part-rs').count(), 1);
   await page.selectOption('#part-ano', '2023');
   assert.ok((await page.locator('#chart-part tbody td', { hasText: 'Consórcio Infraestrutura PR (EPR)' }).count()) >= 1, 'nome (grupo)');
   await page.selectOption('#part-ano', '2025');
@@ -632,7 +669,25 @@ test('v4: Transbrasiliana 2007 aparece com o vencedor verificado', async () => {
   assert.equal(rk['Consórcio BRVias'][2], '1');
   assert.equal(rk['Triunfo'][2], '0');
   assert.ok(+rk['Triunfo'][3] >= 1);
+  // os 5 lotes da OHL Brasil em 2007 contam para ela, não para a Arteris (controle vendido em 2012)
+  assert.equal(rk['OHL Brasil'][2], '5');
+  assert.equal(rk['Arteris'], undefined);
   await rankPeriodo(2007, 2026);
+});
+
+test('v4: Mercado mostra abaixo do verificado o vencedor e o deságio que o RoadShow imprime', async () => {
+  await go('#mercado');
+  await page.selectOption('#part-ano', '2025');
+  const l5 = await page.locator('#chart-part tbody tr', { hasText: 'Rodovias Integradas do Paraná - Lote 5' }).locator('td').allTextContents();
+  assert.match(l5[3], / RoadShow: Pátria$/);
+  assert.equal(l5[4], '23,83% RoadShow: 21,83%');
+  const cel = await page.locator('#chart-part tbody tr', { hasText: 'Rota da Celulose' }).locator('td').allTextContents();
+  assert.equal(cel[4], '8,00% RoadShow: 9,00%');
+  await page.selectOption('#part-ano', '2007');
+  const regis = await page.locator('#chart-part tbody tr', { hasText: 'Autopista Régis Bittencourt' }).locator('td').allTextContents();
+  assert.match(regis[3], /^Obrascon Huarte Lain Brasil S\.A\. \(OHL Brasil\) RoadShow: Arteris \(antiga OHL\)$/);
+  assert.equal(regis[4], '49,19%', 'deságio igual ao do RoadShow: sem sublinha');
+  await page.selectOption('#part-ano', '');
 });
 
 test('nenhuma requisição externa', () => assert.deepEqual(external, []));

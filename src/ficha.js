@@ -87,7 +87,7 @@ const Ficha = (() => {
       ['Situação', e.status_texto, 'txt'], ['Edital', e.edital, 'data', 'edital'], ['Leilão', e.leilao, 'data', 'leilao'],
       ['Participantes', e.participantes, 'int', 'participantes'], ['Deságio', e.desagio, 'pct', 'desagio'],
       ['Vencedor', e.grupo_vencedor, 'txt', 'grupo_vencedor'], ['Tarifa-teto', e.tarifa_teto, 'txt', 'tarifa_teto'],
-      ['Tarifa vencedora', e.tarifa_vencedora, 'txt', 'tarifa_vencedora'], ['Prazo da concessão', e.prazo_anos, 'anos', 'prazo_anos'],
+      ['Tarifa vencedora', e.tarifa_vencedora, 'txt', 'tarifa_vencedora'], [otim ? 'Prazo (a partir do termo aditivo)' : 'Prazo da concessão', e.prazo_anos, 'anos', 'prazo_anos'],
       [otim ? 'Assinatura do contrato original' : 'Assinatura', e.assinatura, 'data', 'assinatura'],
       [otim ? 'Assinatura do termo aditivo (otimização)' : 'Termo aditivo', e.assinatura_aditivo, 'data', 'assinatura_aditivo'],
       ['Início da operação', e.inicio_operacao, 'data', 'inicio_operacao'],

@@ -9,7 +9,7 @@ const Fontes = (() => {
   let built = false;
 
   const txt = v => (v == null || v === '' ? '—' : esc(v));
-  const link = (url, nome) => (url ? `<a class="link-btn" href="${esc(url)}" target="_blank" rel="noopener">${esc(nome || url)}</a>` : txt(nome));
+  const link = (url, nome) => (/^https?:/i.test(url || '') ? `<a class="link-btn" href="${esc(url)}" target="_blank" rel="noopener">${esc(nome || url)}</a>` : txt(nome));
 
   function tabela(id, rows, cols) {
     return `<div class="table-wrap table-wrap--static"><table class="grid grid--static fontes-table" id="${id}" data-csv-name="${id.replace(/-table$/, '')}">
