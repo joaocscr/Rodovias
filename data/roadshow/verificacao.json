@@ -1556,7 +1556,7 @@
           ]
         },
         {
-          "texto": "Data de assinatura: a Agência de Notícias do Governo de MS informa que o contrato foi firmado na sexta-feira, 06/02/2026, em cerimônia em Inocência (valor exibido, fonte oficial). Dois veículos de imprensa dão segunda-feira, 02/02/2026: o Correio do Estado noticiou nesse dia que o contrato foi assinado, e o Campo Grande News, também em 02/02/2026, que, com o contrato assinado, a concessionária assumiu a malha e começou formalmente a operação privada. O extrato no Diário Oficial de MS não pôde ser consultado (o site não responde deste ambiente). O início de operação de 30/12/2025 impresso no RoadShow é anterior a qualquer das duas datas de assinatura e não foi localizado em fonte oficial; o campo fica como não localizado.",
+          "texto": "Data de assinatura: a Agência de Notícias do Governo de MS informa que o contrato foi firmado na sexta-feira, 06/02/2026, em cerimônia em Inocência (valor exibido, fonte oficial). O Correio do Estado noticiou em 02/02/2026 que o contrato foi assinado naquela segunda-feira (2). O Campo Grande News, também em 02/02/2026, não dá data de assinatura: diz que o contrato já estava assinado e que a apresentação daquela segunda-feira (2) marcou o início formal da operação privada. O extrato no Diário Oficial de MS não pôde ser consultado (o site não responde deste ambiente). O início de operação de 30/12/2025 impresso no RoadShow é anterior a qualquer das datas de assinatura; o início de operação fica não localizado em fonte oficial, porque só a imprensa (Campo Grande News) dá 02/02/2026.",
           "fontes": [
             "ms-agencia-2026-02-07-rota-celulose",
             "correio-do-estado-2026-02-02-rota-celulose",
