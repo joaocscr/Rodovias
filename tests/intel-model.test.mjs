@@ -415,6 +415,10 @@ test('portoTipo: só os 4 tipos, com rótulo em português por extenso (sigla en
   for (const v of Object.values(IntelModel.PORTO_TIPOS)) assert.match(v, /^[A-ZÀ-Ú][a-zà-ú ]+( \([A-Z]+\))?$/, v);
   assert.deepEqual(Object.keys(IntelModel.PORTO_TIPOS).sort(),
     ['Estação de transbordo de cargas', 'Porto Organizado', 'Porto Público', 'Terminal de uso privado']);
+  // forma do marcador para cada tipo do dicionário: portos em quadrado, terminais e estações em círculo
+  assert.deepEqual(Object.keys(IntelModel.PORTO_FORMA).sort(), Object.keys(IntelModel.PORTO_TIPOS).sort());
+  assert.deepEqual(Object.entries(IntelModel.PORTO_FORMA).filter(([, f]) => f === 'quadrado').map(([t]) => t).sort(), ['Porto Organizado', 'Porto Público']);
+  assert.ok(Object.values(IntelModel.PORTO_FORMA).every(f => f === 'quadrado' || f === 'circulo'));
   for (const t of ['IP4', 'Registro - Terminal de uso privado', 'TNA', 'Plataforma Marítima', null]) assert.equal(IntelModel.portoTipo(t), null, t);
 });
 

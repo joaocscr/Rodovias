@@ -2074,10 +2074,14 @@ const IntelModel = (() => {
   }
 
   // Tipos ANTAQ mostrados na camada "Portos e ETCs" (os demais ficam de fora), com o rótulo em português da interface:
-  // por extenso, sigla entre parênteses quando o setor a usa.
+  // por extenso, sigla entre parênteses quando o setor a usa. PORTO_FORMA: marcador no mapa (portos organizados e públicos
+  // em quadrado; terminais e estações em círculo).
   const PORTO_TIPOS = {
     'Porto Organizado': 'Porto organizado', 'Porto Público': 'Porto público',
     'Terminal de uso privado': 'Terminal de uso privado (TUP)', 'Estação de transbordo de cargas': 'Estação de transbordo de cargas (ETC)',
+  };
+  const PORTO_FORMA = {
+    'Porto Organizado': 'quadrado', 'Porto Público': 'quadrado', 'Terminal de uso privado': 'circulo', 'Estação de transbordo de cargas': 'circulo',
   };
   const portoTipo = t => (t != null && Object.prototype.hasOwnProperty.call(PORTO_TIPOS, t) ? PORTO_TIPOS[t] : null);
 
@@ -2683,7 +2687,7 @@ const IntelModel = (() => {
 
   return { MODES, has, sumNullable, nAnos, vmdaOf, v25Of, acidOf, cargaOf, fisSup, estTrafego,
     rows, metricArray, quantileBreaks, classOf, aggregateIntel, fisIntel, taxaAcidentes, pointsOfFis, decodeTopo,
-    rodLabel, decodeLine, estConcLines, distToSegment, pointRadius, lineWeight, PORTO_TIPOS, portoTipo, monthLabel, mesX, xMes, fmtMesX, anosLabel,
+    rodLabel, decodeLine, estConcLines, distToSegment, pointRadius, lineWeight, PORTO_TIPOS, PORTO_FORMA, portoTipo, monthLabel, mesX, xMes, fmtMesX, anosLabel,
     FUNDOS, PRODUTOS, fundoFonte, fundoValues,
     fundoClasses, munInfo, pointInRings, ringsBBox, fonteRef,
     ROTA_TIPOS, rotasOf, rotaTitulo, rotaLinhas, paisAneis, rotasBounds, rotasNota, rotaLabelAnchor, paisLabel, paisLabelPoint,
@@ -2872,8 +2876,6 @@ const LAYER_STYLES = {
 // Fundo municipal: Deep Blue com opacidade por classe; sem dado / zero sem preenchimento.
 const FUNDO_OPACITY = [0.12, 0.25, 0.4, 0.55, 0.7];
 const FUNDO_BORDER = { color: COLORS.lightGrey, weight: 0.3, opacity: 0.3 };
-// Portos organizados e públicos em quadrado; TUP e ETC em círculo (rótulos de IntelModel.PORTO_TIPOS).
-const PORTO_QUADRADO = new Set(['Porto organizado', 'Porto público']);
 
 // Amostra SVG de cada camada (painel "Camadas").
 function layerSwatch(key, size = 24) {
@@ -3314,7 +3316,7 @@ const MapView = (() => {
       maxBounds, maxBoundsViscosity: 0.8,
     });
     // Antes de qualquer outro ouvinte de 'zoomend' (o enquadramento pendente de fitSafe já vê a animação encerrada).
-    map.on('zoomanim', () => { animando = true; }).on('zoomend', () => { animando = false; });
+    map.on('zoomstart', () => { animando = true; }).on('zoomend', () => { animando = false; });
     map.createPane('ufs').style.zIndex = 200;
     map.createPane('halo').style.zIndex = 390;
     map.createPane('hl').style.zIndex = 420;
@@ -3389,9 +3391,11 @@ const MapView = (() => {
     map.fitBounds(boundsOf(vis.length ? vis : ids), { padding: [64, 64], maxZoom: 11 });
   }
 
-  // Animação de zoom em curso, acompanhada só pelos eventos públicos do Leaflet: 'zoomanim' marca o início e 'zoomend' o
-  // fim. No Leaflet 1.9.4 (vendor/leaflet) os dois cercam o período em que o Leaflet descarta um novo enquadramento: o
-  // 'zoomanim' sai logo depois de a animação começar e o 'zoomend' logo depois de ela terminar.
+  // Mudança de zoom em curso, acompanhada só pelos eventos públicos do Leaflet: 'zoomstart' marca o início e 'zoomend' o
+  // fim (os dois saem aos pares, de _moveStart e _moveEnd). No Leaflet 1.9.4 (vendor/leaflet) o 'zoomstart' sai antes de a
+  // animação começar e o 'zoomend' logo depois de ela terminar, cercando o período em que o Leaflet descarta um novo
+  // enquadramento. Não serve o 'zoomanim': o ouvinte interno do proxy de animação, registrado antes, pode encerrar a
+  // animação (e disparar o 'zoomend') dentro do próprio 'zoomanim', e a marca ficaria presa em true.
   let animando = false;
   function zoomAnimando() { return animando; }
 
@@ -3597,7 +3601,8 @@ const Layers = (() => {
         m = L.circleMarker(ll, { renderer: rend, interactive: false, radius: rad, stroke: false, fillColor: st.fillColor, fillOpacity: st.fillOpacity });
       } else {
         rad = st.radius;
-        const Ctor = PORTO_QUADRADO.has(r.tipoLabel) ? SquareMarker : L.CircleMarker;
+        // forma do marcador pelo dicionário de tipos (IntelModel.PORTO_FORMA): portos em quadrado, terminais e estações em círculo
+        const Ctor = IM.PORTO_FORMA[r.tipo] === 'quadrado' ? SquareMarker : L.CircleMarker;
         m = new Ctor(ll, { renderer: rend, interactive: false, radius: rad, fillColor: st.fillColor, fillOpacity: st.fillOpacity, color: st.color, weight: st.weight });
       }
       group.addLayer(m);

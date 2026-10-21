@@ -116,7 +116,8 @@ const Layers = (() => {
         m = L.circleMarker(ll, { renderer: rend, interactive: false, radius: rad, stroke: false, fillColor: st.fillColor, fillOpacity: st.fillOpacity });
       } else {
         rad = st.radius;
-        const Ctor = PORTO_QUADRADO.has(r.tipoLabel) ? SquareMarker : L.CircleMarker;
+        // forma do marcador pelo dicionário de tipos (IntelModel.PORTO_FORMA): portos em quadrado, terminais e estações em círculo
+        const Ctor = IM.PORTO_FORMA[r.tipo] === 'quadrado' ? SquareMarker : L.CircleMarker;
         m = new Ctor(ll, { renderer: rend, interactive: false, radius: rad, fillColor: st.fillColor, fillOpacity: st.fillOpacity, color: st.color, weight: st.weight });
       }
       group.addLayer(m);

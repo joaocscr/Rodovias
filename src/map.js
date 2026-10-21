@@ -130,7 +130,7 @@ const MapView = (() => {
       maxBounds, maxBoundsViscosity: 0.8,
     });
     // Antes de qualquer outro ouvinte de 'zoomend' (o enquadramento pendente de fitSafe já vê a animação encerrada).
-    map.on('zoomanim', () => { animando = true; }).on('zoomend', () => { animando = false; });
+    map.on('zoomstart', () => { animando = true; }).on('zoomend', () => { animando = false; });
     map.createPane('ufs').style.zIndex = 200;
     map.createPane('halo').style.zIndex = 390;
     map.createPane('hl').style.zIndex = 420;
@@ -205,9 +205,11 @@ const MapView = (() => {
     map.fitBounds(boundsOf(vis.length ? vis : ids), { padding: [64, 64], maxZoom: 11 });
   }
 
-  // Animação de zoom em curso, acompanhada só pelos eventos públicos do Leaflet: 'zoomanim' marca o início e 'zoomend' o
-  // fim. No Leaflet 1.9.4 (vendor/leaflet) os dois cercam o período em que o Leaflet descarta um novo enquadramento: o
-  // 'zoomanim' sai logo depois de a animação começar e o 'zoomend' logo depois de ela terminar.
+  // Mudança de zoom em curso, acompanhada só pelos eventos públicos do Leaflet: 'zoomstart' marca o início e 'zoomend' o
+  // fim (os dois saem aos pares, de _moveStart e _moveEnd). No Leaflet 1.9.4 (vendor/leaflet) o 'zoomstart' sai antes de a
+  // animação começar e o 'zoomend' logo depois de ela terminar, cercando o período em que o Leaflet descarta um novo
+  // enquadramento. Não serve o 'zoomanim': o ouvinte interno do proxy de animação, registrado antes, pode encerrar a
+  // animação (e disparar o 'zoomend') dentro do próprio 'zoomanim', e a marca ficaria presa em true.
   let animando = false;
   function zoomAnimando() { return animando; }
 

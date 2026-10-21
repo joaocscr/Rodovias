@@ -328,10 +328,14 @@ const IntelModel = (() => {
   }
 
   // Tipos ANTAQ mostrados na camada "Portos e ETCs" (os demais ficam de fora), com o rótulo em português da interface:
-  // por extenso, sigla entre parênteses quando o setor a usa.
+  // por extenso, sigla entre parênteses quando o setor a usa. PORTO_FORMA: marcador no mapa (portos organizados e públicos
+  // em quadrado; terminais e estações em círculo).
   const PORTO_TIPOS = {
     'Porto Organizado': 'Porto organizado', 'Porto Público': 'Porto público',
     'Terminal de uso privado': 'Terminal de uso privado (TUP)', 'Estação de transbordo de cargas': 'Estação de transbordo de cargas (ETC)',
+  };
+  const PORTO_FORMA = {
+    'Porto Organizado': 'quadrado', 'Porto Público': 'quadrado', 'Terminal de uso privado': 'circulo', 'Estação de transbordo de cargas': 'circulo',
   };
   const portoTipo = t => (t != null && Object.prototype.hasOwnProperty.call(PORTO_TIPOS, t) ? PORTO_TIPOS[t] : null);
 
@@ -937,7 +941,7 @@ const IntelModel = (() => {
 
   return { MODES, has, sumNullable, nAnos, vmdaOf, v25Of, acidOf, cargaOf, fisSup, estTrafego,
     rows, metricArray, quantileBreaks, classOf, aggregateIntel, fisIntel, taxaAcidentes, pointsOfFis, decodeTopo,
-    rodLabel, decodeLine, estConcLines, distToSegment, pointRadius, lineWeight, PORTO_TIPOS, portoTipo, monthLabel, mesX, xMes, fmtMesX, anosLabel,
+    rodLabel, decodeLine, estConcLines, distToSegment, pointRadius, lineWeight, PORTO_TIPOS, PORTO_FORMA, portoTipo, monthLabel, mesX, xMes, fmtMesX, anosLabel,
     FUNDOS, PRODUTOS, fundoFonte, fundoValues,
     fundoClasses, munInfo, pointInRings, ringsBBox, fonteRef,
     ROTA_TIPOS, rotasOf, rotaTitulo, rotaLinhas, paisAneis, rotasBounds, rotasNota, rotaLabelAnchor, paisLabel, paisLabelPoint,

@@ -598,6 +598,9 @@ test('(c) Portos e ETCs: só os 4 tipos', async () => {
   }
   // ponto corrigido no script (fora da UF na fonte): o cartão diz que a localização é aproximada; os demais não
   const ap = await page.evaluate(() => { const rows = Layers.rowsOf('portos'); return Layers.items('portos').filter(i => rows[i].aprox); });
+  const nAprox = await page.evaluate(() => window.INTEL.multimodal.portos.filter(p => p.aprox && IntelModel.portoTipo(p.tipo)).length);
+  assert.ok(nAprox > 0, 'nenhum porto com localização aproximada no modelo');
+  assert.equal(ap.length, nAprox);
   for (const k of ap) {
     await page.evaluate(k => Layers.open('portos', k), k);
     assert.match(await page.textContent('#card .card__grid'), /Localização\s*aproximada/);
