@@ -128,3 +128,26 @@ test('dotsSvg vazio não quebra', () => {
   assert.match(Charts.dotsSvg([], {}), /Sem dados/);
   assert.match(Charts.dotsSvg(undefined, {}), /Sem dados/);
 });
+test('legendHtml: formato antigo (array) segue com retângulo; objetos desenham ponto, anel tracejado e linha', () => {
+  const old = Charts.legendHtml([['Realizados', '#183C80'], ['Previstos', '#0071BB', 0.45]]);
+  assert.equal((old.match(/<rect /g) || []).length, 2);
+  assert.match(old, /fill="#0071BB" fill-opacity="0.45"/);
+  const leg = Charts.legendHtml([
+    { label: 'oficial', color: '#183C80', shape: 'dot' },
+    { label: 'imprensa — não oficial', color: '#525254', shape: 'ring' },
+    { label: 'linha de 18% & <x>', color: '#231F20', shape: 'line' },
+  ]);
+  assert.match(leg, /<circle[^>]*fill="#183C80"/);
+  assert.match(leg, /<circle[^>]*fill="none"[^>]*stroke="#525254"[^>]*stroke-dasharray/);
+  assert.match(leg, /<line[^>]*stroke="#231F20"[^>]*stroke-dasharray/);
+  assert.match(leg, /linha de 18% &amp; &lt;x&gt;/);
+  assert.doesNotMatch(leg, /<rect /);
+});
+test('dotsSvg: ponto limitado pelo edital ganha um anel que não captura o mouse', () => {
+  const svg = Charts.dotsSvg([
+    { x: 2021.83, y: 15.31, label: 'A', tipo: 'oficial', limitado: true },
+    { x: 2022.5, y: 10, label: 'B', tipo: 'oficial' },
+  ], {});
+  assert.equal((svg.match(/<circle class="dot"/g) || []).length, 2);
+  assert.equal((svg.match(/<circle class="dot-limite"[^>]*fill="none"[^>]*pointer-events="none"/g) || []).length, 1);
+});

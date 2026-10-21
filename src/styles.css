@@ -606,3 +606,11 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 .nota-fontes .selo { margin: 0 8px 0 0; }
 .notas-verif a.link-btn { display: inline; padding: 0; height: auto; white-space: normal; }
 .part-rs { display: block; font-size: 12px; color: var(--color-light-grey); white-space: normal; }
+
+/* v4: aba Mercado — série de deságio e ranking de grupos */
+#serie-legenda .chart-legend + .chart-legend { color: var(--color-light-grey); }
+.ranking-aliases ul { margin: 8px 0 0; padding-left: 20px; max-height: 320px; overflow: auto; font-size: 14px; line-height: 24px; }
+.chart-legend svg { flex: none; }
+#chart-part td.wrap { white-space: normal; min-width: 176px; }
+#chart-part td.wrap--wide { min-width: 288px; }
+.ranking-aliases a.link-btn { display: inline; padding: 0; height: auto; white-space: normal; }

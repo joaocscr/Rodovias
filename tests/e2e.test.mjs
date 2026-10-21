@@ -522,6 +522,118 @@ test('v4: comparador tem a fonte do deságio e Fontes lista a verificação', as
   assert.ok(await page.locator('#fontes-verificacao-table .selo--imprensa').count() > 0);
 });
 
+// ---------- v4: Mercado — participantes verificados, série de deságio, ranking de grupos ----------
+const rankRows = () => page.$$eval('#ranking-grupos tbody tr', trs => trs.map(tr => [...tr.children].map(td => td.textContent.trim())));
+async function rankPeriodo(de, ate) {
+  await page.selectOption('#rank-de', String(de));
+  await page.selectOption('#rank-ate', String(ate));
+}
+
+test('v4: Mercado mostra ranking com taxa de êxito e filtro de período altera as linhas', async () => {
+  await go('#mercado');
+  assert.equal(await page.getAttribute('#ranking-grupos', 'data-csv-name'), 'mercado-ranking-grupos');
+  const ths = await page.$$eval('#ranking-grupos thead th', t => t.map(x => x.textContent.trim().replace(/ [↑↓]$/, '')));
+  assert.deepEqual(ths, ['Grupo', 'Participações', 'Vitórias', 'Derrotas', 'Êxito (%)', '1ª aparição', 'Última']);
+  assert.equal(await page.inputValue('#rank-de'), '2007');
+  assert.equal(await page.inputValue('#rank-ate'), '2026');
+  const modelo = periodo => page.evaluate(p => {
+    const c = window.CONC, rk = LeiloesModel.rankingGrupos(c.mercado.participantes, c.grupos_alias, p);
+    return { rk, sem: LeiloesModel.leiloesSemLista(c.mercado.participantes, p) };
+  }, periodo);
+  const todos = await modelo({ de: 2007, ate: 2026 });
+  let rows = await rankRows();
+  assert.equal(rows.length, todos.rk.length);
+  const r0 = todos.rk[0], nf1 = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 });
+  assert.deepEqual(rows[0], [r0.grupo, String(r0.participacoes), String(r0.vitorias), String(r0.derrotas), nf1.format(r0.taxa), String(r0.primeira), String(r0.ultima)]);
+  assert.match(await page.textContent('#ranking-aviso'), new RegExp(`^Em ${todos.sem} leilões do período o RoadShow não lista os demais proponentes: neles só o vencedor é contado\\.$`));
+
+  await rankPeriodo(2023, 2026);
+  const recentes = await modelo({ de: 2023, ate: 2026 });
+  rows = await rankRows();
+  assert.equal(rows.length, recentes.rk.length);
+  assert.notEqual(rows.length, todos.rk.length);
+  assert.ok(rows.every(r => +r[5] >= 2023 && +r[6] <= 2026), 'anos dentro do período');
+  assert.match(await page.textContent('#ranking-aviso'), new RegExp(`^Em ${recentes.sem} leilões do período`));
+
+  // ordenação por clique no cabeçalho: Vitórias (desc), depois (asc)
+  await page.click('#ranking-grupos thead button[data-sort="vitorias"]');
+  let v = (await rankRows()).map(r => +r[2]);
+  assert.deepEqual(v, [...v].sort((a, b) => b - a));
+  assert.equal(await page.getAttribute('#ranking-grupos th[aria-sort]', 'aria-sort'), 'descending');
+  await page.click('#ranking-grupos thead button[data-sort="vitorias"]');
+  v = (await rankRows()).map(r => +r[2]);
+  assert.deepEqual(v, [...v].sort((a, b) => a - b));
+
+  // junções de nomes: "nome → grupo (motivo)" com link para a primeira fonte
+  const li = page.locator('#ranking-aliases li', { hasText: 'Consórcio Infraestrutura PR → EPR (consórcio liderado por)' });
+  assert.equal(await li.count(), 1);
+  assert.match(await li.locator('a').getAttribute('href'), /^https:\/\/[^/]*gov\.br\//);
+  assert.equal(await page.locator('#ranking-aliases li').count(), await page.evaluate(() => window.CONC.grupos_alias.length));
+  await rankPeriodo(2007, 2026);
+});
+
+test('v4: série de deságio desenha pontos de 2007 a 2026 com legenda', async () => {
+  await go('#mercado');
+  const esperado = await page.evaluate(() => {
+    const p = window.CONC.mercado.participantes;
+    return { pts: LeiloesModel.serieDesagio(p).length, sem: p.filter(x => x.desagio_vencedor == null).length };
+  });
+  assert.ok(esperado.pts >= 40);
+  assert.equal(await page.locator('#chart-serie circle.dot').count(), esperado.pts);
+  const anos = await page.$$eval('#chart-serie text[text-anchor="middle"]', t => t.map(x => x.textContent));
+  assert.equal(anos[0], '2007');
+  assert.ok(+anos[anos.length - 1] >= 2025, anos.join());
+  assert.equal(await page.locator('#chart-serie line.ref').count(), 1);
+  const tit = await page.$$eval('#chart-serie circle.dot title', t => t.map(x => x.textContent));
+  assert.ok(tit.some(t => /^Rodovias Integradas do Paraná - Lote 5 · .*23,83% · fonte oficial$/.test(t)), 'Lote 5 com o valor exibido');
+  assert.equal(tit.filter(t => t.includes('limitado pelo edital')).length, await page.locator('#chart-serie circle.dot-limite').count());
+  assert.ok(await page.locator('#chart-serie circle.dot-limite').count() >= 1);
+  const leg = page.locator('#serie-legenda');
+  const txt = await leg.textContent();
+  for (const s of ['oficial', 'RoadShow', 'imprensa — não oficial', 'aporte de recursos vinculados, Portaria 995/2023, a partir de 2023'])
+    assert.ok(txt.includes(s), s);
+  assert.equal(await leg.locator('circle[fill="none"][stroke-dasharray]').count(), 1, 'imprensa: anel vazado tracejado');
+  assert.equal(await leg.locator('line[stroke-dasharray]').count(), 1, 'linha de 18%');
+  assert.match(txt, /Pontos marcados como limitados pelo edital: desconto máximo permitido, desempate por outorga \(2021\)/);
+  assert.match(await page.textContent('#serie-sem'), new RegExp(`^${esperado.sem} leilões sem deságio do vencedor localizado`));
+  // Concorrentes × deságio: média dos valores exibidos ao lado da impressa; cartões das pp. 25 e 27 marcados
+  const media = await page.evaluate(() => LeiloesModel.mediaDesagio(window.CONC.mercado.concorrentes_desagio.map(x => x.desagio)));
+  const nf2 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  assert.match(await page.textContent('#card-desagio .sub'), new RegExp(`Média dos deságios exibidos: ${nf2.format(media)}% \\(RoadShow, pp\\. 25 e 27: 12,36%\\)`));
+  // a nota (comentário nosso) acompanha a média exibida e o valor do Lote 5
+  const nota = await page.textContent('#card-desagio .src:last-child');
+  assert.ok(nota.includes(`Média dos deságios exibidos ${nf2.format(media)}%`) && nota.includes('Lote 5, 23,83%'), nota);
+  for (const id of ['faixas', 'porN']) assert.match(await page.textContent(`#card-${id} .sub`), /como impresso no RoadShow/);
+});
+
+test('v4: Transbrasiliana 2007 aparece com o vencedor verificado', async () => {
+  await go('#mercado');
+  const ths = await page.$$eval('#chart-part thead th', t => t.map(x => x.textContent.trim()));
+  assert.deepEqual(ths, ['Ano', 'Data', 'Lote', 'Vencedor', 'Deságio vencedor', 'Fonte', 'Demais proponentes (deságio)']);
+  await page.selectOption('#part-ano', '2007');
+  const tr = page.locator('#chart-part tbody tr', { hasText: 'Transbrasiliana' });
+  const cells = await tr.locator('td').allTextContents();
+  assert.equal(cells[1], '09/10/2007');
+  assert.equal(cells[3], 'Consórcio BRVias');
+  assert.equal(cells[4], '39,99%');
+  assert.equal(cells[5].trim(), 'oficial');
+  assert.match(await tr.locator('td:nth-child(6) .selo--oficial a').getAttribute('href'), /^https:\/\//);
+  assert.match(cells[6], /TPI Triunfo Participações \(5,68%\)/);
+  assert.doesNotMatch(cells[3], /TPI/);
+  await page.selectOption('#part-ano', '2023');
+  assert.ok((await page.locator('#chart-part tbody td', { hasText: 'Consórcio Infraestrutura PR (EPR)' }).count()) >= 1, 'nome (grupo)');
+  await page.selectOption('#part-ano', '2025');
+  assert.match(await page.locator('#chart-part tbody tr', { hasText: 'Rota da Celulose' }).textContent(), /Consórcio K&G Rota da Celulose \(9,00%\) \(inabilitado em 04\/08\/2025\)/);
+  await page.selectOption('#part-ano', '');
+  // no ranking de 2007, a vitória é do BRVias e a Triunfo conta derrota (crédito pelo grupo da época)
+  await rankPeriodo(2007, 2007);
+  const rk = Object.fromEntries((await rankRows()).map(r => [r[0], r]));
+  assert.equal(rk['Consórcio BRVias'][2], '1');
+  assert.equal(rk['Triunfo'][2], '0');
+  assert.ok(+rk['Triunfo'][3] >= 1);
+  await rankPeriodo(2007, 2026);
+});
+
 test('nenhuma requisição externa', () => assert.deepEqual(external, []));
 
 test('sem erros no console', () => assert.deepEqual(errors, []));

@@ -112,6 +112,8 @@ const Charts = (() => {
       const mark = tipo === 'imprensa'
         ? `fill="none" pointer-events="all" stroke="${C.grey}" stroke-width="2" stroke-dasharray="2 2"`
         : `fill="${tipo === 'oficial' ? C.deep : C.bright}" fill-opacity="0.85"`;
+      // limitado pelo edital: anel externo (só visual; a dica fica no ponto)
+      if (p.limitado) body += `<circle class="dot-limite" cx="${cx}" cy="${cy}" r="9.5" fill="none" pointer-events="none" stroke="${C.spacial}" stroke-width="1.5"/>`;
       body += `<circle class="dot" data-tipo="${tipo}" cx="${cx}" cy="${cy}" r="5.5" ${mark}>` +
         `<title>${esc(p.label || '')}: ${esc(fy(p.y))} · ${FONTE[tipo]}${p.limitado ? ' · limitado pelo edital (desempate por outorga)' : ''}</title></circle>`;
     });
@@ -199,9 +201,21 @@ const Charts = (() => {
     return frame(w, data.length * rh + 8, body, o.title, o.clickable ? 'group' : 'img');
   }
 
+  // Legenda. Item = [rótulo, cor, opacidade?, tracejado?] (barra) ou {label, color, shape}, com shape
+  // 'dot' (ponto cheio), 'ring' (anel vazado tracejado, como a marca de imprensa), 'line' (linha de referência tracejada)
+  // ou 'limite' (anel do ponto limitado pelo edital).
+  const SHAPES = {
+    dot: c => `<svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="5" fill="${c}" fill-opacity="0.85"/></svg>`,
+    ring: c => `<svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="4.5" fill="none" stroke="${c}" stroke-width="2" stroke-dasharray="2 2"/></svg>`,
+    line: c => `<svg width="24" height="12" aria-hidden="true"><line x1="0" x2="24" y1="6" y2="6" stroke="${c}" stroke-width="1.5" stroke-dasharray="6 4"/></svg>`,
+    limite: c => `<svg width="20" height="20" aria-hidden="true"><circle cx="10" cy="10" r="8.5" fill="none" stroke="${c}" stroke-width="1.5"/></svg>`,
+  };
   function legendHtml(items) {
-    return `<div class="chart-legend">${items.map(([label, color, op = 1, dash = false]) =>
-      `<span><svg width="24" height="12" aria-hidden="true"><rect x="0" y="2" width="24" height="8" rx="2" fill="${color}" fill-opacity="${op}"${dash ? ' stroke-dasharray="4 2"' : ''}/></svg>${esc(label)}</span>`).join('')}</div>`;
+    return `<div class="chart-legend">${items.map(it => {
+      if (!Array.isArray(it)) return `<span>${(SHAPES[it.shape] || SHAPES.dot)(it.color)}${esc(it.label)}</span>`;
+      const [label, color, op = 1, dash = false] = it;
+      return `<span><svg width="24" height="12" aria-hidden="true"><rect x="0" y="2" width="24" height="8" rx="2" fill="${color}" fill-opacity="${op}"${dash ? ' stroke-dasharray="4 2"' : ''}/></svg>${esc(label)}</span>`;
+    }).join('')}</div>`;
   }
 
   const into = fn => (el, data, o = {}) => { el.innerHTML = fn(data, Object.assign({ width: Math.max(320, el.clientWidth || 640) }, o)); };
