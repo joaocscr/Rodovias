@@ -675,6 +675,436 @@
       "url": "https://www.campograndenews.com.br/brasil/cidades/rota-da-celulose-comeca-com-plano-emergencial-de-reparos-em-150-km-de-rodovias",
       "acesso": "2026-10-21",
       "trecho": "Com o contrato assinado, a Caminhos da Celulose assume oficialmente a responsabilidade pela malha rodoviária […] A apresentação marca o início formal da operação privada sobre 870 quilômetros de rodovias estaduais e federais (apresentação “nesta segunda-feira (2)”; publicado em 02/02/2026 12:51)"
+    },
+    "rs-p15": {
+      "tipo": "roadshow",
+      "pagina": 15
+    },
+    "antt-edital-03-2025": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Edital de Concessão nº 03/2025 (pós-esclarecimentos) — Rodovias Integradas do Paraná, Lotes 4 e 5",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/rodovias-integradas-do-parana-lote-5/arquivos-para-download/edital-e-anexos/edital-no-3-2025-pos-esclarescimentos/view",
+      "acesso": "2026-10-21",
+      "trecho": "1.3 A Tarifa Básica de Pedágio máxima a ser considerada para a elaboração da Proposta Econômica Escrita é de: (a) Lote PR4: 0,16788 […] (b) Lote PR5: 0,17911 […] para Trechos Homogêneos de pista simples […] referenciadas a janeiro de 2024"
+    },
+    "antt-ata-leilao-rip-lote-4": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Comissão de Outorga",
+      "titulo": "Ata de abertura do envelope de qualificação da proponente primeira colocada no leilão do Edital de Concessão nº 03/2025 (Lote 4)",
+      "data": "2025-10-23",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/br-272-369-376-pr-e-pr-182-272-317-323-444-862-897-986/arquivos-para-download/comissao-de-outorga/ata-de-abertura-do-envelope-de-qualificacao-da-proponente-primeira-colocada/view",
+      "acesso": "2026-10-21",
+      "trecho": "o leilão foi realizado no dia vinte e três de outubro de dois mil e vinte e cinco […] 1) Consórcio Infraestrutura PR – 18,52%; 2) Mota-Engil Latam Portugal, S.A. – 6,23%; 3) Motiva Infraestrutura de Mobilidade S.A. – 9,14%; 4) Reúne Rodovias Holding S.A. – 21,20% […] O Consórcio Infraestrutura PR ofertou um desconto final de 21,30% […] foi declarada vencedora a proponente Consórcio Infraestrutura PR"
+    },
+    "antt-extrato-contrato-rip-lote-4": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Extrato de concessão — Contrato de concessão das rodovias BR-272/369/376/PR e PR-182/272/317/323/444/862/897/986, Lote 4 (DOU de 09/02/2026, seção 3)",
+      "data": "2026-02-09",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/br-272-369-376-pr-e-pr-182-272-317-323-444-862-897-986/arquivos-para-download/edital-e-anexos/extrato-de-concessao-br-272-369-376-pr-e-pr-182-272-317-323-444-862-897-986-lote-4/view",
+      "acesso": "2026-10-21",
+      "trecho": "Concessionária: CONCESSIONÁRIA EPR 5 PARTICIPAÇÕES S.A. […] Tarifa Básica de Pedágio, correspondente ao valor básico de R$ 0,13212/km […] Prazo de vigência: 30 anos a partir da data de assunção […] Data de assinatura: 06/02/2026 (ato do DOU reproduzido na página da ANTT; o DOU não responde deste ambiente)"
+    },
+    "antt-contrato-rip-lote-4": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Contrato de Concessão nº 03/2025 — Lote 4, assinado (versão com tratamento LGPD)",
+      "data": "2026-02-06",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/br-272-369-376-pr-e-pr-182-272-317-323-444-862-897-986/arquivos-para-download/edital-e-anexos/contrato-lote-4-pr-assinado-tratamento-lgpd/view",
+      "acesso": "2026-10-21",
+      "trecho": "Aos seis dias do mês de fevereiro de 2026, pelo presente instrumento […] Tarifa Básica de Pedágio (TBP) […] R$ 0,13212/km"
+    },
+    "antt-concessao-epr-parana": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Lista de concessões — EPR Paraná",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/epr-parana",
+      "acesso": "2026-10-21",
+      "trecho": "Empresas Controladoras: Consórcio Infraestrutura PR · Data da Assinatura: 06/02/2026 · Início da Concessão: 09/03/2026 · Prazo da Concessão: 30 anos · Edital: 003/2025"
+    },
+    "antt-projeto-rip-lote-4": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Novos projetos em rodovias — BR-272/369/376/PR e PR-182/272/317/323/444/862/897/986 (Lote 4)",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/br-272-369-376-pr-e-pr-182-272-317-323-444-862-897-986",
+      "acesso": "2026-10-21",
+      "trecho": "O leilão do Lote 4 foi realizado em 23 de outubro de 2025, tendo sido declarado vencedor o Consórcio Infraestrutura PR, com a oferta de desconto de 21,20% […] homologado pela ANTT por meio da Deliberação ANTT nº 471, de 4 de dezembro de 2025. A formalização do contrato ocorreu em 5 de fevereiro de 2026"
+    },
+    "b3-2025-10-30-rip-lote-5": {
+      "tipo": "oficial",
+      "orgao": "B3",
+      "titulo": "Ministério dos Transportes e ANTT realizam leilão na B3 para concessão do Lote 5 de rodovias integradas do Paraná",
+      "data": "2025-10-30",
+      "url": "https://www.b3.com.br/pt_br/noticias/leiloes-8AE490C99A099340019A36D40F4C1C03.htm",
+      "acesso": "2026-10-21",
+      "trecho": "São Paulo, 30 de outubro de 2025 – Foi realizado hoje, na B3, o leilão […] A Reúne Rodovias Holding II S.A foi a vencedora ao apresentar 23,83% de desconto sobre a tarifa básica de pedágio e aporte de recursos vinculados de R$ 399.455.959,54 […] durante os 30 anos de concessão"
+    },
+    "antt-extrato-contrato-rip-lote-5": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Extrato de contrato — Contrato de concessão das rodovias BR-163/369/467 e PR-158/317/467/977/978, Lote 5 (DOU de 16/03/2026, seção 3)",
+      "data": "2026-03-16",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/rodovias-integradas-do-parana-lote-5/arquivos-para-download/edital-e-anexos/extrato-de-concessao-br-163-369-467-e-pr-158-317-467-977-978-lote-5/view",
+      "acesso": "2026-10-21",
+      "trecho": "Concessionária: VIA CAMPO CONCESSIONÁRIA DE RODOVIAS S.A. […] Tarifa Básica de Pedágio, correspondente ao valor básico de R$ 0,13643/km […] em valores de janeiro de 2024 […] Prazo de vigência: 30 anos a partir da data de assunção […] Data de assinatura: 13/03/2026 (ato do DOU reproduzido na página da ANTT; o DOU não responde deste ambiente)"
+    },
+    "antt-contrato-rip-lote-5": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Contrato de Concessão nº 03/2025 — Lote 5, assinado (versão com tratamento LGPD)",
+      "data": "2026-03-13",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/rodovias-integradas-do-parana-lote-5/arquivos-para-download/edital-e-anexos/contrato-lote-5-assinado-tratamento-lgpd/view",
+      "acesso": "2026-10-21",
+      "trecho": "Aos treze dias do mês de março de 2026, pelo presente instrumento […] Tarifa Básica de Pedágio (TBP) […] R$ 0,13643 […] Brasília, 13 de março de 2026"
+    },
+    "antt-concessao-via-campo": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Lista de concessões — Via Campo",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/via-campos",
+      "acesso": "2026-10-21",
+      "trecho": "Data da Assinatura: 13/03/2026 · Início da Concessão: 16/04/2026 · Prazo da Concessão: 30 anos · Edital: 03/2025"
+    },
+    "antt-ata-leilao-rota-sertaneja": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Comissão de Outorga",
+      "titulo": "Ata de abertura do envelope da proposta econômica escrita e classificação no leilão do Edital de Concessão nº 04/2025 (Rota Sertaneja)",
+      "data": "2025-11-06",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/rodovia-br-153-262-go-mg-rota-sertaneja/arquivos-para-download/comissao-de-outorga/ata-de-abertura-do-envelopes-da-proposta-economica-escrita-e-classificacao-no-leilao/view",
+      "acesso": "2026-10-21",
+      "trecho": "o leilão foi realizado no dia seis de novembro de dois mil e vinte e cinco […] 1) Consórcio Rota do Cerrado – 20,36%; 2) Way Concessões S.A. – 24,80 %; 3) Consórcio Caminho do Cerrado – 14,00%; e 4) Vinci Highways do Brasil - Participações S.A. – 20,11% […] foi declarada vencedora a proponente Way Concessões S.A., representada pela corretora Safra […] em virtude do desconto final ofertado de 24,80%"
+    },
+    "antt-delib-489-2025": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Diretoria Colegiada",
+      "titulo": "Deliberação ANTT nº 489, de 17 de dezembro de 2025 — Homologação (Edital nº 4/2025)",
+      "data": "2025-12-17",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/rodovia-br-153-262-go-mg-rota-sertaneja/arquivos-para-download/comissao-de-outorga/deliberacao-antt-no-489-de-17-de-dezembro-de-2025/view",
+      "acesso": "2026-10-21",
+      "trecho": "Fica homologado o resultado do Leilão para concessão do sistema rodoviário da Rodovia BR-153/262/GO/MG, denominada Rota Sertaneja, à proponente consagrada vencedora Way Concessões S.A., que apresentou desconto sobre a tarifa básica de pedágio de 24,80% (ato do DOU reproduzido na página da ANTT; o DOU não responde deste ambiente)"
+    },
+    "antt-extrato-contrato-rota-sertaneja": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Extrato de contrato — Contrato de concessão das rodovias BR-153/262/GO/MG (DOU nº 43, de 05/03/2026, seção 3)",
+      "data": "2026-03-05",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/rodovia-br-153-262-go-mg-rota-sertaneja/arquivos-para-download/edital-e-anexos/extrato-de-contrato-rota-sertaneja/view",
+      "acesso": "2026-10-21",
+      "trecho": "CONCESSIONÁRIA ROTA SERTANEJA MG-GO S.A. […] Prazo de vigência: 30 anos a partir da data de assunção […] Data de assinatura: 03/03/2026 (ato do DOU reproduzido na página da ANTT; o DOU não responde deste ambiente)"
+    },
+    "antt-concessao-way-153": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Lista de concessões — Way-153",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/rota-sertaneja",
+      "acesso": "2026-10-21",
+      "trecho": "Empresas Controladoras: Way Concessões S.A · Data da Assinatura: 03/03/2026 · Início da Concessão: 26/03/2026 · Prazo da Concessão: 30 anos · Edital: 04/2025 · Início da Cobrança de Pedágio: 26/03/2026"
+    },
+    "antt-projeto-rota-sertaneja": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Novos projetos em rodovias — Rodovia BR-153/262/GO/MG (Rota Sertaneja)",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/rodovia-br-153-262-go-mg-rota-sertaneja",
+      "acesso": "2026-10-21",
+      "trecho": "em 5 de dezembro de 2025, a Diretoria Colegiada homologou o resultado do leilão, confirmando a Way Concessões S.A. como vencedora […] por meio da Deliberação nº 47, de 27 de fevereiro de 2026, o ato de outorga em favor da Concessionária Rota Sertaneja MG-GO S.A."
+    },
+    "mg-seinfra-ata-sessao-via-liberdade": {
+      "tipo": "oficial",
+      "orgao": "Governo de Minas Gerais — Seinfra (Comissão Especial de Licitação)",
+      "titulo": "Ata da Sessão Pública de Licitação — Concorrência Internacional SEINFRA nº 002/2025 (Lote 07 – Ouro Preto – Mariana, Via Liberdade)",
+      "data": "2025-09-18",
+      "url": "https://infraestrutura.mg.gov.br/wp-content/uploads/17-ata-sessao-publica.pdf",
+      "acesso": "2026-10-21",
+      "trecho": "Aos dezoito dias de setembro de dois mil e vinte e cinco […] Consórcio Rota da Liberdade, apresentando o valor de contraprestação de R$ 1.702.476.148,74 […] equivalente ao deságio de 13,20% do valor máximo previsto no edital; […] Houer Consultoria e Concessões LTDA […] equivalente ao deságio de 0,02%"
+    },
+    "mg-seinfra-homologacao-via-liberdade": {
+      "tipo": "oficial",
+      "orgao": "Governo de Minas Gerais — Seinfra",
+      "titulo": "Ato de Adjudicação e Homologação — Edital de Concorrência Internacional nº 002/2025 (Via Liberdade)",
+      "data": "2025-11-14",
+      "url": "https://infraestrutura.mg.gov.br/wp-content/uploads/23-ato-adjudicacao-homologacao.pdf",
+      "acesso": "2026-10-21",
+      "trecho": "ADJUDICO o objeto em epígrafe ao licitante declarado vencedor […] CONSÓRCIO ROTA DA LIBERDADE, formado pelas empresas CONSTRUTORA METROPOLITANA S/A […] (LÍDER) […] R$ 1.702.476.148,74"
+    },
+    "mg-doe-extrato-contrato-via-liberdade": {
+      "tipo": "oficial",
+      "orgao": "Governo de Minas Gerais — Seinfra (Diário Oficial de MG)",
+      "titulo": "Extrato do Contrato de Concessão SEINFRA nº 9493121/2026 (Jornal Minas Gerais, Diário do Executivo, 14/01/2026, p. 54)",
+      "data": "2026-01-14",
+      "url": "https://infraestrutura.mg.gov.br/wp-content/uploads/03-extrato-contrato-publicado-doemg-2.pdf",
+      "acesso": "2026-10-21",
+      "trecho": "Espécie: Contrato de Concessão Patrocinada […] Contratado: Concessionária Rota da Liberdade S. A […] Vigência: 30 (trinta) anos […] Local e Data de Assinatura: Belo Horizonte, em 12 de janeiro de 2026"
+    },
+    "mg-artemig-contrato-via-liberdade": {
+      "tipo": "oficial",
+      "orgao": "Governo de Minas Gerais — Artemig",
+      "titulo": "Contrato nº 9493121/2026 — Concessão do Lote 07 – Ouro Preto – Mariana (Via Liberdade)",
+      "data": "2026-01-12",
+      "url": "https://artemig.mg.gov.br/wp-content/uploads/2026/01/CONTRATO_9493121-2026_LOTE_07.pdf",
+      "acesso": "2026-10-21",
+      "trecho": "Aos 12 dias do mês de Janeiro de 2026 […] PRAZO DA CONCESSÃO: prazo original de 30 (trinta) anos, contados a partir da DATA DE EFICÁCIA […] Documento assinado eletronicamente […] em 13/01/2026"
+    },
+    "mg-seinfra-2026-01-12-via-liberdade": {
+      "tipo": "oficial",
+      "orgao": "Governo de Minas Gerais — Seinfra",
+      "titulo": "Governo de Minas assina contrato de concessão da Via Liberdade, um dos maiores projetos rodoviários do estado",
+      "data": "2026-01-12",
+      "url": "https://infraestrutura.mg.gov.br/noticias/governo-de-minas-assina-contrato-de-concessao-da-via-liberdade-um-dos-maiores-projetos-rodoviarios-do-estado/",
+      "acesso": "2026-10-21",
+      "trecho": "O governador Romeu Zema e o vice-governador Mateus Simões participaram, na manhã desta segunda-feira (12/1), em Belo Horizonte, da assinatura do contrato de concessão do Lote Rodoviário Ouro Preto–Mariana"
+    },
+    "mg-seinfra-projeto-via-liberdade": {
+      "tipo": "oficial",
+      "orgao": "Governo de Minas Gerais — Seinfra",
+      "titulo": "Contratos vigentes — Lote 7 – Ouro Preto Mariana (Via Liberdade)",
+      "url": "https://infraestrutura.mg.gov.br/ppp/contratos-vigentes/lote-07-ouro-preto-mariana-via-liberdade/",
+      "acesso": "2026-10-21",
+      "trecho": "PRAZO (ANOS) 30 anos · NÚMERO DO CONTRATO Contrato SEINFRA Nº 9493121/2026 · ASSINATURA DO CONTRATO 13/01/2026 · Leilão: […] 18 de setembro de 2025 […] na B3"
+    },
+    "mg-artemig-lote-7": {
+      "tipo": "oficial",
+      "orgao": "Governo de Minas Gerais — Artemig",
+      "titulo": "Rodovias — Lote 07: Ouro Preto – Mariana",
+      "url": "https://artemig.mg.gov.br/rodovias/lote-7-ouro-preto-mariana/",
+      "acesso": "2026-10-21",
+      "trecho": "Início da Concessão: 20/03/2026 (data de eficácia do contrato) · Prazo da Concessão: 30 anos · 1º Termo Aditivo — Objeto: incluir a […] ARTEMIG […] como INTERVENIENTE ao CONTRATO DE CONCESSÃO, em razão da assunção das atribuições de ENTE REGULADOR"
+    },
+    "mg-gov-2026-03-23-via-liberdade": {
+      "tipo": "oficial",
+      "orgao": "Governo de Minas Gerais",
+      "titulo": "Concessionária assume trecho Ouro Preto – Mariana e inicia operação de lote rodoviário em Minas Gerais",
+      "data": "2026-03-23",
+      "url": "https://www.mg.gov.br/riodoce/noticias/concessionaria-assume-trecho-ouro-preto-mariana-e-inicia-operacao-de-lote-rodoviario-em-minas-gerais",
+      "acesso": "2026-10-21",
+      "trecho": "nesta sexta-feira (20/3), com o início da operação do Lote 7 […] A concessionária Rota da Liberdade S.A. assume oficialmente […] A concessão é regulada e fiscalizada pela Agência Reguladora de Transportes do Estado de Minas Gerais (Artemig)"
+    },
+    "mg-agencia-2025-09-18-via-liberdade": {
+      "tipo": "oficial",
+      "orgao": "Governo de Minas Gerais — Agência Minas",
+      "titulo": "Consórcio Rota da Liberdade vence leilão do lote rodoviário Ouro Preto – Mariana",
+      "data": "2025-09-18",
+      "url": "https://www.agenciaminas.mg.gov.br/noticia/consorcio-rota-da-liberdade-vence-leilao-do-lote-rodoviario-ouro-preto-mariana/",
+      "acesso": "2026-10-21",
+      "trecho": "realizou, nesta quinta-feira (18/9), na Bolsa de Valores (B3) […] O Consórcio Rota da Liberdade foi declarado vencedor ao oferecer uma contraprestação, a ser paga pelo Estado […] deságio de 13,20% do valor máximo previsto em edital […] concessão, pelo prazo de 30 anos"
+    },
+    "antt-noticia-2008-02-14-2a-etapa": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "ANTT assina contratos de concessão das rodovias que compõem a 2ª etapa do programa federal",
+      "data": "2008-02-14",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/noticias/antt-assina-contratos-de-concessao-das-rodovias-que-compoem-a-2-etapa-do-programa-federal",
+      "acesso": "2026-10-21",
+      "trecho": "assina, nessa quinta-feira (14 de fevereiro), os contratos de concessão de seis dos sete lotes […] AUTOPISTA FLUMINENSE S/A Lote 04 […] AUTOPISTA RÉGIS BITTENCOURT S/A Lote 06 […] AUTOPISTA FERNÃO DIAS S.A. Lote 05"
+    },
+    "antt-ata-processo-competitivo-autopista-fluminense": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Comissão de Processo Competitivo",
+      "titulo": "Ata de abertura dos envelopes e divulgação do resultado do Processo Competitivo nº 3/2025 (Autopista Fluminense, BR-101/RJ)",
+      "data": "2025-11-11",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/reestruturacao-de-contratos-de-concessao/br-101-rj-rodovias-autopista-fluminense/arquivos-para-download/comissao-de-processo-competitivo/ata-de-abertura-dos-envelopes-e-divulgacao-do-resultado-do-processo-competitivo/view",
+      "acesso": "2026-10-21",
+      "trecho": "o leilão foi realizado no dia onze de novembro de dois mil e vinte e cinco […] houve apenas uma proponente apta […] Arteris S.A. […] confirmou-se o percentual de deságio ofertado na proposta econômica escrita, correspondente a 0,00% (zero por cento) […] declarou como vencedora do certame a proponente Arteris S.A., representada pela corretora Itaú"
+    },
+    "antt-delib-496-2025": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Diretoria Colegiada",
+      "titulo": "Deliberação ANTT nº 496, de 17 de dezembro de 2025 — Homologação (Processo Competitivo nº 3/2025)",
+      "data": "2025-12-17",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/reestruturacao-de-contratos-de-concessao/br-101-rj-rodovias-autopista-fluminense/arquivos-para-download/comissao-de-processo-competitivo/deliberacao-antt-no-496-de-17-de-dezembro-de-2025-homologacao/view",
+      "acesso": "2026-10-21",
+      "trecho": "Fica homologado o resultado do Processo Competitivo para a alienação de 100% (cem por cento) das ações da Autopista Fluminense, BR-101/RJ, em favor da proponente Arteris S.A. […] A celebração do Termo Aditivo fica condicionada ao integral cumprimento das determinações cautelares proferidas nos autos do processo nº 5004985-60.2025.4.02.5107 (ato do DOU reproduzido na página da ANTT; o DOU não responde deste ambiente)"
+    },
+    "antt-extrato-termo-aditivo-autopista-fluminense": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Extrato de termo aditivo — Contrato de Concessão relativo ao Edital nº 004/2007 (DOU de 09/03/2026, seção 3)",
+      "data": "2026-03-09",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/reestruturacao-de-contratos-de-concessao/br-101-rj-rodovias-autopista-fluminense/arquivos-para-download/edital-e-anexos/extrato-de-termo-aditivo-dou/view",
+      "acesso": "2026-10-21",
+      "trecho": "CONTRATADA: ARTERIS S.A. […] ESPÉCIE: Assinatura do Termo Aditivo referente ao edital de Processo Competitivo n° 03/2025 […] DATA DA ASSINATURA: 06/03/2026 (ato do DOU reproduzido na página da ANTT; o DOU não responde deste ambiente)"
+    },
+    "antt-termo-aditivo-autopista-fluminense-2026": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Termo Aditivo de modernização do Contrato de Concessão da BR-101/RJ (Autopista Fluminense), assinado (versão com tratamento LGPD)",
+      "data": "2026-03-06",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/reestruturacao-de-contratos-de-concessao/br-101-rj-rodovias-autopista-fluminense/arquivos-para-download/edital-e-anexos/termo-aditivo-afl-assinado-tratamento-lgpd/view",
+      "acesso": "2026-10-21",
+      "trecho": "Aos 06 dias do mês de março de 2026 […] Contrato de Concessão Original: significa o Contrato de Concessão firmado em 14 de fevereiro de 2008, nos termos do Edital nº 004/2007 […] 3.1 O Prazo da Concessão […] se estenderá por 22 (vinte e dois) anos, contados a partir do início de vigência do presente Termo Aditivo"
+    },
+    "antt-concessao-autopista-fluminense": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Lista de concessões — Autopista Fluminense",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/autopista-fluminense",
+      "acesso": "2026-10-21",
+      "trecho": "Empresas Controladoras: ARTERIS S/A · Data da Assinatura do Termo Aditivo de Modernização: 06/03/2026 · Início da Concessão: 18/02/2008 · Prazo da Concessão: 22 anos · Edital Original: 004/2007 · Edital Processo Competitivo: 003/2025"
+    },
+    "antt-ata-processo-competitivo-fernao-dias": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Comissão de Processo Competitivo",
+      "titulo": "Ata de abertura dos envelopes e divulgação do resultado do Processo Competitivo nº 4/2025 (Autopista Fernão Dias, BR-381/MG/SP)",
+      "data": "2025-12-11",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/reestruturacao-de-contratos-de-concessao/Fernao-dias/processo%20competitivo/comissao-de-processo-competitivo/ata-de-abertura-de-envelopes-e-divulgacao-do-resultado-do-processo-competitivo/view",
+      "acesso": "2026-10-21",
+      "trecho": "o leilão foi realizado no dia onze de dezembro de dois mil e vinte e cinco […] 1) Motiva Infraestrutura de Mobilidade S.A. - 17,05% ; 2) Consórcio Infraestrutura MG - 11,25%; e 3) Arteis S.A. - 0,00%. […] declarou como vencedora do certame a proponente Motiva Infraestrutura de Mobilidade S.A., representada pela corretora Terra Investimentos, com a alienação de 100% (cem por cento) das ações da Concessionária"
+    },
+    "antt-termo-aditivo-fernao-dias-2026": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Termo Aditivo ao Contrato de Concessão da BR-381/MG/SP (contrato reestruturado, Autopista Fernão Dias)",
+      "data": "2026-05-11",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/motiva-minas-sp/documentos-de-gestao/contrato-e-anexos/contrato-reestruturado/termo-aditivo-ao-contrato-de-concessao-contrato-reestruturado.pdf",
+      "acesso": "2026-10-21",
+      "trecho": "Aos 11 dias do mês de maio de 2026 […] Contrato de Concessão Original: significa o Contrato de Concessão firmado em 14 de fevereiro de 2008, nos termos do Edital Nº 002/2007 […] 3.1 O Prazo da Concessão […] se estenderá por 15 (quinze) anos, contados a partir do início de vigência do presente Termo Aditivo […] Brasília, 11 de maio de 2026"
+    },
+    "antt-concessao-motiva-minas-sp": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Lista de concessões — Motiva Minas SP",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/motiva-minas-sp",
+      "acesso": "2026-10-21",
+      "trecho": "Empresas Controladoras: Motiva · Data da Assinatura do Termo Aditivo de Modernização: 11/05/2026 · Prazo da Concessão: 15 anos · Edital de Processo Competitivo: 04/2025 · Edital Original: 02/2007 · Contrato Anterior: Autopista Fernão Dias"
+    },
+    "antt-ata-leilao-rota-gerais": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Comissão de Outorga",
+      "titulo": "Ata de abertura do envelope de qualificação da proponente primeira colocada no leilão do Edital de Concessão nº 05/2025 (Rota Gerais)",
+      "data": "2026-03-31",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/rodovias-BR%20116-251-MG/copy_of_arquivos-para-download/comissao-de-outorga/ata-de-abertura-do-envelope-de-qualificacao-da-proponente-primeira-colocada/view",
+      "acesso": "2026-10-21",
+      "trecho": "o leilão foi realizado no dia trinta e um de março de dois mil e vinte e seis […] 1) Brasil Rodovias Fundo de Investimento em Participações Multiestratégia Responsabilidade Limitada – 0,01%; 2) Ecorodovias Concessões e Serviços S.A. – 13,50% e 3) Consórcio Atlas Rodovias – 13,70% […] A Ecorodovias Concessões e Serviços S.A. ofertou um desconto final de 19,00%, enquanto o Consórcio Atlas Rodovias […] 18,90% […] representada pela corretora Mirae Asset"
+    },
+    "antt-delib-143-2026": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Diretoria Colegiada",
+      "titulo": "Deliberação ANTT nº 143, de 21 de maio de 2026 — Homologação (Edital nº 05/2025)",
+      "data": "2026-05-21",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/rodovias-BR%20116-251-MG/copy_of_arquivos-para-download/comissao-de-outorga/deliberacao-antt-no-143-de-21-de-maio-de-2026-homologacao/view",
+      "acesso": "2026-10-21",
+      "trecho": "Fica homologado o resultado do Leilão para concessão do sistema rodoviário da rodovia BR-116/251/MG, denominado Rota Gerais, à proponente consagrada vencedora Ecorodovias Concessões e Serviços S.A., que apresentou desconto sobre a tarifa básica de pedágio de 19,00% (ato do DOU reproduzido na página da ANTT; o DOU não responde deste ambiente)"
+    },
+    "antt-extrato-concessao-rota-gerais": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Extrato de concessão — Contrato de concessão da BR-116/251/MG, Rota Gerais (DOU de 08/06/2026)",
+      "data": "2026-06-08",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/rodovias-BR%20116-251-MG/copy_of_arquivos-para-download/edital-e-anexos/extrato-de-concessao-br-116-251-mg-rota-gerais/view",
+      "acesso": "2026-10-21",
+      "trecho": "CONCESSIONÁRIA ECOVIAS DAS GERAIS S.A. […] Prazo de vigência: 30 anos a partir da data de assunção […] Data de assinatura: 03/06/2026 (ato do DOU reproduzido na página da ANTT; o DOU não responde deste ambiente)"
+    },
+    "antt-concessao-ecovias-das-gerais": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Lista de concessões — Ecovias das Gerais",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/ecovias-das-gerais",
+      "acesso": "2026-10-21",
+      "trecho": "Trecho Objeto da Concessão: BR-116/251/MG · Data da Assinatura: 03/06/2026 · Início da Concessão: (em branco) · Prazo da Concessão: 30 anos · Edital: 005/2025"
+    },
+    "b3-2026-03-31-rota-gerais": {
+      "tipo": "oficial",
+      "orgao": "B3",
+      "titulo": "Ministério dos Transportes e ANTT realizam leilão na B3 para a concessão do sistema rodoviário BR-251/MG e BR-116/MG",
+      "data": "2026-03-31",
+      "url": "https://www.b3.com.br/pt_br/noticias/ministerio-dos-transportes-e-antt-realizam-leilao-na-b3-para-a-concessao-do-sistema-rodoviario-br-251-mg-e-br-116-mg.htm",
+      "acesso": "2026-10-21",
+      "trecho": "A EcoRodovias Concessões e Serviços S.A foi a vencedora do leilão ao apresentar desconto de 19% sobre a tarifa básica de pedágio […] O contrato de concessão terá prazo de 30 anos"
+    },
+    "antt-ata-leilao-rota-dos-sertoes": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Comissão de Outorga",
+      "titulo": "Ata de abertura do envelope de qualificação da proponente primeira colocada no leilão do Edital de Concessão nº 01/2026 (Rota dos Sertões)",
+      "data": "2026-05-28",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/BR-116-BA-PE/copy_of_arquivos-para-download/comissao-de-outorga/ata-de-abertura-do-envelope-de-qualificacao-da-proponente-primeira-colocada/view",
+      "acesso": "2026-10-21",
+      "trecho": "o leilão foi realizado no dia vinte e oito de maio de dois mil e vinte e seis […] 1) Consórcio Atlas Rodovias - 16%; 2) Consórcio Via dos Sertões - 13,10% e 3) Consórcio 116 Sertões - 18,17% […] O Consórcio 116 Sertões ofertou um desconto final de 19,60%, enquanto o Consórcio Atlas Rodovias […] 19,50% […] representada pela corretora Galápagos Capital"
+    },
+    "antt-ata-julgamento-rota-dos-sertoes": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Comissão de Outorga",
+      "titulo": "Ata de análise e julgamento dos documentos de qualificação da proponente primeira colocada no leilão do Edital de Concessão nº 01/2026 (Rota dos Sertões)",
+      "data": "2026-06-15",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/BR-116-BA-PE/copy_of_arquivos-para-download/comissao-de-outorga/ata-de-analise-e-julgamento-dos-documentos-de-qualificacao-da-proponente-primeira-colocada/view",
+      "acesso": "2026-10-21",
+      "trecho": "esta Comissão confirma a Proponente Consórcio 116 Sertões como vencedora do Leilão para a concessão do Sistema Rodoviário das Rodovias BR-116/BA/PE e BR-324/BA"
+    },
+    "antt-extrato-contrato-rota-dos-sertoes": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Extrato de contrato — Contrato de concessão das rodovias BR-116/BA/PE e BR-324/BA (DOU nº 185, de 30/09/2026)",
+      "data": "2026-09-30",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/BR-116-BA-PE/copy_of_arquivos-para-download/edital-e-anexos/extrato-de-contrato/view",
+      "acesso": "2026-10-21",
+      "trecho": "CONCESSIONÁRIA 116 SERTÕES S.A. […] Prazo de vigência: 30 anos a partir da data de assunção […] Data de assinatura: 29/09/2026 (ato do DOU reproduzido na página da ANTT; o DOU não responde deste ambiente)"
+    },
+    "antt-concessao-116-sertoes": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Lista de concessões — 116 Sertões",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/116-sertoes",
+      "acesso": "2026-10-21",
+      "trecho": "Trecho Objeto da Concessão: BR-116/324/BA/PE · Data da Assinatura: 29/09/2026 · Início da Concessão: (em branco) · Prazo da Concessão: 30 Anos · Edital: 001/2026"
+    },
+    "b3-2026-05-28-rota-dos-sertoes": {
+      "tipo": "oficial",
+      "orgao": "B3",
+      "titulo": "Ministério dos Transportes e ANTT realizam leilão na B3 (Rota dos Sertões)",
+      "data": "2026-05-28",
+      "url": "https://www.b3.com.br/pt_br/noticias/ministerio-dos-transportes-e-antt-realizam-leilao-na-b3.htm",
+      "acesso": "2026-10-21",
+      "trecho": "O Consórcio 116 Sertões, formado pelas empresas Neo Invest Latam, Infra I Fundo de Investimento em Participações em Infraestrutura Responsabilidade Ltda., e Mota-Engil Latam Portugal S.A, foi o vencedor do leilão ao apresentar ágio de 19,60% de desconto sobre a tarifa base […] O contrato terá prazo de 30 anos"
+    },
+    "b3-2026-07-23-regis-bittencourt": {
+      "tipo": "oficial",
+      "orgao": "B3",
+      "titulo": "Ministério dos Transportes e ANTT fazem leilão na B3 sobre contrato da Autopista Régis Bittencourt",
+      "data": "2026-07-23",
+      "url": "https://www.b3.com.br/pt_br/noticias/leiloes-8AE490C99F922315019F943BDABF2F5D.htm",
+      "acesso": "2026-10-21",
+      "trecho": "São Paulo, 23 de julho de 2026 – Foi realizado hoje, na B3, o leilão […] referente a otimização do contrato da BR-116/SP/PR […] A EPR Participações S.A foi a vencedora do leilão ao apresentar desconto de 22,53% sobre a tarifa básica de pedágio […] o novo contrato terá duração de 25 anos"
+    },
+    "antt-delib-276-2026": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Diretoria Colegiada",
+      "titulo": "Deliberação ANTT nº 276, de 10 de setembro de 2026 — Homologação (Processo Competitivo nº 01/2026, Régis Bittencourt)",
+      "data": "2026-09-10",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/reestruturacao-de-contratos-de-concessao/BR-163-230-PA-MT%20-%20Via%20Brasil/copy_of_processo%20competitivo/edital-e-anexos/deliberacao-antt-no-278-de-10-de-setembro-de-2026",
+      "acesso": "2026-10-21",
+      "trecho": "Fica homologado o resultado do Processo Competitivo para a alienação de 100% (cem por cento) das ações representativas do capital social da Autopista Régis Bittencourt S.A. […] e adjudicar o objeto à proponente EPR Participações S.A., vencedora do certame, com desconto de 22,53% […] sobre a Tarifa Básica de Pedágio (página do DOU de 11/09/2026 com as Deliberações nº 273 a 278, publicada pela ANTT na pasta do processo da Via Brasil; o DOU não responde deste ambiente)"
+    },
+    "antt-ata-entrega-propostas-regis-bittencourt": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Comissão de Processo Competitivo",
+      "titulo": "Ata de entrega eletrônica de propostas no Processo Competitivo nº 01/2026 (Autopista Régis Bittencourt)",
+      "data": "2026-07-20",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/reestruturacao-de-contratos-de-concessao/BR-116-SP-PR%20-%20Regis%20Bittencourt/processo%20competitivo/comissao-de-processo-competitivo/ata-de-entrega-eletronica-de-propostas-no-processo-competitivo-no-01-2026.pdf/view",
+      "acesso": "2026-10-21",
+      "trecho": "Aos vinte dias do mês de julho do ano de dois mil e vinte e seis […] As entregas ocorreram conforme o quadro abaixo: 12:49 MOTIVA INFRAESTRUTURA DE MOBILIDADE S.A. […] 15:01 EPR PARTICIPAÇÕES S.A. […] 15:53 ARTERIS S.A."
+    },
+    "antt-minuta-termo-aditivo-regis-bittencourt": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Termo Aditivo — Edital de Processo Competitivo nº 01/2026, pós-esclarecimentos (minuta, Régis Bittencourt)",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/reestruturacao-de-contratos-de-concessao/BR-116-SP-PR%20-%20Regis%20Bittencourt/processo%20competitivo/edital-e-anexos/termo-aditivo-ao-edital-de-processo-competitivo-no-1-2026-pos-esclarecimentos/view",
+      "acesso": "2026-10-21",
+      "trecho": "Contrato de Concessão Original: significa o Contrato de Concessão firmado em 14 de fevereiro de 2008, nos termos do Edital Nº 001/2007 – Lote 6 […] 3.1 O Prazo da Concessão […] se estenderá por 15 (quinze) anos, contados a partir do início de vigência do presente Termo Aditivo"
+    },
+    "antt-projeto-regis-bittencourt": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Reestruturação de contratos de concessão — BR-116/SP/PR (Régis Bittencourt)",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/reestruturacao-de-contratos-de-concessao/BR-116-SP-PR%20-%20Regis%20Bittencourt",
+      "acesso": "2026-10-21",
+      "trecho": "Prazo: 15 anos a partir da assinatura do termo aditivo · Critério de Julgamento do Leilão: Menor tarifa com base em um percentual de deságio sobre a tarifa-teto"
+    },
+    "antt-concessao-autopista-regis-bittencourt": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Lista de concessões — Autopista Régis Bittencourt",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/autopista-regis-bittencourt",
+      "acesso": "2026-10-21",
+      "trecho": "Empresas Controladoras: ARTERIS S/A · Data da Assinatura: 14/02/2008 · Início da Concessão: 18/02/2008 · Prazo da Concessão: 25 anos · Edital: 001/2007"
     }
   },
   "leiloes": [
@@ -1710,6 +2140,647 @@
             "antt-projeto-br-060-364",
             "antt-ata-leilao-br-060-364",
             "antt-extrato-contrato-br-060-364"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "rip-lote-4",
+      "ent": "rodovias-integradas-do-parana-lote-4",
+      "participantes": {
+        "ano": 2025,
+        "lote": "Rodovias Integradas do Paraná - Lote 4"
+      },
+      "concorrentes": "Rodovias Integradas do Paraná - Lote 4",
+      "campos": {
+        "leilao": {
+          "valor": "2025-10-23",
+          "fontes": [
+            "antt-ata-leilao-rip-lote-4",
+            "rs-p97"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Consórcio Infraestrutura PR",
+          "fontes": [
+            "antt-ata-leilao-rip-lote-4",
+            "antt-concessao-epr-parana",
+            "rs-p97"
+          ]
+        },
+        "desagio": {
+          "valor": 21.3,
+          "fontes": [
+            "antt-ata-leilao-rip-lote-4",
+            "antt-extrato-contrato-rip-lote-4",
+            "antt-edital-03-2025",
+            "rs-p97"
+          ]
+        },
+        "assinatura": {
+          "valor": "2026-02-06",
+          "fontes": [
+            "antt-contrato-rip-lote-4",
+            "antt-extrato-contrato-rip-lote-4",
+            "antt-concessao-epr-parana",
+            "rs-p97"
+          ]
+        },
+        "inicio_operacao": {
+          "valor": "2026-03-09",
+          "fontes": [
+            "antt-concessao-epr-parana",
+            "rs-p97"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 30,
+          "fontes": [
+            "antt-extrato-contrato-rip-lote-4",
+            "antt-concessao-epr-parana"
+          ]
+        }
+      },
+      "notas": [
+        {
+          "texto": "Lances escritos da ata: Consórcio Infraestrutura PR 18,52%, Mota-Engil Latam Portugal 6,23%, Motiva Infraestrutura de Mobilidade 9,14% e Reúne Rodovias Holding 21,20%; no viva-voz, o Consórcio Infraestrutura PR ofertou 21,30% e a Reúne manteve 21,20%. Os 18,52% da p. 15 do RoadShow são o lance escrito do vencedor. A tarifa do contrato (R$ 0,13212/km) sobre a tarifa máxima do edital (R$ 0,16788/km) confirma o desconto de 21,30%. A SPE que assinou o contrato é a Concessionária EPR 5 Participações S.A.",
+          "fontes": [
+            "antt-ata-leilao-rip-lote-4",
+            "antt-extrato-contrato-rip-lote-4",
+            "antt-edital-03-2025"
+          ]
+        },
+        {
+          "texto": "A página do projeto na ANTT informa desconto de 21,20% (o lance da Reúne) e formalização do contrato em 05/02/2026; a ata do leilão, o contrato assinado (\"Aos seis dias do mês de fevereiro de 2026\"), o extrato publicado no DOU e a página da concessão registram 21,30% e 06/02/2026, valores adotados. A mesma página cita a homologação pela Deliberação ANTT nº 471, de 04/12/2025, não localizada em documento próprio.",
+          "fontes": [
+            "antt-projeto-rip-lote-4",
+            "antt-ata-leilao-rip-lote-4",
+            "antt-contrato-rip-lote-4",
+            "antt-extrato-contrato-rip-lote-4"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "rip-lote-5",
+      "ent": "rodovias-integradas-do-parana-lote-5",
+      "participantes": {
+        "ano": 2025,
+        "lote": "Rodovias Integradas do Paraná - Lote 5"
+      },
+      "concorrentes": "Rodovias Integradas do Paraná - Lote 5",
+      "campos": {
+        "leilao": {
+          "valor": "2025-10-30",
+          "fontes": [
+            "b3-2025-10-30-rip-lote-5",
+            "rs-p97"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Reúne Rodovias Holding II S.A.",
+          "fontes": [
+            "b3-2025-10-30-rip-lote-5"
+          ]
+        },
+        "desagio": {
+          "valor": 23.83,
+          "fontes": [
+            "b3-2025-10-30-rip-lote-5",
+            "antt-extrato-contrato-rip-lote-5",
+            "antt-edital-03-2025",
+            "rs-p15"
+          ]
+        },
+        "assinatura": {
+          "valor": "2026-03-13",
+          "fontes": [
+            "antt-contrato-rip-lote-5",
+            "antt-extrato-contrato-rip-lote-5",
+            "antt-concessao-via-campo"
+          ]
+        },
+        "inicio_operacao": {
+          "valor": "2026-04-16",
+          "fontes": [
+            "antt-concessao-via-campo",
+            "rs-p97"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 30,
+          "fontes": [
+            "antt-extrato-contrato-rip-lote-5",
+            "antt-concessao-via-campo",
+            "b3-2025-10-30-rip-lote-5"
+          ]
+        }
+      },
+      "notas": [
+        {
+          "texto": "A B3 informa o desconto vencedor de 23,83%, o mesmo da p. 15 do RoadShow; a p. 97 imprime 21,83%. A tarifa do contrato (R$ 0,13643/km) sobre a tarifa máxima do edital para o Lote PR5 (R$ 0,17911/km, jan/2024) também dá 23,83%. A ata da sessão e a deliberação de homologação do Lote 5 não estão publicadas na página do projeto na ANTT (só a do Lote 4).",
+          "fontes": [
+            "b3-2025-10-30-rip-lote-5",
+            "antt-extrato-contrato-rip-lote-5",
+            "antt-edital-03-2025"
+          ]
+        },
+        {
+          "texto": "O contrato foi assinado em 13/03/2026 com a Via Campo Concessionária de Rodovias S.A. (SPE da Reúne, do grupo Pátria). O RoadShow imprime 16/03/2026 na p. 97, data de publicação do extrato no DOU, e 06/02/2026 na p. 5, data do contrato do Lote 4.",
+          "fontes": [
+            "antt-contrato-rip-lote-5",
+            "antt-extrato-contrato-rip-lote-5"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "rota-sertaneja",
+      "ent": "rota-sertaneja",
+      "participantes": {
+        "ano": 2025,
+        "lote": "Rota Sertaneja"
+      },
+      "concorrentes": "Rota Sertaneja",
+      "campos": {
+        "leilao": {
+          "valor": "2025-11-06",
+          "fontes": [
+            "antt-ata-leilao-rota-sertaneja",
+            "rs-p97"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Way Concessões S.A.",
+          "fontes": [
+            "antt-ata-leilao-rota-sertaneja",
+            "antt-delib-489-2025"
+          ]
+        },
+        "desagio": {
+          "valor": 24.8,
+          "fontes": [
+            "antt-ata-leilao-rota-sertaneja",
+            "antt-delib-489-2025",
+            "rs-p97"
+          ]
+        },
+        "assinatura": {
+          "valor": "2026-03-03",
+          "fontes": [
+            "antt-extrato-contrato-rota-sertaneja",
+            "antt-concessao-way-153",
+            "rs-p97"
+          ]
+        },
+        "inicio_operacao": {
+          "valor": "2026-03-26",
+          "fontes": [
+            "antt-concessao-way-153"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 30,
+          "fontes": [
+            "antt-extrato-contrato-rota-sertaneja",
+            "antt-concessao-way-153"
+          ]
+        }
+      },
+      "notas": [
+        {
+          "texto": "Lances da ata: Way Concessões S.A. 24,80%, Consórcio Rota do Cerrado 20,36%, Vinci Highways do Brasil - Participações S.A. 20,11% (o RoadShow imprime 0,11%) e Consórcio Caminho do Cerrado 14,00%; no viva-voz não houve novas ofertas. \"Corretora Safra\" é a corretora que representou a Way. A homologação é a Deliberação ANTT nº 489, de 17/12/2025 (a página do projeto diz 5 de dezembro), e a outorga, a Deliberação nº 47, de 27/02/2026, em favor da Concessionária Rota Sertaneja MG-GO S.A.",
+          "fontes": [
+            "antt-ata-leilao-rota-sertaneja",
+            "antt-delib-489-2025",
+            "antt-projeto-rota-sertaneja"
+          ]
+        },
+        {
+          "texto": "A página da concessão na ANTT registra o início da concessão e da cobrança em 26/03/2026; o RoadShow imprime 03/04/2026.",
+          "fontes": [
+            "antt-concessao-way-153"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "via-liberdade",
+      "ent": "via-liberdade",
+      "participantes": {
+        "ano": 2025,
+        "lote": "Via Liberdade - BR-356/MG, MG-262/329"
+      },
+      "concorrentes": "Via Liberdade (delegação a MG)",
+      "campos": {
+        "leilao": {
+          "valor": "2025-09-18",
+          "fontes": [
+            "mg-seinfra-ata-sessao-via-liberdade",
+            "mg-agencia-2025-09-18-via-liberdade",
+            "rs-p97"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Consórcio Rota da Liberdade",
+          "fontes": [
+            "mg-seinfra-homologacao-via-liberdade",
+            "mg-seinfra-ata-sessao-via-liberdade",
+            "rs-p97"
+          ]
+        },
+        "desagio": {
+          "valor": 13.2,
+          "fontes": [
+            "mg-seinfra-ata-sessao-via-liberdade",
+            "mg-agencia-2025-09-18-via-liberdade",
+            "rs-p97"
+          ]
+        },
+        "assinatura": {
+          "valor": "2026-01-12",
+          "fontes": [
+            "mg-doe-extrato-contrato-via-liberdade",
+            "mg-artemig-contrato-via-liberdade",
+            "mg-seinfra-2026-01-12-via-liberdade"
+          ]
+        },
+        "inicio_operacao": {
+          "valor": "2026-03-20",
+          "fontes": [
+            "mg-artemig-lote-7",
+            "mg-gov-2026-03-23-via-liberdade"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 30,
+          "fontes": [
+            "mg-doe-extrato-contrato-via-liberdade",
+            "mg-artemig-contrato-via-liberdade",
+            "mg-artemig-lote-7"
+          ]
+        }
+      },
+      "notas": [
+        {
+          "texto": "PPP estadual (concessão patrocinada) do Governo de Minas Gerais, regulada e fiscalizada pela Artemig, não pela ANTT; a Artemig entrou no contrato como interveniente pelo 1º Termo Aditivo, de 13/04/2026. O deságio de 13,20% incide sobre a contraprestação máxima paga pelo Estado (proposta de R$ 1.702.476.148,74), não sobre a tarifa de pedágio; a Houer Consultoria e Concessões ofertou 0,02%. O consórcio é liderado pela Construtora Metropolitana S.A., com Quebec Construções e Tecnologia Ambiental, JCP Participações, Construtora Abra Infraestrutura, Construtora Contorno e Renova Engenharia.",
+          "fontes": [
+            "mg-artemig-lote-7",
+            "mg-gov-2026-03-23-via-liberdade",
+            "mg-seinfra-ata-sessao-via-liberdade",
+            "mg-seinfra-homologacao-via-liberdade"
+          ]
+        },
+        {
+          "texto": "O contrato é datado de 12/01/2026 e foi assinado em cerimônia nesse dia (extrato no Diário Oficial de MG e notícia da Seinfra); as assinaturas eletrônicas no SEI foram concluídas em 13/01/2026, data que a página do projeto na Seinfra informa. O RoadShow imprime 20/01/2026. O início da concessão é 20/03/2026, data de eficácia do contrato segundo a Artemig; o RoadShow imprime 20/02/2026.",
+          "fontes": [
+            "mg-doe-extrato-contrato-via-liberdade",
+            "mg-artemig-contrato-via-liberdade",
+            "mg-seinfra-2026-01-12-via-liberdade",
+            "mg-seinfra-projeto-via-liberdade",
+            "mg-artemig-lote-7"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "autopista-fluminense-otimizacao",
+      "ent": "autopista-fluminense",
+      "participantes": {
+        "ano": 2025,
+        "lote": "BR-101/RJ - Otimização Autopista Fluminense"
+      },
+      "concorrentes": "Otimização Autopista Fluminense",
+      "campos": {
+        "leilao": {
+          "valor": "2025-11-11",
+          "fontes": [
+            "antt-ata-processo-competitivo-autopista-fluminense",
+            "rs-p97"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Arteris S.A.",
+          "fontes": [
+            "antt-ata-processo-competitivo-autopista-fluminense",
+            "antt-delib-496-2025",
+            "antt-extrato-termo-aditivo-autopista-fluminense"
+          ]
+        },
+        "desagio": {
+          "valor": 0.0,
+          "fontes": [
+            "antt-ata-processo-competitivo-autopista-fluminense",
+            "rs-p97"
+          ]
+        },
+        "assinatura": {
+          "valor": "2008-02-14",
+          "fontes": [
+            "antt-termo-aditivo-autopista-fluminense-2026",
+            "antt-noticia-2008-02-14-2a-etapa"
+          ]
+        },
+        "assinatura_aditivo": {
+          "valor": "2026-03-06",
+          "fontes": [
+            "antt-termo-aditivo-autopista-fluminense-2026",
+            "antt-extrato-termo-aditivo-autopista-fluminense",
+            "antt-concessao-autopista-fluminense",
+            "rs-p97"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 22,
+          "fontes": [
+            "antt-termo-aditivo-autopista-fluminense-2026",
+            "antt-concessao-autopista-fluminense"
+          ]
+        }
+      },
+      "notas": [
+        {
+          "texto": "Processo competitivo de alienação de 100% das ações da Autopista Fluminense S.A. com uma única proponente, a controladora Arteris S.A., declarada vencedora com deságio de 0,00% e mantida na titularidade das ações. O RoadShow grafa \"Ateris SA (Corretora Itaú)\"; Itaú é a corretora que a representou. A homologação (Deliberação ANTT nº 496, de 17/12/2025) condicionou o termo aditivo ao cumprimento de decisões cautelares da Justiça Federal (processo nº 5004985-60.2025.4.02.5107).",
+          "fontes": [
+            "antt-ata-processo-competitivo-autopista-fluminense",
+            "antt-delib-496-2025"
+          ]
+        },
+        {
+          "texto": "O contrato original foi firmado em 14/02/2008 (o RoadShow imprime 14/08/2008). O termo aditivo de modernização foi assinado em 06/03/2026; o prazo de 22 anos conta da vigência do aditivo. Não foi localizada fonte oficial para o início de operação de 06/04/2026 impresso no RoadShow; o \"Início da Concessão 18/02/2008\" da ANTT é a assunção do contrato original.",
+          "fontes": [
+            "antt-termo-aditivo-autopista-fluminense-2026",
+            "antt-noticia-2008-02-14-2a-etapa",
+            "antt-concessao-autopista-fluminense"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "fernao-dias-otimizacao",
+      "ent": "fernao-dias",
+      "participantes": {
+        "ano": 2025,
+        "lote": "Fernão Dias - BR-381/MG - Otimização"
+      },
+      "concorrentes": "Otimização Autopista Fernão Dias",
+      "campos": {
+        "leilao": {
+          "valor": "2025-12-11",
+          "fontes": [
+            "antt-ata-processo-competitivo-fernao-dias",
+            "rs-p97"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Motiva Infraestrutura de Mobilidade S.A.",
+          "fontes": [
+            "antt-ata-processo-competitivo-fernao-dias"
+          ]
+        },
+        "desagio": {
+          "valor": 17.05,
+          "fontes": [
+            "antt-ata-processo-competitivo-fernao-dias",
+            "rs-p97"
+          ]
+        },
+        "assinatura": {
+          "valor": "2008-02-14",
+          "fontes": [
+            "antt-termo-aditivo-fernao-dias-2026",
+            "antt-noticia-2008-02-14-2a-etapa"
+          ]
+        },
+        "assinatura_aditivo": {
+          "valor": "2026-05-11",
+          "fontes": [
+            "antt-termo-aditivo-fernao-dias-2026",
+            "antt-concessao-motiva-minas-sp",
+            "rs-p97"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 15,
+          "fontes": [
+            "antt-termo-aditivo-fernao-dias-2026",
+            "antt-concessao-motiva-minas-sp"
+          ]
+        }
+      },
+      "notas": [
+        {
+          "texto": "Processo competitivo de alienação de 100% das ações da Autopista Fernão Dias S.A. (controlada pela Arteris). Lances da ata: Motiva Infraestrutura de Mobilidade S.A. 17,05%, Consórcio Infraestrutura MG 11,25% e Arteris S.A. 0,00% (a ata grafa \"Arteis\"). \"Terra\" é a corretora que representou a Motiva. Com o resultado, a Motiva passou a controlar a SPE existente (\"Contrato Anterior: Autopista Fernão Dias\", hoje Motiva Minas SP). A deliberação de homologação não foi localizada nas páginas da ANTT.",
+          "fontes": [
+            "antt-ata-processo-competitivo-fernao-dias",
+            "antt-concessao-motiva-minas-sp"
+          ]
+        },
+        {
+          "texto": "O contrato original foi firmado em 14/02/2008 (o RoadShow imprime 14/08/2008). O termo aditivo de modernização foi assinado em 11/05/2026; o prazo de 15 anos conta da vigência do aditivo. Não foi localizada fonte oficial para o início de operação de 11/06/2026 impresso no RoadShow.",
+          "fontes": [
+            "antt-termo-aditivo-fernao-dias-2026",
+            "antt-noticia-2008-02-14-2a-etapa"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "rotas-gerais",
+      "ent": "rotas-gerais",
+      "participantes": {
+        "ano": 2026,
+        "lote": "Rota Gerais - BR-116/251/MG"
+      },
+      "concorrentes": "Rota Gerais",
+      "campos": {
+        "leilao": {
+          "valor": "2026-03-31",
+          "fontes": [
+            "antt-ata-leilao-rota-gerais",
+            "b3-2026-03-31-rota-gerais",
+            "rs-p97"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Ecorodovias Concessões e Serviços S.A.",
+          "fontes": [
+            "antt-ata-leilao-rota-gerais",
+            "antt-delib-143-2026"
+          ]
+        },
+        "desagio": {
+          "valor": 19.0,
+          "fontes": [
+            "antt-ata-leilao-rota-gerais",
+            "antt-delib-143-2026",
+            "b3-2026-03-31-rota-gerais",
+            "rs-p97"
+          ]
+        },
+        "assinatura": {
+          "valor": "2026-06-03",
+          "fontes": [
+            "antt-extrato-concessao-rota-gerais",
+            "antt-concessao-ecovias-das-gerais",
+            "rs-p97"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 30,
+          "fontes": [
+            "antt-extrato-concessao-rota-gerais",
+            "b3-2026-03-31-rota-gerais"
+          ]
+        }
+      },
+      "notas": [
+        {
+          "texto": "Lances escritos da ata: Consórcio Atlas Rodovias 13,70%, Ecorodovias Concessões e Serviços S.A. 13,50% e Brasil Rodovias Fundo de Investimento em Participações Multiestratégia 0,01%; no viva-voz, Ecorodovias 19,00% e Atlas 18,90%. A p. 15 do RoadShow lista \"Monte Rodovias\" com 0,01% e omite o Consórcio Atlas Rodovias. \"Mirae Asset\" é a corretora que representou a Ecorodovias. A SPE que assinou o contrato é a Concessionária Ecovias das Gerais S.A.",
+          "fontes": [
+            "antt-ata-leilao-rota-gerais",
+            "antt-extrato-concessao-rota-gerais"
+          ]
+        },
+        {
+          "texto": "A página da concessão na ANTT deixa o início da concessão em branco; não foi localizada fonte oficial para o início de operação de 03/07/2026 impresso no RoadShow.",
+          "fontes": [
+            "antt-concessao-ecovias-das-gerais"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "rota-dos-sertoes",
+      "ent": "rota-dos-sertoes",
+      "participantes": {
+        "ano": 2026,
+        "lote": "BR-116/324/BA/PE - Rota dos Sertões"
+      },
+      "concorrentes": "Rota dos Sertões",
+      "campos": {
+        "leilao": {
+          "valor": "2026-05-28",
+          "fontes": [
+            "antt-ata-leilao-rota-dos-sertoes",
+            "b3-2026-05-28-rota-dos-sertoes",
+            "rs-p97"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Consórcio 116 Sertões",
+          "fontes": [
+            "antt-ata-leilao-rota-dos-sertoes",
+            "antt-ata-julgamento-rota-dos-sertoes",
+            "b3-2026-05-28-rota-dos-sertoes"
+          ]
+        },
+        "desagio": {
+          "valor": 19.6,
+          "fontes": [
+            "antt-ata-leilao-rota-dos-sertoes",
+            "b3-2026-05-28-rota-dos-sertoes",
+            "rs-p97"
+          ]
+        },
+        "assinatura": {
+          "valor": "2026-09-29",
+          "fontes": [
+            "antt-extrato-contrato-rota-dos-sertoes",
+            "antt-concessao-116-sertoes"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 30,
+          "fontes": [
+            "antt-extrato-contrato-rota-dos-sertoes",
+            "antt-concessao-116-sertoes",
+            "b3-2026-05-28-rota-dos-sertoes"
+          ]
+        }
+      },
+      "notas": [
+        {
+          "texto": "Lances escritos da ata: Consórcio 116 Sertões 18,17%, Consórcio Atlas Rodovias 16% e Consórcio Via dos Sertões 13,10%; no viva-voz, 116 Sertões 19,60% e Atlas 19,50%. O consórcio vencedor é formado por Neo Invest Latam, Infra I FIP em Infraestrutura e Mota-Engil Latam Portugal; \"Galapagos\" é a corretora que o representou (Galápagos Capital). A SPE que assinou o contrato é a Concessionária 116 Sertões S.A.",
+          "fontes": [
+            "antt-ata-leilao-rota-dos-sertoes",
+            "b3-2026-05-28-rota-dos-sertoes",
+            "antt-extrato-contrato-rota-dos-sertoes"
+          ]
+        },
+        {
+          "texto": "O contrato foi assinado em 29/09/2026; o RoadShow imprime a previsão de 11/09/2026. A página da concessão na ANTT deixa o início da concessão em branco; não foi localizada fonte oficial para o início de operação previsto (11/10/2026) no RoadShow.",
+          "fontes": [
+            "antt-extrato-contrato-rota-dos-sertoes",
+            "antt-concessao-116-sertoes"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "regis-bittencourt-otimizacao",
+      "ent": "regis-bittencourt",
+      "participantes": {
+        "ano": 2026,
+        "lote": "BR-116/PR/SP - Otimização Régis Bittencourt"
+      },
+      "concorrentes": "Otimização Autopista Régis Bittencourt",
+      "campos": {
+        "leilao": {
+          "valor": "2026-07-23",
+          "fontes": [
+            "b3-2026-07-23-regis-bittencourt",
+            "rs-p97"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "EPR Participações S.A.",
+          "fontes": [
+            "antt-delib-276-2026",
+            "b3-2026-07-23-regis-bittencourt",
+            "rs-p97"
+          ]
+        },
+        "desagio": {
+          "valor": 22.53,
+          "fontes": [
+            "antt-delib-276-2026",
+            "b3-2026-07-23-regis-bittencourt",
+            "rs-p97"
+          ]
+        },
+        "assinatura": {
+          "valor": "2008-02-14",
+          "fontes": [
+            "antt-concessao-autopista-regis-bittencourt",
+            "antt-minuta-termo-aditivo-regis-bittencourt",
+            "antt-noticia-2008-02-14-2a-etapa"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 15,
+          "fontes": [
+            "antt-minuta-termo-aditivo-regis-bittencourt",
+            "antt-projeto-regis-bittencourt"
+          ]
+        }
+      },
+      "notas": [
+        {
+          "texto": "Processo competitivo de alienação de 100% das ações da Autopista Régis Bittencourt S.A. (controlada pela Arteris). Entregaram propostas três proponentes: Motiva Infraestrutura de Mobilidade S.A., EPR Participações S.A. e Arteris S.A. A p. 15 do RoadShow lista também o \"Consórcio Via dos Sertões\" com 13,10%, que é um proponente do leilão da Rota dos Sertões. A homologação (Deliberação ANTT nº 276, de 10/09/2026) adjudicou o objeto à EPR e deu anuência prévia à transferência de controle, condicionada às exigências do edital.",
+          "fontes": [
+            "antt-ata-entrega-propostas-regis-bittencourt",
+            "antt-delib-276-2026",
+            "antt-ata-leilao-rota-dos-sertoes"
+          ]
+        },
+        {
+          "texto": "O contrato original foi firmado em 14/02/2008 (o RoadShow imprime 14/08/2008). O prazo de 15 anos conta da vigência do termo aditivo, conforme a minuta do edital e a página do projeto; a nota da B3 fala em 25 anos. Não foi localizado o termo aditivo assinado: a assinatura do aditivo (21/12/2026) e o início de operação (21/01/2027) do RoadShow seguem como previsões.",
+          "fontes": [
+            "antt-concessao-autopista-regis-bittencourt",
+            "antt-minuta-termo-aditivo-regis-bittencourt",
+            "antt-projeto-regis-bittencourt",
+            "b3-2026-07-23-regis-bittencourt"
           ]
         }
       ]

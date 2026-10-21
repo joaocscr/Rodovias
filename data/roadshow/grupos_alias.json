@@ -74,6 +74,31 @@
       "nome": "Way Concessões S.A.",
       "grupo": "Way Concessões",
       "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "Reúne Rodovias Holding II S.A.",
+      "grupo": "Pátria",
+      "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "Consórcio Rota da Liberdade",
+      "grupo": "Construtora Metropolitana S.A.",
+      "motivo": "consórcio liderado por"
+    },
+    {
+      "nome": "Arteris S.A.",
+      "grupo": "Arteris",
+      "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "Consórcio 116 Sertões",
+      "grupo": "Neo Invest Latam",
+      "motivo": "consórcio liderado por"
+    },
+    {
+      "nome": "EPR Participações S.A.",
+      "grupo": "EPR",
+      "motivo": "razão social do grupo"
     }
   ]
 }

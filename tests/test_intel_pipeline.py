@@ -122,7 +122,8 @@ def test_polo_goiania_presente(blk):
 def test_status_revisados(blk):
     por_id = {i["id"]: i for i in blk["itens"]}
     assert por_id["mg-lote8-vetor-norte"]["status"] == "suspenso"
-    assert por_id["fed-rota-dos-sertoes"]["status"] == "leiloado"
+    # contrato assinado em 29/09/2026 (extrato no DOU; camada de verificação)
+    assert por_id["fed-rota-dos-sertoes"]["status"] == "contrato"
     # audiência suspensa não é projeto suspenso
     demais = por_id["mt-fase2-demais"]
     assert demais["status"] == "consulta_publica" and "suspensa (imprensa)" in demais["obs"]
