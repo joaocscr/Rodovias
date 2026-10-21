@@ -1,6 +1,6 @@
 # v4 — Leilões verificados em fonte oficial, deságios 2007–2022, ranking de grupos e exportação CSV — Design
 
-Data: 2026-10-21 · Base: v3.1 (`main` 4d88be8) · Escopo aprovado em chat ("Está bom assim, pode redigir o design"). **Rascunho:** aguarda duas decisões do usuário (crédito de vitórias no ranking; vencedor quando o melhor lance é inabilitado).
+Data: 2026-10-21 · Base: v3.1 (`main` 4d88be8) · Escopo aprovado em chat ("Está bom assim, pode redigir o design"). Decisões do ranking e do vencedor inabilitado aprovadas em chat ("recomendações").
 
 ## 1. Intenção
 
@@ -79,7 +79,11 @@ Tabela nova, uma linha por grupo econômico, de 2007 a 2026, ordenável, com fil
 
 Base: os leilões de `participantes`, usando o **vencedor exibido** (verificado, seção 2), não o impresso, quando diferirem.
 
-**Agrupamento de nomes:** os nomes como impressos (consórcios, razões sociais, grafias) são ligados a um grupo econômico por uma tabela curada, visível e editável em `data/roadshow/grupos_alias.json`, com o **motivo** de cada junção (troca de nome, aquisição, consórcio liderado por, grafia). Ex.: CCR → Motiva (troca de nome); Primav → Ecorodovias. Consórcio com mais de um grupo conta para o **grupo líder**, quando a fonte indicar; senão, para cada grupo nomeado (decisão do construtor, documentada na tabela). A aba mostra, abaixo do ranking, a lista de junções com o motivo.
+**Crédito pelo grupo da época do leilão** (decidido com o usuário): a vitória ou a derrota conta para o grupo que disputou naquele leilão, não para o dono atual. Exemplo: Transbrasiliana 2007 é vitória do BRVias e derrota da Triunfo, embora a Triunfo tenha comprado o controle depois.
+
+**Vencedor é quem foi adjudicado e assinou o contrato** (decidido com o usuário). Quem deu o melhor lance e foi inabilitado conta como participação com derrota, com a nota "inabilitado" e a data. O deságio exibido é o do adjudicatário; se não for localizado, fica "—" com nota e o leilão sai das médias, medianas e da série de deságio. Exemplo: Rota da Celulose — K&G (9%, inabilitado em 04/08/2025) é derrota; o deságio do Caminhos da Celulose só aparece se for achado.
+
+**Agrupamento de nomes:** os nomes como impressos (consórcios, razões sociais, grafias) são ligados a um grupo econômico por uma tabela curada, visível e editável em `data/roadshow/grupos_alias.json`, com o **motivo** de cada junção. Juntam: troca de nome (CCR → Motiva), grafia, razão social ou SPE do mesmo grupo, e consórcio liderado por um grupo. **Aquisição posterior ao leilão não junta**; ela pode aparecer como nota ("controle adquirido pela Triunfo em 2014/2015"). Consórcio com mais de um grupo conta para o **grupo líder**, quando a fonte indicar; senão, para cada grupo nomeado (decisão do construtor, documentada na tabela). A aba mostra, abaixo do ranking, a lista de junções com o motivo.
 
 **Aviso fixo:** em leilões sem lista de proponentes no PDF, só o vencedor é contado (as derrotas ficam subestimadas). A tabela marca quantos leilões estão nessa situação no período filtrado.
 
@@ -147,7 +151,7 @@ Validação (pytest), falhando o build/teste se:
 
 - Esta entrega é a **v4**. Regra nova, a registrar no `HANDOFF.md`: **cada entrega que entra na `main` por PR ganha um número inteiro** (v4, v5…); não há mais "ponto um".
 - README: seção "Novidades da v4" e a regra de fontes dos leilões.
-- HANDOFF: estado, decisões novas (hierarquia de fontes; agregados impressos ficam como impressos; consórcio no ranking), pendências (seção 6).
+- HANDOFF: estado, decisões novas (hierarquia de fontes; agregados impressos ficam como impressos; crédito pelo grupo da época; vencedor = adjudicatário; consórcio no ranking), pendências (seção 6).
 
 ## 8. Critérios de aceite
 
