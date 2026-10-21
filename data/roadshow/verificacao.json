@@ -1561,15 +1561,6 @@
       "acesso": "2026-10-21",
       "trecho": "Empresas Controladoras: EcoRodovias Concessões e Serviços S.A. […] Data da Assinatura: 22/08/2022 · Início da Concessão: 22/09/2022 […] Prazo da Concessão: 30 anos · Edital: 001/2022"
     },
-    "b3-borainvestir-2025-04-24-ccr-motiva": {
-      "tipo": "oficial",
-      "orgao": "B3 — Bora Investir",
-      "titulo": "CCR muda de ticker na B3 a partir de maio e anuncia pagamento de dividendos",
-      "data": "2025-04-24",
-      "url": "https://borainvestir.b3.com.br/noticias/empresas/ccr-muda-de-ticker-na-b3-a-partir-de-maio-e-anuncia-pagamento-de-dividendos/",
-      "acesso": "2026-10-21",
-      "trecho": "A empresa de logística CCR passará a ser negociada na B3 sob o novo código “MOTV3” a partir de 2 de maio. […] A companhia explica que a mudança é decorrente da alteração do nome da CCR, […] para Motiva Infraestrutura de Mobilidade."
-    },
     "ccr-ri-2013-12-17-cpc-br-163-ms": {
       "tipo": "imprensa",
       "orgao": "CCR S.A. — Relações com Investidores (comunicado ao mercado; fonte da própria empresa)",
@@ -1631,7 +1622,7 @@
       "data": "2024-12-12",
       "url": "https://jornaldebrasilia.com.br/noticias/brasil/consorcio-rota-verde-leva-rodovias-em-goias-em-leilao-dominado-por-fundos-de-investimentos/",
       "acesso": "2026-10-21",
-      "trecho": "O Consórcio Rota Verde Goiás, encabeçado pelo fundo de investimentos Aviva, arrematou a Rota Verde […] O Consórcio Infraestrutura GO, que reunia a EPR e a Perfin, propôs 0,9% de desconto e não chegou a ir para o viva-voz. […] Já o Consórcio Rota Cerrado, da XP junto a outras construtoras, ofereceu um deságio de 10,88%."
+      "trecho": "O Consórcio Rota Verde Goiás, encabeçado pelo fundo de investimentos Aviva, arrematou a Rota Verde […] O Consórcio Infraestrutura GO, que reunia a EPR e a Perfin, propôs 0,9% de desconto e não chegou a ir para o viva-voz. […] Já o Consórcio Rota Cerrado, da XP junto a outras construtoras, ofereceu um deságio de 10,88%. […] O fundo de infraestrutura do BTG deu o segundo maior lance, um desconto de 17,97% sobre a tarifa de pedágio"
     },
     "istoedinheiro-2024-12-12-rota-verde": {
       "tipo": "imprensa",
@@ -1694,7 +1685,7 @@
       "data": "2024-12-12",
       "url": "https://jornaldebrasilia.com.br/noticias/economia/ccr-leva-570-km-de-rodovias-estaduais-e-federais-do-parana-em-leilao-disputado/",
       "acesso": "2026-10-21",
-      "trecho": "No viva-voz, a segunda maior proposta foi do consórcio “Infra BR V Missouri Holding I”, do Pátria Investimentos, de 26,5%."
+      "trecho": "No viva-voz, a segunda maior proposta foi do consórcio “Infra BR V Missouri Holding I”, do Pátria Investimentos, de 26,5%. […] Já o Consórcio Infraestrutura PR, composto pela EPR e pela Perfin, ofereceu um deságio de 25,9% sobre a tarifa."
     },
     "poder360-2018-11-01-viasul": {
       "tipo": "imprensa",
@@ -1713,6 +1704,33 @@
       "url": "https://www.em.com.br/app/noticia/economia/2013/12/17/internas_economia,480095/ccr-vence-leilao-para-br-163-com-desagio-de-52-74.shtml",
       "acesso": "2026-10-21",
       "trecho": "Em segundo lugar ficou o Consórcio Rota do Futuro, liderado pela EcoRodovias, que ofereceu tarifa de R$ 5,175 […] A Queiroz Galvão apresentou proposta de R$ 5,459 para cada 100 quilômetros, o que corresponde a um desconto de 41,11%."
+    },
+    "borainvestir-2025-04-24-ccr-motiva": {
+      "tipo": "imprensa",
+      "orgao": "Bora Investir (portal de notícias da B3)",
+      "titulo": "CCR muda de ticker na B3 a partir de maio e anuncia pagamento de dividendos",
+      "data": "2025-04-24",
+      "url": "https://borainvestir.b3.com.br/noticias/empresas/ccr-muda-de-ticker-na-b3-a-partir-de-maio-e-anuncia-pagamento-de-dividendos/",
+      "acesso": "2026-10-21",
+      "trecho": "A empresa de logística CCR passará a ser negociada na B3 sob o novo código “MOTV3” a partir de 2 de maio. […] A companhia explica que a mudança é decorrente da alteração do nome da CCR, […] para Motiva Infraestrutura de Mobilidade."
+    },
+    "ccr-2025-03-21-carta-motiva": {
+      "tipo": "imprensa",
+      "orgao": "CCR S.A. — carta aos acionistas (fonte da própria empresa; PDF publicado pelo Poder360)",
+      "titulo": "Carta aos acionistas sobre a mudança da razão social do Grupo CCR",
+      "data": "2025-03-21",
+      "url": "https://static.poder360.com.br/2025/03/ccr-motiva-21-mar-2025.pdf",
+      "acesso": "2026-10-21",
+      "trecho": "Em nossa próxima Assembleia levaremos a vocês para deliberação a proposta de mudança da razão social do Grupo CCR. […] a nova razão social passará a ser MOTIVA INFRAESTRUTURA DE MOBILIDADE S.A."
+    },
+    "moneytimes-2024-12-12-rota-verde": {
+      "tipo": "imprensa",
+      "orgao": "Money Times (Reuters)",
+      "titulo": "Aviva/Tecpav vence leilão de rodovias em Goiás com desconto de 18% sobre pedágio",
+      "data": "2024-12-12",
+      "url": "https://www.moneytimes.com.br/aviva-tecpav-vence-leilao-de-rodovias-em-goias-com-desconto-de-18-sobre-pedagio-raql/",
+      "acesso": "2026-10-21",
+      "trecho": "A EPR, que também participava do certame, não passou para a segunda etapa, após ofertar desconto de 0,90%."
     }
   },
   "leiloes": [

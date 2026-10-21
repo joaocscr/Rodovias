@@ -62,7 +62,10 @@
     {
       "nome": "BTG Pactual Infraestrutura III - Itaú",
       "grupo": "BTG Pactual",
-      "motivo": "razão social do grupo"
+      "motivo": "razão social do grupo",
+      "fontes": [
+        "jornaldebrasilia-2024-12-12-rota-verde"
+      ]
     },
     {
       "nome": "Fundos de investimentos BTG",
@@ -470,7 +473,8 @@
       "grupo": "EPR",
       "motivo": "consórcio liderado por",
       "fontes": [
-        "jornaldebrasilia-2024-12-12-rota-verde"
+        "jornaldebrasilia-2024-12-12-rota-verde",
+        "moneytimes-2024-12-12-rota-verde"
       ]
     },
     {
@@ -497,6 +501,7 @@
       "motivo": "consórcio liderado por",
       "fontes": [
         "antt-ata-leilao-rip-lote-3",
+        "jornaldebrasilia-2024-12-12-rip-lote-3",
         "poder360-2023-09-29-rip-lote-2"
       ]
     },
@@ -557,7 +562,11 @@
     {
       "nome": "Mota-Engil Latam Portugal, S.A.",
       "grupo": "Mota-Engil",
-      "motivo": "razão social do grupo"
+      "motivo": "razão social do grupo",
+      "fontes": [
+        "antt-ata-leilao-rip-lote-4",
+        "agenciainfra-2025-10-20-rip-lote-4"
+      ]
     },
     {
       "nome": "CCR",
@@ -565,7 +574,8 @@
       "motivo": "troca de nome",
       "fontes": [
         "antt-nt-6805-2023-fernao-dias",
-        "b3-borainvestir-2025-04-24-ccr-motiva"
+        "ccr-2025-03-21-carta-motiva",
+        "borainvestir-2025-04-24-ccr-motiva"
       ]
     },
     {
@@ -573,7 +583,8 @@
       "grupo": "Motiva",
       "motivo": "troca de nome",
       "fontes": [
-        "b3-borainvestir-2025-04-24-ccr-motiva"
+        "ccr-2025-03-21-carta-motiva",
+        "borainvestir-2025-04-24-ccr-motiva"
       ]
     },
     {
@@ -760,12 +771,18 @@
     {
       "nome": "Vinci Highways do Brasil - Participações S.A.",
       "grupo": "Vinci",
-      "motivo": "razão social do grupo"
+      "motivo": "razão social do grupo",
+      "fontes": [
+        "antt-ata-leilao-rota-sertaneja"
+      ]
     },
     {
       "nome": "VINCI Highways S.A.S",
       "grupo": "Vinci",
-      "motivo": "razão social do grupo"
+      "motivo": "razão social do grupo",
+      "fontes": [
+        "antt-delib-422-2024"
+      ]
     },
     {
       "nome": "Rotas do Brasil S.A.",

@@ -1,6 +1,8 @@
 import copy
 import json
+import re
 import sys
+import unicodedata
 from pathlib import Path
 
 import pytest
@@ -251,6 +253,10 @@ def test_aplicar_limitado_pelo_edital(conc):
     out = aplicar(conc, v, {"aliases": []})
     assert out["entidades"][0]["verif"]["desagio"]["limitado_pelo_edital"] is True
     assert out["mercado"]["participantes"][1]["verif"]["desagio"]["limitado_pelo_edital"] is True
+    com_conc = verif([leilao({"desagio": {"valor": 15.31, "limitado_pelo_edital": True, "fontes": ["antt"]}},
+                             concorrentes="Rodovias Integradas do Paraná - Lote 5")])
+    [c] = aplicar(conc, com_conc, {"aliases": []})["mercado"]["concorrentes_desagio"]
+    assert c["verif"]["desagio"]["limitado_pelo_edital"] is True
     sem = aplicar(conc, verif([leilao({"desagio": {"valor": 23.83, "fontes": ["antt"]}})]), {"aliases": []})
     assert sem["entidades"][0]["verif"]["desagio"]["limitado_pelo_edital"] is False
 
@@ -424,8 +430,34 @@ def test_alias_motivo_valido():
     assert sorted({n for n in nomes if nomes.count(n) > 1}) == []
 
 
+def _normal(texto):
+    """Minúsculas, sem acentos e sem pontuação (só letras e dígitos)."""
+    sem_acento = unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode()
+    return re.sub(r"[^a-z0-9]", "", sem_acento.lower())
+
+
+def test_regra_de_fonte_do_alias():
+    # razão social pede fonte quando o grupo não se lê no nome (sem acento, caixa ou pontuação)
+    casos = {("Companhia de Participações em Concessões", "Motiva", "razão social do grupo"): True,
+             ("Reúne Rodovias Holding II S.A.", "Pátria", "razão social do grupo"): True,
+             ("VINCI Highways S.A.S", "Vinci", "razão social do grupo"): False,
+             ("Mota-Engil Latam Portugal, S.A.", "Mota-Engil", "razão social do grupo"): False,
+             ("Galvão Engenharia S/A", "Galvão Engenharia", "razão social do grupo"): False,
+             ("Consórcio X", "Grupo Y", "consórcio liderado por"): True,
+             ("CCR", "Motiva", "troca de nome"): True,
+             ("Eco Rodovias", "Ecorodovias", "grafia"): False}
+    for (nome, grupo, motivo), esperado in casos.items():
+        assert _precisa_fonte({"nome": nome, "grupo": grupo, "motivo": motivo}) is esperado, (nome, grupo)
+
+
+def _precisa_fonte(a):
+    """Junções que não se leem no próprio nome: consórcio liderado por, troca de nome e razão social cujo grupo não
+    aparece no nome."""
+    if a["motivo"] in ("consórcio liderado por", "troca de nome"):
+        return True
+    return a["motivo"] == "razão social do grupo" and _normal(a["grupo"]) not in _normal(a["nome"])
+
+
 def test_alias_motivos_com_evidencia_tem_fonte():
-    # junções que não se leem no próprio nome citam a fonte (ids de verificacao.json)
-    aliases = carregar_aliases()["aliases"]
-    precisa = ("consórcio liderado por", "troca de nome")
-    assert [a["nome"] for a in aliases if a["motivo"] in precisa and not a.get("fontes")] == []
+    # essas junções citam a fonte (ids de verificacao.json)
+    assert [a["nome"] for a in carregar_aliases()["aliases"] if _precisa_fonte(a) and not a.get("fontes")] == []
