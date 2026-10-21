@@ -79,7 +79,9 @@ def _erros_fonte(fid, f):
     if tipo not in TIPOS:
         return [f"fonte {fid}: tipo {tipo!r} fora de {TIPOS}"]
     erros = [f"fonte {fid} ({tipo}): falta {k}" for k in EXIGIDOS[tipo] if f.get(k) in (None, "")]
-    if tipo == "oficial" and f.get("url") and not _dominio_oficial(f["url"]):
+    if f.get("url") and not (isinstance(f["url"], str) and urlparse(f["url"]).scheme.lower() in ("http", "https")):
+        erros.append(f"fonte {fid} ({tipo}): URL {f['url']!r} precisa ser http ou https")
+    elif tipo == "oficial" and f.get("url") and not _dominio_oficial(f["url"]):
         erros.append(f"fonte {fid} (oficial): URL {f['url']} fora dos domínios oficiais {DOMINIOS_OFICIAIS}")
     if tipo == "roadshow" and f.get("pagina") is not None and not (
             isinstance(f["pagina"], int) and not isinstance(f["pagina"], bool) and f["pagina"] > 0):
@@ -257,6 +259,11 @@ def _fmt(campo, v):
     return str(v)
 
 
+def _sem_valor(v):
+    """Alternativa que o RoadShow imprime sem valor ("-" ou vazio): fica registrada, mas não entra na nota."""
+    return v is None or str(v).strip() in ("", "-")
+
+
 def _divergencia(e, campo, original, valor, tipo):
     """Registra na entidade o valor do RoadShow que deixou de ser exibido (sem duplicar o novo valor exibido)."""
     divs = e.setdefault("divergencias", [])
@@ -271,7 +278,7 @@ def _divergencia(e, campo, original, valor, tipo):
     d["exibido"] = valor
     d["alternativas"] = [alt_rs] + resto
     impressos = [_fmt(campo, a["valor"]) + (f" (p. {a['pagina']})" if a.get("pagina") is not None else "")
-                 for a in d["alternativas"]]
+                 for a in d["alternativas"] if not _sem_valor(a.get("valor"))]
     lista = impressos[0] if len(impressos) == 1 else ", ".join(impressos[:-1]) + " e " + impressos[-1]
     sufixo = "não localizado em fonte oficial." if tipo is None else f"exibido o valor de fonte {ROTULO[tipo]}."
     d["nota"] = f"RoadShow imprime {lista}; {sufixo}"

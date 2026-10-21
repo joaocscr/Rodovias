@@ -21,8 +21,8 @@
     },
     {
       "nome": "Obrascon Huarte Lain Brasil S.A.",
-      "grupo": "Arteris",
-      "motivo": "troca de nome",
+      "grupo": "OHL Brasil",
+      "motivo": "razão social do grupo",
       "fontes": [
         "antt-nt-7038-2022-eco101",
         "mercadoeconsumo-2022-07-21-arteris"
@@ -30,8 +30,8 @@
     },
     {
       "nome": "Obrascon Huarte Lain Brasil S.A. (OHL Brasil)",
-      "grupo": "Arteris",
-      "motivo": "troca de nome",
+      "grupo": "OHL Brasil",
+      "motivo": "razão social do grupo",
       "fontes": [
         "antt-res-2475-2007",
         "mercadoeconsumo-2022-07-21-arteris"
@@ -801,7 +801,7 @@
     {
       "nome": "XP e um consórcio formado por Kinea e Way",
       "grupo": "Way Concessões",
-      "motivo": "razão social do grupo",
+      "motivo": "consórcio liderado por",
       "fontes": [
         "ms-epe-ata-sessao-rota-celulose",
         "campograndenews-2025-05-05-rota-celulose"

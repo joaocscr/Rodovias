@@ -102,6 +102,17 @@ def test_validar_oficial_dominio(conc):
     assert validar(com_url("https://www.b3.com.br/x"), conc) == []
 
 
+def test_validar_url_so_http_em_todo_tipo(conc):
+    def com(fonte):
+        return verif([leilao({"assinatura": {"valor": "2026-03-16", "fontes": ["f"]}})], fontes={"f": fonte})
+    for url in ("javascript:alert(1)", "data:text/html,x", "ftp://agenciainfra.com/x", "agenciainfra.com/x"):
+        erros = validar(com({**IMPRENSA, "url": url}), conc)
+        assert len(erros) == 1 and "http" in erros[0], (url, erros)
+        assert len(validar(com({**RS15, "url": url}), conc)) == 1, url
+    assert validar(com({**IMPRENSA, "url": "HTTP://agenciainfra.com/x"}), conc) == []
+    assert validar(com({**RS15, "url": "https://www.gov.br/transportes/roadshow.pdf"}), conc) == []
+
+
 def test_validar_imprensa_completa(conc):
     sem_data = {k: v for k, v in IMPRENSA.items() if k != "data"}
     v = verif([leilao({"desagio": {"valor": 23.83, "fontes": ["infra"]}})], fontes={"infra": sem_data})
@@ -306,6 +317,17 @@ def test_aplicar_nao_localizado_com_divergencia_existente(conc):
     assert d["exibido"] is None
     assert d["alternativas"] == [{"valor": 21.83, "pagina": 97}, {"valor": 23.83, "pagina": 15}]
     assert d["nota"] == "RoadShow imprime 21,83% (p. 97) e 23,83% (p. 15); não localizado em fonte oficial."
+
+
+def test_aplicar_nota_ignora_alternativa_sem_valor(conc):
+    # o RoadShow imprime "-" numa das páginas: a alternativa fica registrada, mas não entra na nota
+    conc["entidades"][0]["divergencias"].append(
+        {"campo": "assinatura", "exibido": "2026-03-16", "alternativas": [{"valor": "-", "pagina": 5}, {"valor": "", "pagina": 6}],
+         "nota": "Assinatura: 16/03/2026 (p97) × - (p5)"})
+    v = verif([leilao({"assinatura": {"valor": "2026-03-20", "fontes": ["antt"]}})])
+    [d] = [x for x in aplicar(conc, v, {"aliases": []})["entidades"][0]["divergencias"] if x["campo"] == "assinatura"]
+    assert d["alternativas"] == [{"valor": "2026-03-16", "pagina": 97}, {"valor": "-", "pagina": 5}, {"valor": "", "pagina": 6}]
+    assert d["nota"] == "RoadShow imprime 16/03/2026 (p. 97); exibido o valor de fonte oficial."
 
 
 def test_aplicar_cria_divergencia_com_nota(conc):
