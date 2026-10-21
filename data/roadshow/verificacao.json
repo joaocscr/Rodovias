@@ -310,6 +310,362 @@
       "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/br-369-373-376-pr-e-pr-090-170-323-445",
       "acesso": "2026-10-21",
       "trecho": "Imagem da linha do tempo na página do projeto: Leilão de Projeto — Data: 12/12/2024; Contrato — Data: 14/04/2025"
+    },
+    "rs-p5": {
+      "tipo": "roadshow",
+      "pagina": 5
+    },
+    "antt-ata-leilao-br-364-ro": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Comissão de Outorga",
+      "titulo": "Ata de abertura do envelope de qualificação da proponente primeira colocada no leilão do Edital de Concessão nº 06/2024 (BR-364/RO)",
+      "data": "2025-02-27",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/bndes-cn5-centro-oeste-norte/arquivos-para-download/comissao-de-outorga/ata-de-abertura-do-envelope-de-qualificacao-da-proponente-primeira-colocada/view",
+      "acesso": "2026-10-21",
+      "trecho": "o leilão foi realizado no dia vinte e sete de fevereiro de dois mil e vinte e cinco […] houve a participação de 1 (um) proponente […] 1) Consórcio 4Um-Opportunity-BR-364/RO, 0,05%"
+    },
+    "antt-delib-131-2025": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Diretoria Colegiada",
+      "titulo": "Deliberação nº 131, de 10 de abril de 2025 — Homologação (Edital nº 6/2024)",
+      "data": "2025-04-10",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/bndes-cn5-centro-oeste-norte/arquivos-para-download/comissao-de-outorga/deliberacao-no-131-de-10-de-abril-de-2025-homologacao-4um-opportunity/view",
+      "acesso": "2026-10-21",
+      "trecho": "Homologar o resultado do leilão […] da Rodovia BR-364/RO, declarando como vencedora a proponente Consórcio 4UM-OPPORTUNITY-BR-364/RO, que apresentou um desconto de 0,05% (zero vírgula zero cinco por cento) sobre a Tarifa Básica de Pedágio (ato do DOU reproduzido na página da ANTT; o DOU não responde deste ambiente)"
+    },
+    "antt-extrato-contrato-br-364-ro": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Extrato de contrato — Contrato de concessão da rodovia BR-364/RO (DOU de 21/07/2025, seção 3)",
+      "data": "2025-07-21",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/bndes-cn5-centro-oeste-norte/arquivos-para-download/edital-e-anexos/extrato-do-contrato-br-364-ro/view",
+      "acesso": "2026-10-21",
+      "trecho": "Concessionária: CONCESSIONÁRIA DE RODOVIA NOVA 364 S.A. […] Prazo de vigência: 30 anos a partir da data de assunção […] Data de assinatura: 18/07/2025 (ato do DOU reproduzido na página da ANTT; o DOU não responde deste ambiente)"
+    },
+    "antt-concessao-nova-364": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Lista de concessões — Nova 364",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/nova-364",
+      "acesso": "2026-10-21",
+      "trecho": "Data da Assinatura: 18/07/2025 · Início da Concessão: 21/08/2025 · Prazo da Concessão: 30 anos · Edital: 006/2024"
+    },
+    "antt-ata-leilao-br-040-495-mg-rj": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Comissão de Outorga",
+      "titulo": "Ata de abertura do envelope de qualificação da proponente primeira colocada no leilão do Edital de Concessão nº 01/2025 (BR-040/495/MG/RJ)",
+      "data": "2025-04-30",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/BR-040-495-MG-RJ-JF-RIO/arquivos-para-download/comissao-de-outorga/ata-de-abertura-do-envelope-de-qualificacao-da-proponente-primeira-colocada/view",
+      "acesso": "2026-10-21",
+      "trecho": "o leilão foi realizado no dia trinta de abril de dois mil e vinte e cinco […] 1) Sacyr Concessões e Participações do Brasil LTDA, 1,00 %; 2) Consórcio Nova Estrada Real, 14,00%; e 3) EPR Participações S.A., 3,08%. O Diretor da Sessão Pública de Leilão declarou como vencedora a proponente Consórcio Nova Estrada Real"
+    },
+    "antt-ata-julgamento-br-040-495-mg-rj": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Comissão de Outorga",
+      "titulo": "Ata de análise e julgamento dos documentos de qualificação da proponente primeira colocada no leilão do Edital de Concessão nº 01/2025 (BR-040/495/MG/RJ)",
+      "data": "2025-05-19",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/BR-040-495-MG-RJ-JF-RIO/arquivos-para-download/comissao-de-outorga/ata-de-analise-e-julgamento-dos-documentos-de-qualificacao-da-proponente-colocada/view",
+      "acesso": "2026-10-21",
+      "trecho": "esta Comissão confirma a Proponente Consórcio Nova Estrada Real como vencedora do Leilão para a concessão do sistema rodoviário das rodovias BR-040/495/MG/RJ"
+    },
+    "antt-extrato-contrato-br-040-495-mg-rj": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Extrato de contrato — Contrato de concessão das rodovias BR-040/495/MG/RJ (DOU de 03/10/2025, seção 3)",
+      "data": "2025-10-03",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/BR-040-495-MG-RJ-JF-RIO/arquivos-para-download/edital-e-anexos/extrato-do-contrato-br-040-495-mg-rj-jf-rio/view",
+      "acesso": "2026-10-21",
+      "trecho": "Concessionária: ELOVIAS S.A. […] Prazo de vigência: 30 anos a partir da data de assunção […] Data de assinatura: 30/09/2025 (ato do DOU reproduzido na página da ANTT; o DOU não responde deste ambiente)"
+    },
+    "antt-concessao-elovias": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Lista de concessões — Elovias",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/elovias",
+      "acesso": "2026-10-21",
+      "trecho": "Data da Assinatura: 30/09/2025 · Início da Concessão: 04/11/2025 · Prazo da Concessão: 30 anos · Edital: 001/2025"
+    },
+    "antt-ata-processo-competitivo-msvia": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Comissão Mista de Processo Competitivo",
+      "titulo": "Ata de abertura dos envelopes e divulgação do resultado do Processo Competitivo nº 1/2025 (BR-163/MS)",
+      "data": "2025-05-22",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/reestruturacao-de-contratos-de-concessao/copy_of_BR-msvia/processo%20competitivo/comissao-mista-de-processo-competitivo/ata-de-abertura-dos-envelopes-e-divulgacao-do-resultado-do-processo-competitivo-no-1-2025/view",
+      "acesso": "2026-10-21",
+      "trecho": "o leilão foi realizado no dia vinte e dois de maio de dois mil e vinte e cinco […] não houve a apresentação de outras proponentes […] confirmou-se o valor da tarifa básica de pedágio, correspondente a R$ 0,07521/km […] declarou como vencedora do certame a proponente Motiva Infraestrutura de Mobilidade S.A."
+    },
+    "antt-edital-processo-competitivo-msvia": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Edital de Processo Competitivo nº 01/2025 — MSVIA (pós-esclarecimentos)",
+      "data": "2025",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/reestruturacao-de-contratos-de-concessao/copy_of_BR-msvia/processo%20competitivo/edital-e-anexos/edital-de-processo-competitivo-no-01-2025-msvia-pos-esclarecimentos/view",
+      "acesso": "2026-10-21",
+      "trecho": "12.2.2 A TARIFA BÁSICA DE PEDÁGIO a ser considerada para a oferta de DESÁGIO apresentada na PROPOSTA ECONÔMICA é de R$ 0,07521/km […] referenciada a janeiro de 2022"
+    },
+    "antt-termo-aditivo-msvia-2025": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Termo Aditivo nº 006/2025 — Termo Aditivo de Modernização do Contrato de Concessão (Edital nº 005/2013, BR-163/MS), assinado",
+      "data": "2025-08-01",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/reestruturacao-de-contratos-de-concessao/copy_of_BR-msvia/termo%20aditivo/termo-aditivo-assinado-tratamento-lgpd/view",
+      "acesso": "2026-10-21",
+      "trecho": "Ao 1º dia do mês de agosto de 2025 […] Contrato de Concessão Original: significa o Contrato de Concessão firmado em 12 de março de 2014 […] 3.1 O Prazo da Concessão se iniciou na Data de Assunção do Contrato de Concessão Original e se estenderá por 29 (vinte e nove) anos […] contados a partir do início de vigência do presente Termo Aditivo […] Brasília, 01 de agosto de 2025."
+    },
+    "antt-extrato-termo-aditivo-msvia": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Superintendência de Concessão da Infraestrutura",
+      "titulo": "Extrato de termo aditivo — Termo Aditivo de Modernização do contrato da BR-163/MS (DOU nº 146, de 05/08/2025, seção 3)",
+      "data": "2025-08-05",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/reestruturacao-de-contratos-de-concessao/copy_of_BR-msvia/termo%20aditivo/extrato-de-termo-aditivo/view",
+      "acesso": "2026-10-21",
+      "trecho": "Contratada: Motiva Infraestrutura de Mobilidade S.A. […] Instrumento: Contrato de Concessão Relativo Ao Edital N° 005/2013 […] Data de Assinatura: 02/08/2025 (ato do DOU reproduzido na página da ANTT; o DOU não responde deste ambiente)"
+    },
+    "antt-projeto-msvia": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Reestruturação de contratos de concessão — BR-163/MS VIA",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/reestruturacao-de-contratos-de-concessao/copy_of_BR-msvia",
+      "acesso": "2026-10-21",
+      "trecho": "Data do processo competitivo: 22/05/2025 […] Prorrogação com a otimização: 29 anos, a partir da vigência do termo aditivo"
+    },
+    "antt-concessao-motiva-pantanal": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Lista de concessões — Motiva Pantanal",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/motiva-pantanal",
+      "acesso": "2026-10-21",
+      "trecho": "Data da Assinatura do Termo Aditivo de Modernização: 01/08/2025 · Início da Concessão: 11/04/2014 · Prazo da Concessão: 29 anos · Edital Processo Competitivo: 001/2025"
+    },
+    "b3-2025-05-22-msvia": {
+      "tipo": "oficial",
+      "orgao": "B3",
+      "titulo": "Ministério dos Transportes e ANTT realizam leilão na B3",
+      "data": "2025-05-22",
+      "url": "https://www.b3.com.br/pt_br/noticias/leiloes-8AA8D0CD963DF6FC0196F96D2F5F01CF.htm",
+      "acesso": "2026-10-21",
+      "trecho": "São Paulo, 22 de maio de 2025 – Foi realizado hoje, na B3, o leilão […] para o Processo Competitivo de Otimização do Contrato de Concessão da BR-163/MS […] A Motiva Infraestrutura de Mobilidade S.A, antiga CCR, permanece com o controle da concessão"
+    },
+    "antt-ata-processo-competitivo-eco101": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Comissão Mista de Processo Competitivo",
+      "titulo": "Ata de abertura dos envelopes e divulgação do resultado do Processo Competitivo nº 2/2025 (BR-101/ES/BA)",
+      "data": "2025-06-26",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/reestruturacao-de-contratos-de-concessao/BR-101-ES-BA-ECO-101/copy_of_processo-competitivo/comissao-mista-de-processo-competitivo-Eco101/ata-de-abertura-dos-envelopes-e-divulgacao-do-resultado-do-processo-competitivo-no-2-2025/view",
+      "acesso": "2026-10-21",
+      "trecho": "o leilão foi realizado no dia vinte e seis de junho de dois mil e vinte e cinco […] não houve a apresentação de outras proponentes […] confirmou-se o valor da tarifa básica de pedágio, correspondente a R$ 0,05525/km […] declarou como vencedora do certame a proponente Ecorodovias Concessões e Serviços S.A."
+    },
+    "antt-delib-230-2025": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Diretoria Colegiada",
+      "titulo": "Deliberação nº 230, de 17 de julho de 2025 — Homologação (Processo Competitivo nº 2/2025)",
+      "data": "2025-07-17",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/reestruturacao-de-contratos-de-concessao/BR-101-ES-BA-ECO-101/copy_of_processo-competitivo/comissao-mista-de-processo-competitivo-Eco101/deliberacao-no-230-de-17-de-julho-de-2025-homologacao/view",
+      "acesso": "2026-10-21",
+      "trecho": "Homologar o resultado do Leilão do Processo Competitivo […] à proponente consagrada vencedora, Ecorodovias Concessões e Serviços S.A. (BR-101/ES/BA), com a manutenção da titularidade da vencedora sobre a totalidade das ações da Concessionária (ato do DOU reproduzido na página da ANTT; o DOU não responde deste ambiente)"
+    },
+    "antt-edital-processo-competitivo-eco101": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Edital de Processo Competitivo nº 02/2025 — ECO101 (pós-esclarecimentos)",
+      "data": "2025",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/reestruturacao-de-contratos-de-concessao/BR-101-ES-BA-ECO-101/copy_of_processo-competitivo/edital-e-anexos/edital-de-processo-competitivo-no-02-2025-eco-101-pos-esclarecimentos/view",
+      "acesso": "2026-10-21",
+      "trecho": "12.2.5 A TARIFA BÁSICA DE PEDÁGIO a ser considerada para a oferta de DESÁGIO apresentada na PROPOSTA ECONÔMICA é de R$ 0,05525/km […] referenciada a janeiro de 2023"
+    },
+    "antt-termo-aditivo-eco101-2025": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Termo Aditivo de Modernização do Contrato de Concessão da BR-101/ES/BA (Edital nº 001/2011), assinado",
+      "data": "2025-08-26",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/ecovias-capixaba/documentos-de-gestao/contrato-e-anexos/termos-aditivos-1/termo-aditivo.pdf",
+      "acesso": "2026-10-21",
+      "trecho": "Contrato de Concessão Original: significa o Contrato de Concessão firmado em 17 de abril de 2013 […] 3.1 O Prazo da Concessão se iniciou na Data de Assunção do Contrato de Concessão Original e se estenderá por 24 (vinte e quatro) anos, contados a partir do início de vigência do presente Termo Aditivo […] Brasília, 26 de agosto de 2025."
+    },
+    "antt-projeto-eco101": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Reestruturação de contratos de concessão — BR-101/ES/BA",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/reestruturacao-de-contratos-de-concessao/BR-101-ES-BA-ECO-101",
+      "acesso": "2026-10-21",
+      "trecho": "O contrato de concessão foi assinado em 17 de abril de 2013 […] Prazo: 24 anos (Prorrogação de 10 anos, totalizando 24 anos de concessão sem direito a nova prorrogação)"
+    },
+    "antt-concessao-ecovias-capixaba": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Lista de concessões — Ecovias Capixaba",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/ecovias-capixaba",
+      "acesso": "2026-10-21",
+      "trecho": "Data da Assinatura do Termo Aditivo de Modernização: 26/08/2025 · Início da Concessão: 10/05/2013 · Prazo da Concessão: 24 anos"
+    },
+    "ms-epe-ata-sessao-rota-celulose": {
+      "tipo": "oficial",
+      "orgao": "Governo de MS — Escritório de Parcerias Estratégicas (Comissão Especial de Licitação)",
+      "titulo": "Ata da sessão pública e abertura dos envelopes nº 02 — Concorrência Pública nº 001/2024 (Rota da Celulose)",
+      "data": "2025-05-08",
+      "url": "https://www.epe.segov.ms.gov.br/wp-content/uploads/2025/05/Ata_Sessao_Publica_do_Leilao_assinado.pdf",
+      "acesso": "2026-10-21",
+      "trecho": "Às 14h do dia 08 dia do mês de maio de 2025 […] CONSÓRCIO K&G ROTA DA CELULOSE […] 9% · CONSÓRCIO CAMINHOS DA CELULOSE […] 8% · ROTAS DO BRASIL S.A […] 5% · BTG PACTUAL INFRAESTRUTURA III […] 4%"
+    },
+    "ms-epe-decisao-recurso-rota-celulose": {
+      "tipo": "oficial",
+      "orgao": "Governo de MS — Escritório de Parcerias Estratégicas (Comissão Especial de Licitação)",
+      "titulo": "Comunicado — Aviso de decisão de recurso, Concorrência nº 01/2024",
+      "data": "2025-08-04",
+      "url": "https://www.epe.segov.ms.gov.br/wp-content/uploads/2025/08/COMUNICADO-Aviso-de-Decisao-de-Recurso.pdf",
+      "acesso": "2026-10-21",
+      "trecho": "COMUNICA aos interessados o PROVIMENTO ao recurso apresentado pelo Consórcio Caminhos da Celulose, declarando o Consórcio K&G Rota da Celulose, INABILITADO […] a CEL convoca o licitante segundo colocado, Consórcio Caminhos da Celulose […] Campo Grande - MS, 04 de agosto de 2025."
+    },
+    "ms-epe-ata-habilitacao-rota-celulose": {
+      "tipo": "oficial",
+      "orgao": "Governo de MS — Escritório de Parcerias Estratégicas (Comissão Especial de Licitação)",
+      "titulo": "2ª Ata de julgamento da Concorrência Pública nº 001/2024",
+      "data": "2025-09-18",
+      "url": "https://www.epe.segov.ms.gov.br/wp-content/uploads/2025/09/Ata-Julgamento-da-Habilitacao-Set25.pdf",
+      "acesso": "2026-10-21",
+      "trecho": "Aos 18 dias do mês de setembro de 2025 […] Os membros da CEL analisaram os documentos de habilitação apresentados pelo CONSÓRCIO CAMINHOS DA CELULOSE […] declarando HABILITADA a licitante"
+    },
+    "ms-doe-homologacao-rota-celulose": {
+      "tipo": "oficial",
+      "orgao": "Governo de MS — Secretaria de Estado de Infraestrutura e Logística",
+      "titulo": "Resultado da concorrência e aviso de homologação e adjudicação — Concorrência nº 001/2024 (Diário Oficial Eletrônico de MS nº 11.949, de 26/09/2025, p. 215–216)",
+      "data": "2025-09-26",
+      "url": "https://www.epe.segov.ms.gov.br/wp-content/uploads/2025/09/Aviso-de-Homologacao-e-Adjudicacao.pdf",
+      "acesso": "2026-10-21",
+      "trecho": "HOMOLOGA e ADJUDICA o Resultado da Concorrência n. 001/2024 […] ao CONSÓRCIO CAMINHOS DA CELULOSE, com percentual de desconto de 8% (oito por cento). Campo Grande - MS, 25 de setembro de 2025 (página do DOE-MS reproduzida no site do EPE)"
+    },
+    "ms-agencia-2025-05-08-rota-celulose": {
+      "tipo": "oficial",
+      "orgao": "Governo de MS — Agência de Notícias",
+      "titulo": "Mato Grosso do Sul bate o martelo: Rota da Celulose tem consórcio vencedor em disputa na bolsa de valores",
+      "data": "2025-05-08",
+      "url": "https://agenciadenoticias.ms.gov.br/mato-grosso-do-sul-bate-o-martelo-rota-da-celulose-tem-consorcio-vencedor-em-disputa-na-bolsa-de-valores/",
+      "acesso": "2026-10-21",
+      "trecho": "concedeu na tarde desta quinta-feira (8 de maio) o conjunto de rodovias da Rota da Celulose […] O leilão foi vencido pelo consórcio K&G, que ofereceu um desconto 9% na tarifa de pedágio"
+    },
+    "ms-agencia-2026-02-07-rota-celulose": {
+      "tipo": "oficial",
+      "orgao": "Governo de MS — Agência de Notícias",
+      "titulo": "Rota da Celulose: concessão garante segurança viária e inovações a Mato Grosso do Sul",
+      "data": "2026-02-07",
+      "url": "https://agenciadenoticias.ms.gov.br/rota-da-celulose-concessao-garante-seguranca-viaria-e-inovacoes-a-mato-grosso-do-sul/",
+      "acesso": "2026-10-21",
+      "trecho": "Foi firmado sexta-feira (6) o contrato de concessão da Rota da Celulose entre o Governo do Estado e a empresa XP Infra líder do consórcio Caminhos da Celulose […] ao longo dos próximos 30 anos (publicado em 07/02/2026)"
+    },
+    "correio-do-estado-2026-02-02-rota-celulose": {
+      "tipo": "imprensa",
+      "orgao": "Correio do Estado",
+      "titulo": "Contrato de concessão da Rota da Celulose é assinado e duplicação fica para o ano que vem",
+      "data": "2026-02-02",
+      "url": "https://correiodoestado.com.br/cidades/contrato-de-concessao-e-assinado-e-obras-na-rota-da-celulose-comecam/461508/",
+      "acesso": "2026-10-21",
+      "trecho": "foi assinado nesta segunda-feira (2) entre o Governo do Estado e o Consórcio Caminhos da Celulose, que foi o segundo colocado na licitação"
+    },
+    "b3-2025-07-16-ponte-sao-borja": {
+      "tipo": "oficial",
+      "orgao": "B3",
+      "titulo": "Brasil e Argentina realizam leilão para concessão da Ponte Internacional de São Borja",
+      "data": "2025-07-16",
+      "url": "https://www.b3.com.br/pt_br/noticias/leiloes-8AA8D0CC97F714260198142506C80DCD.htm",
+      "acesso": "2026-10-21",
+      "trecho": "São Paulo, 16 de julho de 2025 – Foi realizado hoje, em Foz do Iguaçu (PR), o leilão […] A Plus Byte SRL venceu com uma oferta de outorga fixa de US$ 29 milhões. O prazo da concessão será de 25 anos"
+    },
+    "rs-gov-2025-10-10-ponte-sao-borja": {
+      "tipo": "oficial",
+      "orgao": "Governo do Rio Grande do Sul — Secom",
+      "titulo": "Na Argentina, Leite visita centro de fronteira com São Borja e acompanha planos de investimento na Ponte Binacional",
+      "data": "2025-10-10",
+      "url": "https://estado.rs.gov.br/na-argentina-leite-visita-centro-de-fronteira-com-sao-borja-e-acompanha-planos-de-investimento-na-ponte-binacional",
+      "acesso": "2026-10-21",
+      "trecho": "investimentos previstos pela CS Infra, empresa do grupo SIMPAR, que venceu em agosto a licitação para a concessão da Ponte Binacional e de seus acessos. A concessão, com prazo de 25 anos"
+    },
+    "agenciainfra-2025-07-16-ponte-sao-borja": {
+      "tipo": "imprensa",
+      "orgao": "Agência iNFRA",
+      "titulo": "Plus Byte SRL vence leilão da Ponte São Borja e Santo Tomé com outorga de US$ 29 milhões",
+      "data": "2025-07-16",
+      "url": "https://agenciainfra.com/blog/plus-byte-srl-vence-leilao-da-ponte-sao-borja-e-santo-tome-com-outorga-de-us-29-milhoes/",
+      "acesso": "2026-10-21",
+      "trecho": "O valor de outorga fixa ofertado foi de US$ 29 milhões, ágio de 9,43% […] A empresa CS Infra S.A., que não levou o ativo […] ofertou US$ 26,6 milhões, ágio de 0,38%"
+    },
+    "poder360-2025-11-25-ponte-sao-borja": {
+      "tipo": "imprensa",
+      "orgao": "Poder360",
+      "titulo": "Governo assina concessão de ponte que liga Brasil e Argentina",
+      "data": "2025-11-25",
+      "url": "https://www.poder360.com.br/poder-infra/governo-assina-concessao-de-ponte-que-liga-brasil-e-argentina/",
+      "acesso": "2026-10-21",
+      "trecho": "Em julho, a argentina Plus Byte chegou a vencer o leilão com oferta de US$ 29 milhões. Entretanto, em agosto, a empresa foi desclassificada […] a CS Infra, subsidiária da Simpar e 2ª colocada do certame, foi habilitada. A proposta da companhia apresentou ágio de 0,38% sobre a outorga mínima de US$ 26,5 milhões"
+    },
+    "antt-ata-leilao-br-060-364": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Comissão de Outorga",
+      "titulo": "Ata de abertura do envelope de qualificação da proponente primeira colocada no leilão do Edital de Concessão nº 02/2025 (BR-060/364/GO/MT)",
+      "data": "2025-08-14",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/bndes-cn2-centro-oeste-norte/arquivos-para-download/comissao-de-outorga/ata-de-abertura-do-envelope-de-qualificacao-da-proponente-primeira-colocada/view",
+      "acesso": "2026-10-21",
+      "trecho": "o leilão foi realizado no dia quatorze de agosto de dois mil e vinte e cinco […] O Consórcio Rota Agro Brasil ofertou um desconto final de 19,70%, enquanto a Way Concessões S.A. apresentou um desconto final de 19,60%"
+    },
+    "antt-ata-julgamento-br-060-364-1a": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Comissão de Outorga",
+      "titulo": "Ata de análise e julgamento dos documentos de qualificação da proponente primeira colocada no leilão do Edital de Concessão nº 02/2025",
+      "data": "2025-10-13",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/bndes-cn2-centro-oeste-norte/arquivos-para-download/comissao-de-outorga/ata-de-analise-e-julgamentos-de-qualificacao-da-primeira-colocada",
+      "acesso": "2026-10-21",
+      "trecho": "a proponente classificada em primeiro lugar, Consórcio Rota Agro Brasil […] não atendeu integralmente às exigências […] razão pela qual esta Comissão decide pela INABILITAÇÃO do Consórcio Rota Agro Brasil (Brasília-DF, 13 de outubro de 2025)"
+    },
+    "antt-ata-reconsideracao-br-060-364": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Comissão de Outorga",
+      "titulo": "Ata de análise sobre pedido de reconsideração diante dos recursos interpostos — Edital de Concessão nº 02/2025",
+      "data": "2025-10-28",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/bndes-cn2-centro-oeste-norte/arquivos-para-download/comissao-de-outorga/ata-de-analise-sobre-pedido-de-reconsideracao-aos-recursos-interpostos",
+      "acesso": "2026-10-21",
+      "trecho": "concluiu que não há razões para reconsiderar a decisão anteriormente proferida, sendo mantida a decisão de inabilitação do Consórcio Rota Agro Brasil"
+    },
+    "antt-ata-julgamento-br-060-364-2a": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Comissão de Outorga",
+      "titulo": "Ata de análise e julgamento dos documentos de qualificação da proponente segunda colocada no leilão do Edital de Concessão nº 02/2025",
+      "data": "2025-11-24",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/bndes-cn2-centro-oeste-norte/arquivos-para-download/comissao-de-outorga/ata-de-analise-e-julgamento-dos-documentos-de-qualificacao-da-segunda-colocada",
+      "acesso": "2026-10-21",
+      "trecho": "A decisão de inabilitação da proponente primeira colocada no leilão foi confirmada pela Deliberação nº 4, de 5 de novembro de 2025 […] esta Comissão confirma a Proponente Way Concessões S.A. como vencedora do Leilão"
+    },
+    "antt-projeto-br-060-364": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Novos projetos em rodovias — BR-060/364/GO/MT - CN2 (Rota Agro)",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/bndes-cn2-centro-oeste-norte",
+      "acesso": "2026-10-21",
+      "trecho": "Prazo: 30 anos […] a Diretoria Colegiada determinou a convocação da segunda colocada, Way Concessões S.A. […] O contrato de concessão foi assinado em 3 de março de 2026"
+    },
+    "antt-extrato-contrato-br-060-364": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Extrato de contrato — Contrato de concessão das rodovias BR-060/364/GO/MT (DOU nº 43, de 05/03/2026, seção 3)",
+      "data": "2026-03-05",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/bndes-cn2-centro-oeste-norte/arquivos-para-download/edital-e-anexos/extrato_de_contrato_rota-agro/view",
+      "acesso": "2026-10-21",
+      "trecho": "Concessionária: CONCESSIONÁRIA DE ROTA AGRO MT-GO S.A. […] Prazo de vigência: 30 anos a partir da data de assunção […] Data de assinatura: 03/03/2026 (ato do DOU reproduzido na página da ANTT; o DOU não responde deste ambiente)"
+    },
+    "antt-concessao-rota-agro": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Lista de concessões — Rota Agro",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/rota-agro",
+      "acesso": "2026-10-21",
+      "trecho": "Data da Assinatura: 03/03/2026 · Início da Concessão: 01/04/2026 · Prazo da Concessão: 30 anos · Edital: 002/2025"
+    },
+    "atlas-publico-2026-02-17-delib-498": {
+      "tipo": "imprensa",
+      "orgao": "Atlas Público",
+      "titulo": "ANTT homologa concessão da BR-060/364 (Rota do Agro) à Way Concessões com deságio de 19,60%",
+      "data": "2026-02-17",
+      "url": "https://atlaspublico.com.br/noticias/antt-homologa-concessao-da-br-060-364-rota-do-agro-a-way-20760",
+      "acesso": "2026-10-21",
+      "trecho": "homologou, por meio da Deliberação nº 498 de 17 de dezembro de 2025, o resultado do leilão […] A empresa Way Concessões S.A. foi declarada vencedora do certame ao oferecer um desconto de 19,60%"
     }
   },
   "leiloes": [
@@ -843,6 +1199,502 @@
           "texto": "A ata do leilão registra 4 proponentes (o RoadShow lista 3). Lances escritos: CCR S.A. 21,10%, Consórcio Paraná 4um Opportunity 16,42%, Consórcio Infraestrutura PR 24,18% e Infra BR V Missouri Holding I S.A. 22%; no viva-voz, CCR 26,60%, Infra BR V Missouri 26,50% e Consórcio Infraestrutura PR 25,90% (o RoadShow imprime 25,2% e 25,8% para os dois últimos).",
           "fontes": [
             "antt-ata-leilao-rip-lote-3"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "rota-agro-norte",
+      "ent": "rota-agro-norte",
+      "participantes": {
+        "ano": 2025,
+        "lote": "BR-364/RO - Rota Agro Norte"
+      },
+      "concorrentes": "Rota Agro Norte",
+      "campos": {
+        "leilao": {
+          "valor": "2025-02-27",
+          "fontes": [
+            "antt-ata-leilao-br-364-ro",
+            "rs-p97"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Consórcio 4UM-Opportunity-BR-364/RO",
+          "fontes": [
+            "antt-delib-131-2025",
+            "antt-ata-leilao-br-364-ro"
+          ]
+        },
+        "desagio": {
+          "valor": 0.05,
+          "fontes": [
+            "antt-ata-leilao-br-364-ro",
+            "antt-delib-131-2025",
+            "rs-p97"
+          ]
+        },
+        "assinatura": {
+          "valor": "2025-07-18",
+          "fontes": [
+            "antt-extrato-contrato-br-364-ro",
+            "antt-concessao-nova-364",
+            "rs-p97"
+          ]
+        },
+        "inicio_operacao": {
+          "valor": "2025-08-21",
+          "fontes": [
+            "antt-concessao-nova-364",
+            "rs-p97"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 30,
+          "fontes": [
+            "antt-extrato-contrato-br-364-ro",
+            "antt-concessao-nova-364"
+          ]
+        }
+      },
+      "notas": [
+        {
+          "texto": "A ata do leilão registra 1 proponente (Consórcio 4Um-Opportunity-BR-364/RO, 0,05%). A lista de proponentes da p. 15 do RoadShow, que inclui EPR (Equipav) com 8,30%, não tem respaldo na ata. A SPE que assinou o contrato é a Concessionária de Rodovia Nova 364 S.A.",
+          "fontes": [
+            "antt-ata-leilao-br-364-ro",
+            "antt-extrato-contrato-br-364-ro"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "juiz-de-fora-rio-de-janeiro",
+      "ent": "juiz-de-fora-rio-de-janeiro",
+      "participantes": {
+        "ano": 2025,
+        "lote": "BR-040/495/RJ/MG"
+      },
+      "concorrentes": "Juiz de Fora/MG - Rio de Janeiro/RJ",
+      "campos": {
+        "leilao": {
+          "valor": "2025-04-30",
+          "fontes": [
+            "antt-ata-leilao-br-040-495-mg-rj",
+            "rs-p97"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Consórcio Nova Estrada Real",
+          "fontes": [
+            "antt-ata-leilao-br-040-495-mg-rj",
+            "antt-ata-julgamento-br-040-495-mg-rj"
+          ]
+        },
+        "desagio": {
+          "valor": 14.0,
+          "fontes": [
+            "antt-ata-leilao-br-040-495-mg-rj",
+            "rs-p97"
+          ]
+        },
+        "assinatura": {
+          "valor": "2025-09-30",
+          "fontes": [
+            "antt-extrato-contrato-br-040-495-mg-rj",
+            "antt-concessao-elovias"
+          ]
+        },
+        "inicio_operacao": {
+          "valor": "2025-11-04",
+          "fontes": [
+            "antt-concessao-elovias"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 30,
+          "fontes": [
+            "antt-extrato-contrato-br-040-495-mg-rj",
+            "antt-concessao-elovias"
+          ]
+        }
+      },
+      "notas": [
+        {
+          "texto": "Lances da ata: Consórcio Nova Estrada Real 14,00%, EPR Participações S.A. 3,08% (o RoadShow imprime 3%) e Sacyr Concessões e Participações do Brasil 1,00%. A SPE que assinou o contrato é a Elovias S.A.",
+          "fontes": [
+            "antt-ata-leilao-br-040-495-mg-rj",
+            "antt-extrato-contrato-br-040-495-mg-rj"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "motiva-pantanal-otimizacao",
+      "ent": "motiva-pantanal",
+      "participantes": {
+        "ano": 2025,
+        "lote": "BR-163/MS - MSVIA Otimização"
+      },
+      "concorrentes": "Otimização Motiva Pantanal",
+      "campos": {
+        "leilao": {
+          "valor": "2025-05-22",
+          "fontes": [
+            "antt-ata-processo-competitivo-msvia",
+            "b3-2025-05-22-msvia",
+            "rs-p97"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Motiva Infraestrutura de Mobilidade S.A.",
+          "fontes": [
+            "antt-ata-processo-competitivo-msvia",
+            "antt-extrato-termo-aditivo-msvia",
+            "b3-2025-05-22-msvia"
+          ]
+        },
+        "desagio": {
+          "valor": 0.0,
+          "fontes": [
+            "antt-ata-processo-competitivo-msvia",
+            "antt-edital-processo-competitivo-msvia"
+          ]
+        },
+        "assinatura": {
+          "valor": "2014-03-12",
+          "fontes": [
+            "antt-termo-aditivo-msvia-2025",
+            "rs-p5"
+          ]
+        },
+        "assinatura_aditivo": {
+          "valor": "2025-08-01",
+          "fontes": [
+            "antt-termo-aditivo-msvia-2025",
+            "antt-concessao-motiva-pantanal",
+            "rs-p97"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 29,
+          "fontes": [
+            "antt-termo-aditivo-msvia-2025",
+            "antt-projeto-msvia",
+            "antt-concessao-motiva-pantanal"
+          ]
+        }
+      },
+      "notas": [
+        {
+          "texto": "Processo competitivo sem outras proponentes: a controladora (Motiva) foi declarada vencedora e a ata confirma a tarifa básica de R$ 0,07521/km, igual à tarifa de referência do edital (item 12.2.2), ou seja, sem desconto (0,00%); o RoadShow imprime 0,05%.",
+          "fontes": [
+            "antt-ata-processo-competitivo-msvia",
+            "antt-edital-processo-competitivo-msvia"
+          ]
+        },
+        {
+          "texto": "O termo aditivo é datado de 01/08/2025 (a página da concessão na ANTT usa a mesma data); o extrato publicado no DOU de 05/08/2025 informa 02/08/2025. Pela cláusula 45.10.1, o aditivo vigora a partir da publicação do extrato no DOU. O prazo de 29 anos conta da vigência do aditivo. Não foi localizada fonte oficial para o início de operação de 01/09/2025 impresso no RoadShow.",
+          "fontes": [
+            "antt-termo-aditivo-msvia-2025",
+            "antt-extrato-termo-aditivo-msvia",
+            "antt-concessao-motiva-pantanal"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "ecovias-capixaba-otimizacao",
+      "ent": "ecovias-capixaba",
+      "participantes": {
+        "ano": 2025,
+        "lote": "BR-101/ES/BA Otimização ECO101"
+      },
+      "concorrentes": "Otimização Ecovias Capixaba",
+      "campos": {
+        "leilao": {
+          "valor": "2025-06-26",
+          "fontes": [
+            "antt-ata-processo-competitivo-eco101",
+            "rs-p97"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Ecorodovias Concessões e Serviços S.A.",
+          "fontes": [
+            "antt-ata-processo-competitivo-eco101",
+            "antt-delib-230-2025"
+          ]
+        },
+        "desagio": {
+          "valor": 0.0,
+          "fontes": [
+            "antt-ata-processo-competitivo-eco101",
+            "antt-edital-processo-competitivo-eco101"
+          ]
+        },
+        "assinatura": {
+          "valor": "2013-04-17",
+          "fontes": [
+            "antt-termo-aditivo-eco101-2025",
+            "antt-projeto-eco101",
+            "rs-p5"
+          ]
+        },
+        "assinatura_aditivo": {
+          "valor": "2025-08-26",
+          "fontes": [
+            "antt-termo-aditivo-eco101-2025",
+            "antt-concessao-ecovias-capixaba",
+            "rs-p5"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 24,
+          "fontes": [
+            "antt-termo-aditivo-eco101-2025",
+            "antt-projeto-eco101",
+            "antt-concessao-ecovias-capixaba"
+          ]
+        }
+      },
+      "notas": [
+        {
+          "texto": "Processo competitivo sem outras proponentes: a controladora (Ecorodovias) foi declarada vencedora e a ata confirma a tarifa básica de R$ 0,05525/km, igual à tarifa de referência do edital (item 12.2.5), ou seja, sem desconto (0,00%); o RoadShow imprime 0,05%.",
+          "fontes": [
+            "antt-ata-processo-competitivo-eco101",
+            "antt-edital-processo-competitivo-eco101"
+          ]
+        },
+        {
+          "texto": "O termo aditivo de modernização é datado de 26/08/2025, como na p. 5 do RoadShow (a p. 97 imprime 12/09/2025). Pela cláusula 45.10.1, o aditivo vigora a partir da publicação do extrato no DOU; o prazo de 24 anos conta dessa vigência. Não foi localizada fonte oficial para o início de operação de 12/10/2025 impresso no RoadShow.",
+          "fontes": [
+            "antt-termo-aditivo-eco101-2025",
+            "antt-concessao-ecovias-capixaba"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "rota-da-celulose",
+      "ent": "rota-da-celulose",
+      "participantes": {
+        "ano": 2025,
+        "lote": "BR-262/267/MS e MS-040/338/395 - Rota da Celulose"
+      },
+      "concorrentes": "Rota da Celulose (delegação a MS)",
+      "campos": {
+        "leilao": {
+          "valor": "2025-05-08",
+          "fontes": [
+            "ms-epe-ata-sessao-rota-celulose",
+            "ms-agencia-2025-05-08-rota-celulose",
+            "rs-p97"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Consórcio Caminhos da Celulose",
+          "fontes": [
+            "ms-doe-homologacao-rota-celulose",
+            "ms-epe-ata-habilitacao-rota-celulose",
+            "rs-p97"
+          ]
+        },
+        "desagio": {
+          "valor": 8.0,
+          "fontes": [
+            "ms-doe-homologacao-rota-celulose",
+            "ms-epe-ata-sessao-rota-celulose"
+          ]
+        },
+        "assinatura": {
+          "valor": "2026-02-06",
+          "fontes": [
+            "ms-agencia-2026-02-07-rota-celulose"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 30,
+          "fontes": [
+            "ms-agencia-2026-02-07-rota-celulose"
+          ]
+        }
+      },
+      "inabilitados": [
+        {
+          "grupo": "Consórcio K&G Rota da Celulose",
+          "desagio": 9.0,
+          "data": "2025-08-04",
+          "fontes": [
+            "ms-epe-ata-sessao-rota-celulose",
+            "ms-epe-decisao-recurso-rota-celulose",
+            "ms-agencia-2025-05-08-rota-celulose"
+          ]
+        }
+      ],
+      "notas": [
+        {
+          "texto": "O Consórcio K&G Rota da Celulose (K-Infra e Galapagos) fez o maior lance (9%) e foi declarado vencedor na sessão de 08/05/2025; em 04/08/2025 a Comissão Especial de Licitação deu provimento ao recurso do Consórcio Caminhos da Celulose e declarou o K&G inabilitado. O Caminhos da Celulose (liderado pelo XP Infra V FIP), segundo colocado com 8%, foi habilitado em 18/09/2025 e teve o resultado homologado e adjudicado em 25/09/2025 (DOE-MS de 26/09/2025). O RoadShow atribui ao Caminhos da Celulose o deságio de 9%, que é o lance do K&G.",
+          "fontes": [
+            "ms-epe-ata-sessao-rota-celulose",
+            "ms-epe-decisao-recurso-rota-celulose",
+            "ms-epe-ata-habilitacao-rota-celulose",
+            "ms-doe-homologacao-rota-celulose"
+          ]
+        },
+        {
+          "texto": "Data de assinatura: a Agência de Notícias do Governo de MS informa que o contrato foi firmado na sexta-feira, 06/02/2026, em cerimônia em Inocência; o Correio do Estado noticiou em 02/02/2026 que o contrato foi assinado naquela segunda-feira. O extrato no Diário Oficial de MS não pôde ser consultado (o site não responde deste ambiente). O início de operação de 30/12/2025 impresso no RoadShow é anterior à assinatura e não foi localizado em fonte oficial.",
+          "fontes": [
+            "ms-agencia-2026-02-07-rota-celulose",
+            "correio-do-estado-2026-02-02-rota-celulose"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "ponte-sao-borja-santo-tome",
+      "ent": "ponte-binacional-sao-borja-santo-tome",
+      "participantes": {
+        "ano": 2025,
+        "lote": "Ponte Internacional São Borja - São Tomé"
+      },
+      "concorrentes": "Ponte Binacional São Borja/BRA a Santo Tomé/ARG",
+      "campos": {
+        "leilao": {
+          "valor": "2025-07-16",
+          "fontes": [
+            "b3-2025-07-16-ponte-sao-borja",
+            "rs-p97"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "CS Infra S.A.",
+          "fontes": [
+            "rs-gov-2025-10-10-ponte-sao-borja",
+            "poder360-2025-11-25-ponte-sao-borja",
+            "agenciainfra-2025-07-16-ponte-sao-borja"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 25,
+          "fontes": [
+            "b3-2025-07-16-ponte-sao-borja",
+            "rs-gov-2025-10-10-ponte-sao-borja"
+          ]
+        }
+      },
+      "inabilitados": [
+        {
+          "grupo": "Plus Byte SRL",
+          "desagio": null,
+          "data": null,
+          "fontes": [
+            "b3-2025-07-16-ponte-sao-borja",
+            "poder360-2025-11-25-ponte-sao-borja"
+          ]
+        }
+      ],
+      "notas": [
+        {
+          "texto": "O critério do leilão foi a maior outorga fixa (em dólares), não o desconto na tarifa. A Plus Byte SRL venceu a sessão com US$ 29 milhões (ágio de 9,43%) e foi desclassificada em agosto de 2025 por não cumprir os requisitos de qualificação; a CS Infra S.A. (grupo Simpar), segunda colocada, ofertou US$ 26,6 milhões, ágio de 0,38% sobre a outorga mínima de US$ 26,5 milhões. Os 0,38% e 9,43% que o RoadShow imprime como deságio são esses ágios sobre a outorga.",
+          "fontes": [
+            "b3-2025-07-16-ponte-sao-borja",
+            "agenciainfra-2025-07-16-ponte-sao-borja",
+            "poder360-2025-11-25-ponte-sao-borja"
+          ]
+        },
+        {
+          "texto": "O contrato foi assinado em 25/11/2025 com a CS Rodovias Mercosul (SPE da CS Infra), segundo a imprensa; as páginas do Ministério dos Transportes sobre o leilão e a assinatura não respondem deste ambiente.",
+          "fontes": [
+            "poder360-2025-11-25-ponte-sao-borja"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "rota-agro",
+      "ent": "rota-agro",
+      "participantes": {
+        "ano": 2025,
+        "lote": "Rota Agro BR-060/364/GO/MT"
+      },
+      "concorrentes": "Rota Agro",
+      "campos": {
+        "leilao": {
+          "valor": "2025-08-14",
+          "fontes": [
+            "antt-ata-leilao-br-060-364",
+            "rs-p97"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Way Concessões S.A.",
+          "fontes": [
+            "antt-ata-julgamento-br-060-364-2a",
+            "antt-projeto-br-060-364",
+            "rs-p97"
+          ]
+        },
+        "desagio": {
+          "valor": 19.6,
+          "fontes": [
+            "antt-ata-leilao-br-060-364",
+            "atlas-publico-2026-02-17-delib-498",
+            "rs-p97"
+          ]
+        },
+        "assinatura": {
+          "valor": "2026-03-03",
+          "fontes": [
+            "antt-extrato-contrato-br-060-364",
+            "antt-concessao-rota-agro",
+            "antt-projeto-br-060-364",
+            "rs-p97"
+          ]
+        },
+        "inicio_operacao": {
+          "valor": "2026-04-01",
+          "fontes": [
+            "antt-concessao-rota-agro"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 30,
+          "fontes": [
+            "antt-extrato-contrato-br-060-364",
+            "antt-concessao-rota-agro"
+          ]
+        }
+      },
+      "inabilitados": [
+        {
+          "grupo": "Consórcio Rota Agro Brasil",
+          "desagio": 19.7,
+          "data": "2025-10-13",
+          "fontes": [
+            "antt-ata-leilao-br-060-364",
+            "antt-ata-julgamento-br-060-364-1a",
+            "antt-ata-reconsideracao-br-060-364",
+            "antt-ata-julgamento-br-060-364-2a"
+          ]
+        }
+      ],
+      "notas": [
+        {
+          "texto": "Lances escritos da ata: Consórcio Rota Agro Brasil 17,18%, Way Concessões S.A. 16,10%, EPR Participações S.A. 10,80%, Consórcio Rota do Cerrado 10,55% e VF Gomes Participações 0,00%; no viva-voz, Rota Agro Brasil 19,70% e Way 19,60%. Os 19,70% citados pela imprensa são do Consórcio Rota Agro Brasil, inabilitado em 13/10/2025 (certidões trabalhistas dos administradores dos fundos e seguro-garantia), decisão mantida na reconsideração de 28/10/2025 e confirmada pela Deliberação nº 4, de 05/11/2025. A Way (19,60%) foi confirmada vencedora em 24/11/2025; a homologação (Deliberação nº 498, de 17/12/2025) foi lida na reprodução do Atlas Público, porque o DOU não responde deste ambiente.",
+          "fontes": [
+            "antt-ata-leilao-br-060-364",
+            "antt-ata-julgamento-br-060-364-1a",
+            "antt-ata-reconsideracao-br-060-364",
+            "antt-ata-julgamento-br-060-364-2a",
+            "atlas-publico-2026-02-17-delib-498"
+          ]
+        },
+        {
+          "texto": "A página do projeto na ANTT diz que a sessão do leilão foi em 18/08/2025; a ata da Comissão de Outorga registra 14/08/2025, data adotada. A SPE que assinou o contrato é a Concessionária de Rota Agro MT-GO S.A.",
+          "fontes": [
+            "antt-projeto-br-060-364",
+            "antt-ata-leilao-br-060-364",
+            "antt-extrato-contrato-br-060-364"
           ]
         }
       ]

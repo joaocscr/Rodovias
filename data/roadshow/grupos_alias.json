@@ -39,6 +39,41 @@
       "nome": "CCR S.A.",
       "grupo": "Motiva",
       "motivo": "troca de nome"
+    },
+    {
+      "nome": "Consórcio 4UM-Opportunity-BR-364/RO",
+      "grupo": "4UM Investimentos",
+      "motivo": "consórcio liderado por"
+    },
+    {
+      "nome": "Consórcio Nova Estrada Real",
+      "grupo": "Construcap; Copasa; Ohla",
+      "motivo": "consórcio liderado por"
+    },
+    {
+      "nome": "Motiva Infraestrutura de Mobilidade S.A.",
+      "grupo": "Motiva",
+      "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "Ecorodovias Concessões e Serviços S.A.",
+      "grupo": "Ecorodovias",
+      "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "Consórcio Caminhos da Celulose",
+      "grupo": "XP Infra V Fundo de Investimento",
+      "motivo": "consórcio liderado por"
+    },
+    {
+      "nome": "CS Infra S.A.",
+      "grupo": "CS Infra S.A.",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Way Concessões S.A.",
+      "grupo": "Way Concessões",
+      "motivo": "razão social do grupo"
     }
   ]
 }
