@@ -1735,6 +1735,14 @@
     "rs-p23": {
       "tipo": "roadshow",
       "pagina": 23
+    },
+    "rs-p117": {
+      "tipo": "roadshow",
+      "pagina": 117
+    },
+    "rs-p153": {
+      "tipo": "roadshow",
+      "pagina": 153
     }
   },
   "leiloes": [
@@ -4858,6 +4866,46 @@
           "fontes": [
             "antt-nt-1854-2026-ecovias-rio-minas",
             "antt-concessao-ecovias-rio-minas"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "rota-arco-norte",
+      "ent": "rota-arco-norte",
+      "campos": {
+        "edital": {
+          "valor": "2026-07-17",
+          "fontes": [
+            "rs-p117"
+          ]
+        }
+      },
+      "notas": [
+        {
+          "texto": "A ficha do RoadShow (p. 109) imprime o edital em 17/07/2025, mas o cronograma 2026 (p. 117) põe a publicação do edital em 17/07 de 2026, três meses antes do leilão de 12/11/2026; exibida a data do cronograma.",
+          "fontes": [
+            "rs-p117"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "rota-norte-catarinense",
+      "ent": "rota-norte-catarinense",
+      "campos": {
+        "edital": {
+          "valor": "2027-08",
+          "fontes": [
+            "rs-p153"
+          ]
+        }
+      },
+      "notas": [
+        {
+          "texto": "A ficha do RoadShow (p. 145) imprime o edital em agosto/2026, com leilão em novembro/2027; o cronograma 2027 (p. 153) põe o edital em agosto de 2027, três meses antes do leilão; exibida a data do cronograma.",
+          "fontes": [
+            "rs-p153"
           ]
         }
       ]

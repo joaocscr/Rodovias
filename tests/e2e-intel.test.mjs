@@ -1071,6 +1071,20 @@ test('Pipeline: linha do tempo de editais e leilões bate com o modelo (linhas, 
   strokes.forEach(([st, fl], i) => { assert.equal(st, rgb(m.cor[comEdital[i].status])); assert.equal(fl, 'none'); });
   const leg = await page.textContent('#pipe-timeline .chart-legend:first-of-type');
   for (const k of new Set(res.rows.map(r => r.status))) assert.ok(leg.includes(m.lbl[k]), k);
+  // amostra da legenda: mesma forma e cor cheia do losango da linha (sem transparência), um por status usado
+  const usados = [...new Set(res.rows.map(r => r.status))];
+  const amostras = await page.$$eval('#pipe-timeline .chart-legend:first-of-type span', ss => ss.map(sp => {
+    const el = sp.querySelector('svg path'), cs = getComputedStyle(el);
+    return [sp.textContent.trim(), cs.fill, cs.fillOpacity, el.getAttribute('d')];
+  }));
+  assert.equal(amostras.length, usados.length);
+  const formaMarca = await page.$eval(`${sel} .tl-leilao`, p => p.getAttribute('d').match(/L/g).length);
+  amostras.forEach(([txt, fill, op, d], i) => {
+    assert.equal(txt, m.lbl[usados.find(k => m.lbl[k] === txt)], txt);
+    assert.equal(fill, rgb(m.cor[usados.find(k => m.lbl[k] === txt)]), txt);
+    assert.equal(op, '1', txt);
+    assert.equal(d.match(/L/g).length, formaMarca, txt); // losango: M + 3 L + Z, como a marca
+  });
   assert.match(await page.textContent('#pipe-timeline'), /Edital\s*Leilão|Edital.*Leilão/);
   // só tokens do projeto nas marcas
   const cores = await page.$$eval(sel + ' [fill], ' + sel + ' [stroke]', els => els.flatMap(e => [e.getAttribute('fill'), e.getAttribute('stroke')]).filter(c => c && c[0] === '#'));

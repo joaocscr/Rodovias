@@ -6,7 +6,7 @@ Gerado por `scripts/build.py` a partir de `data/roadshow/verificacao.json`. Hier
 
 | Leilões | Campos oficial | Campos RoadShow | Campos imprensa | Não localizados | Não se aplica |
 |---:|---:|---:|---:|---:|---:|
-| 47 | 297 | 0 | 0 | 1 | 1 |
+| 49 | 297 | 2 | 0 | 1 | 1 |
 
 ## Campos verificados
 
@@ -311,6 +311,8 @@ Gerado por `scripts/build.py` a partir de `data/roadshow/verificacao.json`. Hier
 | ecovias-rio-minas-2022 | tarifa_vencedora | R$ 0,15592 por km em pista simples (out/2021) | oficial | — | antt-nt-1854-2026-ecovias-rio-minas |
 | ecovias-rio-minas-2022 | assinatura | 19/08/2022 | oficial | — | antt-nt-1854-2026-ecovias-rio-minas, rs-p3 |
 | ecovias-rio-minas-2022 | prazo_anos | 30 anos | oficial | — | antt-nt-1854-2026-ecovias-rio-minas, antt-concessao-ecovias-rio-minas |
+| rota-arco-norte | edital | 17/07/2026 | RoadShow | 17/07/2025 | rs-p117 |
+| rota-norte-catarinense | edital | ago/2027 | RoadShow | ago/2026 | rs-p153 |
 
 ## Notas
 
@@ -373,6 +375,8 @@ Gerado por `scripts/build.py` a partir de `data/roadshow/verificacao.json`. Hier
 - **ecovias-araguaia-2021**: Critério híbrido: menor tarifa com desconto máximo de 16,25% e, a partir daí, maior outorga. O Consórcio ECO153 e a CCR S.A. deram o desconto máximo; o ECO153 venceu com outorga de R$ 320 milhões (homologação pela Deliberação ANTT nº 203/2021). A SPE Ecovias Araguaia tem como controladoras a Ecorodovias Concessões e Serviços e a GLP X Participações.
 - **ecovias-rio-minas-2022**: Proposta única: a ANTT registra só a Ecorodovias Concessões e Serviços, com 3,11%. O critério do leilão foi o maior valor de outorga e o menor valor da TBP, com desconto máximo de 17,50% (nota técnica da ANTT, item 17). O “Ecorodovias (10,6%)” que o RoadShow lista como outro proponente tem o mesmo valor do lance da EcoRodovias no leilão de 2021 da BR-101/116/SP/RJ (10,60%).
 - **ecovias-rio-minas-2022**: A nota técnica da ANTT dá a assinatura em 19/08/2022 (igual ao RoadShow); a página da concessão na ANTT mostra 22/08/2022.
+- **rota-arco-norte**: A ficha do RoadShow (p. 109) imprime o edital em 17/07/2025, mas o cronograma 2026 (p. 117) põe a publicação do edital em 17/07 de 2026, três meses antes do leilão de 12/11/2026; exibida a data do cronograma.
+- **rota-norte-catarinense**: A ficha do RoadShow (p. 145) imprime o edital em agosto/2026, com leilão em novembro/2027; o cronograma 2027 (p. 153) põe o edital em agosto de 2027, três meses antes do leilão; exibida a data do cronograma.
 
 ## Inabilitados
 

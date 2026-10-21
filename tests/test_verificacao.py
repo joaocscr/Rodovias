@@ -73,9 +73,9 @@ def test_tipo_campo_hierarquia():
     assert tipo_campo([IMPRENSA]) == "imprensa"
 
 
-def test_campos_sao_os_nove_de_leilao():
+def test_campos_sao_os_dez_de_leilao():
     assert set(CAMPOS) == {"leilao", "grupo_vencedor", "desagio", "assinatura", "assinatura_aditivo",
-                           "inicio_operacao", "tarifa_teto", "tarifa_vencedora", "prazo_anos"}
+                           "inicio_operacao", "tarifa_teto", "tarifa_vencedora", "prazo_anos", "edital"}
 
 
 def test_validar_aceita_camada_correta(conc):
@@ -546,6 +546,57 @@ def test_relatorio_markdown(conc):
     assert "Nenhum leilão" in relatorio_markdown(vazio, aplicar(conc, vazio, {"aliases": []}))
 
 
+# ---------- edital: data completa ou só mês; edital não pode ser posterior ao leilão ----------
+def test_validar_edital_aceita_dia_ou_mes(conc):
+    for ok in ("2025-07-17", "2025-08"):
+        assert validar(verif([leilao({"edital": {"valor": ok, "fontes": ["rs-p15"]}})]), conc) == [], ok
+    for ruim in ("2027", "2027-13", "2026-02-30", "ago/2027", "2027-8", 20270817):
+        erros = validar(verif([leilao({"edital": {"valor": ruim, "fontes": ["rs-p15"]}})]), conc)
+        assert len(erros) == 1 and "edital" in erros[0], (ruim, erros)
+    # as outras datas continuam exigindo o dia
+    erros = validar(verif([leilao({"assinatura": {"valor": "2026-03", "fontes": ["antt"]}})]), conc)
+    assert len(erros) == 1 and "assinatura" in erros[0]
+
+
+def test_aplicar_edital_troca_exibido_e_guarda_o_impresso(conc):
+    conc["entidades"][0]["edital"] = "2025-06"
+    conc["entidades"][0]["fontes"]["edital"] = 145
+    v = verif([leilao({"edital": {"valor": "2025-08", "fontes": ["rs-p15"]}})])
+    out = aplicar(conc, v, {"aliases": []})
+    e = out["entidades"][0]
+    assert e["edital"] == "2025-08"
+    assert e["verif"]["edital"]["tipo"] == "roadshow" and e["verif"]["edital"]["roadshow"] == "2025-06"
+    [d] = [x for x in e["divergencias"] if x["campo"] == "edital"]
+    assert d["exibido"] == "2025-08" and d["alternativas"] == [{"valor": "2025-06", "pagina": 145}]
+    assert "jun/2025" in d["nota"] and "2025-06" not in d["nota"]
+
+
+def sequencia(edital, leilao_):
+    c = {"entidades": [{"id": "x", "nome": "X", "edital": edital, "leilao": leilao_, "fontes": {}}], "mercado": {}}
+    return validar({"versao": 1, "fontes": {}, "leiloes": []}, c)
+
+
+def test_validar_edital_nao_pode_ser_posterior_ao_leilao():
+    assert sequencia("2026-09-02", "2026-12-11") == []
+    assert sequencia("2026-12-11", "2026-12-11") == []
+    assert sequencia(None, "2026-12-11") == [] and sequencia("2026-12-11", None) == []
+    [e] = sequencia("2026-12-12", "2026-12-11")
+    assert "x" in e and "edital" in e and "12/12/2026" in e and "11/12/2026" in e
+    # mês sem dia: compara no mês (mesmo mês vale; mês seguinte não)
+    assert sequencia("2027-06-30", "2027-06") == [] and sequencia("2027-06", "2027-06-01") == []
+    assert len(sequencia("2027-07", "2027-06-30")) == 1
+    assert len(sequencia("2027-07-01", "2027-06")) == 1
+    assert len(sequencia("2028-01", "2027-12")) == 1
+
+
+def test_sequencia_vale_para_o_valor_exibido_depois_da_camada(conc):
+    conc["entidades"][0].update({"edital": "2027-01-10", "leilao": "2026-12-01"})
+    erros = validar(verif([]), conc)  # base com edital depois do leilão
+    assert len(erros) == 1 and "lote-5" in erros[0]
+    corrige = verif([leilao({"edital": {"valor": "2026-09-01", "fontes": ["rs-p15"]}})])
+    assert validar(corrige, conc) == []
+
+
 def _conc_real():
     return json.loads((ROOT / "data" / "base" / "conc.json").read_text(encoding="utf-8"))
 
@@ -608,3 +659,20 @@ def _precisa_fonte(a):
 def test_alias_motivos_com_evidencia_tem_fonte():
     # essas junções citam a fonte (ids de verificacao.json)
     assert [a["nome"] for a in carregar_aliases()["aliases"] if _precisa_fonte(a) and not a.get("fontes")] == []
+
+
+def test_dados_reais_editais_corrigidos_pela_camada():
+    ents = {e["id"]: e for e in aplicar(_conc_real(), carregar(), carregar_aliases())["entidades"]}
+    base = {e["id"]: e for e in _conc_real()["entidades"]}
+    # base congelada = transcrição do RoadShow, intacta; a camada mostra o cronograma (p. 117 e p. 153)
+    assert (base["rota-arco-norte"]["edital"], base["rota-norte-catarinense"]["edital"]) == ("2025-07-17", "2026-08")
+    for id_, exibido, impresso, pg_ficha, pg_cron in [("rota-arco-norte", "2026-07-17", "2025-07-17", 109, 117),
+                                                      ("rota-norte-catarinense", "2027-08", "2026-08", 145, 153)]:
+        e = ents[id_]
+        assert e["edital"] == exibido, id_
+        assert [m["data"] for m in e["cronograma"] if m["marco"] == "Edital"] == [exibido], id_
+        assert e["verif"]["edital"]["roadshow"] == impresso
+        assert [f["pagina"] for f in e["verif"]["edital"]["fontes"]] == [pg_cron]
+        [d] = [x for x in e["divergencias"] if x["campo"] == "edital"]
+        assert d["exibido"] == exibido and d["alternativas"] == [{"valor": impresso, "pagina": pg_ficha}], id_
+        assert any("ficha" in n["texto"] and str(pg_ficha) in n["texto"] for n in e["notas_verif"]), id_

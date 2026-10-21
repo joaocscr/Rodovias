@@ -19,8 +19,13 @@ ROOT = Path(__file__).resolve().parent.parent
 ROADSHOW = ROOT / "data" / "roadshow"
 
 CAMPOS = ("leilao", "grupo_vencedor", "desagio", "assinatura", "assinatura_aditivo", "inicio_operacao",
-          "tarifa_teto", "tarifa_vencedora", "prazo_anos")
-CAMPOS_DATA = ("leilao", "assinatura", "assinatura_aditivo", "inicio_operacao")
+          "tarifa_teto", "tarifa_vencedora", "prazo_anos", "edital")
+CAMPOS_DATA = ("leilao", "assinatura", "assinatura_aditivo", "inicio_operacao", "edital")
+# datas que o RoadShow dá só com o mês (cronograma): aceitam também AAAA-MM
+CAMPOS_DATA_MES = ("edital",)
+# campos que só existem na entidade (a linha de participantes e a de concorrentes não têm edital)
+CAMPOS_SO_ENT = ("edital",)
+MESES = ("jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez")
 CAMPOS_NUM = ("desagio", "prazo_anos")
 # tarifas levam unidade e data-base ("R$ 4,083 por praça (jul/2007)"): texto livre não vazio
 CAMPOS_TEXTO = ("grupo_vencedor", "tarifa_teto", "tarifa_vencedora")
@@ -76,6 +81,10 @@ def _data_iso(v):
     return True
 
 
+def _mes_iso(v):
+    return isinstance(v, str) and re.fullmatch(r"\d{4}-(0[1-9]|1[0-2])", v) is not None
+
+
 def _url_http(url):
     """URL http(s) com host: `http:` e `https://` sem endereço não levam a lugar nenhum."""
     try:
@@ -108,8 +117,8 @@ def _erros_fonte(fid, f):
 
 
 def _erros_valor(campo, v):
-    if campo in CAMPOS_DATA and not _data_iso(v):
-        return f"{campo} deve ser data AAAA-MM-DD, veio {v!r}"
+    if campo in CAMPOS_DATA and not (_data_iso(v) or (campo in CAMPOS_DATA_MES and _mes_iso(v))):
+        return f"{campo} deve ser data AAAA-MM-DD{' ou AAAA-MM' if campo in CAMPOS_DATA_MES else ''}, veio {v!r}"
     if campo in CAMPOS_NUM and (isinstance(v, bool) or not isinstance(v, (int, float))):
         return f"{campo} deve ser número, veio {v!r}"
     if campo in CAMPOS_TEXTO and (not isinstance(v, str) or not v.strip()):
@@ -153,7 +162,8 @@ def _ligacoes(l):
         lig.append((("ent", l["ent"]), {c: c for c in CAMPOS}))
     if "participantes" in l:
         p = l["participantes"] or {}
-        lig.append((("participantes", p.get("ano"), p.get("lote")), {c: PART_KEY.get(c, c) for c in CAMPOS}))
+        lig.append((("participantes", p.get("ano"), p.get("lote")),
+                    {c: PART_KEY.get(c, c) for c in CAMPOS if c not in CAMPOS_SO_ENT}))
     if "concorrentes" in l:
         lig.append((("concorrentes", l["concorrentes"]), CONC_KEY))
     return lig
@@ -300,9 +310,26 @@ def validar(verif, conc, aliases=None):
 
     if aliases is not None:
         erros += _erros_aliases(aliases, fontes)
-        if not erros:  # `aplicar` supõe a camada válida; com erros, os nomes ficam para a próxima rodada
-            faltam = [n for n in nomes_do_ranking(aplicar(conc, verif, aliases)) if n not in nomes_alias]
+    if not erros:  # `aplicar` supõe a camada válida; com erros, as conferências sobre o valor exibido ficam para a próxima rodada
+        aplicado = aplicar(conc, verif, aliases or {"aliases": []})
+        erros += _erros_sequencia(aplicado)
+        if aliases is not None:
+            faltam = [n for n in nomes_do_ranking(aplicado) if n not in nomes_alias]
             erros += [f"participantes: nome {n!r} sem grupo em grupos_alias.json" for n in faltam]
+    return erros
+
+
+def _erros_sequencia(conc_aplicado):
+    """Edital não pode ser posterior ao leilão (valores exibidos, já com a camada). Com 'AAAA-MM' em um dos dois,
+    compara no mês: edital e leilão no mesmo mês é válido."""
+    erros = []
+    for e in conc_aplicado.get("entidades", []):
+        ed, le = e.get("edital"), e.get("leilao")
+        if not (_data_iso(ed) or _mes_iso(ed)) or not (_data_iso(le) or _mes_iso(le)):
+            continue
+        n = 7 if 7 in (len(ed), len(le)) else 10
+        if ed[:n] > le[:n]:
+            erros.append(f"{e.get('id')}: edital ({_fmt('edital', ed)}) depois do leilão ({_fmt('leilao', le)})")
     return erros
 
 
@@ -325,6 +352,8 @@ def _fmt(campo, v):
     if isinstance(v, str) and _data_iso(v):
         a, m, d = v.split("-")
         return f"{d}/{m}/{a}"
+    if isinstance(v, str) and _mes_iso(v):
+        return f"{MESES[int(v[5:]) - 1]}/{v[:4]}"
     if isinstance(v, (int, float)) and not isinstance(v, bool):
         if campo not in CAMPOS_NUM:  # tarifa e texto não se arredondam nem levam unidade: o valor como veio
             return str(v).replace(".", ",")

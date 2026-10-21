@@ -176,7 +176,7 @@ const Projetos = (() => {
     card.hidden = false;
     card.innerHTML = `<h3>Linha do tempo: editais e leilões ${anos}</h3>
       <p class="sub">Um projeto por linha, em ordem de leilão. A linha liga o edital ao leilão; sem data de edital, só o leilão aparece. Data só com o mês fica no meio do mês e leva “(mês)”. Clique no nome para abrir a ficha.</p>
-      ${Charts.legendHtml(usados.map(k => ({ label: IM.statusLabel(intel, k), color: cor(k), shape: 'dot' })))}
+      ${Charts.legendHtml(usados.map(k => ({ label: IM.statusLabel(intel, k), color: cor(k), shape: 'diamondFill' })))}
       ${Charts.legendHtml([{ label: 'Edital', color: Charts.C.spacial, shape: 'circle' }, { label: 'Leilão', color: Charts.C.spacial, shape: 'diamondFill' }])}
       <div class="chart-box" id="pipe-timeline-chart"></div>
       ${semData ? `<p class="src" id="pipe-timeline-fora">${semData}</p>` : ''}`;
