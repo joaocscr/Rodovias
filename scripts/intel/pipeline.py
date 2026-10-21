@@ -36,7 +36,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from intel.fontes import RAW, ROOT, Manifest, fetch as baixar  # noqa: E402
-from verificacao import aplicar, carregar, carregar_aliases  # noqa: E402
+from verificacao import aplicar, carregar, carregar_aliases, validar  # noqa: E402
 
 DOMINIO = "pipeline"
 RAW_DIR = RAW / DOMINIO
@@ -186,8 +186,13 @@ def item_de_linha(r, ents, n_estudos, ents_est=frozenset()):
 
 
 def montar(csv_path=CSV, conc_path=CONC, est_path=ESTADUAIS):
-    # valores de leilão exibidos (camada de verificação sobre a base congelada), como no build
-    conc = aplicar(json.loads(Path(conc_path).read_text(encoding="utf-8")), carregar(), carregar_aliases())
+    # valores de leilão exibidos (camada de verificação sobre a base congelada), validada como no build
+    conc = json.loads(Path(conc_path).read_text(encoding="utf-8"))
+    verif, aliases = carregar(), carregar_aliases()
+    erros = validar(verif, conc, aliases)
+    if erros:
+        sys.exit("Falha na verificação dos leilões:\n" + "\n".join(erros))
+    conc = aplicar(conc, verif, aliases)
     ents = {e["id"] for e in conc["entidades"]}
     est = Path(est_path)
     ents_est = {e["id"] for e in json.loads(est.read_text(encoding="utf-8"))["entidades"]} if est.exists() else set()

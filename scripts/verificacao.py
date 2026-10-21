@@ -108,6 +108,19 @@ def _linhas(conc, nome):
     return (conc.get("mercado") or {}).get(nome) or []
 
 
+def _ligacoes(l):
+    """(identidade do alvo, mapa campo→chave na linha) para cada ligação do leilão."""
+    lig = []
+    if "ent" in l:
+        lig.append((("ent", l["ent"]), {c: c for c in CAMPOS}))
+    if "participantes" in l:
+        p = l["participantes"] or {}
+        lig.append((("participantes", p.get("ano"), p.get("lote")), {c: PART_KEY.get(c, c) for c in CAMPOS}))
+    if "concorrentes" in l:
+        lig.append((("concorrentes", l["concorrentes"]), CONC_KEY))
+    return lig
+
+
 def _erros_aliases(aliases):
     erros, vistos = [], {}
     for i, a in enumerate(aliases.get("aliases", [])):
@@ -137,7 +150,7 @@ def validar(verif, conc, aliases=None):
     part = _linhas(conc, "participantes")
     concs = _linhas(conc, "concorrentes_desagio")
     nomes_alias = {a.get("nome") for a in (aliases or {}).get("aliases", [])}
-    chaves = set()
+    chaves, donos = set(), {}
     for l in verif.get("leiloes", []):
         chave = l.get("chave")
         if not chave:
@@ -160,11 +173,21 @@ def validar(verif, conc, aliases=None):
             n = sum(1 for r in concs if r.get("leilao") == l["concorrentes"])
             if n != 1:
                 erros.append(f"{chave}: concorrentes {l['concorrentes']!r} casa {n} linhas (esperada exatamente 1)")
+        # um alvo por leilão: um segundo leilão leria o valor já trocado como original do RoadShow
+        ligacoes = _ligacoes(l)
+        for alvo, _ in ligacoes:
+            if alvo in donos:
+                erros.append(f"{chave}: {alvo[0]} {alvo[1:]!r} já ligado ao leilão {donos[alvo]!r}")
+            else:
+                donos[alvo] = chave
 
         for campo, c in (l.get("campos") or {}).items():
             if campo not in CAMPOS:
                 erros.append(f"{chave}: campo {campo!r} fora dos campos de leilão {CAMPOS}")
                 continue
+            if ligacoes and not any(campo in mapa for _, mapa in ligacoes):
+                erros.append(f"{chave}: campo {campo!r} não tem onde ser aplicado nas ligações "
+                             f"{[a[0] for a, _ in ligacoes]}")
             if c.get("nao_localizado"):
                 if c.get("valor") is not None:
                     erros.append(f"{chave}.{campo}: não localizado deve ter valor null, veio {c['valor']!r}")
@@ -235,6 +258,11 @@ def _divergencia(e, campo, original, valor, tipo):
     resto = [a for a in d.get("alternativas", []) if a.get("valor") != valor and a.get("valor") != original]
     d["exibido"] = valor
     d["alternativas"] = [alt_rs] + resto
+    impressos = [_fmt(campo, a["valor"]) + (f" (p. {a['pagina']})" if a.get("pagina") is not None else "")
+                 for a in d["alternativas"]]
+    lista = impressos[0] if len(impressos) == 1 else ", ".join(impressos[:-1]) + " e " + impressos[-1]
+    sufixo = "não localizado em fonte oficial." if tipo is None else f"exibido o valor de fonte {ROTULO[tipo]}."
+    d["nota"] = f"RoadShow imprime {lista}; {sufixo}"
 
 
 def _aplicar_campo(alvo, chave, campo, c, fontes, entidade):
@@ -255,16 +283,14 @@ def _aplicar_campo(alvo, chave, campo, c, fontes, entidade):
 def _alvos(conc, l):
     """(linha, mapa campo→chave, é entidade) para cada ligação do leilão."""
     alvos = []
-    if "ent" in l:
-        e = next(x for x in conc["entidades"] if x["id"] == l["ent"])
-        alvos.append((e, {c: c for c in CAMPOS}, True))
-    if "participantes" in l:
-        p = l["participantes"]
-        r = next(x for x in conc["mercado"]["participantes"] if x["ano"] == p["ano"] and x["lote"] == p["lote"])
-        alvos.append((r, {c: PART_KEY.get(c, c) for c in CAMPOS}, False))
-    if "concorrentes" in l:
-        r = next(x for x in conc["mercado"]["concorrentes_desagio"] if x["leilao"] == l["concorrentes"])
-        alvos.append((r, CONC_KEY, False))
+    for alvo, mapa in _ligacoes(l):
+        if alvo[0] == "ent":
+            r = next(x for x in conc["entidades"] if x["id"] == alvo[1])
+        elif alvo[0] == "participantes":
+            r = next(x for x in conc["mercado"]["participantes"] if (x["ano"], x["lote"]) == alvo[1:])
+        else:
+            r = next(x for x in conc["mercado"]["concorrentes_desagio"] if x["leilao"] == alvo[1])
+        alvos.append((r, mapa, alvo[0] == "ent"))
     return alvos
 
 

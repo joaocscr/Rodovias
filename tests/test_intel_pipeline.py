@@ -215,3 +215,12 @@ def test_validacao_rejeita_status_e_ent_invalidos():
         pipeline.item_de_linha(est, {"rota-arco-norte"}, 27)
     with pytest.raises(ValueError):
         pipeline.item_de_linha({**est, "esfera": "federal"}, {"rota-arco-norte"}, 27, {"rs-x"})
+
+
+def test_montar_falha_com_camada_de_verificacao_invalida(monkeypatch):
+    """O pipeline valida a camada de verificação antes de aplicá-la, como o build."""
+    ruim = {"versao": 1, "fontes": {}, "leiloes": [{"chave": "x", "ent": "nao-existe", "campos": {}}]}
+    monkeypatch.setattr(pipeline, "carregar", lambda: ruim)
+    with pytest.raises(SystemExit) as exc:
+        pipeline.montar()
+    assert "Falha na verificação dos leilões" in str(exc.value) and "nao-existe" in str(exc.value)

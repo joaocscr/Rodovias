@@ -117,7 +117,35 @@ def test_validar_exige_ligacao(conc):
 
 def test_validar_chave_duplicada(conc):
     l1 = leilao({"desagio": {"valor": 23.83, "fontes": ["rs-p15"]}})
-    assert len(validar(verif([l1, copy.deepcopy(l1)]), conc)) == 1
+    erros = validar(verif([l1, {**copy.deepcopy(l1), "ent": "celulose"}]), conc)
+    assert len(erros) == 1 and "chave repetida" in erros[0]
+
+
+def test_validar_alvo_ligado_a_dois_leiloes(conc):
+    ok = {"desagio": {"valor": 23.83, "fontes": ["rs-p15"]}}
+    casos = [
+        [{"chave": "a", "ent": "lote-5", "campos": ok}, {"chave": "b", "ent": "lote-5", "campos": ok}],
+        [{"chave": "a", "participantes": {"ano": 2025, "lote": "Lote 5"}, "campos": ok},
+         {"chave": "b", "ent": "celulose", "participantes": {"ano": 2025, "lote": "Lote 5"}, "campos": ok}],
+        [{"chave": "a", "concorrentes": "Rodovias Integradas do Paraná - Lote 5", "campos": ok},
+         {"chave": "b", "concorrentes": "Rodovias Integradas do Paraná - Lote 5", "notas": []}],
+    ]
+    for leiloes in casos:
+        erros = validar(verif(leiloes), conc)
+        assert len(erros) == 1 and erros[0].startswith("b:") and "'a'" in erros[0], erros
+    # ligações distintas do mesmo leilão de dois leilões diferentes passam
+    assert validar(verif([{"chave": "a", "ent": "lote-5", "campos": ok},
+                          {"chave": "b", "ent": "celulose", "campos": ok}]), conc) == []
+
+
+def test_validar_campo_sem_onde_aplicar(conc):
+    so_conc = {"chave": "x", "concorrentes": "Rodovias Integradas do Paraná - Lote 5",
+               "campos": {"assinatura": {"valor": "2026-03-16", "fontes": ["antt"]}}}
+    erros = validar(verif([so_conc]), conc)
+    assert len(erros) == 1 and "x" in erros[0] and "assinatura" in erros[0]
+    # deságio cabe na linha de concorrentes; assinatura cabe na linha de participantes
+    assert validar(verif([{**so_conc, "campos": {"desagio": {"valor": 23.83, "fontes": ["rs-p15"]}}}]), conc) == []
+    assert validar(verif([{**so_conc, "participantes": {"ano": 2025, "lote": "Lote 5"}}]), conc) == []
 
 
 def test_validar_nao_localizado_sem_valor(conc):
@@ -161,6 +189,7 @@ def test_aplicar_troca_exibido_sem_duplicar_alternativa(conc):
     assert len(d) == 1
     assert d[0]["exibido"] == 23.83
     assert d[0]["alternativas"] == [{"valor": 21.83, "pagina": 97}]
+    assert d[0]["nota"] == "RoadShow imprime 21,83% (p. 97); exibido o valor de fonte RoadShow."
     assert e["verif"]["desagio"]["tipo"] == "roadshow"
     assert e["verif"]["desagio"]["roadshow"] == 21.83
     assert e["verif"]["desagio"]["nao_localizado"] is False
@@ -182,6 +211,14 @@ def test_aplicar_nao_localizado_zera_valor_e_registra_roadshow(conc):
     assert d["campo"] == "desagio" and d["exibido"] is None
     assert d["alternativas"] == [{"valor": 9.0, "pagina": 99}]
     assert "9" in d["nota"] and "não localizado" in d["nota"]
+
+
+def test_aplicar_nao_localizado_com_divergencia_existente(conc):
+    v = verif([leilao({"desagio": {"valor": None, "nao_localizado": True, "fontes": []}})])
+    [d] = [x for x in aplicar(conc, v, {"aliases": []})["entidades"][0]["divergencias"] if x["campo"] == "desagio"]
+    assert d["exibido"] is None
+    assert d["alternativas"] == [{"valor": 21.83, "pagina": 97}, {"valor": 23.83, "pagina": 15}]
+    assert d["nota"] == "RoadShow imprime 21,83% (p. 97) e 23,83% (p. 15); não localizado em fonte oficial."
 
 
 def test_aplicar_cria_divergencia_com_nota(conc):
