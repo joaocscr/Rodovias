@@ -13,6 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from roadshow import build_conc, cobertura_markdown  # noqa: E402
 from snv import build_payload, check_group_consistency, group_physical, load_records  # noqa: E402
+from verificacao import aplicar, carregar, carregar_aliases, relatorio_markdown, validar  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 MAX_BYTES = 15_000_000
@@ -89,10 +90,25 @@ def relatorio_intel(intel):
     return total
 
 
+def camada_verificacao(conc):
+    """Valida e aplica data/roadshow/verificacao.json sobre `conc` (sem mutá-lo); grava verificacao.md e imprime a
+    cobertura. Sai com erro se a camada não validar."""
+    verif, aliases = carregar(), carregar_aliases()
+    erros = validar(verif, conc, aliases)
+    if erros:
+        sys.exit("Falha na verificação dos leilões:\n" + "\n".join(erros))
+    conc = aplicar(conc, verif, aliases)
+    (ROADSHOW / "verificacao.md").write_text(relatorio_markdown(verif, conc), encoding="utf-8")
+    c = conc["verificacao"]["cobertura"]
+    print(f"verificação: {c['leiloes']} leilões | oficial {c['oficial']} | roadshow {c['roadshow']} | "
+          f"imprensa {c['imprensa']} | não localizado {c['nao_localizado']}")
+    return conc
+
+
 def build_from_base(base_dir, out, intel=None):
     """Build sem o shapefile: SNV e CONC congelados em data/base/ (gerados pelo modo --shp)."""
     payload = json.loads((Path(base_dir) / "snv.json").read_text(encoding="utf-8"))
-    conc = json.loads((Path(base_dir) / "conc.json").read_text(encoding="utf-8"))
+    conc = camada_verificacao(json.loads((Path(base_dir) / "conc.json").read_text(encoding="utf-8")))
     intel = load_intel() if intel is None else intel
     size = assemble(payload, conc, intel, out)
     print(f"base: SNV {payload['versao']} ({len(payload['trechos'])} registros, {len(payload['fis'])} físicos) | "
@@ -125,6 +141,7 @@ def build(shp, out, tol, rascunho=False):
     BASE.mkdir(parents=True, exist_ok=True)
     for name, obj in [("snv.json", payload), ("conc.json", conc)]:
         (BASE / name).write_text(json.dumps(obj, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    conc = camada_verificacao(conc)  # a base fica como transcrição do RoadShow; a camada só vai para o HTML
     intel = load_intel()
     size = assemble(payload, conc, intel, out)
     print(f"registros: {len(records)} | trechos físicos: {len(groups)}")
