@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parent.parent
 MAX_BYTES = 15_000_000
 JS_FILES = ["vendor/leaflet/leaflet.js", "src/model.js", "src/conc-model.js", "src/leiloes-model.js", "src/intel-model.js", "src/styles-map.js", "src/charts.js", "src/map.js", "src/layers.js",
             "src/ficha.js", "src/projetos.js", "src/trafego.js", "src/cargas.js", "src/mercado.js", "src/regulatorio.js", "src/fontes.js",
-            "src/ui.js", "src/tabs.js", "src/main.js"]
+            "src/csv.js", "src/ui.js", "src/tabs.js", "src/main.js"]
 ROADSHOW = ROOT / "data" / "roadshow"
 BASE = ROOT / "data" / "base"
 INTEL = ROOT / "data" / "intel"

@@ -381,6 +381,43 @@ test('v2: gráfico de investimento por grupo usa o nome completo', async () => {
   assert.ok(full.filter(n => n.includes(' ')).every(n => txt.includes(n)), 'nomes completos');
 });
 
+test('v4: toda table.grid visível tem botão CSV', async () => {
+  for (const hash of ['#projetos', '#mercado']) {
+    await go(hash);
+    const r = await page.evaluate(() => {
+      const vis = [...document.querySelectorAll('table.grid')].filter(t => t.offsetParent !== null);
+      const sem = vis.filter(t => {
+        const prev = (t.closest('.table-wrap') || t).previousElementSibling;
+        return !(prev && prev.classList.contains('csv-btn') && prev.textContent === 'Exportar CSV');
+      }).map(t => t.id || t.className);
+      return { n: vis.length, sem };
+    });
+    assert.ok(r.n >= 2, `${hash}: tabelas visíveis`);
+    assert.deepEqual(r.sem, [], `${hash}: tabelas sem botão`);
+  }
+});
+
+test('v4: CSV do comparador respeita filtro', async () => {
+  await go('#projetos');
+  await page.selectOption('#proj-uf', 'SP');
+  await page.waitForTimeout(150);
+  const visiveis = await page.locator('#proj-table tbody tr').count();
+  assert.ok(visiveis > 0);
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('.csv-btn:has(+ .table-wrap #proj-table)').click(),
+  ]);
+  assert.match(download.suggestedFilename(), /^proj-table-\d{4}-\d{2}-\d{2}\.csv$/);
+  const txt = (await import('node:fs')).readFileSync(await download.path(), 'utf8');
+  assert.equal(txt.charCodeAt(0), 0xFEFF);
+  const linhas = txt.split('\r\n');
+  assert.equal(linhas.length, visiveis + 1);
+  assert.ok(linhas[0].includes(';') && linhas[0].startsWith('﻿"'));
+  assert.ok(!linhas[0].includes('Mapa'), 'coluna de botões fica de fora');
+  assert.ok(linhas.slice(1).every(l => l.split('";"').length === linhas[0].split('";"').length));
+  await page.selectOption('#proj-uf', '');
+});
+
 test('nenhuma requisição externa', () => assert.deepEqual(external, []));
 
 test('sem erros no console', () => assert.deepEqual(errors, []));

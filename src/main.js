@@ -13,4 +13,5 @@
   Tabs.on('regulatorio', () => Regulatorio.init(conc));
   Tabs.on('fontes', () => Fontes.init(intel));
   Tabs.init({ isFicha: id => Ficha.exists(id) });
+  Csv.init();  // depois da montagem inicial: botão em cada table.grid, inclusive as criadas depois
 })();
