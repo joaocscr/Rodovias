@@ -34,9 +34,23 @@ async function openPage(errs, ext, transform, viewport = { width: 1440, height: 
   return p;
 }
 
+// Anos e períodos dos blocos, lidos do INTEL da página: os rótulos da tela seguem o dado, e o teste também (os valores
+// conferidos estão em tests/test_dados_conferidos.py). v25: VMDa do DNIT (bloco vmda2025); v23: VMDa da Infra S.A.
+// (trafego); pnl: ano-base do PNL; pracas: ano do VMD das praças da ANTT; pam/arm: IBGE PAM e Estoques.
+let A;
+const anosDe = p => p.evaluate(() => {
+  const I = window.INTEL, IM = IntelModel;
+  return { v25: I.vmda2025 && I.vmda2025.ano, v23: I.trafego.vmda.ano, pnl: I.carga.ano_base, pracas: I.antt.pracas.ano, pam: I.agro.ano,
+    arm: I.agro.armazenagem.periodo, perPracas: I.antt.fonte.find(f => /Praças de pedágio/.test(f.nome)).periodo,
+    mes0: IM.monthLabel(I.antt.pracas.serie_meses[0]), abcr0: IM.monthLabel(I.trafego.abcr.meses[0]),
+    agendado: window.CONC.estados.find(x => x.key === 'agendado2026').label,
+    notaRotas: IM.rotasNota(I.rotas), apresentacao: IM.rotasDocs(I.rotas).apresentacao };
+});
+
 before(async () => {
   browser = await chromium.launch();
   page = await openPage(errors, external);
+  A = await anosDe(page);
 });
 after(async () => { await browser?.close(); });
 
@@ -92,9 +106,9 @@ test('(b, c) modo Tráfego: legenda com 5 faixas, "Sem dado" e "Estimativa de mo
   assert.match(t, /Estimativa de modelo/);
   assert.match(t, /veíc\.\/dia/);
   // v3.1: Tráfego colorido pelo VMDa 2025 (DNIT, modelado), com o ano visível no título e na fonte
-  assert.match(await page.textContent('#legend .legend__title'), /VMDa 2025, modelado/);
-  assert.match(await page.textContent('#legend .legend__src'), /DNIT, VMDa 2025 \(modelado\)/);
-  assert.doesNotMatch(t, /VMDa 2023/);
+  assert.ok((await page.textContent('#legend .legend__title')).includes(`VMDa ${A.v25}, modelado`));
+  assert.ok((await page.textContent('#legend .legend__src')).includes(`DNIT, VMDa ${A.v25} (modelado)`));
+  assert.ok(!t.includes(`VMDa ${A.v23}`));
   // camada de estaduais desligada: a legenda não fala delas
   assert.doesNotMatch(t, /estaduais/i);
   // faixas "a – b" formatadas, contíguas
@@ -151,10 +165,10 @@ test('(d) KPI de veíc·km com filtro UF = MT bate com o modelo', async () => {
   });
   assert.equal((await page.textContent('#kpi-vkm')).trim(), expected.vkm);
   assert.notEqual(expected.vkm, '—');
-  assert.equal(expected.ano, 2025);
+  assert.equal(expected.ano, A.v25);
   assert.ok(expected.ok25);
   const sub = await page.locator('#kpi-vkm').evaluate(e => e.nextElementSibling.textContent);
-  assert.ok(sub.startsWith(`${expected.pct} pesados (estimativa: % de 2023) · Tráfego VMDa 2025, modelado`), sub);
+  assert.ok(sub.startsWith(`${expected.pct} pesados (estimativa: % de ${A.v23}) · Tráfego VMDa ${A.v25}, modelado`), sub);
   assert.match(await page.textContent('#kpi-acid'), /\d/);
   assert.match(await page.textContent('#kpi-tkm'), /t·km\/ano/);
   // cobertura sobre os km pavimentados da seleção
@@ -187,12 +201,13 @@ test('(e) cartão de físico com VMDa mostra o bloco "Tráfego e segurança"', a
   const t = await page.textContent('#card');
   assert.match(t, /Tráfego e segurança/);
   assert.match(t, /veíc\.\/dia/);
-  assert.match(t, /VMDa 2023 · modelado · leves e pesados/);
+  assert.ok(t.includes(`VMDa ${A.v23} · modelado · leves e pesados`));
   // v3.1: VMDa 2025 total e por sentido; pesados 2025 rotulados "estimativa"; bloco 2023 leves/pesados mantido
   const subs = await page.$$eval('#card .card__intel dt.card__sub', ds => ds.map(d => d.textContent));
   // grupos paralelos: "VMDa <ano> · modelado · <o que traz>"
-  assert.ok(subs.some(s => s === 'VMDa 2025 · modelado · total e por sentido'), subs.join(' | '));
-  assert.ok(subs.some(s => s === 'VMDa 2023 · modelado · leves e pesados'), subs.join(' | '));
+  const G25 = `VMDa ${A.v25} · modelado · total e por sentido`, G23 = `VMDa ${A.v23} · modelado · leves e pesados`;
+  assert.ok(subs.some(s => s === G25), subs.join(' | '));
+  assert.ok(subs.some(s => s === G23), subs.join(' | '));
   const k25 = await page.evaluate(j => {
     const f = window.INTEL.vmda2025.fis, x = IntelModel.fisIntel(window.INTEL, window.SNV, j);
     return { t: IntelModel.fmtVmd(f.t[j]), c: IntelModel.fmtVmd(f.c[j]), d: IntelModel.fmtVmd(f.d[j]), pes: IntelModel.fmtVmd(x.pes25),
@@ -207,16 +222,15 @@ test('(e) cartão de físico com VMDa mostra o bloco "Tráfego e segurança"', a
     }
     return out;
   });
-  const G25 = 'VMDa 2025 · modelado · total e por sentido', G23 = 'VMDa 2023 · modelado · leves e pesados';
   assert.equal(rows25[`${G25}|Total`], k25.t);
   assert.equal(rows25[`${G25}|Sentido crescente (SNV)`], k25.c);
   assert.equal(rows25[`${G25}|Sentido decrescente (SNV)`], k25.d);
   assert.equal(rows25[`${G25}|Pesados (estimativa)`], k25.pes);
   assert.equal(rows25[`${G23}|Leves`], k25.l);
   assert.equal(rows25[`${G23}|Pesados`], k25.p);
-  assert.match(t, /Pesados \(estimativa\) = total 2025 × [\d,]+% de pesados no VMDa 2023 do trecho/);
+  assert.match(t, new RegExp(`Pesados \\(estimativa\\) = total ${A.v25} × [\\d,]+% de pesados no VMDa ${A.v23} do trecho`));
   assert.equal(await page.locator('#card .card__flag[data-ns]').count(), 0);
-  assert.match(t, /modelo PNL, 2017/);
+  assert.ok(t.includes(`modelo PNL, ${A.pnl}`));
   assert.match(t, /10⁶ veíc·km/);
   // veíc·km/dia do trecho, acidentes por km por ano e carga total do PNL
   const f = await page.evaluate(j => {
@@ -289,9 +303,9 @@ test('(f) modos Acidentes e Carga mudam a legenda', async () => {
   assert.match(carga, /PNL/);
   await mode('pesados');
   assert.match(await legend(), /Pesados/);
-  // Pesados segue o VMDa 2023 (leves/pesados), rotulado 2023
-  assert.match(await page.textContent('#legend .legend__title'), /VMDa 2023, modelado/);
-  assert.match(await page.textContent('#legend .legend__src'), /VMDa 2023/);
+  // Pesados segue o VMDa da Infra S.A. (leves/pesados), rotulado com o ano dele
+  assert.ok((await page.textContent('#legend .legend__title')).includes(`VMDa ${A.v23}, modelado`));
+  assert.ok((await page.textContent('#legend .legend__src')).includes(`VMDa ${A.v23}`));
   assert.equal(await page.evaluate(() => MapView.colorMode()), 'pesados');
 });
 
@@ -323,7 +337,7 @@ test('(g) troca de modo em menos de 300 ms', async t => {
 test('(i) volta ao modo Concessões com legenda e halo da v2', async () => {
   await mode('concessoes');
   assert.equal(await page.evaluate(() => MapView.colorMode()), 'concessoes');
-  assert.match(await legend(), /Leilão agendado 2026/);
+  assert.ok((await legend()).includes(A.agendado));
   assert.ok(await page.evaluate(() => MapView.haloCount()) > 0);
 });
 
@@ -485,12 +499,12 @@ test('(b) Praças: ≥ 230 pontos; cartão da maior VMD com veíc./dia, gráfico
   const t = await page.textContent('#card');
   assert.ok(t.includes(top.nome));
   assert.match(t, /veíc\.\/dia/);
-  assert.match(t, /VMD 2025/);
+  assert.ok(t.includes(`VMD ${A.pracas}`));
   assert.match(t, /% pesados/);
   assert.match(t, /Eixos médios do comercial/);
-  assert.match(t, /Receita 2025/);
+  assert.ok(t.includes(`Receita ${A.pracas}`));
   assert.match(t, /Contagem medida · ANTT/);
-  assert.match(t, /jan\/2024 a ago\/2026/);
+  assert.ok(t.includes(A.perPracas), A.perPracas);
   assert.ok(await page.locator('#card svg.chart path.line').count() >= 2);
   assert.match(await page.locator('#card svg.chart title').first().textContent(), /^Leves [a-z]{3}\/\d{4}: /);
   assert.equal(await page.locator('#card a[href^="#ficha/"]').count(), top.ficha ? 1 : 0);
@@ -556,11 +570,14 @@ test('SATs e Obras: cartões com período, % pesados e previsto × executado', a
   await setLayer(page, 'obras', true);
   assert.ok(await page.evaluate(() => Layers.count('sats')) >= 400);
   assert.ok(await page.evaluate(() => Layers.count('obras')) >= 900);
-  const i = await page.evaluate(() => Layers.rowsOf('sats').findIndex(r => r.periodo && r.periodo.includes('/')));
-  await page.evaluate(i => Layers.open('sats', i), i);
+  const sat = await page.evaluate(() => {
+    const rows = Layers.rowsOf('sats'), i = rows.findIndex(r => r.periodo && r.periodo.includes('/'));
+    return { i, per: rows[i].periodo.split('/').map(IntelModel.monthLabel).join(' a ') };
+  });
+  await page.evaluate(i => Layers.open('sats', i), sat.i);
   let t = await page.textContent('#card');
   assert.match(t, /% pesados/); assert.match(t, /% motos/); assert.match(t, /Período/);
-  assert.match(t, /set\/2025 a ago\/2026/);
+  assert.ok(t.includes(sat.per), sat.per);
   const o = await page.evaluate(() => Layers.items('obras')[0]);
   await page.evaluate(i => Layers.open('obras', i), o);
   t = await page.textContent('#card');
@@ -624,7 +641,7 @@ test('(d) Fundo Soja: legenda com 5 faixas e "IBGE PAM 2025"; Sorriso mostra a p
   await page.waitForSelector('#fundo-legend:not([hidden])');
   assert.equal(await page.locator('#fundo-legend .legend__row[data-class]').count(), 5);
   const lt = await page.textContent('#fundo-legend');
-  assert.match(lt, /IBGE PAM 2025/);
+  assert.ok(lt.includes(`IBGE PAM ${A.pam}`));
   assert.match(lt, /Soja/);
   assert.match(lt, /Sem dado ou zero/);
   const rows = await page.$$eval('#fundo-legend .legend__row[data-class] .legend__range', es => es.map(e => e.textContent));
@@ -642,7 +659,8 @@ test('(d) Fundo Soja: legenda com 5 faixas e "IBGE PAM 2025"; Sorriso mostra a p
   await page.waitForSelector('#card:not([hidden])');
   const t = await page.textContent('#card');
   assert.match(t, /Sorriso \/ MT/);
-  assert.match(t, /2\.343\.000 t|2,3 Mt/);
+  const soja = await page.evaluate(() => IntelModel.fmtInt(window.INTEL.agro.produtos.soja[window.INTEL.municipios.ids.indexOf('5107925')]));
+  assert.ok(t.includes(`${soja} t`), soja);
   assert.match(t, /Milho 2ª safra/);
   assert.match(t, /Capacidade útil/);
   assert.ok(!/NaN|undefined|null/.test(t));
@@ -680,7 +698,7 @@ test('(d) Fundo Soja: legenda com 5 faixas e "IBGE PAM 2025"; Sorriso mostra a p
   // armazenagem explica o sigilo
   await page.check('#layers-section input[name="fundo"][value="armazenagem"]');
   const at = await page.textContent('#fundo-legend');
-  assert.match(at, /IBGE Estoques 2º sem\/2025/);
+  assert.ok(at.includes(`IBGE Estoques ${A.arm}`));
   assert.match(at, /Sigilo/);
   await page.check('#layers-section input[name="fundo"][value=""]');
   assert.equal(await page.isHidden('#fundo-legend'), true);
@@ -739,13 +757,18 @@ test('(a) ficha Nova Rota do Oeste: ANTT, controladora, gráfico de receita e pr
   const t = await fichaText();
   assert.match(t, /ANTT/);
   assert.match(t, /MTPAR/);
-  for (const re of [/Controladora/, /Trecho/, /Extensão/, /850,9 km/, /12\/03\/2014/, /003\/2013/, /06\/09\/2015/, /21\/set/]) assert.match(t, re);
+  for (const re of [/Controladora/, /Trecho/, /Extensão/]) assert.match(t, re);
+  const capa = await page.evaluate(() => {
+    const c = window.INTEL.antt.capas['nova-rota-do-oeste'];
+    return { prazo: c.prazo, s: [Model.fmtKm(c.extensao_km), ConcModel.fmtData(c.assinatura), c.edital, ConcModel.fmtData(c.cobranca), c.database] };
+  });
+  for (const x of capa.s) assert.ok(t.includes(x), x);
   // prazo é o vigente (com prorrogações), em caixa baixa
   const kv = await page.$$eval('#ficha .fblock', bs => {
     const b = bs.find(x => x.querySelector('h3').textContent === 'ANTT');
     return Object.fromEntries([...b.querySelectorAll('dt')].map(dt => [dt.textContent, dt.nextElementSibling.textContent]));
   });
-  assert.equal(kv['Prazo atual (com prorrogações)'], '30 anos');
+  assert.equal(kv['Prazo atual (com prorrogações)'], capa.prazo.toLowerCase());
   assert.ok(!('Prazo' in kv));
   const url = await page.evaluate(() => window.INTEL.antt.capas['nova-rota-do-oeste'].url);
   const link = page.locator('#ficha a', { hasText: 'Página da concessão na ANTT' });
@@ -763,17 +786,19 @@ test('(a) ficha Nova Rota do Oeste: ANTT, controladora, gráfico de receita e pr
   const vmds = exp.linhas.map(p => p.vmd);
   assert.deepEqual(vmds, [...vmds].sort((a, b) => b - a));
   assert.match(await page.textContent('#ficha-pracas tfoot'), new RegExp(exp.receita ? (await page.evaluate(v => IntelModel.fmtBRL(v), exp.receita)).replace(/[$.]/g, '\\$&') : '—'));
-  assert.match(t, /Contagem medida · ANTT 2025/);
+  assert.ok(t.includes(`Contagem medida · ANTT ${A.pracas}`));
   // série mensal leves × pesados das praças da concessão (mesma regra da aba Tráfego, filtrada pela concessão)
   const s = await page.evaluate(() => IntelModel.pracasSerie(window.INTEL, p => p.ent === 'nova-rota-do-oeste'));
   assert.ok(s.n >= 1 && s.n <= s.total && s.total === exp.linhas.length, JSON.stringify([s.n, s.total]));
   const st = await page.textContent('#ficha-pracas-serie');
   assert.ok(st.includes(`Entram ${s.n} de ${s.total} praças da concessão`), st);
-  assert.match(st, /jan\/2024 a ago\/2026/);
+  const per = await page.evaluate(m => `${IntelModel.monthLabel(m[0])} a ${IntelModel.monthLabel(m[m.length - 1])}`, s.meses);
+  assert.ok(st.includes(per), per);
   assert.equal(await page.locator('#ficha-pracas-serie svg.chart rect.cbar').count(), s.meses.length * 2);
   assert.match(await page.textContent('#ficha-pracas-serie .chart-legend'), /Leves.*Pesados/);
   const tip = await page.evaluate(v => IntelModel.fmtInt(v), s.l[0]);
-  assert.ok((await page.innerHTML('#ficha-pracas-serie')).includes(`<title>jan/2024 · Leves: ${tip} veíc./dia</title>`));
+  const mes0 = await page.evaluate(m => IntelModel.monthLabel(m), s.meses[0]);
+  assert.ok((await page.innerHTML('#ficha-pracas-serie')).includes(`<title>${mes0} · Leves: ${tip} veíc./dia</title>`));
   assert.doesNotMatch(t, /undefined|NaN/);
   await escFicha();
   assert.equal(await page.evaluate(() => location.hash), '#mapa');
@@ -1012,7 +1037,11 @@ test('(e, f) Pipeline: ≥ 60 linhas por data prevista, filtros, contagem por st
   // item estadual com concessão vigente abre a ficha estadual (RS Bloco 3 → Caminhos da Serra Gaúcha), km como na ficha
   const b3 = page.locator('#pipe-table tbody tr[data-ent="rs-caminhos-da-serra-gaucha"]');
   assert.equal(await b3.count(), 1);
-  assert.equal(await b3.locator('td.num').textContent(), '271,4');
+  const kmB3 = await page.evaluate(() => {
+    const e = window.INTEL.estaduais.entidades.find(x => x.id === 'rs-caminhos-da-serra-gaucha');
+    return new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(e.km_decl);
+  });
+  assert.equal(await b3.locator('td.num').textContent(), kmB3);
   // observação: detalhe expansível na linha, sem abrir a ficha
   const nObs = await page.evaluate(() => window.INTEL.pipeline.itens.filter(i => i.obs).length);
   assert.equal(await page.locator('#pipe-table details.pipe-obs').count(), nObs);
@@ -1192,22 +1221,22 @@ test('(b) Tráfego: ≥ 5 gráficos, "Fonte:" em cada cartão, KPIs do modelo, s
     t.forEach((x, i) => { if (x != null && x > 0) est += x * m.linhas[i][iExt]; });
     return { fed: IntelModel.fmtVkm(a.vkm), est: IntelModel.fmtVkm(est), ano: a.anoVmda };
   });
-  assert.equal(v.ano, 2025);
+  assert.equal(v.ano, A.v25);
   assert.equal(await page.textContent('#kpi-vkm b'), v.fed);
-  assert.match(await page.textContent('#kpi-vkm span'), /^na malha federal \(VMDa 2025, modelado\)$/);
+  assert.equal(await page.textContent('#kpi-vkm span'), `na malha federal (VMDa ${A.v25}, modelado)`);
   assert.equal(await page.textContent('#kpi-vkm-est b'), v.est);
-  assert.match(await page.textContent('#kpi-vkm-est span'), /^nas rodovias estaduais \(VMDa 2025, modelado\)$/);
+  assert.equal(await page.textContent('#kpi-vkm-est span'), `nas rodovias estaduais (VMDa ${A.v25}, modelado)`);
   const kSrc = await page.textContent('#card-t-kpis');
-  assert.match(kSrc, /DNIT — VMDa 2025 .* · 2025 · modelado/);
+  assert.match(kSrc, new RegExp(`DNIT — VMDa ${A.v25} .* · ${A.v25} · modelado`));
   assert.match(kSrc, /Rodovias estaduais: .* km com estimativa de .* km/);
   // cobertura exata: a malha inclui duplicados e em obras (não só "pavimentadas") e não afirma "fora das BRs"
   assert.match(kSrc, /pavimentados, duplicados ou em obras de pavimentação, mais os usados por concessões estaduais/);
   assert.match(kSrc, /se sobrepõem a rodovias federais do SNV em mais de 80% da extensão/);
   assert.doesNotMatch(kSrc, /fora das BRs/);
   // a taxa de acidentes segue com o VMDa 2023 (leves/pesados), rotulada
-  assert.match(await page.textContent('#card-t-taxa'), /÷ VMDa 2023/);
+  assert.ok((await page.textContent('#card-t-taxa')).includes(`÷ VMDa ${A.v23}`));
   // períodos das fontes em pt-BR
-  assert.match(await page.textContent('#card-t-rank .src:last-child'), /jan\/2024 a ago\/2026/);
+  assert.ok((await page.textContent('#card-t-rank .src:last-child')).includes(A.perPracas));
   assert.doesNotMatch(await page.textContent('#page-trafego'), /\b\d{4}-(0[1-9]|1[0-2])\b/);
   const t = await page.textContent('#page-trafego');
   assert.doesNotMatch(t, /undefined|NaN/);
@@ -1220,8 +1249,8 @@ test('(b) Tráfego: ≥ 5 gráficos, "Fonte:" em cada cartão, KPIs do modelo, s
   assert.equal(await page.locator('#chart-t-taxa .hrow').count(), 15);
   assert.equal(await page.locator('#chart-t-uf-a .hrow').count(), await page.evaluate(() => IntelModel.acidentesPorUf(window.INTEL, window.SNV).length));
   // dicas da série mensal e do ABCR em mmm/aaaa
-  assert.match(await page.innerHTML('#chart-t-serie'), /<title>jan\/2024 · Leves:/);
-  assert.match(await page.innerHTML('#chart-t-abcr'), /<title>Leves out\/2016:/);
+  assert.ok((await page.innerHTML('#chart-t-serie')).includes(`<title>${A.mes0} · Leves:`));
+  assert.ok((await page.innerHTML('#chart-t-abcr')).includes(`<title>Leves ${A.abcr0}:`));
 });
 
 test('(b) clicar na 1ª praça do ranking abre o Mapa com a camada Praças e o cartão da praça', async () => {
@@ -1312,7 +1341,7 @@ test('(c) fretes: ordena por R$/t, filtra UF de origem e marca origem aproximada
   assert.equal(await page.locator('#frete-table .tag-nv', { hasText: 'origem aproximada' }).count(), nAprox);
   // distância suspeita na fonte: R$/t·km "—" com etiqueta, e essas rotas sempre no fim (em qualquer ordenação)
   const nSus = await page.evaluate(() => window.INTEL.multimodal.fretes.linhas.filter(l => l[6].includes('km_suspeito')).length);
-  assert.ok(nSus >= 17);
+  assert.ok(nSus > 0);
   for (const key of ['rs_t', 'rs_tkm', 'km', 'origem']) {
     await page.click(`#frete-table [data-fsort="${key}"]`);
     const flags = await page.$$eval('#frete-table tbody tr', trs => trs.map(t => t.dataset.suspeito === '1'));
@@ -1322,7 +1351,12 @@ test('(c) fretes: ordena por R$/t, filtra UF de origem e marca origem aproximada
   const cells = await page.$$eval('#frete-table tbody tr[data-suspeito] td:nth-child(7)', tds => tds.map(t => t.textContent.trim()));
   assert.ok(cells.every(c => c === '— distância suspeita na fonte'), cells[0]);
   const ms = await page.$$eval('#frete-table tbody tr[data-suspeito]', trs => trs.filter(t => t.children[1].textContent === 'MS').length);
-  assert.equal(ms, 17);
+  const msEsperado = await page.evaluate(() => {
+    const f = window.INTEL.multimodal.fretes, k = f.campos.indexOf('uf_o');
+    return f.linhas.filter(l => l[6].includes('km_suspeito') && l[k] === 'MS').length;
+  });
+  assert.ok(msEsperado > 0);
+  assert.equal(ms, msEsperado);
   await page.click('#frete-table [data-fsort="rs_t"]');
   if ((await page.getAttribute('#frete-table th[aria-sort]', 'aria-sort')) !== 'descending') await page.click('#frete-table [data-fsort="rs_t"]');
   assert.ok(isSorted(await vals(), 'desc'));
@@ -1368,15 +1402,17 @@ test('(d) Fontes: ≥ 30 fontes, ≥ 9 indisponíveis com motivo, bases v1/v2 e 
   assert.match(t, /Medido × modelado/);
   assert.match(t, /Não disponíveis neste ambiente/);
   assert.match(t, /Bases da v1\/v2/);
-  assert.match(t, /20\/10\/2026/);
-  assert.match(t, /jan\/2024 a ago\/2026/);
+  const acessos = await page.evaluate(() => [...new Set(window.INTEL.fontes.fontes.map(f => f.acesso))]);
+  for (const a of acessos) assert.ok(t.includes(a.split('-').reverse().join('/')), `acesso ${a} em dd/mm/aaaa`);
+  assert.ok(t.includes(A.perPracas), A.perPracas);
   // coluna Período em pt-BR (as notas ficam como na fonte)
   const periodos = await page.$$eval('#fontes-table tbody tr td:nth-child(3), #fontes-base-table tbody tr td:nth-child(2)', tds => tds.map(t => t.textContent));
   for (const x of periodos) assert.doesNotMatch(x, /\b\d{4}-(0[1-9]|1[0-2])\b/, x);
   const leg = await page.textContent('#fontes-legenda');
   for (const re of [/Medido/, /Modelado/, /Cadastro/, /"—": fonte de apoio/]) assert.match(leg, re);
   assert.match(t, /Cadastro é registro de infraestrutura ou de contratos/);
-  assert.doesNotMatch(t, /undefined|NaN|2026-10-20/);
+  assert.doesNotMatch(t, /undefined|NaN/);
+  for (const a of acessos) assert.ok(!t.includes(a), `data crua ${a}`);
   const motivos = await page.$$eval('#fontes-indisp-table tbody tr td:nth-child(2)', tds => tds.map(t => t.textContent));
   assert.ok(motivos.every(m => m.length > 5));
   assert.equal(await page.getAttribute('#fontes-table tbody tr a', 'target'), '_blank');
@@ -1479,7 +1515,7 @@ const overlap = (a, b) => a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;
 // ou de volta ao Brasil.
 const naAreaDasRotas = (p = page) => p.waitForFunction(() => !MapView.zoomAnimando() && MapView.map.getBounds().getSouth() < -42);
 const noBrasil = (p = page) => p.waitForFunction(() => !MapView.zoomAnimando() && MapView.map.getBounds().getSouth() > -42);
-const NOTA = /Traçado esquemático · fonte MPO, jul\/2026/;
+
 
 test('rotas: ligar mostra países, linhas, rótulos diretos e legenda; enquadra a América do Sul; desligar volta ao Brasil', async t => {
   await page.evaluate(() => { location.hash = '#mapa'; });
@@ -1492,10 +1528,11 @@ test('rotas: ligar mostra países, linhas, rótulos diretos e legenda; enquadra 
   // grupo próprio no painel Camadas, desligado, com fonte no title e no texto oculto
   const g = await page.textContent('#layers-section .rotas-group');
   assert.match(g, /Rotas de Integração Sul-Americana/);
-  assert.match(g, NOTA);
+  assert.ok(g.includes(A.notaRotas), A.notaRotas);
   assert.equal(await rotasBox().isChecked(), false);
   const title = await page.locator('#layers-section label:has(input[data-layer="rotas"])').getAttribute('title');
-  assert.match(title, /MPO .*01\/07\/2026.*traçado esquemático/);
+  assert.ok(A.apresentacao);
+  assert.match(title, new RegExp(`MPO .*${A.apresentacao}.*traçado esquemático`));
   assert.equal(await page.textContent('#layer-src-rotas'), `Fonte: ${title}`);
   // ligar em menos de 400 ms (a 1ª vez é medida no teste "(g) ligar cada camada")
   await settle(page);
@@ -1525,7 +1562,8 @@ test('rotas: ligar mostra países, linhas, rótulos diretos e legenda; enquadra 
   await page.waitForSelector('#rotas-legend:not([hidden])');
   assert.deepEqual(await page.$$eval('#rotas-legend [data-rota]', bs => bs.map(b => b.textContent.trim())), R.map(r => r.t));
   const lt = await page.textContent('#rotas-legend');
-  for (const re of [/Hidrovia/, /Cabotagem/, /Trecho em pavimentação/, /Trecho em estudos/, NOTA]) assert.match(lt, re);
+  for (const re of [/Hidrovia/, /Cabotagem/, /Trecho em pavimentação/, /Trecho em estudos/]) assert.match(lt, re);
+  assert.ok(lt.includes(A.notaRotas));
   assert.doesNotMatch(lt, /undefined|NaN/);
   // recolhível como "Camadas", aberta por padrão, sem título dentro do <summary>
   assert.equal(await page.locator('#rotas-legend details[open]').count(), 1);
@@ -1720,7 +1758,7 @@ test('VMDa 2025: no modo Tráfego, as estaduais (camada ligada) usam a rampa e a
   // classes = classOf(VMDa 2025 estadual, quebras federais), linha a linha
   assert.deepEqual(r.got.porClasse, r.exp);
   assert.equal(r.got.n, r.n);
-  assert.equal(r.got.ano, 2025);
+  assert.equal(r.got.ano, A.v25);
   for (let c = 0; c < 5; c++) assert.ok(r.exp[c] > 0, `classe ${c} vazia`);
   // cores: os 5 passos da rampa do Tráfego, cinza sem dado, concessões estaduais (magenta + halo); sem o verde da malha
   const T = await page.evaluate(() => RAMPS.trafego.map(c => c.toUpperCase()));
@@ -1730,7 +1768,7 @@ test('VMDa 2025: no modo Tráfego, as estaduais (camada ligada) usam a rampa e a
   assert.deepEqual(await page.evaluate(() => Layers.EST_NONE), { color: '#525254', weight: 0.75, opacity: 0.5 });
   // legenda: inclui as estaduais, faixas cobrem também os valores estaduais, linha "Sem dado (estadual)"
   const lg = await legend();
-  assert.match(lg, /inclui rodovias estaduais \(VMDa 2025\)/i);
+  assert.ok(lg.toLowerCase().includes(`inclui rodovias estaduais (vmda ${A.v25})`), lg);
   assert.match(lg, /Sem dado \(federal\)/);
   assert.match(lg, /Sem dado \(estadual\)/);
   assert.equal(await page.locator('#legend .legend__row[data-class]').count(), 5);
@@ -1785,7 +1823,7 @@ test('VMDa 2025: no modo Tráfego, as estaduais (camada ligada) usam a rampa e a
   assert.equal(await page.evaluate(() => Layers.estTrafego()), null);
   await box.check();
   await page.waitForTimeout(50);
-  assert.match(await legend(), /inclui rodovias estaduais \(VMDa 2025\)/i);
+  assert.ok((await legend()).toLowerCase().includes(`inclui rodovias estaduais (vmda ${A.v25})`));
   await box.uncheck();
   await mode('concessoes');
   assert.deepEqual(errors, []);
@@ -1806,16 +1844,16 @@ test('VMDa 2025: sem o bloco vmda2025 tudo volta ao VMDa 2023, sem erros', async
     for (let j = 0; j < all.length; j++) { const t = IntelModel.sumNullable(v.l[j], v.p[j]); if (t != null) s += t * window.SNV.fis[j].ext; }
     return { fmt: IntelModel.fmtVkm(x.vkm), ok: Math.abs(s - x.vkm) < 1e-6 * s, ano: x.anoVmda };
   });
-  assert.equal(a.ano, 2023);
+  assert.equal(a.ano, A.v23);
   assert.ok(a.ok);
   assert.equal((await p.textContent('#kpi-vkm')).trim(), a.fmt);
   const sub = await p.locator('#kpi-vkm').evaluate(e => e.nextElementSibling.textContent);
-  assert.match(sub, /pesados · Tráfego VMDa 2023, modelado/);
+  assert.ok(sub.includes(`pesados · Tráfego VMDa ${A.v23}, modelado`), sub);
   assert.doesNotMatch(sub, /estimativa/);
   // modo Tráfego: legenda 2023, estaduais continuam verdes e fora da legenda
   await p.click('#legend [data-mode="trafego"]');
-  assert.match(await p.textContent('#legend .legend__title'), /VMDa 2023, modelado/);
-  assert.match(await p.textContent('#legend .legend__src'), /Infra S\.A\.\/DNIT, VMDa 2023/);
+  assert.ok((await p.textContent('#legend .legend__title')).includes(`VMDa ${A.v23}, modelado`));
+  assert.ok((await p.textContent('#legend .legend__src')).includes(`Infra S.A./DNIT, VMDa ${A.v23}`));
   assert.equal(await p.locator('#legend .legend__row[data-class]').count(), 5);
   await p.locator('#layers-section input[data-layer="estaduais"]').check();
   await p.waitForTimeout(50);
@@ -1827,15 +1865,15 @@ test('VMDa 2025: sem o bloco vmda2025 tudo volta ao VMDa 2023, sem erros', async
   await p.evaluate(j => MapView.pick(j), j);
   await p.waitForSelector('#card:not([hidden])');
   const t = await p.textContent('#card');
-  assert.doesNotMatch(t, /VMDa 2025|Sentido crescente|uso restrito|estimativa/);
-  assert.match(t, /VMDa 2023 · modelado · leves e pesados/);
+  assert.doesNotMatch(t, new RegExp(`VMDa ${A.v25}|Sentido crescente|uso restrito|estimativa`));
+  assert.ok(t.includes(`VMDa ${A.v23} · modelado · leves e pesados`));
   assert.match(t, /Veículos × extensão/);
   // aba Tráfego: só o veíc·km federal 2023, sem o estadual
   await goTab(p, '#trafego');
   assert.equal(await p.textContent('#kpi-vkm b'), a.fmt);
-  assert.match(await p.textContent('#kpi-vkm span'), /VMDa 2023, modelado/);
+  assert.ok((await p.textContent('#kpi-vkm span')).includes(`VMDa ${A.v23}, modelado`));
   assert.equal(await p.locator('#kpi-vkm-est').count(), 0);
-  assert.doesNotMatch(await p.textContent('#page-trafego'), /undefined|NaN|VMDa 2025/);
+  assert.doesNotMatch(await p.textContent('#page-trafego'), new RegExp(`undefined|NaN|VMDa ${A.v25}`));
   assert.deepEqual(errs, []);
   assert.deepEqual(ext, []);
   await p.context().close();
@@ -1998,6 +2036,48 @@ test('1366 × 768: a legenda das rotas reavalia o recolhimento quando a janela m
   assert.deepEqual(errs, []);
   assert.deepEqual(ext, []);
   await p.context().close();
+});
+
+test('fechamento: períodos e constantes impressas seguem os dados (dados alterados na página)', async () => {
+  const errs = [], ext = [];
+  // muda, antes de a interface montar, os valores que davam rótulos: nenhum deles pode estar digitado no código
+  const inject = html => {
+    const i = html.indexOf('</script>', html.indexOf('window.INTEL='));
+    return `${html.slice(0, i)};(() => { const c = window.CONC, m = c.mercado;
+      m.desagio_medio_impresso = 11.11; m.fontes.desagio_medio_impresso = [99]; m.periodo_concorrencia = '2031–2034';
+      for (const k of ['programa_por_ano', 'gestao', 'leiloes_por_ano']) m[k].forEach(x => { x.ano += 10; });
+      c.entidades.forEach(e => { if (e.ano_programa) e.ano_programa += 10; });
+      window.INTEL.antt.pracas.ano = 2035; window.INTEL.trafego.vmda.ano = 2033; window.INTEL.carga.ano_base = 2027;
+      window.INTEL.rotas.fonte.find(f => /Apresentação/.test(f.nome)).periodo = '05/05/2035'; })();${html.slice(i)}`;
+  };
+  const p = await openPage(errs, ext, inject);
+  const x = await p.evaluate(() => {
+    const m = window.CONC.mercado, per = s => `${Math.min(...s.map(r => r.ano))}–${Math.max(...s.map(r => r.ano))}`;
+    return { prog: per(m.programa_por_ano), gestao: per(m.gestao), leiloes: per(m.leiloes_por_ano), anos: ConcModel.anosPrograma(window.CONC) };
+  });
+  assert.deepEqual(x.anos, [2033, 2034, 2035, 2036, 2037]);
+  await goTab(p, '#mercado');
+  assert.equal(await p.textContent('#card-kpis h3'), 'Concorrência 2031–2034');
+  assert.ok((await p.textContent('#card-desagio .sub')).endsWith('(RoadShow, p. 99: 11,11%)'));
+  for (const id of ['faixas', 'porN']) assert.equal(await p.textContent(`#card-${id} .sub`), '2031–2034, como impresso no RoadShow');
+  assert.equal(await p.textContent('#card-programa h3'), `Programa ${x.prog} por ano`);
+  assert.ok((await p.textContent('#card-leiloes .sub')).endsWith(`, ${x.leiloes}`));
+  assert.equal(await p.textContent('#card-gestao .sub'), `Extensão em km, ${x.gestao}`);
+  await goTab(p, '#projetos');
+  assert.deepEqual(await p.$$eval('#page-projetos .chip[data-f="ano"]', bs => bs.map(b => +b.dataset.v)), x.anos);
+  assert.ok((await p.textContent('#page-projetos .page__lead')).includes('programa 2033–2037'));
+  await goTab(p, '#trafego');
+  assert.ok((await p.textContent('#kpi-pracas span')).includes('em 2035'));
+  assert.equal(await p.textContent('#card-t-rank h3'), 'As 20 praças de maior VMD em 2035');
+  await goTab(p, '#fontes');
+  const prosa = await p.textContent('.fontes-nota');
+  assert.ok(prosa.includes('Infra S.A. (2033)') && prosa.includes('ano-base 2027'), prosa);
+  await p.evaluate(() => { location.hash = '#mapa'; });
+  await p.waitForFunction(() => Tabs.current().active === 'mapa');
+  assert.deepEqual(await p.$$eval('input[data-cfilter="ano"]', is => is.map(i => +i.value)), x.anos);
+  assert.match(await p.locator('#layers-section label:has(input[data-layer="rotas"])').getAttribute('title'), /apresentação de 05\/05\/2035/);
+  assert.deepEqual(errs, []);
+  assert.deepEqual(ext, []);
 });
 
 test('nenhuma requisição externa', () => assert.deepEqual(external, []));

@@ -62,6 +62,19 @@ const ConcModel = (() => {
     return e.estado === 'vigente' ? (e.assinatura || e.leilao) : (e.leilao || e.assinatura);
   }
 
+  // Anos do programa (`ano_programa` das entidades), em ordem crescente: filtros e títulos seguem os dados.
+  const anosPrograma = conc => [...new Set(((conc && conc.entidades) || []).map(e => e.ano_programa).filter(Number.isFinite))]
+    .sort((x, y) => x - y);
+
+  // Data-base mais comum das entidades (a das tabelas do RoadShow): texto do comparador. Empate: a que aparece antes.
+  function dataBaseComum(conc) {
+    const n = new Map();
+    for (const e of (conc && conc.entidades) || []) if (e.data_base) n.set(e.data_base, (n.get(e.data_base) || 0) + 1);
+    let best = null;
+    for (const [k, v] of n) if (best == null || v > n.get(best)) best = k;
+    return best;
+  }
+
   function comparatorRows(conc) {
     return conc.entidades.map((e, idx) => {
       const f = e.ficha || {};
@@ -210,7 +223,7 @@ const ConcModel = (() => {
   }
 
   return { PRIORITY, entitiesOfFis, stateOfFis, stateArray, emptyConcFilters, passes, kmPorEstado,
-    comparatorRows, PISTA, pistaSNV, pistaPartes, pistaLinha, rotuloOrigem, origemCampo, participantesExibidos, filterRows, sortRows, totals, fmtBi, fmtPct, fmtData, brsUfs, dataChave, norm };
+    comparatorRows, anosPrograma, dataBaseComum, PISTA, pistaSNV, pistaPartes, pistaLinha, rotuloOrigem, origemCampo, participantesExibidos, filterRows, sortRows, totals, fmtBi, fmtPct, fmtData, brsUfs, dataChave, norm };
 })();
 
 if (typeof module !== 'undefined') module.exports = ConcModel;

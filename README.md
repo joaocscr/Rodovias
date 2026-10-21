@@ -97,11 +97,51 @@ O SNV repete o mesmo trecho físico uma vez para cada BR que passa por ele: por 
 
 Registros do mesmo trecho físico são agrupados por dois critérios: os códigos citados em `ds_coinc` e a geometria idêntica.
 
-## Atualizar o RoadShow
+## Como atualizar
 
-O PDF fica em `data/raw/roadshow.pdf` (fora do git). Os dados estão em `data/roadshow/*.json`, com a página de origem de cada número. O roteiro de reextração está em [`scripts/extract/README.md`](scripts/extract/README.md). Depois de editar os JSON, rode `python -m pytest tests/test_roadshow.py` e `python scripts/build.py`. Para consultar os trechos de uma BR ao curar o recorte, use `python scripts/snv_lookup.py 116 MG --adm`.
+São três roteiros. Todos terminam do mesmo jeito: o `mapa-rodovias.html` gerado de novo e o relatório `data/atualizacao.md`, que diz o que mudou e o que ainda precisa de revisão manual. Nenhum arquivo de `data/intel/*.json` se edita à mão: uma correção vai no script que gera o bloco ou no arquivo curado de origem (`data/intel/pipeline.csv`, `data/roadshow/*.json`). A interface não tem número nem período digitado: títulos como "Programa 2023–2027" e os anos dos filtros saem dos dados.
+
+### 1. Dados públicos (um comando)
+
+```bash
+python scripts/atualizar.py --baixar                         # baixa o que falta, gera todos os blocos, valida e gera o HTML
+python scripts/atualizar.py                                  # sem baixar: usa só os brutos que já estão em data/raw/
+python scripts/atualizar.py --dominios antt,pipeline --sem-html   # só alguns domínios, sem gerar o HTML
+```
+
+- A ordem é fixa: `trafego`, `antt`, `carga`, `agro`, `multimodal`, `pipeline`, `estaduais`, `vmda2025`, `rotas`; depois o bloco de fontes, a validação da camada de verificação dos leilões e o `build.py`. O comando chama os scripts de `scripts/intel/` (os mesmos da seção "Atualizar os dados", abaixo).
+- Domínio sem o arquivo bruto (sem `--baixar`), ou cujo download falha, é pulado com aviso no relatório, e o bloco dele fica como estava. O VMDa 2025 é pulado se o zip do Google Drive não estiver em `data/raw/trafego/vmda2025/`.
+- O comando só termina com erro quando a validação da verificação ou a geração do HTML falham.
+- `--baixar` baixa só o que falta: arquivo que já está em `data/raw/` não é baixado de novo. Para renovar um domínio, apague antes a pasta dele em `data/raw/`. Fontes cujo nome de arquivo traz a data (planilhas anuais da ANTT, boletim da CONAB, planilha da ABCR) só mudam quando a URL é trocada no script do domínio (listas `ARQUIVOS` e constantes no topo).
+- Depois, leia `data/atualizacao.md`:
+  - **O que mudou por bloco**: registros e tamanho de cada bloco antes e depois, comparados com o último commit.
+  - **Curadoria manual**: cada item diz o arquivo a editar. São cinco tipos: item do pipeline com data passada ainda como previsto (`pipeline.csv`); leilão realizado sem entrada na camada de verificação (roteiro 3); item do pipeline sem fonte oficial; fonte acessada há mais de 12 meses; nome de proponente sem grupo econômico (`data/roadshow/grupos_alias.json`).
+- Rode os testes (seção "Testes"). Os testes de navegador comparam a tela com o que a própria página calcula e passam com dados novos. Os testes que conferem um valor concreto (`tests/test_dados_conferidos.py` e os `tests/test_intel_*.py`) falham com a mensagem "dado mudou: revise …": confira o novo valor na fonte indicada e, se estiver certo, atualize o valor esperado no teste.
+- Faça o commit dos JSON, do relatório e do HTML.
+
+### 2. Nova versão do RoadShow
+
+1. Coloque o PDF novo em `data/raw/roadshow.pdf` (fora do git).
+2. Extraia de novo seguindo [`scripts/extract/README.md`](scripts/extract/README.md): os gráficos saem do PDF com `scripts/extract/roadshow_v5.py`; fichas, mercado e regulatório são conferidos à mão contra as páginas (só as ímpares, em português). Todo número leva a página de origem.
+3. Releia os totais impressos e atualize `data/roadshow/reconciliacao.json`. `python -m pytest tests/test_reconciliacao.py` diz se os dados curados fecham com o que o RoadShow declara (divergências conhecidas do próprio RoadShow estão listadas no teste, com o motivo).
+4. As duas constantes impressas que a interface mostra ficam em `data/roadshow/mercado.json`, com a página em `fontes`: `desagio_medio_impresso` (média dos deságios, pp. 25 e 27) e `periodo_concorrencia` (período dos totais de concorrência, pp. 21, 25 e 27).
+5. Rode `python -m pytest tests/test_roadshow.py tests/test_reconciliacao.py tests/test_dados_conferidos.py` e `python scripts/atualizar.py`.
+6. O nome "RoadShow 2026-2027", a versão (`VERSAO` em `scripts/roadshow.py`) e as categorias de estado das concessões ("Leilão agendado 2026", "Projeto 2027", "Contrato do programa 2023–26", em `scripts/roadshow.py` e `src/styles-map.js`) fazem parte do modelo da base congelada: uma versão com outros anos pede revisar esses rótulos e gerar `data/base/` de novo (`python scripts/build.py --shp …`, seção "Regenerar com um SNV novo").
+
+Para consultar os trechos de uma BR ao curar o recorte, use `python scripts/snv_lookup.py 116 MG --adm`.
+
+### 3. Um leilão novo
+
+1. Atualize o item em `data/intel/pipeline.csv` (status `leiloado` ou `contrato`, data, fonte oficial em `fonte_url` e `verificado = true`) e rode `python scripts/atualizar.py --dominios pipeline`.
+2. O relatório passa a listar o leilão em "Leilão realizado sem entrada na camada de verificação".
+3. Acrescente-o à camada de verificação seguindo a receita de [`docs/HANDOFF.md`](docs/HANDOFF.md) (§2, "Como acrescentar um leilão verificado"): `data/roadshow/verificacao.json` (campos, valores e fontes) e `data/roadshow/grupos_alias.json` (grupo econômico de cada proponente).
+4. Rode `python -m pytest tests/test_verificacao.py` e `python scripts/atualizar.py`.
+
+A camada de verificação só se liga a concessões e linhas que já existem no RoadShow. Um leilão federal que o RoadShow ainda não traz fica no pipeline (com fonte e observação) até a próxima versão do RoadShow, e o relatório continua lembrando dele.
 
 ## Atualizar os dados
+
+O roteiro 1 de "Como atualizar" faz tudo isto em um comando. Abaixo, os detalhes de cada domínio, para rodar à mão.
 
 Cada script de `scripts/intel/` baixa o que falta em `data/raw/<domínio>/` (`fetch`), registra a origem em `data/manifest/<domínio>.json` e gera o bloco (`build`). Sem argumento ou com `all`, faz os dois. Rode nesta ordem (o `vmda2025` depois do `estaduais`, porque lê a malha estadual):
 
@@ -133,7 +173,7 @@ Para atualizar os contornos das UFs (IBGE), o Leaflet ou as fontes, rode `python
 ## Testes
 
 ```bash
-python -m pytest                     # pipeline SNV, RoadShow, verificação dos leilões (v4) e blocos de data/intel/, incluindo a linguagem das notas de fonte (os testes com bruto exigem data/raw/ e são pulados sem ele)
+python -m pytest                     # pipeline SNV, RoadShow, verificação dos leilões (v4), blocos de data/intel/ (incluindo a linguagem das notas de fonte), atualização em um comando e valores conferidos (test_dados_conferidos.py); os testes com bruto exigem data/raw/ e são pulados sem ele
 npm test                             # filtro, soma, busca, concessões, gráficos, paleta, leilões e CSV (JS)
 npm run test:e2e                     # navegador: offline, interações, desempenho (requer Playwright)
 ```
@@ -144,6 +184,8 @@ npm run test:e2e                     # navegador: offline, interações, desempe
 |---|---|
 | `scripts/snv.py` | leitura do shapefile, agrupamento dos coincidentes, simplificação e codificação |
 | `scripts/build.py` | monta o HTML único |
+| `scripts/atualizar.py` | atualização em um comando (blocos, fontes, validação, HTML) e relatório `data/atualizacao.md` |
+| `scripts/curadoria.py` | funções do relatório: diferença por bloco e lista de curadoria manual |
 | `scripts/fetch_assets.py` | baixa as UFs do IBGE, o Leaflet e as fontes |
 | `scripts/roadshow.py` | recorte curado (km → trechos), validação e payload das concessões |
 | `scripts/intel/` | um script por domínio (`trafego`, `antt`, `carga`, `agro`, `multimodal`, `pipeline`, `estaduais` e, na v3.1, `vmda2025` e `rotas`), a junção com o SNV (`snvbase.py`), o download com manifesto (`fontes.py`) e o bloco de fontes (`fontes_bloco.py`) |
@@ -156,6 +198,7 @@ npm run test:e2e                     # navegador: offline, interações, desempe
 | `data/roadshow/verificacao.md` | v4: relatório de cobertura da verificação, gerado pelo `build.py` |
 | `data/intel/` | blocos da v3 (`<bloco>.json`), `pipeline.csv`, `fontes.json` e `manifest.json` |
 | `data/manifest/` | manifesto de download por domínio |
+| `data/atualizacao.md` | relatório da última atualização (gerado por `scripts/atualizar.py`) |
 | `tests/` | testes Python (`test_*.py`) e JS (`*.test.mjs`) |
 | `src/` | template, CSS (tokens Galapagos), tokens de cor de dados (`styles-map.js`) e JS (`model`, `map`, `layers`, `ui` e uma aba por arquivo) |
 | `src/leiloes-model.js` | v4: funções puras do ranking de grupos, da série de deságio e das médias, testadas com `node --test` |

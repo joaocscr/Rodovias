@@ -233,12 +233,13 @@ const Ficha = (() => {
   function pracasBlock(id) {
     const { linhas, receita } = IM.pracasDe(intel, id);
     if (!linhas.length) return '';
+    const aP = IM.anoPracas(intel);
     return block('Praças da concessão', `<div class="table-wrap table-wrap--static"><table class="grid grid--static" id="ficha-pracas" data-csv-name="ficha-pracas">
-      <thead><tr><th>Praça</th><th class="num">VMD 2025 (veíc./dia)</th><th class="num">% pesados</th><th class="num">Receita 2025</th></tr></thead>
+      <thead><tr><th>Praça</th><th class="num">${IM.comAno('VMD', aP)} (veíc./dia)</th><th class="num">% pesados</th><th class="num">${IM.comAno('Receita', aP)}</th></tr></thead>
       <tbody>${linhas.map(p => `<tr><td>${esc(p.nome || '—')}</td><td class="num">${esc(IM.fmtInt(p.vmd))}</td><td class="num">${esc(IM.fmtPct(p.pctPes))}</td>
         <td class="num">${esc(IM.fmtBRL(p.receita))}</td></tr>`).join('')}</tbody>
       <tfoot><tr><td colspan="3">Receita total (${fmtInt.format(linhas.length)} ${linhas.length === 1 ? 'praça' : 'praças'})</td><td class="num">${esc(IM.fmtBRL(receita))}</td></tr></tfoot>
-    </table></div><p class="page__src">Contagem medida · ANTT 2025. VMD = média diária dos dois sentidos nos meses com dado; receita em R$ nominais.</p>${pracasSerieHtml(id)}`, true);
+    </table></div><p class="page__src">Contagem medida · ${IM.comAno('ANTT', aP)}. VMD = média diária dos dois sentidos nos meses com dado; receita em R$ nominais.</p>${pracasSerieHtml(id)}`, true);
   }
 
   // Tráfego mensal da concessão: VMD do mês somado (leves × pesados) nas praças com todos os meses da janela

@@ -223,3 +223,15 @@ test('pistaLinha e pistaPartes: só categorias com km; sem recorte, aviso e nenh
   assert.equal(ConcModel.pistaLinha(sem), 'sem recorte no SNV');
   assert.deepEqual(ConcModel.pistaPartes(sem), []);
 });
+
+test('anosPrograma: anos distintos e ordenados das entidades, sem nulos', () => {
+  assert.deepEqual(ConcModel.anosPrograma(conc), [2024, 2026, 2027]);
+  assert.deepEqual(ConcModel.anosPrograma({ entidades: [] }), []);
+  assert.deepEqual(ConcModel.anosPrograma(null), []);
+});
+
+test('dataBaseComum: a data-base mais frequente; sem nenhuma, null', () => {
+  assert.equal(ConcModel.dataBaseComum(conc), 'dez/2024');
+  assert.equal(ConcModel.dataBaseComum({ entidades: [ent({ data_base: 'jul/2024' }), ent({ data_base: 'abr/2026' }), ent({ data_base: 'abr/2026' })] }), 'abr/2026');
+  assert.equal(ConcModel.dataBaseComum({ entidades: [ent({ data_base: null })] }), null);
+});

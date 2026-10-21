@@ -31,6 +31,16 @@ before(async () => {
 after(async () => { await browser?.close(); });
 
 const kpi = () => page.textContent('#kpi-km');
+// v4: linha da ficha (dd) pelo rótulo (dt)
+const fichaDd = rotulo => page.evaluate(r => {
+  const dt = [...document.querySelectorAll('#ficha dt')].find(x => x.textContent === r);
+  return dt ? { html: dt.nextElementSibling.innerHTML, text: dt.nextElementSibling.textContent } : null;
+}, rotulo);
+// KPI sem filtro calculado pelo modelo na própria página (o valor muda com o SNV; o número conferido está no pytest)
+const kpiInicial = () => page.evaluate(() => {
+  const f = Model.emptyFilters(), a = Model.aggregate(window.SNV, f, Model.visibleFis(window.SNV, f));
+  return { km: Model.fmtKm(a.km), n: new Intl.NumberFormat('pt-BR').format(a.n), total: a.n === window.SNV.fis.length };
+});
 async function check(group, label) {
   const det = page.locator(`details[data-group="${group}"]`);
   if (!(await det.evaluate(d => d.open))) await det.locator('summary').click();
@@ -38,8 +48,10 @@ async function check(group, label) {
 }
 
 test('KPI inicial', async () => {
-  assert.equal((await kpi()).trim(), '122.394,9 km');
-  assert.match(await page.textContent('#kpi-n'), /6\.815/);
+  const k = await kpiInicial();
+  assert.ok(k.total, 'sem filtro, todos os trechos físicos');
+  assert.equal((await kpi()).trim(), k.km);
+  assert.equal((await page.textContent('#kpi-n')).trim(), `${k.n} trechos`);
 });
 
 test('filtro combinado bate com o modelo', async () => {
@@ -60,7 +72,7 @@ test('filtro combinado bate com o modelo', async () => {
 test('limpar filtros volta ao inicial', async () => {
   await page.click('#clear-filters');
   await page.waitForTimeout(150);
-  assert.equal((await kpi()).trim(), '122.394,9 km');
+  assert.equal((await kpi()).trim(), (await kpiInicial()).km);
 });
 
 test('busca 116 realça a BR inteira sem mudar o KPI', async () => {
@@ -69,7 +81,7 @@ test('busca 116 realça a BR inteira sem mudar o KPI', async () => {
   await page.keyboard.press('Enter');
   await page.waitForTimeout(150);
   assert.ok(await page.evaluate(() => MapView.highlighted().length) > 10);
-  assert.equal((await kpi()).trim(), '122.394,9 km');
+  assert.equal((await kpi()).trim(), (await kpiInicial()).km);
   await page.keyboard.press('Escape');
 });
 
@@ -165,7 +177,9 @@ test('v2: hash inválido cai no mapa', async () => {
 test('v2: modo concessões é o padrão e a legenda lista os estados', async () => {
   await go('#mapa');
   assert.equal(await page.evaluate(() => MapView.colorMode()), 'concessoes');
-  assert.match(await page.textContent('#legend'), /Leilão agendado 2026/);
+  const rotulos = await page.evaluate(() => window.CONC.estados.filter(s => s.key !== 'nenhum').map(s => s.label));
+  const leg = await page.textContent('#legend');
+  for (const r of rotulos) assert.ok(leg.includes(r), r);
   await page.click('[data-mode="fisica"]');
   assert.equal(await page.evaluate(() => MapView.colorMode()), 'fisica');
   assert.match(await page.textContent('#legend'), /Duplicada/);
@@ -226,8 +240,12 @@ test('v2: trecho da Transbrasiliana lista contrato e otimização e leva à fich
 test('v2: ficha da Rotas Gerais', async () => {
   await go('#ficha/rotas-gerais');
   const t = await page.textContent('#ficha');
-  for (const s of ['734,9 km', 'R$ 7,34 bi', '13,76%']) assert.ok(t.includes(s), s);
-  assert.match(t, /Praças a implantar\s*9/);
+  const x = await page.evaluate(() => {
+    const e = window.CONC.entidades.find(z => z.id === 'rotas-gerais'), f = e.ficha;
+    return { s: [Model.fmtKm(e.km), ConcModel.fmtBi(e.capex_ficha), ConcModel.fmtPct(f.wacc)], pracas: f.pracas_implantar };
+  });
+  for (const s of x.s) assert.ok(t.includes(s), s);
+  assert.equal((await fichaDd('Praças a implantar')).text, String(x.pracas));
   assert.ok(await page.locator('#ficha-capex rect.cbar').count() >= 5);
 });
 
@@ -306,7 +324,12 @@ test('cartão do mapa: uma linha resumo da pista da concessão, igual ao modelo'
 test('v2: ficha da Rota dos Sertões mostra data-base e valor dez/2024', async () => {
   await go('#ficha/rota-dos-sertoes');
   const t = await page.textContent('#ficha');
-  for (const s of ['R$ 4,13 bi', 'mar/2023', 'R$ 6,27 bi em dez/2024']) assert.ok(t.includes(s), s);
+  const x = await page.evaluate(() => {
+    const e = window.CONC.entidades.find(z => z.id === 'rota-dos-sertoes');
+    return { difere: e.data_base !== e.data_base_ficha, s: [ConcModel.fmtBi(e.capex_ficha), e.data_base_ficha, `${ConcModel.fmtBi(e.capex)} em ${e.data_base}`] };
+  });
+  assert.ok(x.difere, 'a ficha tem data-base própria');
+  for (const s of x.s) assert.ok(t.includes(s), s);
 });
 
 test('v2: aviso de divergência mostra páginas', async () => {
@@ -345,11 +368,16 @@ test('v2: Esc fecha a ficha e volta ao hash anterior', async () => {
   assert.equal(await page.isVisible('#ficha'), false);
 });
 
-test('v2: comparador com 54 linhas, ordenação, filtro e totais', async () => {
+test('v2: comparador com todas as concessões federais, ordenação, filtro e totais', async () => {
   await go('#projetos');
-  // v3: com concessões estaduais no arquivo, os 39 + 4 + 11 da v2 são a esfera federal
+  // v3: com concessões estaduais no arquivo, as entidades do RoadShow são a esfera federal
   if (await page.locator('#proj-esfera').count()) await page.selectOption('#proj-esfera', 'federal');
-  assert.equal(await page.locator('#proj-table tbody tr').count(), 54);
+  const n = await page.evaluate(() => {
+    const c = window.CONC;
+    return { todas: c.entidades.length, p2027: c.entidades.filter(e => e.estado === 'projeto2027').length, estudos: c.estudos.length };
+  });
+  assert.ok(n.p2027 > 0 && n.p2027 < n.todas);
+  assert.equal(await page.locator('#proj-table tbody tr').count(), n.todas);
   await page.click('[data-sort="capexKm"]');
   let vals = await page.evaluate(() => Projetos.rowsShown().map(r => r.capexKm));
   const nn = vals.filter(v => v != null);
@@ -359,7 +387,7 @@ test('v2: comparador com 54 linhas, ordenação, filtro e totais', async () => {
   vals = await page.evaluate(() => Projetos.rowsShown().map(r => r.desagio).filter(v => v != null));
   assert.deepEqual(vals, [...vals].sort((a, b) => b - a));
   await page.click('[data-f="estado"][data-v="projeto2027"]');
-  assert.equal(await page.locator('#proj-table tbody tr').count(), 11);
+  assert.equal(await page.locator('#proj-table tbody tr').count(), n.p2027);
   const ok = await page.evaluate(() => {
     const t = ConcModel.totals(Projetos.rowsShown());
     return document.getElementById('proj-total-capex').textContent === new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(t.capex);
@@ -370,7 +398,7 @@ test('v2: comparador com 54 linhas, ordenação, filtro e totais', async () => {
   assert.match(await page.evaluate(() => location.hash), /^#ficha\//);
   await page.keyboard.press('Escape');
   await page.click('[data-f="estado"][data-v="projeto2027"]');
-  assert.equal(await page.locator('#estudos-list li').count(), 27);
+  assert.equal(await page.locator('#estudos-list li').count(), n.estudos);
   if (await page.locator('#proj-esfera').count()) await page.selectOption('#proj-esfera', '');
 });
 
@@ -379,12 +407,14 @@ test('v2: aba Mercado tem gráficos com fonte e tooltip', async () => {
   assert.ok(await page.locator('#page-mercado svg.chart').count() >= 7);
   const semFonte = await page.$$eval('#page-mercado .ccard', cs => cs.filter(c => ![...c.querySelectorAll('.src')].some(s => s.textContent.startsWith('Fonte:'))).length);
   assert.equal(semFonte, 0);
-  assert.match(await page.locator('#chart-leiloes rect.cbar title').first().textContent(), /1993: \d+ leilões/);
+  const l0 = await page.evaluate(() => window.CONC.mercado.leiloes_por_ano[0]);
+  assert.equal(await page.locator('#chart-leiloes rect.cbar title').first().textContent(), `${l0.ano}: ${l0.n} leilões`);
 });
 
 test('v2: aba Regulatório com índice, otimizações e estudos', async () => {
   await go('#regulatorio');
-  assert.equal(await page.locator('.reg__toc a').count(), 8);
+  const reg = await page.evaluate(() => ({ secoes: window.CONC.regulatorio.secoes.length, otim: window.CONC.regulatorio.otimizacoes.length }));
+  assert.equal(await page.locator('.reg__toc a').count(), reg.secoes);
   await page.locator('.reg__toc a', { hasText: 'Matriz de riscos' }).click();
   // A rolagem é suave: espera a posição parar (10 quadros iguais seguidos, até 3 s) em vez de um tempo fixo.
   const top = await page.evaluate(() => new Promise(resolve => {
@@ -398,7 +428,7 @@ test('v2: aba Regulatório com índice, otimizações e estudos', async () => {
     })();
   }));
   assert.ok(top < 200, String(top));
-  assert.equal(await page.locator('#otimizacoes tbody tr').count(), 11);
+  assert.equal(await page.locator('#otimizacoes tbody tr').count(), reg.otim);
   await page.locator('#page-regulatorio [data-estudo]:not([disabled])').first().click();
   await page.waitForTimeout(300);
   assert.equal(await page.evaluate(() => location.hash), '#mapa');
@@ -549,8 +579,9 @@ async function exportaCsv(sel) {
 
 test('fechamento: CSV deixa de fora a linha escondida (display:none) da tabela visível', async () => {
   await go('#mercado');
-  await page.selectOption('#rank-de', '2007');
-  await page.selectOption('#rank-ate', '2026');
+  const anos = await anosPart();
+  await page.selectOption('#rank-de', String(anos[0]));
+  await page.selectOption('#rank-ate', String(anos[anos.length - 1]));
   const grupos = await page.$$eval('#ranking-grupos tbody tr', trs => trs.map(tr => tr.firstElementChild.textContent.trim()));
   assert.ok(grupos.length >= 3 && new Set(grupos).size === grupos.length, 'nomes de grupo únicos');
   const linhaDe = g => `"${g.replace(/"/g, '""')}";`;
@@ -589,81 +620,120 @@ test('fechamento: CSV coleta links só do que sai no arquivo (nada de <details> 
   }
 });
 
-// v4: linha da ficha (dd) pelo rótulo (dt)
-const fichaDd = rotulo => page.evaluate(r => {
-  const dt = [...document.querySelectorAll('#ficha dt')].find(x => x.textContent === r);
-  return dt ? { html: dt.nextElementSibling.innerHTML, text: dt.nextElementSibling.textContent } : null;
-}, rotulo);
 const partLinhas = () => page.$$eval('#ficha table[data-csv-name="ficha-participantes"] tbody tr', trs => trs.map(tr => tr.textContent.replace(/\s+/g, ' ').trim()));
 const notasVerif = () => page.evaluate(() => {
   const h = [...document.querySelectorAll('#ficha .fblock h3')].find(x => x.textContent === 'Notas da verificação');
   return h ? h.parentElement.textContent.replace(/\s+/g, ' ') : null;
 });
 
+// v4: valores esperados lidos do CONC da página (os números conferidos estão em tests/test_dados_conferidos.py).
+// Título do selo de um campo verificado, como Selo.badge o monta; texto de um valor como no popover de divergência.
+const esperadoFicha = id => page.evaluate(i => {
+  const e = window.CONC.entidades.find(z => z.id === i);
+  const selo = v => (v.fontes || []).filter(Boolean).map(Selo.fonteTexto).concat(v.limitado_pelo_edital ? ['limitado pelo edital; desempate por outorga'] : []).join('\n');
+  const txt = (campo, v) => (campo === 'desagio' && typeof v === 'number' ? ConcModel.fmtPct(v)
+    : typeof v === 'string' && /^\d{4}-\d{2}(-\d{2})?$/.test(v) ? ConcModel.fmtData(v)
+      : typeof v === 'number' ? new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 }).format(v) : String(v));
+  const div = campo => {
+    const d = (e.divergencias || []).find(z => z.campo === campo);
+    return d && { exibido: txt(campo, d.exibido), alts: d.alternativas.filter(a => a.valor != null && !/^[-–—]?$/.test(String(a.valor).trim()))
+      .map(a => `${txt(campo, a.valor)} (${a.pagina != null ? `p. ${a.pagina}` : a.fonte})`) };
+  };
+  return { e, selo: Object.fromEntries(Object.entries(e.verif || {}).map(([k, v]) => [k, selo(v)])),
+    div: Object.fromEntries((e.divergencias || []).map(d => [d.campo, div(d.campo)])),
+    fmt: { desagio: ConcModel.fmtPct(e.desagio), assinatura: ConcModel.fmtData(e.assinatura), aditivo: ConcModel.fmtData(e.assinatura_aditivo),
+      inab: (e.inabilitados || []).map(x => `${x.grupo}: ${ConcModel.fmtPct(x.desagio)}, inabilitado em ${ConcModel.fmtData(x.data)}`) } };
+}, id);
+const seloDe = rotulo => page.evaluate(r => {
+  const dt = [...document.querySelectorAll('#ficha dt')].find(x => x.textContent === r);
+  const s = dt && dt.nextElementSibling.querySelector('.selo');
+  return s ? { classe: s.className, title: s.getAttribute('title'), target: s.querySelector('a') && s.querySelector('a').getAttribute('target') } : null;
+}, rotulo);
+const abreDivergencia = rotulo => page.evaluate(r => {
+  const dt = [...document.querySelectorAll('#ficha dt')].find(x => x.textContent === r);
+  dt.nextElementSibling.querySelector('.div-flag').click();
+}, rotulo);
+
 test('v4: ficha do Lote 5 do Paraná mostra selo e RoadShow na divergência', async () => {
   await go('#ficha/rodovias-integradas-do-parana-lote-5');
+  const x = await esperadoFicha('rodovias-integradas-do-parana-lote-5');
+  assert.equal(x.e.verif.desagio.tipo, 'oficial');
+  assert.ok(x.div.desagio.alts.length >= 1, 'o RoadShow imprime outro deságio');
   const d = await fichaDd('Deságio');
-  assert.match(d.text, /^23,83%/);
+  assert.ok(d.text.startsWith(x.fmt.desagio), d.text);
   assert.match(d.html, /class="selo selo--oficial"/);
-  assert.equal(await page.getAttribute('#ficha dd .selo--oficial a', 'target'), '_blank');
-  assert.match(await page.getAttribute('#ficha dd .selo--oficial', 'title'), /B3 — .*\(30\/10\/2025\)/);
-  await page.evaluate(() => {
-    const dt = [...document.querySelectorAll('#ficha dt')].find(x => x.textContent === 'Deságio');
-    dt.nextElementSibling.querySelector('.div-flag').click();
-  });
+  const selo = await seloDe('Deságio');
+  assert.equal(selo.target, '_blank');
+  assert.equal(selo.title, x.selo.desagio);
+  await abreDivergencia('Deságio');
   const t = await page.textContent('.popover');
   assert.match(t, /Divergência entre fontes/);
-  assert.match(t, /Exibido: 23,83%/);
-  assert.match(t, /21,83% \(p\. 97\)/);
+  assert.ok(t.includes(`Exibido: ${x.div.desagio.exibido}`), t);
+  for (const a of x.div.desagio.alts) assert.ok(t.includes(a), a);
   assert.ok(await notasVerif(), 'bloco de notas');
   await page.keyboard.press('Escape');
 });
 
 test('v4: ficha da Rota da Celulose mostra nota de inabilitação', async () => {
   await go('#ficha/rota-da-celulose');
+  const x = await esperadoFicha('rota-da-celulose');
   const n = await notasVerif();
-  assert.match(n, /Consórcio K&G Rota da Celulose: 9,00%, inabilitado em 04\/08\/2025/);
-  assert.match(n, /Comunicado — Aviso de decisão de recurso/);
+  assert.ok(x.fmt.inab.length >= 1);
+  for (const s of x.fmt.inab) assert.ok(n.includes(s), s);
+  for (const f of x.e.inabilitados[0].fontes) assert.ok(n.includes(f.titulo), f.titulo);
   assert.ok(await page.locator('#ficha .notas-verif .selo--oficial').count() > 0);
   // início da operação não localizado: linha com "—" e o selo
+  assert.equal(x.e.verif.inicio_operacao.nao_localizado, true);
   const ini = await fichaDd('Início da operação');
   assert.match(ini.text, /^—não localizado em fonte oficial/);
-  // um só vencedor: o verificado, com o deságio exibido (8%); o que o RoadShow imprime (9%) fica abaixo. O nome do
-  // RoadShow ("… (XP infra V fundo de Investimento)") é do mesmo grupo (XP): sem sublinha de nome
+  // um só vencedor: o verificado, com o deságio exibido; o que o RoadShow imprime fica abaixo. O nome do RoadShow é do
+  // mesmo grupo econômico: sem sublinha de nome
   const linhas = await partLinhas();
+  const esperado = await page.evaluate(() => {
+    const c = window.CONC, v = ConcModel.participantesExibidos(c.entidades.find(z => z.id === 'rota-da-celulose'), c.grupos_alias)[0];
+    return Object.assign(v, { nomeDiverge: !!(v.roadshow && LeiloesModel.rsDiverge(v.grupo, v.roadshow.grupo, c.grupos_alias)) });
+  });
   assert.equal(linhas.filter(l => l.includes('(vencedor)')).length, 1);
-  assert.match(linhas[0], /^Consórcio Caminhos da Celulose \(vencedor\) oficial 8,00% oficial RoadShow: 9,00%$/);
+  assert.ok(esperado.roadshow && esperado.roadshow.desagio != null && !esperado.nomeDiverge, JSON.stringify(esperado));
+  const pct = await page.evaluate(v => [ConcModel.fmtPct(v[0]), ConcModel.fmtPct(v[1])], [esperado.desagio, esperado.roadshow.desagio]);
+  assert.equal(linhas[0], `${esperado.grupo} (vencedor) oficial ${pct[0]} oficial RoadShow: ${pct[1]}`);
 });
 
 test('v4: vencedor verificado fora da lista do RoadShow entra no topo (Transbrasiliana)', async () => {
   await go('#ficha/transbrasiliana');
+  const x = await esperadoFicha('transbrasiliana');
   const linhas = await partLinhas();
   assert.equal(linhas.filter(l => l.includes('(vencedor)')).length, 1);
   // o rótulo do vencedor no RoadShow fica na sublinha do verificado, não como proponente derrotado sem lance
-  assert.match(linhas[0], /^Consórcio BRVias \(vencedor\) oficial RoadShow: TPI – Triunfo .*\(Antigo Consórcio BRVIAS\) 39,99% oficial$/);
-  assert.ok(!linhas.slice(1).some(l => /Antigo Consórcio BRVIAS/.test(l)), linhas.join('\n'));
-  assert.ok(linhas.some(l => /^TPI triunfo participações 5,68%$/.test(l)), 'o lance da Triunfo continua');
+  const rs = x.e.participantes_lista.find(p => p.vencedor);
+  assert.ok(rs && rs.desagio == null && rs.grupo !== x.e.grupo_vencedor, 'o RoadShow marca outro nome como vencedor, sem lance');
+  assert.equal(linhas[0], `${x.e.grupo_vencedor} (vencedor) oficial RoadShow: ${rs.grupo} ${x.fmt.desagio} oficial`);
+  assert.ok(!linhas.slice(1).some(l => l.includes(rs.grupo)), linhas.join('\n'));
+  const lances = x.e.participantes_lista.filter(p => !p.vencedor && p.desagio != null);
+  for (const p of lances) assert.ok(linhas.includes(`${p.grupo} ${await page.evaluate(v => ConcModel.fmtPct(v), p.desagio)}`), p.grupo);
   assert.ok(!linhas.slice(1).some(l => /—$/.test(l)), 'nenhum proponente sem deságio');
   await go('#ficha/autopista-litoral-do-sul');
   const ls = await partLinhas();
-  assert.match(ls[0], /\(vencedor\) oficial RoadShow: Arteris \(Antiga OHL\) /);
-  assert.ok(!ls.slice(1).some(l => /Arteris/.test(l)), ls.join('\n'));
+  const rsL = await page.evaluate(() => window.CONC.entidades.find(z => z.id === 'autopista-litoral-do-sul').participantes_lista.find(p => p.vencedor).grupo);
+  assert.ok(ls[0].includes(`(vencedor) oficial RoadShow: ${rsL} `), ls[0]);
+  assert.ok(!ls.slice(1).some(l => l.includes(rsL)), ls.join('\n'));
 });
 
 test('v4: otimização distingue contrato original e termo aditivo; popover sem alternativa "-"', async () => {
   await go('#ficha/regis-bittencourt');
-  assert.match((await fichaDd('Assinatura do contrato original')).text, /^14\/02\/2008/);
-  assert.match((await fichaDd('Assinatura do termo aditivo (otimização)')).text, /^21\/12\/2026/);
+  const x = await esperadoFicha('regis-bittencourt');
+  assert.equal(x.e.tipo, 'otimizacao');
+  assert.ok((await fichaDd('Assinatura do contrato original')).text.startsWith(x.fmt.assinatura));
+  assert.ok((await fichaDd('Assinatura do termo aditivo (otimização)')).text.startsWith(x.fmt.aditivo));
   // o prazo verificado de uma otimização conta a partir do termo aditivo
-  assert.match((await fichaDd('Prazo (a partir do termo aditivo)')).text, /^15 anos/);
+  assert.ok((await fichaDd('Prazo (a partir do termo aditivo)')).text.startsWith(`${x.e.prazo_anos} anos`));
   assert.equal(await fichaDd('Prazo da concessão'), null);
   await go('#ficha/via-liberdade');
-  await page.evaluate(() => {
-    const dt = [...document.querySelectorAll('#ficha dt')].find(x => x.textContent === 'Assinatura');
-    dt.nextElementSibling.querySelector('.div-flag').click();
-  });
+  const y = await esperadoFicha('via-liberdade');
+  assert.ok(y.e.divergencias.find(d => d.campo === 'assinatura').alternativas.some(a => /^[-–—]$/.test(String(a.valor))), 'há alternativa "-" no dado');
+  await abreDivergencia('Assinatura');
   const itens = await page.$$eval('.popover li', lis => lis.map(l => l.textContent));
-  assert.deepEqual(itens, ['20/01/2026 (p. 97)']);
+  assert.deepEqual(itens, y.div.assinatura.alts);
   await page.keyboard.press('Escape');
 });
 
@@ -690,6 +760,8 @@ test('v4: comparador tem a fonte do deságio e Fontes lista a verificação', as
 
 // ---------- v4: Mercado — participantes verificados, série de deságio, ranking de grupos ----------
 const rankRows = () => page.$$eval('#ranking-grupos tbody tr', trs => trs.map(tr => [...tr.children].map(td => td.textContent.trim())));
+// anos com leilão em mercado.participantes, em ordem (os seletores do ranking vão do primeiro ao último)
+const anosPart = () => page.evaluate(() => [...new Set(window.CONC.mercado.participantes.map(p => p.ano))].sort((a, b) => a - b));
 async function rankPeriodo(de, ate) {
   await page.selectOption('#rank-de', String(de));
   await page.selectOption('#rank-ate', String(ate));
@@ -700,25 +772,26 @@ test('v4: Mercado mostra ranking com taxa de êxito e filtro de período altera 
   assert.equal(await page.getAttribute('#ranking-grupos', 'data-csv-name'), 'mercado-ranking-grupos');
   const ths = await page.$$eval('#ranking-grupos thead th', t => t.map(x => x.textContent.trim().replace(/ [↑↓]$/, '')));
   assert.deepEqual(ths, ['Grupo', 'Participações', 'Vitórias', 'Derrotas', 'Êxito (%)', '1ª aparição', 'Última']);
-  assert.equal(await page.inputValue('#rank-de'), '2007');
-  assert.equal(await page.inputValue('#rank-ate'), '2026');
+  const anos = await anosPart(), de = anos[0], ate = anos[anos.length - 1], recente = anos[anos.length - 4];
+  assert.equal(await page.inputValue('#rank-de'), String(de));
+  assert.equal(await page.inputValue('#rank-ate'), String(ate));
   const modelo = periodo => page.evaluate(p => {
     const c = window.CONC, rk = LeiloesModel.rankingGrupos(c.mercado.participantes, c.grupos_alias, p);
     return { rk, sem: LeiloesModel.leiloesSemLista(c.mercado.participantes, p) };
   }, periodo);
-  const todos = await modelo({ de: 2007, ate: 2026 });
+  const todos = await modelo({ de, ate });
   let rows = await rankRows();
   assert.equal(rows.length, todos.rk.length);
   const r0 = todos.rk[0], nf1 = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 });
   assert.deepEqual(rows[0], [r0.grupo, String(r0.participacoes), String(r0.vitorias), String(r0.derrotas), nf1.format(r0.taxa), String(r0.primeira), String(r0.ultima)]);
   assert.match(await page.textContent('#ranking-aviso'), new RegExp(`^Em ${todos.sem} leilões do período o RoadShow não lista os demais proponentes: neles só o vencedor é contado\\.$`));
 
-  await rankPeriodo(2023, 2026);
-  const recentes = await modelo({ de: 2023, ate: 2026 });
+  await rankPeriodo(recente, ate);
+  const recentes = await modelo({ de: recente, ate });
   rows = await rankRows();
   assert.equal(rows.length, recentes.rk.length);
   assert.notEqual(rows.length, todos.rk.length);
-  assert.ok(rows.every(r => +r[5] >= 2023 && +r[6] <= 2026), 'anos dentro do período');
+  assert.ok(rows.every(r => +r[5] >= recente && +r[6] <= ate), 'anos dentro do período');
   assert.match(await page.textContent('#ranking-aviso'), new RegExp(`^Em ${recentes.sem} leilões do período`));
 
   // ordenação por clique no cabeçalho: Vitórias (desc), depois (asc)
@@ -730,40 +803,46 @@ test('v4: Mercado mostra ranking com taxa de êxito e filtro de período altera 
   v = (await rankRows()).map(r => +r[2]);
   assert.deepEqual(v, [...v].sort((a, b) => a - b));
 
-  // junções de nomes: "nome → grupo (motivo)" com link para a primeira fonte
-  const li = page.locator('#ranking-aliases li', { hasText: 'Consórcio Infraestrutura PR → EPR (consórcio liderado por)' });
-  assert.equal(await li.count(), 1);
-  assert.match(await li.locator('a').getAttribute('href'), /^https:\/\/[^/]*gov\.br\//);
+  // junções de nomes: "nome → grupo (motivo)" com link para a primeira fonte (uma junção com fonte http)
+  const a = await page.evaluate(() => window.CONC.grupos_alias.find(x => (x.fontes || []).length && /^https?:\/\//.test(x.fontes[0].url || '')));
+  const li = page.locator('#ranking-aliases li', { hasText: `${a.nome} → ${a.grupo} (${a.motivo})` });
+  assert.ok(await li.count() >= 1);
+  assert.equal(await li.first().locator('a').getAttribute('href'), a.fontes[0].url);
   assert.equal(await page.locator('#ranking-aliases li').count(), await page.evaluate(() => window.CONC.grupos_alias.length));
-  await rankPeriodo(2007, 2026);
+  await rankPeriodo(de, ate);
 });
 
 test('fechamento: seletores de período trocam de lugar quando de > até', async () => {
   await go('#mercado');
-  await rankPeriodo(2007, 2026);
-  await page.selectOption('#rank-ate', '2015');
-  await page.selectOption('#rank-de', '2023'); // de passa de até: os dois trocam e a tabela segue o período 2015–2023
-  assert.equal(await page.inputValue('#rank-de'), '2015');
-  assert.equal(await page.inputValue('#rank-ate'), '2023');
-  const esperado = await page.evaluate(() => LeiloesModel.rankingGrupos(window.CONC.mercado.participantes, window.CONC.grupos_alias, { de: 2015, ate: 2023 }).length);
+  const anos = await anosPart(), a = anos[1], b = anos[anos.length - 2];
+  await rankPeriodo(anos[0], anos[anos.length - 1]);
+  await page.selectOption('#rank-ate', String(a));
+  await page.selectOption('#rank-de', String(b)); // de passa de até: os dois trocam e a tabela segue o período a–b
+  assert.equal(await page.inputValue('#rank-de'), String(a));
+  assert.equal(await page.inputValue('#rank-ate'), String(b));
+  const esperado = await page.evaluate(p => LeiloesModel.rankingGrupos(window.CONC.mercado.participantes, window.CONC.grupos_alias, p).length, { de: a, ate: b });
   assert.equal((await rankRows()).length, esperado);
-  await rankPeriodo(2007, 2026);
+  await rankPeriodo(anos[0], anos[anos.length - 1]);
 });
 
-test('v4: série de deságio desenha pontos de 2007 a 2026 com legenda', async () => {
+test('v4: série de deságio desenha um ponto por leilão com deságio, com legenda', async () => {
   await go('#mercado');
   const esperado = await page.evaluate(() => {
-    const p = window.CONC.mercado.participantes;
-    return { pts: LeiloesModel.serieDesagio(p).length, sem: p.filter(x => x.desagio_vencedor == null).length };
+    const m = window.CONC.mercado, p = m.participantes, s = LeiloesModel.serieDesagio(p);
+    const l5 = p.find(x => x.lote === 'Rodovias Integradas do Paraná - Lote 5');
+    const pct = v => new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 }).format(v) + '%';
+    return { pts: s.length, sem: p.filter(x => x.desagio_vencedor == null).length,
+      x0: Math.floor(Math.min(...s.map(q => q.x))), x1: Math.floor(Math.max(...s.map(q => q.x))),
+      l5: { ini: `${l5.lote} · `, fim: `${pct(l5.desagio_vencedor)} · fonte ${l5.verif.desagio.tipo}` } };
   });
   assert.ok(esperado.pts >= 40);
   assert.equal(await page.locator('#chart-serie circle.dot').count(), esperado.pts);
   const anos = await page.$$eval('#chart-serie text[text-anchor="middle"]', t => t.map(x => x.textContent));
-  assert.equal(anos[0], '2007');
-  assert.ok(+anos[anos.length - 1] >= 2025, anos.join());
+  assert.equal(anos[0], String(esperado.x0));
+  assert.ok(+anos[anos.length - 1] >= esperado.x1, anos.join());
   assert.equal(await page.locator('#chart-serie line.ref').count(), 1);
   const tit = await page.$$eval('#chart-serie circle.dot title', t => t.map(x => x.textContent));
-  assert.ok(tit.some(t => /^Rodovias Integradas do Paraná - Lote 5 · .*23,83% · fonte oficial$/.test(t)), 'Lote 5 com o valor exibido');
+  assert.ok(tit.some(t => t.startsWith(esperado.l5.ini) && t.endsWith(esperado.l5.fim)), 'Lote 5 com o valor exibido');
   assert.equal(tit.filter(t => t.includes('limitado pelo edital')).length, await page.locator('#chart-serie circle.dot-limite').count());
   assert.ok(await page.locator('#chart-serie circle.dot-limite').count() >= 1);
   const leg = page.locator('#serie-legenda');
@@ -774,107 +853,148 @@ test('v4: série de deságio desenha pontos de 2007 a 2026 com legenda', async (
   assert.equal(await leg.locator('line[stroke-dasharray]').count(), 1, 'linha de 18%');
   assert.match(txt, /Pontos marcados como limitados pelo edital: desconto máximo permitido, desempate por outorga \(2021\)/);
   assert.match(await page.textContent('#serie-sem'), new RegExp(`^${esperado.sem} ${esperado.sem === 1 ? 'leilão' : 'leilões'} sem deságio do vencedor localizado`));
-  // Concorrentes × deságio: média dos valores exibidos ao lado da impressa; cartões das pp. 25 e 27 marcados
-  const media = await page.evaluate(() => LeiloesModel.mediaDesagio(window.CONC.mercado.concorrentes_desagio.map(x => x.desagio)));
-  const nf2 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  assert.match(await page.textContent('#card-desagio .sub'), new RegExp(`Média dos deságios exibidos: ${nf2.format(media)}% \\(RoadShow, pp\\. 25 e 27: 12,36%\\)`));
-  // a nota (comentário nosso) acompanha a média exibida e o valor do Lote 5
-  const nota = await page.textContent('#card-desagio .src:last-child');
-  assert.ok(nota.includes(`Média dos deságios exibidos ${nf2.format(media)}%`) && nota.includes('Lote 5, 23,83%'), nota);
-  for (const id of ['faixas', 'porN']) assert.match(await page.textContent(`#card-${id} .sub`), /como impresso no RoadShow/);
+  // Concorrentes × deságio: média dos valores exibidos ao lado da impressa (valor e páginas de mercado.json)
+  const x = await page.evaluate(() => {
+    const m = window.CONC.mercado, nf2 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const pp = [].concat(m.fontes.desagio_medio_impresso);
+    return { media: nf2.format(LeiloesModel.mediaDesagio(m.concorrentes_desagio.map(c => c.desagio))),
+      impressa: `(RoadShow, ${pp.length > 1 ? 'pp.' : 'p.'} ${pp.join(', ').replace(/, ([^,]*)$/, ' e $1')}: ${nf2.format(m.desagio_medio_impresso)}%)`,
+      nota: m.notas.concorrentes_desagio, periodo: m.periodo_concorrencia };
+  });
+  assert.ok((await page.textContent('#card-desagio .sub')).includes(`Média dos deságios exibidos: ${x.media}% ${x.impressa}`));
+  // a nota é o comentário de mercado.json (a coerência dela com a média está no pytest)
+  assert.equal(await page.textContent('#card-desagio .src:last-child'), `Nota: ${x.nota}`);
+  for (const id of ['faixas', 'porN']) assert.equal(await page.textContent(`#card-${id} .sub`), `${x.periodo}, como impresso no RoadShow`);
 });
 
-test('v4: Transbrasiliana 2007 aparece com o vencedor verificado', async () => {
+// Linha esperada da tabela de participantes do Mercado, calculada do CONC da página (mesmas regras de mercado.js):
+// vencedor exibido com o grupo quando o nome é outro; "RoadShow: …" de nome só se o grupo difere; deságio com o do RoadShow
+// quando difere. `lote`: trecho do nome do lote.
+const linhaPart = lote => page.evaluate(l => {
+  const c = window.CONC, al = c.grupos_alias, p = c.mercado.participantes.find(x => x.lote.includes(l));
+  const venc = n => { const g = LeiloesModel.grupoDe(n, al); return g && g !== n && !n.endsWith(`(${g})`) ? `${n} (${g})` : n; };
+  const v = p.verif || {}, rsG0 = v.grupo_vencedor && v.grupo_vencedor.roadshow, rsD = v.desagio && v.desagio.roadshow;
+  const rsG = LeiloesModel.rsDiverge(p.vencedor, rsG0, al) ? rsG0 : null;
+  const pct = ConcModel.fmtPct;
+  return { ano: String(p.ano), lote: p.lote, data: p.data ? ConcModel.fmtData(p.data) : '—', rsG, rsG0, rsD,
+    vencedor: venc(p.vencedor) + (rsG ? ` RoadShow: ${rsG}` : ''),
+    desagio: (p.desagio_vencedor == null ? '—' : pct(p.desagio_vencedor)) + (rsD == null ? '' : ` RoadShow: ${pct(rsD)}`),
+    tipo: (v.desagio || v.grupo_vencedor || {}).tipo,
+    outros: (p.outros || []).map(o => `${o.grupo}${o.desagio == null ? '' : ` (${pct(o.desagio)})`}`),
+    inab: (p.inabilitados || []).map(i => `${i.grupo}${i.desagio == null ? '' : ` (${pct(i.desagio)})`} (inabilitado${i.data ? ` em ${ConcModel.fmtData(i.data)}` : ''})`) };
+}, lote);
+const celulasPart = async x => {
+  await page.selectOption('#part-ano', x.ano);
+  return page.locator('#chart-part tbody tr', { hasText: x.lote }).locator('td').allTextContents();
+};
+
+test('v4: Transbrasiliana aparece com o vencedor verificado e o ranking credita o grupo da época', async () => {
   await go('#mercado');
   const ths = await page.$$eval('#chart-part thead th', t => t.map(x => x.textContent.trim()));
   assert.deepEqual(ths, ['Ano', 'Data', 'Lote', 'Vencedor', 'Deságio vencedor', 'Fonte', 'Demais proponentes (deságio)']);
-  await page.selectOption('#part-ano', '2007');
-  const tr = page.locator('#chart-part tbody tr', { hasText: 'Transbrasiliana' });
-  const cells = await tr.locator('td').allTextContents();
-  assert.equal(cells[1], '09/10/2007');
+  const x = await linhaPart('Transbrasiliana');
+  assert.ok(x.rsG, 'o RoadShow imprime como vencedor um nome de outro grupo');
+  const cells = await celulasPart(x);
+  assert.equal(cells[1], x.data);
   // o vencedor como o RoadShow imprime fica na sublinha "RoadShow: …" (não é apagado)
-  assert.match(cells[3], /^Consórcio BRVias RoadShow: TPI – Triunfo .*\(antigo Consórcio BRVias\)$/);
-  assert.equal(cells[4], '39,99%');
-  assert.equal(cells[5].trim(), 'oficial');
+  assert.equal(cells[3], x.vencedor);
+  assert.equal(cells[4], x.desagio);
+  assert.equal(cells[5].trim(), x.tipo);
+  const tr = page.locator('#chart-part tbody tr', { hasText: x.lote });
   assert.match(await tr.locator('td:nth-child(6) .selo--oficial a').getAttribute('href'), /^https:\/\//);
-  assert.match(cells[6], /TPI Triunfo Participações \(5,68%\)/);
+  for (const o of x.outros) assert.ok(cells[6].includes(o), o);
   assert.equal(await tr.locator('td:nth-child(4) .part-rs').count(), 1);
-  await page.selectOption('#part-ano', '2023');
-  assert.ok((await page.locator('#chart-part tbody td', { hasText: 'Consórcio Infraestrutura PR (EPR)' }).count()) >= 1, 'nome (grupo)');
-  await page.selectOption('#part-ano', '2025');
-  assert.match(await page.locator('#chart-part tbody tr', { hasText: 'Rota da Celulose' }).textContent(), /Consórcio K&G Rota da Celulose \(9,00%\) \(inabilitado em 04\/08\/2025\)/);
+  // nome com grupo econômico diferente aparece como "nome (grupo)"
+  const comGrupo = await page.evaluate(() => {
+    const c = window.CONC, p = c.mercado.participantes.find(r => { const g = LeiloesModel.grupoDe(r.vencedor, c.grupos_alias); return g && g !== r.vencedor && !r.vencedor.endsWith(`(${g})`); });
+    return { ano: String(p.ano), txt: `${p.vencedor} (${LeiloesModel.grupoDe(p.vencedor, c.grupos_alias)})` };
+  });
+  await page.selectOption('#part-ano', comGrupo.ano);
+  assert.ok((await page.locator('#chart-part tbody td', { hasText: comGrupo.txt }).count()) >= 1, 'nome (grupo)');
+  const cel = await linhaPart('Rota da Celulose');
+  assert.ok(cel.inab.length >= 1);
+  const tCel = (await celulasPart(cel))[6];
+  for (const i of cel.inab) assert.ok(tCel.includes(i), i);
   await page.selectOption('#part-ano', '');
-  // no ranking de 2007, a vitória é do BRVias e a Triunfo conta derrota (crédito pelo grupo da época)
-  await rankPeriodo(2007, 2007);
+  // ranking do ano da Transbrasiliana: igual ao modelo (crédito pelo grupo da época; os valores estão no pytest)
+  await rankPeriodo(+x.ano, +x.ano);
+  const modelo = await page.evaluate(a => LeiloesModel.rankingGrupos(window.CONC.mercado.participantes, window.CONC.grupos_alias, { de: a, ate: a }), +x.ano);
   const rk = Object.fromEntries((await rankRows()).map(r => [r[0], r]));
-  assert.equal(rk['Consórcio BRVias'][2], '1');
-  assert.equal(rk['Triunfo'][2], '0');
-  assert.ok(+rk['Triunfo'][3] >= 1);
-  // os 5 lotes da OHL Brasil em 2007 contam para ela, não para a Arteris (controle vendido em 2012)
-  assert.equal(rk['OHL Brasil'][2], '5');
-  assert.equal(rk['Arteris'], undefined);
-  await rankPeriodo(2007, 2026);
+  assert.equal(Object.keys(rk).length, modelo.length);
+  for (const r of modelo) assert.deepEqual([rk[r.grupo][2], rk[r.grupo][3]], [String(r.vitorias), String(r.derrotas)], r.grupo);
+  const gVenc = await page.evaluate(n => LeiloesModel.grupoDe(n, window.CONC.grupos_alias), x.vencedor.split(' RoadShow: ')[0]);
+  assert.ok(+rk[gVenc][2] >= 1, 'a vitória é do grupo verificado');
+  const anos = await anosPart();
+  await rankPeriodo(anos[0], anos[anos.length - 1]);
 });
 
 test('v4: Mercado mostra abaixo do verificado o vencedor e o deságio que o RoadShow imprime', async () => {
   await go('#mercado');
-  await page.selectOption('#part-ano', '2025');
-  const l5 = await page.locator('#chart-part tbody tr', { hasText: 'Rodovias Integradas do Paraná - Lote 5' }).locator('td').allTextContents();
-  // "Pátria" (RoadShow) é o grupo do nome verificado: sem sublinha de nome; o deságio diferente continua
-  assert.equal(l5[3], 'Reúne Rodovias Holding II S.A. (Pátria)');
-  assert.equal(l5[4], '23,83% RoadShow: 21,83%');
-  const cel = await page.locator('#chart-part tbody tr', { hasText: 'Rota da Celulose' }).locator('td').allTextContents();
-  assert.equal(cel[4], '8,00% RoadShow: 9,00%');
-  await page.selectOption('#part-ano', '2007');
-  const regis = await page.locator('#chart-part tbody tr', { hasText: 'Autopista Régis Bittencourt' }).locator('td').allTextContents();
-  assert.match(regis[3], /^Obrascon Huarte Lain Brasil S\.A\. \(OHL Brasil\) RoadShow: Arteris \(antiga OHL\)$/);
-  assert.equal(regis[4], '49,19%', 'deságio igual ao do RoadShow: sem sublinha');
+  // Lote 5: o nome do RoadShow é do mesmo grupo (sem sublinha de nome); o deságio diferente continua
+  const l5 = await linhaPart('Rodovias Integradas do Paraná - Lote 5');
+  assert.ok(l5.rsG0 && !l5.rsG && l5.rsD != null, JSON.stringify(l5));
+  const c5 = await celulasPart(l5);
+  assert.equal(c5[3], l5.vencedor);
+  assert.equal(c5[4], l5.desagio);
+  const cel = await linhaPart('Rota da Celulose');
+  assert.ok(cel.rsD != null);
+  assert.equal((await celulasPart(cel))[4], cel.desagio);
+  // Régis 2007: nome de outro grupo na sublinha; deságio igual ao do RoadShow, sem sublinha
+  const regis = await linhaPart('Autopista Régis Bittencourt');
+  assert.ok(regis.rsG && regis.rsD == null, JSON.stringify(regis));
+  const cr = await celulasPart(regis);
+  assert.equal(cr[3], regis.vencedor);
+  assert.equal(cr[4], regis.desagio, 'deságio igual ao do RoadShow: sem sublinha');
   await page.selectOption('#part-ano', '');
 });
 
 test('fechamento: ficha da Ponte São Borja mostra deságio "não se aplica (leilão por outorga)"', async () => {
   await go('#ficha/ponte-binacional-sao-borja-santo-tome');
+  const x = await esperadoFicha('ponte-binacional-sao-borja-santo-tome');
+  assert.equal(x.e.verif.desagio.nao_se_aplica, true);
   const d = await fichaDd('Deságio');
   assert.match(d.text, /^—não se aplica \(leilão por outorga\)/);
   assert.match(d.html, /class="selo selo--nao-se-aplica"/);
-  assert.match(await page.getAttribute('#ficha dd .selo--nao-se-aplica', 'title'), /^B3 — /);
-  await page.evaluate(() => {
-    const dt = [...document.querySelectorAll('#ficha dt')].find(x => x.textContent === 'Deságio');
-    dt.nextElementSibling.querySelector('.div-flag').click();
-  });
-  assert.match(await page.textContent('.popover'), /RoadShow imprime 0,38%; não se aplica \(leilão por outorga\)\./);
+  assert.equal((await seloDe('Deságio')).title, x.selo.desagio);
+  await abreDivergencia('Deságio');
+  const nota = x.e.divergencias.find(z => z.campo === 'desagio').nota;
+  assert.match(nota, /não se aplica \(leilão por outorga\)/);
+  assert.ok((await page.textContent('.popover')).includes(nota));
   await page.keyboard.press('Escape');
 });
 
-test('fechamento: prazo da Régis Bittencourt com a B3 (25 anos) como divergência', async () => {
+test('fechamento: prazo da Régis Bittencourt com a B3 como divergência', async () => {
   await go('#ficha/regis-bittencourt');
-  await page.evaluate(() => {
-    const dt = [...document.querySelectorAll('#ficha dt')].find(x => x.textContent === 'Prazo (a partir do termo aditivo)');
-    dt.nextElementSibling.querySelector('.div-flag').click();
-  });
+  const x = await esperadoFicha('regis-bittencourt');
+  assert.ok(x.div.prazo_anos && x.div.prazo_anos.alts.length >= 1);
+  await abreDivergencia('Prazo (a partir do termo aditivo)');
   const t = await page.textContent('.popover');
-  assert.match(t, /Exibido: 15oficial/);
-  assert.match(t, /25 \(B3, 23\/07\/2026\)/);
+  assert.ok(t.includes(`Exibido: ${x.div.prazo_anos.exibido}oficial`), t);
+  for (const a of x.div.prazo_anos.alts) assert.ok(t.includes(a), a);
   await page.keyboard.press('Escape');
 });
 
 test('fechamento: "RoadShow: …" de nome só quando o grupo econômico difere', async () => {
   await go('#mercado');
-  await page.selectOption('#part-ano', '2026');
-  const tr = page.locator('#chart-part tbody tr', { hasText: 'Rota Gerais' });
-  assert.match((await tr.locator('td').allTextContents())[3], /^Ecorodovias Concessões e Serviços S\.A\. \(Ecorodovias\)$/);
+  const rg = await linhaPart('Rota Gerais');
+  assert.ok(rg.rsG0 && !rg.rsG, 'o RoadShow grafa outro nome do mesmo grupo');
+  await page.selectOption('#part-ano', rg.ano);
+  const tr = page.locator('#chart-part tbody tr', { hasText: rg.lote });
+  assert.equal((await tr.locator('td').allTextContents())[3], rg.vencedor);
   assert.equal(await tr.locator('td:nth-child(4) .part-rs').count(), 0);
-  await page.selectOption('#part-ano', '2007');
-  const tb = page.locator('#chart-part tbody tr', { hasText: 'Transbrasiliana' });
-  assert.match(await tb.locator('td:nth-child(4) .part-rs').textContent(), /^RoadShow: TPI/);
+  const tb = await linhaPart('Transbrasiliana');
+  await page.selectOption('#part-ano', tb.ano);
+  assert.equal(await page.locator('#chart-part tbody tr', { hasText: tb.lote }).locator('td:nth-child(4) .part-rs').textContent(), `RoadShow: ${tb.rsG}`);
   await page.selectOption('#part-ano', '');
-  // ficha: o RoadShow grafa "EcoRodovias Concessões e Ser. S.A" (mesmo grupo): sem sublinha de nome
+  // ficha: o RoadShow grafa o vencedor de outro jeito (mesmo grupo): sem sublinha de nome
   await go('#ficha/rotas-gerais');
+  const x = await esperadoFicha('rotas-gerais');
   const venc = (await partLinhas()).filter(l => l.includes('(vencedor)'));
-  assert.deepEqual(venc, ['Ecorodovias Concessões e Serviços S.A. (vencedor) oficial 19,00% oficial']);
+  assert.deepEqual(venc, [`${x.e.grupo_vencedor} (vencedor) oficial ${x.fmt.desagio} oficial`]);
   assert.equal(await page.locator('#ficha table[data-csv-name="ficha-participantes"] .part-rs').count(), 0);
   await go('#ficha/transbrasiliana');
-  assert.match((await partLinhas())[0], /RoadShow: TPI/);
+  const rs = await page.evaluate(() => window.CONC.entidades.find(z => z.id === 'transbrasiliana').participantes_lista.find(p => p.vencedor).grupo);
+  assert.ok((await partLinhas())[0].includes(`RoadShow: ${rs}`));
 });
 
 test('fechamento: Mercado tem ABDIB, debêntures, comparativos e pavimento com a página e sem NaN', async () => {

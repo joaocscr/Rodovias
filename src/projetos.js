@@ -108,7 +108,7 @@ const Projetos = (() => {
       </div>
       <div class="toolbar"><div class="chips">${conc.estados.filter(s => !['snv', 'pos2027', 'nenhum'].includes(s.key))
         .concat(IM.EST_ESTADOS.filter(s => rows.some(r => r.estado === s.key))).map(s => chip('estado', s.key, s.label)).join('')}</div>
-        <div class="chips">${[2023, 2024, 2025, 2026, 2027].map(a => chip('ano', a, String(a))).join('')}</div></div>`;
+        <div class="chips">${ConcModel.anosPrograma(conc).map(a => chip('ano', a, String(a))).join('')}</div></div>`;
   }
 
   function estudos() {
@@ -196,10 +196,11 @@ const Projetos = (() => {
     hasEst = est.length > 0;
     rows = ConcModel.comparatorRows(conc).map(r => Object.assign(r, { esfera: 'federal' })).concat(est);
     pipe = IM.pipelineRows(intel);
+    const anos = ConcModel.anosPrograma(conc), base = ConcModel.dataBaseComum(conc);
     const el = document.getElementById('page-projetos');
     el.innerHTML = `<div class="page__inner">
       <h1 class="page__title">Projetos e contratos</h1>
-      <p class="page__lead">Contratos vigentes e projetos do programa 2023–2027${hasEst ? ', e concessões rodoviárias estaduais' : ''}. Capex e opex na base comparável (tabelas em dez/2024 quando existirem; senão, a data-base da ficha, indicada na coluna). Clique numa linha para abrir a ficha.</p>
+      <p class="page__lead">Contratos vigentes e projetos do programa${anos.length ? ` ${anos[0]}–${anos[anos.length - 1]}` : ''}${hasEst ? ', e concessões rodoviárias estaduais' : ''}. Capex e opex na base comparável (tabelas${base ? ` em ${esc(base)}` : ''} quando existirem; senão, a data-base da ficha, indicada na coluna). Clique numa linha para abrir a ficha.</p>
       ${toolbar()}
       <div class="table-wrap"><table class="grid" id="proj-table" data-csv-name="projetos-comparador"></table></div>
       ${pipelineSection()}

@@ -1,5 +1,5 @@
 // Aba Mercado: séries do RoadShow em gráficos SVG próprios; v4: participantes verificados, série de deságio do
-// vencedor 2007–2026 e ranking de grupos econômicos (LeiloesModel).
+// vencedor e ranking de grupos econômicos (LeiloesModel). Períodos e constantes impressas vêm de mercado.json.
 const Mercado = (() => {
   const nf0 = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
   const nf1 = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 });
@@ -9,7 +9,6 @@ const Mercado = (() => {
   const nfPct = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });
   const pages = p => (Array.isArray(p) ? p : [p]).filter(x => x != null).join(', ');
   const plural = (n, um, varios) => `${nf0.format(n)} ${n === 1 ? um : varios}`;
-  const MEDIA_IMPRESSA = '12,36%'; // média dos deságios 2023–26 impressa no RoadShow (pp. 25 e 27)
   const SERIE_NOTA = 'Pontos marcados como limitados pelo edital: desconto máximo permitido, desempate por outorga (2021)';
 
   let m, aliases = [], built = false;
@@ -87,8 +86,18 @@ const Mercado = (() => {
     }).join('')}</ul></details>`;
   }
 
-  // "2010–2024" a partir dos anos da série
-  const periodoSerie = serie => (serie.length ? `${serie[0].ano}–${serie[serie.length - 1].ano}` : '');
+  // "2010–2024" a partir dos anos da série (menor e maior)
+  const periodoSerie = serie => {
+    const anos = (serie || []).map(x => x.ano).filter(Number.isFinite);
+    return anos.length ? `${Math.min(...anos)}–${Math.max(...anos)}` : '';
+  };
+  const comPeriodo = (txt, p, sep = ', ') => (p ? `${txt}${sep}${p}` : txt);
+  // média dos deságios impressa no RoadShow, com as páginas (pp. 25 e 27 na versão atual)
+  function mediaImpressa() {
+    if (m.desagio_medio_impresso == null) return '';
+    const pp = [].concat(m.fontes.desagio_medio_impresso || []);
+    return ` (RoadShow, ${pp.length > 1 ? 'pp.' : 'p.'} ${pp.join(', ').replace(/, ([^,]*)$/, ' e $1')}: ${nf2.format(m.desagio_medio_impresso)}%)`;
+  }
   const fmtNum = v => (v == null ? '—' : nfPct.format(v));
 
   // Comparativos das pp. 41 e 45: período base (realizado) × comparado (previsto), média anual e variação impressas.
@@ -112,32 +121,34 @@ const Mercado = (() => {
     const semDesagio = m.participantes.filter(p => p.desagio_vencedor == null).length;
     const anoOpts = sel => anos.map(a => `<option${a === sel ? ' selected' : ''}>${a}</option>`).join('');
     const serie = LeiloesModel.serieDesagio(m.participantes);
+    const pPart = periodoSerie(m.participantes), pConc = periodoSerie(m.concorrentes_desagio), pImp = m.periodo_concorrencia || '';
+    const impresso = pImp ? `${pImp}, como impresso no RoadShow` : 'Como impresso no RoadShow';
     const verificado = 'leilões conferidos em fonte oficial ou imprensa, com selo na tabela de participantes (documentos na aba Fontes)';
     el.innerHTML = `<div class="page__inner">
       <h1 class="page__title">Mercado de concessões rodoviárias federais</h1>
       <p class="page__lead">Leilões, concorrência, deságios, grupos econômicos e investimentos, segundo o RoadShow 2026-2027 do Ministério dos Transportes. Passe o mouse sobre os gráficos para ver os valores exatos.</p>
       <div class="grid-cards">
-        ${card('kpis', 'Concorrência 2023–26', 'Totais dos leilões do programa (realizados e previstos até 2026)', { key: 'concorrencia_2023_26', wide: true,
+        ${card('kpis', comPeriodo('Concorrência', pImp, ' '), 'Totais dos leilões do programa (realizados e previstos no período)', { key: 'concorrencia_2023_26', wide: true,
           html: `<div class="kpis">${[[c.grupos_novos_entrantes, 'grupos participantes'], [c.km, 'km'], [c.capex, 'R$ bi de capex'], [c.opex, 'R$ bi de opex'], [c.capex_opex, 'R$ bi capex + opex'], [c.empregos_milhoes, 'milhões de empregos']]
             .filter(([v]) => v != null).map(([v, l]) => `<div class="kpi-tile"><b>${nf1.format(v)}</b><span>${l}</span></div>`).join('')}</div>` })}
-        ${card('leiloes', 'Leilões por ano', 'Número de leilões de concessões rodoviárias federais, 1993–2030', { key: 'leiloes_por_ano', wide: true,
+        ${card('leiloes', 'Leilões por ano', comPeriodo('Número de leilões de concessões rodoviárias federais', periodoSerie(m.leiloes_por_ano)), { key: 'leiloes_por_ano', wide: true,
           legend: Charts.legendHtml([['Realizados', Charts.C.deep], ['Previstos', Charts.C.bright, 0.45]]) })}
-        ${card('serie', 'Deságio do vencedor, 2007–2026', 'Desconto sobre a tarifa-teto oferecido pelo vencedor de cada leilão, na data do leilão', { wide: true,
+        ${card('serie', comPeriodo('Deságio do vencedor', pPart), 'Desconto sobre a tarifa-teto oferecido pelo vencedor de cada leilão, na data do leilão', { wide: true,
           src: `${verificado}; RoadShow 2026-2027, p. ${pages(m.fontes.participantes)}, onde não há verificação`,
           legend: `<div id="serie-legenda">${Charts.legendHtml([{ label: 'oficial', color: C.deep, shape: 'dot' }, { label: 'RoadShow', color: C.bright, shape: 'dot' },
             { label: 'imprensa — não oficial', color: C.grey, shape: 'ring' },
             { label: 'linha de 18%: aporte de recursos vinculados, Portaria 995/2023, a partir de 2023', color: C.spacial, shape: 'line' }])}${
             serie.some(p => p.limitado) ? Charts.legendHtml([{ label: SERIE_NOTA, color: C.spacial, shape: 'limite' }]) : ''}</div>`,
           foot: `<p class="src" id="serie-sem">${plural(semDesagio, 'leilão', 'leilões')} sem deságio do vencedor localizado</p>` })}
-        ${card('programa', 'Programa 2023–2027 por ano', 'Extensão e investimento (capex + opex) dos leilões', { key: 'programa_por_ano',
+        ${card('programa', `${comPeriodo('Programa', periodoSerie(m.programa_por_ano), ' ')} por ano`, 'Extensão e investimento (capex + opex) dos leilões', { key: 'programa_por_ano',
           legend: Charts.legendHtml([['Capex', Charts.C.deep], ['Opex', Charts.C.bright]]) })}
-        ${card('desagio', 'Concorrentes × deságio', `Cada ponto é um dos ${conc.length} leilões de 2023–26${conc.length < m.concorrentes_desagio.length ? ` com deságio localizado (de ${m.concorrentes_desagio.length})` : ''}. ` +
-          `Média dos deságios exibidos: ${media == null ? '—' : nf2.format(media) + '%'} (RoadShow, pp. 25 e 27: ${MEDIA_IMPRESSA})`, { key: 'concorrentes_desagio' })}
-        ${card('faixas', 'Leilões por faixa de deságio', '2023–26, como impresso no RoadShow', { key: 'faixas_desagio' })}
-        ${card('porN', 'Deságio médio por número de concorrentes', '2023–26, como impresso no RoadShow', { key: 'desagio_por_n_concorrentes' })}
+        ${card('desagio', 'Concorrentes × deságio', `Cada ponto é um dos ${conc.length} leilões${pConc ? ` de ${pConc}` : ''}${conc.length < m.concorrentes_desagio.length ? ` com deságio localizado (de ${m.concorrentes_desagio.length})` : ''}. ` +
+          `Média dos deságios exibidos: ${media == null ? '—' : nf2.format(media) + '%'}${mediaImpressa()}`, { key: 'concorrentes_desagio' })}
+        ${card('faixas', 'Leilões por faixa de deságio', impresso, { key: 'faixas_desagio' })}
+        ${card('porN', 'Deságio médio por número de concorrentes', impresso, { key: 'desagio_por_n_concorrentes' })}
         ${card('grupos', 'Grupos econômicos: extensão concedida', 'km sob concessão federal por grupo líder', { key: 'grupos' })}
         ${card('gruposInv', 'Grupos econômicos: investimento', 'Capex + opex contratados por grupo (R$ bi); passe o mouse para ver o detalhe', { key: 'grupos' })}
-        ${card('gestao', 'Malha federal: gestão direta × concedida', 'Extensão em km, 2011–2026', { key: 'gestao',
+        ${card('gestao', 'Malha federal: gestão direta × concedida', comPeriodo('Extensão em km', periodoSerie(m.gestao)), { key: 'gestao',
           legend: Charts.legendHtml([['Concedida', Charts.C.deep], ['Gestão direta', Charts.C.bright]]) })}
         ${card('invest', 'Investimentos públicos × privados', 'R$ bi por ano (orçamento federal × capex + opex privado)', { key: 'investimentos',
           legend: Charts.legendHtml([['Público', Charts.C.deep], ['Privado', Charts.C.bright]]) })}
@@ -150,13 +161,13 @@ const Mercado = (() => {
         ${m.pavimento ? card('pavimento', 'Estado do pavimento', `Aumento do custo operacional do transporte rodoviário de cargas conforme o estado do pavimento. Acréscimo médio no Brasil: ${nf1.format(m.pavimento.acrescimo_medio)}%`, { key: 'pavimento',
           src: `${roadshow('pavimento')} (${m.pavimento.fonte_original})`, legend: Charts.legendHtml([['Aumento do custo operacional', C.deep]]) }) : ''}
         ${card('diag', 'Diagnóstico da carteira', 'Contratos, extensão e valor concedido', { key: 'diagnostico' })}
-        ${card('indic', 'Indicadores dos 40 leilões', 'Obras e equipamentos previstos', { key: 'indicadores_40', wide: true,
+        ${card('indic', 'Indicadores dos leilões do programa', 'Obras e equipamentos previstos', { key: 'indicadores_40', wide: true,
           html: `<div class="kpis">${m.indicadores_40.map(i => `<div class="kpi-tile"><b>${nf0.format(i.valor)}</b><span>${esc(i.unidade)} · ${esc(i.rotulo)}</span></div>`).join('')}</div>` })}
-        ${card('part', 'Participantes dos leilões 2007–2026', 'Vencedor (adjudicatário que assinou o contrato) e demais proponentes com o deságio ofertado', { key: 'participantes', wide: true,
+        ${card('part', comPeriodo('Participantes dos leilões', pPart, ' '), 'Vencedor (adjudicatário que assinou o contrato) e demais proponentes com o deságio ofertado', { key: 'participantes', wide: true,
           src: `${roadshow('participantes')}; vencedor, data e deságio dos ${verificado}`,
           legend: `<div class="toolbar"><label class="sub" for="part-ano">Ano</label><select id="part-ano"><option value="">Todos</option>${anos.map(a => `<option>${a}</option>`).join('')}</select></div>`,
           html: participantesTable('') })}
-        ${card('ranking', 'Grupos nos leilões, 2007–2026', 'Participações, vitórias e derrotas por grupo econômico; crédito pelo grupo que disputou na época do leilão. Clique no cabeçalho para ordenar', { wide: true,
+        ${card('ranking', comPeriodo('Grupos nos leilões', pPart), 'Participações, vitórias e derrotas por grupo econômico; crédito pelo grupo que disputou na época do leilão. Clique no cabeçalho para ordenar', { wide: true,
           src: `${roadshow('participantes')} (proponentes); vencedor verificado nos ${verificado}`,
           legend: `<div class="toolbar"><label class="sub" for="rank-de">de</label><select id="rank-de">${anoOpts(rank.de)}</select>
             <label class="sub" for="rank-ate">até</label><select id="rank-ate">${anoOpts(rank.ate)}</select></div>
@@ -168,7 +179,7 @@ const Mercado = (() => {
     Charts.bars(box('leiloes'), m.leiloes_por_ano.map(x => ({ label: String(x.ano), value: x.n, alt: x.previsto })), { unit: 'leilões', format: v => nf0.format(v), title: 'Leilões por ano' });
     Charts.stacked(box('programa'), m.programa_por_ano.map(x => ({ label: `${x.ano}${x.previsto ? '*' : ''} · ${nf0.format(x.km)} km`, parts: [x.capex, x.opex] })),
       { names: ['Capex', 'Opex'], unit: 'R$ bi', format: v => nf1.format(v), title: 'Programa por ano' });
-    Charts.dots(box('serie'), serie, { refY: 18, refFromX: 2023, formatY: v => nfPct.format(v) + '%', title: 'Deságio do vencedor, 2007–2026' });
+    Charts.dots(box('serie'), serie, { refY: 18, refFromX: 2023, formatY: v => nfPct.format(v) + '%', title: comPeriodo('Deságio do vencedor', pPart) });
     Charts.scatter(box('desagio'), conc.map(x => ({ x: x.n, y: x.desagio, label: `${x.leilao} (${x.ano})` })),
       { xLabel: 'concorrentes', formatX: v => nf0.format(v), formatY: v => nf1.format(v) + '%', title: 'Concorrentes × deságio' });
     Charts.hbars(box('faixas'), m.faixas_desagio.map(x => ({ label: x.faixa, value: x.n })), { unit: 'leilões', format: v => nf0.format(v) });

@@ -45,7 +45,7 @@ const Layers = (() => {
       fonte: () => `${IM.fonteRef(est().fonte, /./)} · concessões estaduais em magenta com halo (ARTESP, AGERGS e demais agências)` +
         (IM.estTrafego(intel) ? ` · no modo Tráfego, coloridas pelo VMDa ${IM.estTrafego(intel).ano} (DNIT, modelado)` : '') },
     { key: 'pracas', label: 'Praças de pedágio', has: () => !!antt('pracas'), n: () => rowsOf('pracas').filter(hasLatLng).length,
-      fonte: () => `${fonteAntt(/Praças de pedágio/)} · VMD 2025, contagem medida; círculo ∝ √VMD` },
+      fonte: () => `${fonteAntt(/Praças de pedágio/)} · ${IM.comAno('VMD', IM.anoPracas(intel))}, contagem medida; círculo ∝ √VMD` },
     { key: 'sats', label: 'SATs', has: () => !!antt('sats'), n: () => rowsOf('sats').filter(hasLatLng).length,
       fonte: () => `${fonteAntt(/SAT/)} · contagem medida nos equipamentos de contagem` },
     { key: 'obras', label: 'Obras ANTT', has: () => !!antt('obras'), n: () => rowsOf('obras').filter(hasLatLng).length,
@@ -57,8 +57,11 @@ const Layers = (() => {
     { key: 'siade', label: 'Fluxos ferroviários de grãos', has: () => !!(mm('siade') && mm('siade').length), n: () => mm('siade').length,
       fonte: () => `${fonteMm(/SIADE/)} · origem → destino, espessura ∝ toneladas` },
     { key: 'rotas', label: 'Rotas de Integração Sul-Americana', has: () => !!rotas(), n: () => rotas().rotas.length,
-      fonte: () => `${IM.fonteRef(rotas().fonte, /Apresentação/)} · traçado esquemático e obras (slides da apresentação de 01/07/2026); ` +
-        'descrição das rotas dos relatórios 2024 e 2025 do MPO' },
+      fonte: () => {
+        const d = IM.rotasDocs(rotas()), rel = d.relatorios.join(', ').replace(/, ([^,]*)$/, ' e $1');
+        return `${IM.fonteRef(rotas().fonte, /Apresentação/)} · traçado esquemático e obras (slides da apresentação${d.apresentacao ? ` de ${d.apresentacao}` : ''}); ` +
+          `descrição das rotas ${d.relatorios.length > 1 ? 'dos relatórios' : 'do relatório'}${rel ? ` ${rel}` : ''} do MPO`;
+      } },
   ];
   const def = key => DEFS.find(d => d.key === key) || null;
   const hasLatLng = r => finite(r.lat) && finite(r.lon);

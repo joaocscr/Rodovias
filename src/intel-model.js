@@ -759,7 +759,19 @@ const IntelModel = (() => {
 
   const pracasRows = intel => rows(anttOf(intel) && anttOf(intel).pracas).map((p, i) => Object.assign(p, { i }));
 
-  // KPIs da aba Tráfego: praças com contagem 2025 (VMD > 0), VMD somado, % pesados ponderado pelo VMD,
+  // Ano do VMD e da receita das praças (antt.pracas.ano); rótulos da interface usam este ano, nunca um digitado.
+  const anoPracas = intel => { const p = anttOf(intel) && anttOf(intel).pracas; return p && Number.isFinite(p.ano) ? p.ano : null; };
+  // Documentos do MPO nas fontes do bloco rotas: data da apresentação (traçado) e anos dos relatórios (descrições).
+  function rotasDocs(rotas) {
+    const f = (rotas && Array.isArray(rotas.fonte)) ? rotas.fonte : [];
+    const ap = f.find(x => /Apresentação/.test(x.nome || ''));
+    return { apresentacao: (ap && ap.periodo) || null,
+      relatorios: f.filter(x => /Relatório/.test(x.nome || '') && x.periodo).map(x => String(x.periodo)).sort() };
+  }
+  // "VMD 2025" com o ano; sem ano, só "VMD".
+  const comAno = (txt, ano) => (ano != null ? `${txt} ${ano}` : txt);
+
+  // KPIs da aba Tráfego: praças com contagem no ano das praças (VMD > 0), VMD somado, % pesados ponderado pelo VMD,
   // veíc·km/dia do VMDa em toda a malha federal (anoVkm: 2025 ou, sem o bloco, 2023), veíc·km/dia 2025 da malha estadual
   // (Σ total × extensão; kmEst = km com estimativa de kmEstTotal) e médias anuais da PRF. Bloco ausente = null.
   function trafegoKpis(intel, snv) {
@@ -998,7 +1010,7 @@ const IntelModel = (() => {
     FUNDOS, PRODUTOS, fundoFonte, fundoValues,
     fundoClasses, munInfo, pointInRings, ringsBBox, fonteRef,
     ROTA_TIPOS, rotasOf, rotaTitulo, rotaLinhas, paisAneis, rotasBounds, rotasNota, rotaLabelAnchor, paisLabel, paisLabelPoint,
-    anttCapa, anttAnteriores, anttSeries, pracasDe, obrasResumo, linhaDoTempo, linhaDoTempoResumo, pipelineRows, filterPipeline, pipelineCounts, statusLabel, pipelineDe,
+    anttCapa, anttAnteriores, anttSeries, pracasDe, obrasResumo, linhaDoTempo, linhaDoTempoResumo, anoPracas, comAno, rotasDocs, pipelineRows, filterPipeline, pipelineCounts, statusLabel, pipelineDe,
     EST_ESTADOS, QUALIDADE_RECORTE, qualidadeRecorte, estaduaisRows, byEsfera, estIndex, trechosLabel,
     trafegoKpis, pracasRanking, pracasSerie, abcrSazonal, acidentesPorUf, taxaPorBrUf,
     cargasKpis, producaoPorUf, topMunicipios, exportProdutos, exportPorUrf, exportMatriz, siadePares, fretesRows, suspeitosNoFim, cargaTop,

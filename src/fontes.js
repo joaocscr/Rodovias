@@ -34,13 +34,17 @@ const Fontes = (() => {
       ])}`;
   }
 
+  // "(2023)" com o ano do bloco; sem o bloco, nada
+  const anoDe = v => (v && Number.isFinite(v) ? ` (${v})` : '');
+
   function render(intel, conc) {
     const el = document.getElementById('page-fontes');
     const d = IM.fontesData(intel);
+    const vm = (intel && intel.trafego && intel.trafego.vmda) || null, v25 = (intel && intel.vmda2025) || null, cg = (intel && intel.carga) || null;
     const head = `<h1 class="page__title">Fontes dos dados</h1>
       <p class="page__lead">Cada número do Centro de Inteligência vem de uma fonte pública listada aqui, com o período coberto, a data em que foi baixada e a licença. Tudo está embutido neste arquivo: nada é consultado na internet ao abri-lo.</p>
       <div class="fontes-nota"><h2 class="fontes-h2">Medido × modelado</h2>
-        <p><b>Medido</b> é contagem ou registro do mundo real: veículos que passaram nas praças de pedágio e nos equipamentos SAT da ANTT, acidentes registrados pela PRF, produção declarada ao IBGE, exportações despachadas na Receita, toneladas transportadas nas ferrovias. <b>Modelado</b> é estimativa de um modelo de transporte: o VMDa da Infra S.A. (2023) e o do DNIT (2025), volume diário em trechos sem contagem, e a carga agrícola do PNL 2035 (alocação de fluxos na rede, ano-base 2017). Os dois servem para comparar trechos, mas só o medido é observação; os cartões e as legendas sempre dizem qual é qual.</p>
+        <p><b>Medido</b> é contagem ou registro do mundo real: veículos que passaram nas praças de pedágio e nos equipamentos SAT da ANTT, acidentes registrados pela PRF, produção declarada ao IBGE, exportações despachadas na Receita, toneladas transportadas nas ferrovias. <b>Modelado</b> é estimativa de um modelo de transporte: o VMDa da Infra S.A.${anoDe(vm && vm.ano)} e o do DNIT${anoDe(v25 && v25.ano)}, volume diário em trechos sem contagem, e a carga agrícola do PNL 2035 (alocação de fluxos na rede${cg && Number.isFinite(cg.ano_base) ? `, ano-base ${cg.ano_base}` : ''}). Os dois servem para comparar trechos, mas só o medido é observação; os cartões e as legendas sempre dizem qual é qual.</p>
         <p><b>Cadastro</b> é registro de infraestrutura ou de contratos, sem número medido nem modelado: a malha municipal do IBGE, a malha e as fichas das concessões estaduais, as páginas das concessões na ANTT, as ferrovias da BaseFerro, as instalações portuárias da ANTAQ e o traçado esquemático das Rotas de Integração Sul-Americana (MPO).</p>
         <p><b>Acesso</b> é a data em que o arquivo foi baixado da fonte para montar este mapa (dd/mm/aaaa). O dado pode ter sido atualizado na origem depois disso.</p></div>`;
     if (!d) {

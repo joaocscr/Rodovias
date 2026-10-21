@@ -1108,3 +1108,18 @@ test('linhaDoTempo: datas inválidas (mês 13, texto) contam como sem data', () 
   const res = IntelModel.linhaDoTempoResumo({ entidades: [{ id: 'w', leilao: '2026-13', edital: 'breve', cronograma: [] }] }, { itens: [tlItem('w', { ent: 'w' })] });
   assert.equal(res.rows.length, 0); assert.equal(res.semData, 1);
 });
+
+test('anoPracas e comAno: o ano dos rótulos das praças vem do bloco antt; sem ele, rótulo sem ano', () => {
+  assert.equal(IntelModel.anoPracas({ antt: { pracas: { ano: 2026, campos: [], linhas: [] } } }), 2026);
+  assert.equal(IntelModel.anoPracas({ antt: { pracas: { campos: [], linhas: [] } } }), null);
+  assert.equal(IntelModel.anoPracas(null), null);
+  assert.equal(IntelModel.comAno('VMD', 2026), 'VMD 2026');
+  assert.equal(IntelModel.comAno('VMD', null), 'VMD');
+});
+
+test('rotasDocs: data da apresentação e anos dos relatórios a partir das fontes do bloco rotas', () => {
+  const rotas = { fonte: [{ nome: 'MPO — Apresentação Rotas (01/07/2026)', periodo: '01/07/2026' },
+    { nome: 'MPO — Relatório 2025', periodo: '2025' }, { nome: 'MPO — Relatório 2024', periodo: '2024' }, { nome: 'Natural Earth', periodo: 'x' }] };
+  assert.deepEqual(IntelModel.rotasDocs(rotas), { apresentacao: '01/07/2026', relatorios: ['2024', '2025'] });
+  assert.deepEqual(IntelModel.rotasDocs(null), { apresentacao: null, relatorios: [] });
+});

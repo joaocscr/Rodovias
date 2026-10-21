@@ -1,0 +1,261 @@
+"""Relatório da atualização (data/atualizacao.md): o que mudou por bloco e o que precisa de curadoria manual.
+
+Funções puras, usadas por `scripts/atualizar.py`; a data de referência (`hoje`) vem sempre de fora, para os testes não
+dependerem do relógio.
+
+- `itens(conc_aplicado, intel, verif, hoje)`: lista de curadoria `[{tipo, item, motivo}]`, nos tipos de `TIPOS`.
+- `diff_blocos(antes, depois)`: registros e tamanho (KB, JSON compacto, como no HTML) de cada bloco antes e depois.
+- `relatorio(...)`: o Markdown de data/atualizacao.md.
+"""
+import datetime as dt
+import json
+
+from verificacao import nomes_do_ranking
+
+TIPOS = {
+    "pipeline_atrasado": "Pipeline com data passada ainda como previsto",
+    "leilao_sem_verificacao": "Leilão realizado sem entrada na camada de verificação",
+    "pipeline_nao_verificado": "Itens do pipeline sem fonte oficial",
+    "fonte_antiga": "Fontes acessadas há mais de 12 meses",
+    "nome_sem_grupo": "Nomes de proponentes sem grupo econômico",
+}
+# status do pipeline cuja data ainda é uma previsão (leilão; no "leiloado", a assinatura prevista)
+PREVISTOS = ("estudo", "consulta_publica", "tcu", "edital", "leilao_agendado", "leiloado")
+REALIZADOS = ("leiloado", "contrato")
+DIAS_FONTE_ANTIGA = 365
+# o que conta como registro em cada bloco: caminhos (a.b) de listas — conta os valores preenchidos — ou de dicionários
+# — conta as chaves. Bloco fora daqui: listas de primeiro nível e `linhas` dos sub-blocos (sem `fonte`).
+REGISTROS = {
+    "agro": ["ids"],
+    "antt": ["pracas.linhas", "sats.linhas", "capas", "series", "obras.linhas"],
+    "carga": ["gsa"],
+    "estaduais": ["malha.linhas", "entidades"],
+    "fontes": ["fontes", "indisponiveis", "base"],
+    "multimodal": ["ferrovias", "portos", "siade", "exportacao.linhas", "fretes.linhas"],
+    "municipios": ["ids"],
+    "pipeline": ["itens"],
+    "rotas": ["paises", "rotas", "linhas"],
+    "trafego": ["vmda.l", "acidentes.n", "abcr.total"],
+    "vmda2025": ["fis.t", "estaduais.t"],
+}
+
+
+# ---------- datas ----------
+
+def _data(s):
+    """'AAAA-MM-DD' → date; 'AAAA-MM' → último dia do mês; outro valor → None."""
+    if not isinstance(s, str):
+        return None
+    try:
+        if len(s) == 10:
+            return dt.date.fromisoformat(s)
+        if len(s) == 7:
+            a, m = int(s[:4]), int(s[5:])
+            return dt.date(a + m // 12, m % 12 + 1, 1) - dt.timedelta(days=1)
+    except ValueError:
+        return None
+    return None
+
+
+def _fmt(s):
+    """'AAAA-MM-DD' → dd/mm/aaaa; 'AAAA-MM' → mm/aaaa."""
+    return f"{s[8:10]}/{s[5:7]}/{s[:4]}" if len(s) == 10 else f"{s[5:7]}/{s[:4]}"
+
+
+def _passou(s, hoje):
+    d = _data(s)
+    return d is not None and d < hoje
+
+
+# ---------- lista de curadoria ----------
+
+def _nome(i):
+    return f"{i.get('nome') or i.get('id')} ({i.get('id')})"
+
+
+def _pipeline_atrasado(itens, rotulo, hoje):
+    out = []
+    for i in itens:
+        if i.get("status") in PREVISTOS and _passou(i.get("data_prevista"), hoje):
+            o_que = "a assinatura prevista" if i["status"] == "leiloado" else "a data prevista"
+            out.append(("pipeline_atrasado", _nome(i),
+                        f"{o_que} ({_fmt(i['data_prevista'])}) já passou e o status ainda é "
+                        f"\"{rotulo.get(i['status'], i['status'])}\": atualize status e data em data/intel/pipeline.csv"))
+    return out
+
+
+def _leilao_sem_verificacao(conc, itens, verif, hoje):
+    leiloes = verif.get("leiloes") or []
+    ents = {l["ent"] for l in leiloes if "ent" in l}
+    parts = {(l["participantes"].get("ano"), l["participantes"].get("lote")) for l in leiloes
+             if isinstance(l.get("participantes"), dict)}
+    msg = "adicione o leilão a data/roadshow/verificacao.json (receita em docs/HANDOFF.md §2)"
+    out, vistos = [], set()
+    for e in conc.get("entidades") or []:
+        if e.get("id") not in ents and _passou(e.get("leilao"), hoje):
+            vistos.add(e["id"])
+            out.append(("leilao_sem_verificacao", _nome(e), f"leilão em {_fmt(e['leilao'])}, sem verificação: {msg}"))
+    for p in (conc.get("mercado") or {}).get("participantes") or []:
+        if (p.get("ano"), p.get("lote")) not in parts:
+            out.append(("leilao_sem_verificacao", f"{p.get('lote')} ({p.get('ano')})",
+                        f"linha de participantes do RoadShow sem verificação: {msg}"))
+    for i in itens:  # o pipeline anda antes do RoadShow: leilão federal novo aparece primeiro aqui
+        if i.get("esfera") != "federal" or i.get("status") not in REALIZADOS or i.get("ent") in vistos:
+            continue
+        if i.get("ent") is None or i["ent"] not in ents:
+            vistos.add(i.get("ent"))
+            sem_ficha = " e sem ficha (ent vazio)" if i.get("ent") is None else ""
+            out.append(("leilao_sem_verificacao", _nome(i), f"status \"{i['status']}\" no pipeline{sem_ficha}: {msg}"))
+    return out
+
+
+def _pipeline_nao_verificado(itens):
+    return [("pipeline_nao_verificado", _nome(i),
+             "fonte só de imprensa (verificado = false): procure página ou documento oficial e atualize "
+             "fonte_url e verificado em data/intel/pipeline.csv") for i in itens if i.get("verificado") is False]
+
+
+def _fonte_antiga(fontes, hoje):
+    out, vistos = [], set()
+    linhas = [(f, f.get("bloco")) for f in fontes.get("fontes") or []] + [(f, "base") for f in fontes.get("base") or []]
+    for f, bloco in linhas:
+        d = _data(f.get("acesso"))
+        chave = (f.get("nome"), f.get("url"))
+        if d is None or chave in vistos or (hoje - d).days <= DIAS_FONTE_ANTIGA:
+            continue
+        vistos.add(chave)
+        out.append(("fonte_antiga", f"{f.get('nome')} ({bloco})",
+                    f"acesso em {_fmt(f['acesso'])}, há {(hoje - d).days} dias: rode `python scripts/atualizar.py "
+                    f"--baixar` para o domínio ou confira a fonte e o script que a registra"))
+    return out
+
+
+def _nome_sem_grupo(conc, verif):
+    if not conc:
+        return []
+    grupos = {a.get("nome") for a in conc.get("grupos_alias") or []}
+    nomes = set(nomes_do_ranking(conc))
+    for l in verif.get("leiloes") or []:
+        v = ((l.get("campos") or {}).get("grupo_vencedor") or {}).get("valor")
+        if isinstance(v, str) and v:
+            nomes.add(v)
+    return [("nome_sem_grupo", n, "sem grupo econômico em data/roadshow/grupos_alias.json: o ranking de grupos não "
+             "consegue creditá-lo (o build falha até a junção existir)") for n in sorted(nomes - grupos)]
+
+
+def itens(conc_aplicado, intel, verif, hoje=None):
+    """Lista de curadoria manual `[{tipo, item, motivo}]`, na ordem de `TIPOS` e, dentro do tipo, por item.
+    `conc_aplicado`: CONC com a camada de verificação aplicada; `intel`: {bloco: dados} de data/intel/; `verif`:
+    data/roadshow/verificacao.json; `hoje`: data de referência (padrão: hoje)."""
+    hoje = hoje or dt.date.today()
+    conc_aplicado, intel, verif = conc_aplicado or {}, intel or {}, verif or {}
+    pipe = intel.get("pipeline") or {}
+    lista = pipe.get("itens") or []
+    rotulo = {s["key"]: s["label"] for s in pipe.get("status") or []}
+    brutos = (_pipeline_atrasado(lista, rotulo, hoje) + _leilao_sem_verificacao(conc_aplicado, lista, verif, hoje)
+              + _pipeline_nao_verificado(lista) + _fonte_antiga(intel.get("fontes") or {}, hoje)
+              + _nome_sem_grupo(conc_aplicado, verif))
+    ordem = {t: k for k, t in enumerate(TIPOS)}
+    brutos.sort(key=lambda x: (ordem[x[0]], x[1]))
+    return [{"tipo": t, "item": i, "motivo": m} for t, i, m in brutos]
+
+
+# ---------- diferença por bloco ----------
+
+def _em(dados, caminho):
+    for k in caminho.split("."):
+        dados = dados.get(k) if isinstance(dados, dict) else None
+    return dados
+
+
+def _conta(v):
+    if isinstance(v, list):
+        return sum(x is not None for x in v)
+    return len(v) if isinstance(v, dict) else 0
+
+
+def registros(bloco, dados):
+    """Número de registros do bloco (ver REGISTROS)."""
+    if not isinstance(dados, dict):
+        return _conta(dados)
+    if bloco in REGISTROS:
+        return sum(_conta(_em(dados, c)) for c in REGISTROS[bloco])
+    return sum(_conta(v) if isinstance(v, list) else _conta(v.get("linhas")) if isinstance(v, dict) else 0
+               for k, v in dados.items() if k != "fonte")
+
+
+def _kb(dados):
+    return round(len(json.dumps(dados, ensure_ascii=False, separators=(",", ":")).encode("utf-8")) / 1e3, 3)
+
+
+def diff_blocos(antes, depois):
+    """Uma linha por bloco presente antes ou depois: {bloco, registros_antes, registros_depois, kb_antes, kb_depois}
+    (None onde o bloco não existe)."""
+    out = []
+    for b in sorted(set(antes) | set(depois)):
+        a, d = antes.get(b), depois.get(b)
+        out.append({"bloco": b,
+                    "registros_antes": None if b not in antes else registros(b, a),
+                    "registros_depois": None if b not in depois else registros(b, d),
+                    "kb_antes": None if b not in antes else _kb(a),
+                    "kb_depois": None if b not in depois else _kb(d)})
+    return out
+
+
+# ---------- relatório ----------
+
+def _n(v, casas=0):
+    if v is None:
+        return "—"
+    s = f"{v:,.{casas}f}"
+    return s.replace(",", "X").replace(".", ",").replace("X", ".")
+
+
+def _md(s):
+    return str(s).replace("|", "\\|").replace("\n", " ")
+
+
+def _mudou(d):
+    """'não', 'novo', 'removido' ou 'sim (+9 bytes)' / 'sim (−1,2 KB)': a variação aparece mesmo quando o KB arredondado
+    não muda."""
+    if (d["registros_antes"], d["kb_antes"]) == (d["registros_depois"], d["kb_depois"]):
+        return "não"
+    if d["kb_antes"] is None or d["kb_depois"] is None:
+        return "novo" if d["kb_antes"] is None else "removido"
+    delta = round((d["kb_depois"] - d["kb_antes"]) * 1000)
+    sinal = "+" if delta >= 0 else "−"
+    return f"sim ({sinal}{_n(abs(delta))} bytes)" if abs(delta) < 1000 else f"sim ({sinal}{_n(abs(delta) / 1e3, 1)} KB)"
+
+
+def relatorio(hoje, passos, diff, itens_curadoria, opcoes="", erros=()):
+    """Markdown de data/atualizacao.md. `passos`: [{passo, estado, detalhe}]; `diff`: saída de diff_blocos;
+    `itens_curadoria`: saída de itens (None quando não pôde ser calculada); `erros`: da validação da verificação."""
+    linhas = [f"# Atualização dos dados — {hoje.strftime('%d/%m/%Y')}", "",
+              f"Gerado por `python scripts/atualizar.py`{f' ({opcoes})' if opcoes else ''}. Diferenças em relação à "
+              "versão de `data/intel/` no último commit do git.", "",
+              "## Passos", "", "| Passo | Resultado | Detalhe |", "|---|---|---|"]
+    linhas += [f"| {_md(p['passo'])} | {p['estado']} | {_md(p.get('detalhe') or '')} |" for p in passos]
+    if erros:
+        linhas += ["", "## Erros da camada de verificação", "",
+                   "O HTML não foi gerado. Corrija `data/roadshow/verificacao.json` ou `grupos_alias.json`:", ""]
+        linhas += [f"- {_md(e)}" for e in erros]
+    linhas += ["", "## O que mudou por bloco", "",
+               "Registros: itens das coleções principais de cada bloco (valores preenchidos); KB: JSON compacto, como "
+               "entra no HTML.", "",
+               "| Bloco | Registros antes | Registros depois | KB antes | KB depois | Mudou |", "|---|---:|---:|---:|---:|---|"]
+    for d in diff:
+        linhas.append(f"| {d['bloco']} | {_n(d['registros_antes'])} | {_n(d['registros_depois'])} | "
+                      f"{_n(d['kb_antes'], 1)} | {_n(d['kb_depois'], 1)} | {_mudou(d)} |")
+    linhas += ["", "## Curadoria manual", ""]
+    if itens_curadoria is None:
+        linhas.append("A lista não foi calculada: a camada de verificação não pôde ser aplicada (veja os erros acima).")
+    elif not itens_curadoria:
+        linhas.append("Nada a revisar.")
+    else:
+        linhas.append(f"{len(itens_curadoria)} itens. Cada um diz o arquivo a editar; depois rode de novo o comando.")
+        for tipo, titulo in TIPOS.items():
+            grupo = [i for i in itens_curadoria if i["tipo"] == tipo]
+            if grupo:
+                linhas += ["", f"### {titulo} ({len(grupo)})", ""]
+                linhas += [f"- **{_md(i['item'])}** — {_md(i['motivo'])}" for i in grupo]
+    return "\n".join(linhas) + "\n"

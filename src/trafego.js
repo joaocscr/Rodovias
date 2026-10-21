@@ -52,10 +52,10 @@ const Trafego = (() => {
   // ---------- Cartões ----------
   function kpisCard() {
     const k = IM.trafegoKpis(intel, snv), tr = intel.trafego || {}, ac = IM.acidOf(intel), v25 = IM.v25Of(intel);
-    const tiles = [];
+    const tiles = [], aP = IM.anoPracas(intel);
     if (k.nPracas != null) {
-      tiles.push(tile('kpi-pracas', IM.fmtInt(k.nPracas), 'praças com contagem em 2025 (ANTT, medido)'));
-      tiles.push(tile('kpi-vmd', IM.fmtInt(k.vmdTotal), 'veíc./dia somados nas praças (VMD 2025, dois sentidos)'));
+      tiles.push(tile('kpi-pracas', IM.fmtInt(k.nPracas), `praças com contagem${aP != null ? ` em ${aP}` : ''} (ANTT, medido)`));
+      tiles.push(tile('kpi-vmd', IM.fmtInt(k.vmdTotal), `veíc./dia somados nas praças (${IM.comAno('VMD', aP)}, dois sentidos)`));
       tiles.push(tile('kpi-pes', IM.fmtPct(k.pctPes), 'de pesados nas praças, ponderado pelo VMD'));
     }
     // veíc·km/dia: VMDa 2025 (DNIT) na malha federal e na estadual; sem o bloco 2025, o federal com o VMDa 2023
@@ -77,11 +77,14 @@ const Trafego = (() => {
       { wide: true, html: `<div class="kpis">${tiles.join('')}</div>`, fonte: f.join('; '), note });
   }
 
+  const rankTitulo = () => { const aP = IM.anoPracas(intel); return `As 20 praças de maior VMD${aP != null ? ` em ${aP}` : ''}`; };
+
   function rankingCard() {
     if (!IM.pracasRanking(intel, 1).length) return '';
-    return card('t-rank', 'As 20 praças de maior VMD em 2025', 'Veículos por dia, dois sentidos; clique numa praça para abri-la no mapa',
+    const aP = IM.anoPracas(intel);
+    return card('t-rank', rankTitulo(), 'Veículos por dia, dois sentidos; clique numa praça para abri-la no mapa',
       { legend: Charts.legendHtml([['Leves', Charts.C.deep], ['Pesados', Charts.C.bright], ['Motos', Charts.C.grey]]),
-        fonte: fontePracas(), note: 'VMD 2025 = média diária dos meses com dado em 2025; contagem medida.' });
+        fonte: fontePracas(), note: `${IM.comAno('VMD', aP)} = média diária dos meses com dado${aP != null ? ` em ${aP}` : ''}; contagem medida.` });
   }
 
   function serieCard(s) {
@@ -123,7 +126,7 @@ const Trafego = (() => {
       const list = IM.pracasRanking(intel, 20);
       rk.innerHTML = Charts.hstackSvg(list.map(p => ({ k: p.i, label: `${p.nome} · ${IM.rodLabel(p.br, p.uf)}${p.uf ? `/${p.uf}` : ''}`, parts: [p.leves, p.pesados, p.moto],
         detail: `VMD ${IM.fmtInt(p.vmd)}` })), { width: width(rk), labelWidth: 280, names: ['Leves', 'Pesados', 'Motos'], colors: [Charts.C.deep, Charts.C.bright, Charts.C.grey],
-        format: v => IM.fmtInt(v), unit: 'veíc./dia', clickable: true, title: 'As 20 praças de maior VMD em 2025' });
+        format: v => IM.fmtInt(v), unit: 'veíc./dia', clickable: true, title: rankTitulo() });
       onRows(rk, openPraca);
     }
     const se = box('t-serie');

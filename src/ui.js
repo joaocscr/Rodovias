@@ -28,7 +28,6 @@ const UI = (() => {
   const fmtKmNum = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const F = Model.FIELD, T = Model.T, I_FIS = 15, I_EST = 14, I_UL = 8;
 
-  const ANOS = [2023, 2024, 2025, 2026, 2027];
   let snv, index, filters, showAllUf = false, refreshTimer = null;
   let conc, states, concFilters, intel = null;
   const IM = IntelModel;
@@ -253,7 +252,7 @@ const UI = (() => {
     return group('estado', 'Estado da concessão', `<div class="checks">${conc.estados.map(s => check('estado', s.key, s.label, concStyleSwatch(s.key, 24))).join('')}</div>`) +
       group('ent', 'Projeto / contrato', `<div class="checks check-list">${ents.map(({ e, i }) => check('ent', i, e.nome, '', `${e.nome} ${e.nome_contrato || ''}`)).join('')}</div>`,
         '<input class="mini-input" type="search" data-finder="ent" placeholder="Filtrar projetos" aria-label="Filtrar lista de projetos">') +
-      group('ano', 'Ano do programa', `<div class="checks">${ANOS.map(a => check('ano', a, String(a))).join('')}</div>`);
+      group('ano', 'Ano do programa', `<div class="checks">${ConcModel.anosPrograma(conc).map(a => check('ano', a, String(a))).join('')}</div>`);
   }
 
   function syncChecks() {
@@ -621,12 +620,13 @@ const UI = (() => {
     const r = Layers.rowsOf(key)[i];
     if (!r) return;
     if (key === 'pracas') {
+      const aP = IM.anoPracas(intel);
       showCard(r.nome, `Praça de pedágio · ${rodUf(r)}${kmFmt(r.km) ? ` · km ${kmFmt(r.km)}` : ''}`,
         `<div class="card__badges"><span class="badge">Contagem medida · ANTT</span></div>
         ${grid([
-          ['VMD 2025', IM.fmtVmd(r.vmd)], ['Leves', IM.fmtVmd(r.leves)], ['Pesados', IM.fmtVmd(r.pesados)], ['Motos', IM.fmtVmd(r.moto)],
+          [IM.comAno('VMD', aP), IM.fmtVmd(r.vmd)], ['Leves', IM.fmtVmd(r.leves)], ['Pesados', IM.fmtVmd(r.pesados)], ['Motos', IM.fmtVmd(r.moto)],
           ['% pesados', IM.fmtPct(pctOf(r.pesados, r.vmd))], ['Eixos médios do comercial', IM.has(r.eixos) ? IM.fmtDec(r.eixos, 1) : null],
-          ['Receita 2025', IM.fmtBRL(r.receita)], ['Meses com dado em 2025', IM.has(r.meses) ? String(r.meses) : null],
+          [IM.comAno('Receita', aP), IM.fmtBRL(r.receita)], [`Meses com dado${aP != null ? ` em ${aP}` : ''}`, IM.has(r.meses) ? String(r.meses) : null],
         ])}${pointConc(r.ent, r.conc)}${pracaChart(i)}`, r.fis);
     } else if (key === 'sats') {
       showCard(`SAT ${r.id}`, `Equipamento de contagem · ${rodUf(r)}`,
@@ -671,6 +671,7 @@ const UI = (() => {
 
   // Cartão de uma Rota de Integração Sul-Americana (MPO): o traçado no mapa é esquemático.
   function openRota(r) {
+    const ap = IM.rotasDocs(intel && intel.rotas).apresentacao;
     const join = a => (Array.isArray(a) && a.length ? a.join(', ') : null);
     const list = (title, items) => (Array.isArray(items) && items.length
       ? `<div class="card__intel"><h3 class="section-title">${esc(title)}</h3><ul class="flist">${items.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>` : '');
@@ -682,7 +683,7 @@ const UI = (() => {
       ${r.descricao ? `<p class="card__desc">${esc(r.descricao)}</p>` : ''}
       ${grid([['Países', join(r.paises)], ['UFs', join(r.ufs)], ['Situação', r.previsao], ['Rodovias', join(r.rodovias)]])}
       ${cidades}${list('Hidrovias', r.hidrovias)}${list('Obras e projetos', r.obras)}
-      <p class="card__src card__pad card__aviso">Traçado esquemático: linhas do mapa da apresentação do MPO de 01/07/2026, georreferenciadas por cidades; não é o eixo das vias.</p>${link}`, null);
+      <p class="card__src card__pad card__aviso">Traçado esquemático: linhas do mapa da apresentação do MPO${ap ? ` de ${esc(ap)}` : ''}, georreferenciadas por cidades; não é o eixo das vias.</p>${link}`, null);
   }
 
   function openMun(id) {
@@ -711,7 +712,7 @@ const UI = (() => {
     }
     if (!items.length) return '';
     return `<div class="card__meas"><h3 class="section-title">Medições no trecho</h3><ul class="meas-list">${items.join('')}</ul>
-      <p class="card__src">VMD medido 2025 · ANTT</p></div>`;
+      <p class="card__src">${IM.comAno('VMD medido', IM.anoPracas(intel))} · ANTT</p></div>`;
   }
 
   function scheduleRefresh(delay = 30) {

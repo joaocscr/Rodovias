@@ -462,6 +462,8 @@ def build_series():
 
 # ============================================================ praças
 
+PRACAS_ANO = 2025  # ano do VMD e da receita por praça (vai para o bloco: a interface rotula com ele)
+
 def _load_volumes():
     import pandas as pd
     L = []
@@ -546,7 +548,7 @@ def build_pracas():
         if c not in mon:
             mon[c] = 0.0
     com = V[V.cls == "p"]
-    y25 = com[com.ym.str[:4] == "2025"]
+    y25 = com[com.ym.str[:4] == str(PRACAS_ANO)]
     eix = (y25.eixos * y25.v).groupby(y25.g).sum() / y25.v.groupby(y25.g).sum()
 
     # --- receita 2025 → grupo (nome; senão coordenada a ≤ 1 km na mesma concessionária)
@@ -577,7 +579,7 @@ def build_pracas():
         fis = None
         if br and br.startswith("BR") and g["lat"] is not None:
             fis, _ = S.snap(g["lon"], g["lat"], max_m=SNAP_M, br=br)
-        m25 = [ym for ym in MESES if ym[:4] == "2025" and (k, ym) in mon.index]
+        m25 = [ym for ym in MESES if ym[:4] == str(PRACAS_ANO) and (k, ym) in mon.index]
         vmd = leves = pes = moto = eixos = meses25 = None
         if m25:
             dd = sum(days(ym) for ym in m25)
@@ -592,7 +594,7 @@ def build_pracas():
                    else None for ym in MESES])
         sp.append([round(mon.loc[(k, ym), "p"] / days(ym)) if (k, ym) in mon.index else None for ym in MESES])
         ncad.append(len(g["cids"]))
-    return {"tipo": "medido",
+    return {"tipo": "medido", "ano": PRACAS_ANO,
             "campos": ["nome", "ent", "conc", "br", "uf", "km", "lat", "lon", "fis", "vmd", "leves", "pesados", "moto",
                        "eixos", "receita", "meses"],
             "linhas": linhas, "n_cadastro": ncad, "serie_meses": MESES, "serie_l": sl, "serie_p": sp}
