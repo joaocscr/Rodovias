@@ -71,3 +71,84 @@ def test_curados_falha_sem_arquivo(tmp_path):
         roadshow.curados({}, tmp_path)
     with pytest.raises(FileNotFoundError, match=r"mercado\.json"):
         build.build_from_base(BASE, tmp_path / "m.html", intel={}, roadshow_dir=tmp_path / "vazio")
+
+
+# ---------- campos curados das entidades sem o shapefile (data/roadshow/entidades.json → CONC) ----------
+
+def _base():
+    return (json.loads((BASE / "conc.json").read_text(encoding="utf-8")),
+            json.loads((BASE / "snv.json").read_text(encoding="utf-8")))
+
+
+def _copia_roadshow(tmp_path):
+    d = tmp_path / "roadshow"
+    d.mkdir()
+    for p in ROADSHOW.glob("*.json"):
+        (d / p.name).write_text(p.read_text(encoding="utf-8"), encoding="utf-8")
+    return d
+
+
+def test_dados_sem_mudanca_dao_o_mesmo_conc():
+    """Com entidades.json igual ao da base, a releitura não muda nada: o HTML sai idêntico."""
+    conc, snv = _base()
+    assert roadshow.conc_da_base(conc, ROADSHOW, snv) == roadshow.curados(conc, ROADSHOW)
+
+
+def test_estado_editado_em_entidades_json_chega_ao_conc_sem_shp(tmp_path):
+    conc, snv = _base()
+    d = _copia_roadshow(tmp_path)
+    ents = json.loads((d / "entidades.json").read_text(encoding="utf-8"))
+    i = next(k for k, e in enumerate(ents) if e["estado"] == "agendado2026")
+    ents[i]["estado"], ents[i]["status_texto"] = "programa", "Contrato assinado"
+    (d / "entidades.json").write_text(json.dumps(ents, ensure_ascii=False), encoding="utf-8")
+    novo = roadshow.conc_da_base(conc, d, snv)
+    e = novo["entidades"][i]
+    assert (e["estado"], e["status_texto"]) == ("programa", "Contrato assinado")
+    # campos do recorte no SNV continuam os da base
+    b = conc["entidades"][i]
+    assert (e["idx"], e["km_mapeado"], e["qualidade"], e["nota_trecho"]) == (b["idx"], b["km_mapeado"], b["qualidade"], b["nota_trecho"])
+    assert novo["entFis"] == conc["entFis"] and novo["fisEnt"] == conc["fisEnt"]
+    # contrato novo cobre os físicos dele: saem da lista "concessão no SNV, fora do RoadShow"
+    assert set(novo["snvOnly"]) == set(conc["snvOnly"]) - set(conc["entFis"][i])
+
+
+def test_km_declarado_editado_reclassifica_o_recorte(tmp_path):
+    conc, snv = _base()
+    d = _copia_roadshow(tmp_path)
+    ents = json.loads((d / "entidades.json").read_text(encoding="utf-8"))
+    trechos = json.loads((ROADSHOW / "trechos.json").read_text(encoding="utf-8"))
+    i = next(k for k, e in enumerate(conc["entidades"])
+             if e["qualidade"] == "ok" and e.get("km") and not trechos.get(e["id"], {}).get("qualidade"))
+    ents[i]["km"] = conc["entidades"][i]["km_mapeado"] * 3  # declarado muito maior que o recorte
+    (d / "entidades.json").write_text(json.dumps(ents, ensure_ascii=False), encoding="utf-8")
+    assert roadshow.conc_da_base(conc, d, snv)["entidades"][i]["qualidade"] == "falha"
+
+
+def test_entidade_nova_ou_removida_falha_com_mensagem(tmp_path):
+    import pytest
+    conc, snv = _base()
+    d = _copia_roadshow(tmp_path)
+    ents = json.loads((d / "entidades.json").read_text(encoding="utf-8"))
+    (d / "entidades.json").write_text(json.dumps(ents + [dict(ents[0], id="concessao-nova")], ensure_ascii=False),
+                                      encoding="utf-8")
+    msg = r"entidade nova/removida precisa de recorte no SNV: rode build\.py --shp \(ou ajuste trechos\.json\)"
+    with pytest.raises(ValueError, match=msg + r".*concessao-nova"):
+        roadshow.conc_da_base(conc, d, snv)
+    (d / "entidades.json").write_text(json.dumps(ents[1:], ensure_ascii=False), encoding="utf-8")
+    with pytest.raises(ValueError, match=msg + rf".*{ents[0]['id']}"):
+        roadshow.conc_da_base(conc, d, snv)
+    # pelo build: sai com a mensagem, sem gerar o HTML
+    with pytest.raises(SystemExit, match=msg):
+        build.build_from_base(BASE, tmp_path / "m.html", intel={}, roadshow_dir=d)
+    assert not (tmp_path / "m.html").exists()
+
+
+def test_estudo_com_outras_brs_falha(tmp_path):
+    import pytest
+    conc, snv = _base()
+    d = _copia_roadshow(tmp_path)
+    est = json.loads((d / "estudos_pos2027.json").read_text(encoding="utf-8"))
+    est[0]["brs"] = ["999"]
+    (d / "estudos_pos2027.json").write_text(json.dumps(est, ensure_ascii=False), encoding="utf-8")
+    with pytest.raises(ValueError, match=r"precisa de recorte no SNV"):
+        roadshow.conc_da_base(conc, d, snv)

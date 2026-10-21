@@ -12,7 +12,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
-from roadshow import curados  # noqa: E402
+from roadshow import conc_da_base  # noqa: E402
 from verificacao import ROADSHOW, aplicar, carregar, carregar_aliases  # noqa: E402
 
 INTEL = ROOT / "data" / "intel"
@@ -25,7 +25,8 @@ def _json(p):
 @pytest.fixture(scope="module")
 def conc():
     """CONC como vai para o HTML: base congelada + JSON curados do RoadShow + camada de verificação."""
-    return aplicar(curados(_json(ROOT / "data" / "base" / "conc.json"), ROADSHOW), carregar(), carregar_aliases())
+    base = ROOT / "data" / "base"
+    return aplicar(conc_da_base(_json(base / "conc.json"), ROADSHOW, _json(base / "snv.json")), carregar(), carregar_aliases())
 
 
 @pytest.fixture(scope="module")

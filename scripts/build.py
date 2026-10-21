@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from roadshow import build_conc, cobertura_markdown, curados  # noqa: E402
+from roadshow import build_conc, cobertura_markdown, conc_da_base  # noqa: E402
 from snv import build_payload, check_group_consistency, group_physical, load_records  # noqa: E402
 from verificacao import aplicar, carregar, carregar_aliases, relatorio_markdown, validar  # noqa: E402
 
@@ -106,11 +106,16 @@ def camada_verificacao(conc):
 
 
 def build_from_base(base_dir, out, intel=None, roadshow_dir=ROADSHOW):
-    """Build sem o shapefile: SNV e CONC congelados em data/base/ (gerados pelo modo --shp); `mercado` e
-    `regulatorio` vêm sempre dos JSON curados de data/roadshow/."""
+    """Build sem o shapefile: SNV e CONC congelados em data/base/ (gerados pelo modo --shp); `mercado`, `regulatorio`
+    e os campos curados das entidades e dos estudos vêm sempre dos JSON de data/roadshow/ (roadshow.conc_da_base). Só
+    o recorte no SNV fica da base: entidade nova ou removida faz o build parar e pedir --shp."""
     payload = json.loads((Path(base_dir) / "snv.json").read_text(encoding="utf-8"))
     base = json.loads((Path(base_dir) / "conc.json").read_text(encoding="utf-8"))
-    conc = camada_verificacao(curados(base, roadshow_dir))
+    try:
+        conc = conc_da_base(base, roadshow_dir, payload)
+    except ValueError as e:
+        sys.exit(f"Falha: {e}")
+    conc = camada_verificacao(conc)
     intel = load_intel() if intel is None else intel
     size = assemble(payload, conc, intel, out)
     print(f"base: SNV {payload['versao']} ({len(payload['trechos'])} registros, {len(payload['fis'])} físicos) | "

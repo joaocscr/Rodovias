@@ -127,8 +127,8 @@ def _estado_vencido(conc, hoje):
     rotulo = {s.get("key"): s.get("label") for s in conc.get("estados") or []}
     return [("estado_vencido", _nome(e),
              f"estado \"{rotulo.get(e['estado'], e['estado'])}\", mas o leilão foi em {_fmt(e['leilao'])}: atualize o "
-             "status em data/intel/pipeline.csv; o estado do mapa vem do RoadShow (data/roadshow/entidades.json, que "
-             "chega ao HTML pela base congelada: `python scripts/build.py --shp …` ou a próxima versão do RoadShow)")
+             "`estado` (e `status_texto`) da concessão em data/roadshow/entidades.json e o status em "
+             "data/intel/pipeline.csv, e rode `python scripts/atualizar.py`")
             for e in conc.get("entidades") or []
             if e.get("estado") in ESTADOS_A_LEILOAR and _passou(e.get("leilao"), hoje)]
 

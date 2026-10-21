@@ -68,6 +68,21 @@ def classify(km_decl, km_map):
     return "falha"
 
 
+def qualidade_recorte(cfg, km_decl, km_map):
+    """Qualidade do recorte de uma entidade: a marcada à mão em trechos.json; sem intervalos nem códigos, 'falha';
+    senão a comparação do km declarado com o mapeado."""
+    if cfg.get("qualidade"):
+        return cfg["qualidade"]
+    if not cfg.get("ranges") and not cfg.get("codigos"):
+        return "falha"
+    return classify(km_decl, km_map)
+
+
+def cobertos(entidades, ent_fis):
+    """Físicos dos contratos (estado em CONTRATO): ficam fora de "concessão no SNV, fora do RoadShow"."""
+    return {j for e, fis in zip(entidades, ent_fis) if e["estado"] in CONTRATO for j in fis}
+
+
 def snv_only(records, groups, covered):
     return [j for j, g in enumerate(groups)
             if j not in covered and any(records[i]["ds_tipo_ad"] == CONCESSAO_SNV for i in g)]
@@ -87,13 +102,7 @@ def build_conc(records, groups, data_dir):
         cfg = trechos.get(e["id"], {})
         fis = resolve_ranges(records, groups, cfg.get("ranges", []), cfg.get("codigos", []))
         km_map = round(coverage(records, groups, fis), 1)
-        manual = cfg.get("qualidade")
-        if manual:
-            q = manual
-        elif not cfg.get("ranges") and not cfg.get("codigos"):
-            q = "falha"
-        else:
-            q = classify(e.get("km"), km_map)
+        q = qualidade_recorte(cfg, e.get("km"), km_map)
         e = dict(e, idx=idx, qualidade=q, km_mapeado=km_map, nota_trecho=cfg.get("nota"))
         entidades[idx] = e
         ent_fis.append(sorted(fis))
@@ -105,7 +114,7 @@ def build_conc(records, groups, data_dir):
     for idx, fis in enumerate(ent_fis):
         for j in fis:
             fis_ent.setdefault(j, []).append(idx)
-    covered = {j for e, fis in zip(entidades, ent_fis) if e["estado"] in CONTRATO for j in fis}
+    covered = cobertos(entidades, ent_fis)
     estudos_out = [dict(s, fis=_fis_by_br_uf(records, groups, s["brs"], s["ufs"])) for s in estudos]
     conc = {
         "estados": [{"key": k, "label": label} for k, label in ESTADOS],
@@ -130,6 +139,61 @@ def curados(conc, data_dir):
             raise FileNotFoundError(f"arquivo curado do RoadShow ausente: {path} (fonte única de `{chave}` no build)")
         out[chave] = json.loads(path.read_text(encoding="utf-8"))
     return out
+
+
+# Campos de cada entidade que dependem do recorte no SNV (build_conc com o shapefile); os demais vêm de entidades.json.
+CAMPOS_RECORTE = ("idx", "km_mapeado", "nota_trecho")  # + qualidade, reclassificada com o km declarado atual
+RECORTE_NOVO = "entidade nova/removida precisa de recorte no SNV: rode build.py --shp (ou ajuste trechos.json)"
+
+
+def snv_only_payload(payload, covered):
+    """snv_only a partir do SNV congelado (data/base/snv.json): físicos com algum registro "Concessão Federal" que
+    nenhum contrato cobre. Mesmo resultado de snv_only, sem o shapefile."""
+    k = 1 + list(payload["dict"]).index("adm")  # trechos: [código, *categorias na ordem de dict, ...]
+    adm = payload["dict"]["adm"]
+    if CONCESSAO_SNV not in adm:
+        return []
+    alvo = adm.index(CONCESSAO_SNV)
+    return [j for j, f in enumerate(payload["fis"])
+            if j not in covered and any(payload["trechos"][i][k] == alvo for i in f["r"])]
+
+
+def atualiza_entidades(conc, data_dir, payload):
+    """Cópia de `conc` (base congelada) com os campos curados das entidades e dos estudos relidos de data/roadshow/
+    (entidades.json, estudos_pos2027.json), por id e na mesma ordem. Ficam da base os campos do recorte no SNV
+    (CAMPOS_RECORTE, entFis, fisEnt, estudos[].fis); `qualidade` é reclassificada com o km declarado atual e `snvOnly`
+    recalculado com os estados atuais. Entidade nova ou removida (ou estudo com outras BRs/UFs) pede recorte novo no
+    SNV: ValueError com a mensagem do que fazer."""
+    novas = _load(data_dir, "entidades.json")
+    base = conc["entidades"]
+    ids_b, ids_n = [e["id"] for e in base], [e["id"] for e in novas]
+    if ids_b != ids_n:
+        novos = [i for i in ids_n if i not in set(ids_b)]
+        removidos = [i for i in ids_b if i not in set(ids_n)]
+        detalhe = (f"novas: {', '.join(novos) or '—'}; removidas: {', '.join(removidos) or '—'}" if novos or removidos
+                   else "a ordem das entidades em entidades.json mudou")
+        raise ValueError(f"{RECORTE_NOVO} ({detalhe})")
+    trechos = _load(data_dir, "trechos.json", {})
+    entidades = []
+    for b, n in zip(base, novas):
+        km_map = b["km_mapeado"]
+        entidades.append(dict(n, idx=b["idx"], qualidade=qualidade_recorte(trechos.get(n["id"], {}), n.get("km"), km_map),
+                              km_mapeado=km_map, nota_trecho=b.get("nota_trecho")))
+    est = _load(data_dir, "estudos_pos2027.json", [])
+    if [(s["brs"], s["ufs"]) for s in est] != [(s["brs"], s["ufs"]) for s in conc.get("estudos", [])]:
+        raise ValueError("estudo pós-2027 novo, removido ou com outras BRs/UFs precisa de recorte no SNV: rode "
+                         "build.py --shp")
+    estudos = [dict(s, fis=b["fis"]) for s, b in zip(est, conc.get("estudos", []))]
+    out = dict(conc, estados=[{"key": k, "label": label} for k, label in ESTADOS], entidades=entidades,
+               estudos=estudos, versaoRoadshow=VERSAO)
+    out["snvOnly"] = snv_only_payload(payload, cobertos(entidades, conc["entFis"]))
+    return out
+
+
+def conc_da_base(conc, data_dir, payload):
+    """CONC do build sem o shapefile: base congelada + JSON curados de data/roadshow/ (mercado, regulatorio, entidades
+    e estudos). A camada de verificação é aplicada depois, por quem chama."""
+    return atualiza_entidades(curados(conc, data_dir), data_dir, payload)
 
 
 def _br(x):

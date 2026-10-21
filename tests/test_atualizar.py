@@ -105,7 +105,7 @@ def test_passo_que_falha_deixa_os_json_como_estavam(tmp_path):
 
 
 def _atualiza(tmp_path, chamadas, erros=(), build_falha=False, html=True, renovar=(), dominios=("antt",),
-              manifest_dir=None, **kw):
+              manifest_dir=None, log=None, **kw):
     intel = tmp_path / "intel"
     intel.mkdir(exist_ok=True)
     (intel / "pipeline.json").write_text(json.dumps({"itens": [{"id": "x", "nome": "X", "verificado": False}]}),
@@ -126,7 +126,7 @@ def _atualiza(tmp_path, chamadas, erros=(), build_falha=False, html=True, renova
     md_dir = manifest_dir or tmp_path / "manifest"
     md_dir.mkdir(exist_ok=True)
     codigo = atualizar.atualizar(list(dominios), baixar=False, renovar=renovar, html=html, hoje=HOJE, intel_dir=intel,
-                                 saida=saida, manifest_dir=md_dir,
+                                 saida=saida, manifest_dir=md_dir, log=log or (lambda *_: None),
                                  importar=_modulos(chamadas, tmp_path, **kw), validar=validar, construir=construir,
                                  fontes=lambda: chamadas.append("fontes_bloco"),
                                  anterior=lambda _d: {"pipeline": {"itens": []}})
@@ -244,9 +244,13 @@ def test_passo_que_falha_restaura_tambem_o_manifesto(tmp_path):
 
 
 def test_html_que_falha_por_arquivo_ausente_nao_e_pulado(tmp_path):
-    codigo, md = _atualiza(tmp_path, [], build_falha="arquivo")
+    linhas = []
+    codigo, md = _atualiza(tmp_path, [], build_falha="arquivo", log=linhas.append)
     assert codigo == 1
-    assert "| build.py (HTML) | falhou | o HTML não foi gerado: arquivo ausente: vendor/leaflet/leaflet.js" in md
+    assert "| build.py (HTML) | falhou | o HTML não foi gerado: arquivo ausente: vendor/leaflet/leaflet.js |" in md
+    html = [x for x in linhas if "build.py (HTML)" in x or "HTML não foi gerado" in x]
+    assert html and not any("pulado" in x or "--baixar" in x for x in html), html
+    assert any(x.startswith("ERRO: o HTML não foi gerado: arquivo ausente: vendor/leaflet/leaflet.js") for x in linhas)
 
 
 @pytest.mark.parametrize("args", [["--renovar", "vmda2025"], ["--dominios", "antt", "--renovar", "agro"],

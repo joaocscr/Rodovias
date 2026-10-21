@@ -110,10 +110,11 @@ def _restaura(pastas, antes):
             p.write_bytes(conteudo)
 
 
-def executar(passos, intel_dir=INTEL, baixar=False, log=print, manifest_dir=MANIFESTO):
+def executar(passos, intel_dir=INTEL, baixar=False, log=print, manifest_dir=MANIFESTO, critico=False):
     """Roda cada passo; um passo pulado ou que falha não interrompe os seguintes e tem os JSON de `intel_dir` e o
     manifesto (`manifest_dir`) restaurados. `baixar`: True/False, ou o conjunto dos passos que baixam (para eles,
-    arquivo ausente é falha). Devolve [{passo, estado ('ok' | 'pulado' | 'falhou'), detalhe}]."""
+    arquivo ausente é falha). `critico` (o HTML): nunca é pulado; qualquer resultado que não seja ok é falha, sem a
+    dica de --baixar. Devolve [{passo, estado ('ok' | 'pulado' | 'falhou'), detalhe}]."""
     out, pastas = [], (intel_dir, manifest_dir)
     for nome, rodar in passos:
         log(f"== {nome}")
@@ -123,19 +124,22 @@ def executar(passos, intel_dir=INTEL, baixar=False, log=print, manifest_dir=MANI
         try:
             rodar()
         except Pular as e:
-            estado, detalhe = "pulado", str(e)
+            estado, detalhe = "falhou" if critico else "pulado", str(e)
         except SystemExit as e:
             estado, detalhe = "falhou", str(e.code)
         except Exception as e:  # noqa: BLE001 — qualquer falha do domínio vira aviso no relatório
             ausente = _arquivo_ausente(e)
-            if ausente:  # sem --baixar o bruto ausente é esperado (pula); com --baixar, o download não o trouxe (falha)
+            if ausente and critico:
+                estado, detalhe = "falhou", f"arquivo ausente: {ausente}"
+            elif ausente:  # sem --baixar o bruto ausente é esperado (pula); com --baixar, o download não o trouxe (falha)
                 estado = "falhou" if baixou else "pulado"
                 detalhe = f"arquivo ausente: {ausente}" + ("" if baixou else " (baixe com `--baixar`)")
             else:
                 estado, detalhe = "falhou", f"{type(e).__name__}: {e}"
         if estado != "ok":
             _restaura(pastas, antes)
-            log(f"AVISO: {nome} {estado}: {detalhe}")
+            if not critico:  # o passo crítico é relatado por quem chama, com a mensagem própria
+                log(f"AVISO: {nome} {estado}: {detalhe}")
         out.append({"passo": nome, "estado": estado, "detalhe": detalhe[:400]})
     return out
 
@@ -148,10 +152,12 @@ def fontes_bloco():
 
 
 def validar_camada():
-    """(erros, conc com a camada aplicada ou None, verificacao.json): a mesma validação do build.py, sem sair."""
-    from roadshow import curados
+    """(erros, conc com a camada aplicada ou None, verificacao.json): a mesma validação do build.py, sem sair, sobre o
+    mesmo CONC (base congelada + JSON curados de data/roadshow/, inclusive as entidades)."""
+    from roadshow import conc_da_base
     from verificacao import aplicar, carregar, carregar_aliases, validar
-    conc = curados(json.loads((BASE / "conc.json").read_text(encoding="utf-8")), ROADSHOW)
+    ler = lambda nome: json.loads((BASE / nome).read_text(encoding="utf-8"))  # noqa: E731
+    conc = conc_da_base(ler("conc.json"), ROADSHOW, ler("snv.json"))
     verif, aliases = carregar(), carregar_aliases()
     erros = validar(verif, conc, aliases)
     try:
@@ -240,9 +246,9 @@ def atualizar(dominios=ORDEM, baixar=False, html=True, hoje=None, intel_dir=INTE
     elif not html:
         passos.append({"passo": PASSO_HTML, "estado": "pulado", "detalhe": "--sem-html"})
     else:
-        (r,) = executar([(PASSO_HTML, construir)], intel_dir, False, log, None)
+        (r,) = executar([(PASSO_HTML, construir)], intel_dir, False, log, None, critico=True)
         if r["estado"] != "ok":  # o HTML nunca é "pulado": qualquer resultado que não seja ok é falha
-            r = {"passo": PASSO_HTML, "estado": "falhou", "detalhe": f"o HTML não foi gerado: {r['detalhe']}"}
+            r["detalhe"] = f"o HTML não foi gerado: {r['detalhe']}"
             log(f"ERRO: {r['detalhe']}")
         passos.append(r)
     if not PDF_ROADSHOW.exists():
