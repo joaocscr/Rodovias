@@ -193,7 +193,7 @@ notas={
  "faixas_desagio":"Faixas da p27. Pela p97 só há 1 leilão com 0,00% (Fluminense) e 4 com 0,05%; pela p97 as faixas seriam ≥18%: 10, 10–<18%: 6, >0–<10%: 8, 0%: 1 (a p27 dá 6 e 3, provavelmente contando 0,05%/0,08% como 0%). desagio_por_n_concorrentes vem da p25; as médias da p25 não batem com a p97 (recalculadas: 2 conc. 17,14%; 3 conc. 16,30%; 4 conc. 17,50%; 5 conc. 19,60% vs 17,65/18,47/17,30/19,70 na p25).",
  "grupos":"p17 (2008–2026, 39 concessões, 19.195 km, R$ 269,3 bi capex, R$ 196,3 bi opex). p19 traz só contagens (inclui 'TPI - Triunfo' com 2 concessões, que na p17 está em 'Outros 6 grupos'); p21 não acrescenta grupos.",
  "gestao":"p37, km da malha federal pavimentada; pct_concedido conforme rótulos do gráfico.",
- "investimentos":"Série anual da p43 (rodovias federais): 'publico' = Públicas (OGU), 'privado' = Capex + Opex das concessões, R$ bi, base de preços não informada na p43 (p47 indica valores nominais). 2003–2009 sem barra pública (null); eixo '1995...' sem valor. 2023–2029 previstos. Soma privada 2003–2022 = 115,25 vs 'R$ 129 bi realizado 1995–2022'; soma 2023–2029 = 223,23 vs 'R$ 218 bi'. p41 dá público 2023–2026 = R$ 48,29 bi, enquanto a p43 soma 75,6. p39 (ABDIB, toda a infraestrutura) não foi usada.",
+ "investimentos":"Série anual da p43 (rodovias federais): 'publico' = Públicas (OGU), 'privado' = Capex + Opex das concessões, R$ bi, base de preços não informada na p43 (p47 indica valores nominais). 2003–2009 sem barra pública (null); eixo '1995...' sem valor. 2023–2029 previstos. Soma privada 2003–2022 = 115,25 vs 'R$ 129 bi realizado 1995–2022'; soma 2023–2029 = 223,23 vs 'R$ 218 bi'. p41 dá público 2023–2026 = R$ 48,29 bi, enquanto a p43 soma 75,6. p39 (ABDIB, toda a infraestrutura) está em cartão próprio; os comparativos das pp. 41 e 45 também.",
  "indicadores_40":"pp.51–55. p125 traz 4.400 km de duplicação e 3.701 km de faixa adicional (vs 4.374/3.702 na p51). p53 diz R$ 400 bi, p125 R$ 440 bi.",
  "diagnostico":"p29. 'valor' = 'R$ X bi de rodovias concedidas' (valor dos contratos); 'invest_executado_acum' = investimentos executados acumulados.",
  "concorrencia_2023_26":"p21 (29 leilões previstos e realizados 2023–2026, igual à p123). Difere do total dos 25 leilões realizados da p97: 12.198 km, capex R$ 169,04 bi, opex R$ 113,6 bi.",
@@ -205,13 +205,14 @@ fontes={"leiloes_por_ano":[7,9],"participantes":[11,13,15,97],"concorrentes_desa
 d={"fontes":fontes,"notas":notas,"leiloes_por_ano":leiloes,"participantes":participantes,"concorrentes_desagio":conc,
    "faixas_desagio":faixas,"desagio_por_n_concorrentes":por_n,"grupos":grupos,"gestao":gestao,"investimentos":investimentos,
    "indicadores_40":indicadores,"diagnostico":diag,"concorrencia_2023_26":conc2326,"programa_por_ano":prog}
-# preserva as chaves que este script não gera (ex.: abdib, debentures, pavimento, comparativos de roadshow_v5.py)
+# preserva as chaves que este script não gera (ex.: abdib, debentures, pavimento, comparativos de roadshow_v5.py);
+# as notas já curadas no JSON prevalecem sobre as deste rascunho (revisadas à mão depois da primeira extração)
 import os
 if os.path.exists(out):
     old=json.load(open(out))
     for k,v in old.items(): d.setdefault(k,v)
-    for k in ("fontes","notas"):
-        for kk,v in old[k].items(): d[k].setdefault(kk,v)
+    for kk,v in old["fontes"].items(): d["fontes"].setdefault(kk,v)
+    d["notas"].update(old["notas"])
 json.dump(d,open(out,"w"),ensure_ascii=False,indent=1)
 
 # checks

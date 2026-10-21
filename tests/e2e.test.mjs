@@ -860,7 +860,13 @@ test('fechamento: Regulatório desenha os dois diagramas com título, descriçã
     assert.ok(await fig.locator('.chart-legend span').count() >= 4, `${d.id}: legenda`);
     const txt = await fig.textContent();
     assert.ok(!/NaN|undefined|null/.test(txt), d.id);
-    assert.ok(txt.includes(`Fonte: RoadShow 2026-2027, p. ${d.paginas.join(', ')}`), d.id);
+    // rodapé de origem e nota a partir do JSON: nenhum dos dois diagramas se apresenta como figura do RoadShow
+    const rod = await fig.locator('.diagrama__fonte').textContent();
+    assert.equal(rod, await page.evaluate(x => Regulatorio.rodape(x), d));
+    assert.ok(!rod.startsWith('Fonte:'), rod);
+    if (d.origem === 'esquema') assert.ok(rod.startsWith('Esquema elaborado com o texto do RoadShow 2026-2027, p. ') && rod.endsWith(d.paginas.join(', ')), rod);
+    if (d.origem === 'adaptado') assert.ok(rod.startsWith(`Baseado na figura da p. ${d.pagina_figura} `), rod);
+    assert.ok((await fig.locator('.diagrama__nota').textContent()).includes(d.nota), `${d.id}: nota`);
     const box = await svg.boundingBox();
     assert.ok(box.width > 300 && box.height > 200, `${d.id}: ${JSON.stringify(box)}`);
   }
@@ -872,6 +878,9 @@ test('fechamento: Regulatório desenha os dois diagramas com título, descriçã
   assert.ok(nota.includes(f.nota));
   const g = ds.find(d => d.id === 'fluxo-financiamento');
   assert.equal(await page.locator('#diagrama-fluxo-financiamento [data-no]').count(), g.nos.length);
+  for (const n of g.nos.filter(x => x.pagina)) {  // "p. N" visível em cada caixa
+    assert.ok((await page.locator(`#diagrama-fluxo-financiamento [data-no="${n.id}"] text`).allTextContents()).includes(`p. ${n.pagina}`), n.id);
+  }
   assert.equal(await page.locator('#diagrama-fluxo-financiamento line.aresta').count(), g.arestas.length);
 });
 

@@ -57,3 +57,17 @@ def test_build_pela_base_usa_os_json_curados(tmp_path):
     assert conc["regulatorio"] == reg
     for k in ("abdib", "debentures", "pavimento", "comparativos", "notas", "fontes"):
         assert conc["mercado"][k] == merc[k], k
+
+
+def test_curados_falha_sem_arquivo(tmp_path):
+    # sem o JSON curado o build para com mensagem clara, em vez de publicar Mercado/Regulatório vazios
+    import pytest
+    (tmp_path / "regulatorio.json").write_text("{}", encoding="utf-8")
+    with pytest.raises(FileNotFoundError, match=r"arquivo curado do RoadShow ausente: .*mercado\.json"):
+        roadshow.curados({}, tmp_path)
+    (tmp_path / "regulatorio.json").unlink()
+    (tmp_path / "mercado.json").write_text("{}", encoding="utf-8")
+    with pytest.raises(FileNotFoundError, match=r"regulatorio\.json"):
+        roadshow.curados({}, tmp_path)
+    with pytest.raises(FileNotFoundError, match=r"mercado\.json"):
+        build.build_from_base(BASE, tmp_path / "m.html", intel={}, roadshow_dir=tmp_path / "vazio")

@@ -372,7 +372,10 @@ def test_diagramas_regulatorio():
         assert d["secao"] in secoes and d["titulo"] and d["descricao"] and d["paginas"]
         assert all(p % 2 == 1 for p in d["paginas"]), d["id"]  # só páginas em português
         assert d["legenda"]
+        assert d["origem"] in ("adaptado", "esquema"), d["id"]  # nenhum dos dois é cópia de figura do RoadShow
     f = ds["fluxo-projeto"]
+    assert f["origem"] == "adaptado" and f["pagina_figura"] in f["paginas"]
+    assert "acrescentados por nós" in f["nota"] and "leitura nossa" in f["nota"]
     ids = [e["id"] for e in f["etapas"]]
     assert len(ids) == len(set(ids)) == 10 and all(e["titulo"] for e in f["etapas"])
     dec = f["decisao"]
@@ -380,6 +383,7 @@ def test_diagramas_regulatorio():
     assert "18%" in dec["pergunta"] and "aporte" in dec["sim"].lower()
     assert [x["pagina"] for x in f["redacoes"]] == [61, 65, 73] and f["nota"]
     g = ds["fluxo-financiamento"]
+    assert g["origem"] == "esquema" and "não é uma figura do RoadShow" in g["nota"]
     nos = {n["id"]: n for n in g["nos"]}
     assert {n["tipo"] for n in nos.values()} == {"fonte", "concessionaria", "destino", "garantia"}
     assert all(n["pagina"] in (65, 73, 75, 77) for n in nos.values() if n["tipo"] != "concessionaria")

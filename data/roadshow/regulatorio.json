@@ -708,6 +708,8 @@
    "id": "fluxo-projeto",
    "secao": "estruturadores",
    "titulo": "Fluxo de um projeto de concessão de rodovias",
+   "origem": "adaptado",
+   "pagina_figura": 61,
    "descricao": "Dez etapas, da identificação do trecho ao início das obras, com o responsável por cada uma. Depois do leilão, deságio acima de 18% exige aporte de recursos vinculados; sem isso, o fluxo segue direto para a assinatura do contrato.",
    "paginas": [
     61,
@@ -799,7 +801,7 @@
      "texto": "Aporte de Recursos Vinculados (acima de 18% de deságio)"
     }
    ],
-   "nota": "O RoadShow usa duas redações para o limite do aporte: “a partir de 18%” na p. 61 e “maiores do que 18%” / “acima de 18%” nas pp. 65 e 73. O diagrama segue as pp. 65 e 73; pela redação da p. 61, um deságio de exatamente 18% também exigiria aporte.",
+   "nota": "O RoadShow usa duas redações para o limite do aporte: “a partir de 18%” na p. 61 e “maiores do que 18%” / “acima de 18%” nas pp. 65 e 73. O diagrama segue as pp. 65 e 73; pela redação da p. 61, um deságio de exatamente 18% também exigiria aporte. O losango de decisão e os ramos “sim” e “não” foram acrescentados por nós: a p. 73 sustenta o aporte antes da assinatura do contrato; o ramo “não → assinatura” é leitura nossa.",
    "legenda": {
     "etapa": "Etapa, com o responsável",
     "decisao": "Decisão pelo resultado do leilão",
@@ -811,7 +813,8 @@
    "id": "fluxo-financiamento",
    "secao": "financiamento",
    "titulo": "Fluxo de financiamento de uma concessão",
-   "descricao": "De onde vêm os recursos da concessionária (capital dos acionistas, BNDES e debêntures), para onde vão (investimentos e aporte de recursos vinculados) e as garantias que ela presta, segundo as pp. 73 a 77.",
+   "origem": "esquema",
+   "descricao": "Esquema montado com o texto das pp. 73 a 77: de onde vêm os recursos da concessionária (capital dos acionistas, BNDES e debêntures), para onde vão (investimentos e aporte de recursos vinculados) e as garantias que ela presta.",
    "paginas": [
     73,
     75,
@@ -940,7 +943,8 @@
     "destino": "Uso dos recursos",
     "garantia": "Garantia prestada (seta tracejada)",
     "recursos": "Fluxo de recursos"
-   }
+   },
+   "nota": "Esquema montado a partir do texto das pp. 73 a 77; não é uma figura do RoadShow. A disposição em fontes, concessionária, usos e garantias é leitura do texto."
   }
  ]
 }

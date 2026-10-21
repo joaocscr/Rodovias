@@ -102,7 +102,8 @@ const Regulatorio = (() => {
     for (const n of nos) {
       const g = GEO[COL[n.tipo] ?? 2];
       const ls = quebra(n.titulo, Math.floor((g.w - 2 * PAD) / CH_T)).map(t => ({ t, peso: 600 }))
-        .concat(itens(n.linhas || [], g.w - 2 * PAD));
+        .concat(itens(n.linhas || [], g.w - 2 * PAD))
+        .concat(n.pagina ? [{ t: `p. ${n.pagina}`, tam: 13 }] : []); // página visível no próprio nó
       const p = { n, ls, x: g.x, w: g.w, h: altura(ls) + 2 * PAD + 4 };
       pos[n.id] = p;
       cols[COL[n.tipo] ?? 2].push(p);
@@ -135,7 +136,21 @@ const Regulatorio = (() => {
     return moldura(d, W, H, marcador(`${id}-seta`, C.spacial) + marcador(`${id}-seta-g`, C.grey), body);
   }
 
-  // Figura com legenda (rótulos do JSON), o SVG, a nota de redação (quando houver) e a fonte.
+  // Rodapé pela origem do diagrama (JSON): "esquema" = montado por nós com o texto das páginas; "adaptado" = figura
+  // de uma página (pagina_figura) com acréscimos tirados do texto das demais; sem origem = figura do RoadShow.
+  function rodape(d) {
+    const pgs = (d.paginas || []).map(String);
+    const rs = 'RoadShow 2026-2027';
+    if (d.origem === 'esquema') return `Esquema elaborado com o texto do ${rs}, p. ${pgs.join(', ')}`;
+    if (d.origem === 'adaptado') {
+      const txt = pgs.filter(p => p !== String(d.pagina_figura));
+      const lista = txt.length > 1 ? `${txt.slice(0, -1).join(', ')} e ${txt[txt.length - 1]}` : txt[0];
+      return `Baseado na figura da p. ${d.pagina_figura}${txt.length ? ` e ${txt.length > 1 ? 'nos textos das pp.' : 'no texto da p.'} ${lista}` : ''} do ${rs}`;
+    }
+    return `Fonte: ${rs}, p. ${pgs.join(', ')}`;
+  }
+
+  // Figura com legenda (rótulos do JSON), o SVG, a nota (redação e o que é leitura nossa) e o rodapé de origem.
   function figuraHtml(d) {
     const C = Ch.C, l = d.legenda || {};
     const fluxo = Array.isArray(d.etapas);
@@ -148,7 +163,7 @@ const Regulatorio = (() => {
     return `<figure class="diagrama" id="diagrama-${esc(d.id)}"><figcaption>${esc(d.titulo)}</figcaption>
       ${Ch.legendHtml(legenda.filter(it => (Array.isArray(it) ? it[0] : it.label)))}
       <div class="diagrama__box">${fluxo ? fluxoSvg(d) : colunasSvg(d)}</div>${nota}
-      <p class="src">Fonte: RoadShow 2026-2027, p. ${esc((d.paginas || []).join(', '))}</p></figure>`;
+      <p class="src diagrama__fonte">${esc(rodape(d))}</p></figure>`;
   }
 
   function blocoHtml(b) {
@@ -201,7 +216,7 @@ const Regulatorio = (() => {
     }));
   }
 
-  return { init, fluxoSvg, colunasSvg, quebra };
+  return { init, fluxoSvg, colunasSvg, quebra, rodape };
 })();
 
 if (typeof module !== 'undefined') module.exports = Regulatorio;

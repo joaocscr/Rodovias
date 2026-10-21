@@ -114,17 +114,22 @@ def build_conc(records, groups, data_dir):
         "fisEnt": fis_ent,
         "snvOnly": snv_only(records, groups, covered),
         "estudos": estudos_out,
-        "mercado": _load(data_dir, "mercado.json", {}),
-        "regulatorio": _load(data_dir, "regulatorio.json", {}),
         "versaoRoadshow": VERSAO,
     }
-    return conc, report
+    return curados(conc, data_dir), report
 
 
 def curados(conc, data_dir):
     """`conc` com `mercado` e `regulatorio` relidos de data/roadshow/: os JSON curados são a fonte única desses
-    blocos também no build pela base congelada (a cópia em data/base/conc.json pode estar defasada)."""
-    return dict(conc, mercado=_load(data_dir, "mercado.json", {}), regulatorio=_load(data_dir, "regulatorio.json", {}))
+    blocos também no build pela base congelada (a cópia em data/base/conc.json pode estar defasada).
+    Arquivo ausente falha o build, em vez de publicar as abas Mercado e Regulatório vazias."""
+    out = dict(conc)
+    for chave in ("mercado", "regulatorio"):
+        path = Path(data_dir) / f"{chave}.json"
+        if not path.exists():
+            raise FileNotFoundError(f"arquivo curado do RoadShow ausente: {path} (fonte única de `{chave}` no build)")
+        out[chave] = json.loads(path.read_text(encoding="utf-8"))
+    return out
 
 
 def _br(x):
