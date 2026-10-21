@@ -556,7 +556,9 @@ test('v4: comparador tem a fonte do deságio e Fontes lista a verificação', as
   await go('#fontes');
   const cob = await page.textContent('#fontes-verif-cobertura');
   assert.match(cob, /\d+ leilões conferidos; campos por origem: \d+ oficial/);
-  assert.match(cob, /1 não se aplica \(deságio de leilão por outorga\)\./);
+  const nsa = await page.evaluate(() => window.CONC.verificacao.cobertura.nao_se_aplica);
+  assert.ok(nsa > 0);
+  assert.ok(cob.includes(`${nsa} não se aplica (deságio de leilão por outorga).`), cob);
   const n = await page.locator('#fontes-verificacao-table tbody tr').count();
   assert.equal(n, await page.evaluate(() => window.CONC.verificacao.fontes.length));
   assert.equal(await page.getAttribute('#fontes-verificacao-table', 'data-csv-name'), 'fontes-verificacao');

@@ -36,6 +36,11 @@ test('rsDiverge mantém grupos diferentes', () => {
   // grupo de outra época continua visível
   assert.equal(LeiloesModel.rsDiverge('Obrascon Huarte Lain Brasil S.A. (OHL Brasil)', 'Arteris (Antiga OHL)', g), true);
   assert.equal(LeiloesModel.rsDiverge('Consórcio Planalto', 'Ecorodovias', g), true);
+  const h = [{ nome: 'Consórcio Rodovia da Vitória', grupo: 'Ecorodovias' }, { nome: 'Consórcio Acciona', grupo: 'Acciona' }];
+  // consórcio liderado pela Ecorodovias: o RoadShow lista os membros começando pelo grupo (ECO101, 2012)
+  assert.equal(LeiloesModel.rsDiverge('Consórcio Rodovia da Vitória', 'Ecorodovias e SBS Engenharia e Construções', h), false);
+  // K-Infra comprou depois: grupo da época (Acciona) continua divergente
+  assert.equal(LeiloesModel.rsDiverge('Consórcio Acciona', 'K-Infra (antigo Consórcio Acciona)', h), true);
 });
 
 test('ranking conta vitória e derrota', () => {

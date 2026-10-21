@@ -221,6 +221,8 @@ def validar(verif, conc, aliases=None):
                 erros.append(f"{chave}.{campo}: limitado_pelo_edital só vale em desagio e deve ser true/false, "
                              f"veio {lim!r}")
             erros += _erros_alternativas(chave, campo, c, fontes)
+            if "alternativas" in c and "ent" not in l:  # só a entidade guarda divergências
+                erros.append(f"{chave}.{campo}: alternativas exigem ligação com entidade (ent)")
             if "nao_se_aplica" in c:
                 nsa = c["nao_se_aplica"]
                 if campo != "desagio" or nsa is not True or c.get("nao_localizado") or c.get("valor") is not None:

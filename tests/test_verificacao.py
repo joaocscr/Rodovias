@@ -484,6 +484,14 @@ def test_alternativa_declarada_valida_e_aplica(conc):
                          "B3 (23/07/2026) informa 22,00%.")
 
 
+def test_alternativas_so_em_leilao_com_entidade(conc):
+    # sem `ent` não há divergência onde registrar a alternativa: aplicar a descartaria em silêncio
+    campos = {"desagio": {"valor": 21.83, "fontes": ["antt"], "alternativas": [{"valor": 22.0, "fontes": ["antt"]}]}}
+    erros = validar(verif([{"chave": "lote-5", "participantes": {"ano": 2025, "lote": "Lote 5"}, "campos": campos}]), conc)
+    assert len(erros) == 1 and "alternativas" in erros[0] and "ent" in erros[0], erros
+    assert validar(verif([leilao(campos)]), conc) == []
+
+
 def test_relatorio_markdown(conc):
     v = verif([leilao({"desagio": {"valor": 23.83, "fontes": ["rs-p15"]}})])
     md = relatorio_markdown(v, aplicar(conc, v, {"aliases": []}))
