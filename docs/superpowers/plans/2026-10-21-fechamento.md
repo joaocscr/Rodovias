@@ -20,6 +20,7 @@
 - Todo número do RoadShow carrega a página de origem (ímpar, páginas em português).
 - PDF do RoadShow em `data/raw/roadshow.pdf` (fora do git; baixar do Drive id `1zStkFuN8kJSMWYRygewJw6ZI70TZMwy9` se faltar).
 - Commits no branch `claude/confident-brown-k72wi2`, terminando com as linhas de atribuição.
+- **Atualização fácil (princípio do usuário):** nenhum `data/intel/*.json` editado à mão — correção vai no script gerador ou no arquivo curado de origem; nenhum número/período de dado digitado no código da interface; e2e compara com o modelo, não com literais de dado; todo dado novo tem caminho de atualização documentado.
 
 ## Review Focus
 
@@ -61,7 +62,7 @@
 
 - [ ] Legenda reavalia o recolhimento no `resize` (debounce); rótulos GF e SR sem sobreposição; legenda do Tráfego não cobre o leste do Brasil em 1366×768 (e2e em 1366×768); `_animatingZoom` isolado numa função `zoomAnimando(map)` com comentário e teste e2e do enquadramento repetido (ou API pública se existir).
 - [ ] `fmtPeriodo` trata `AAAA-MM-DD` e intervalos ISO (unit); tipo dos portos com rótulo em português (dicionário em `intel-model`, unit); nomes dos fretes sem artefatos (limpeza no script ou no front, unit com exemplos reais).
-- [ ] Coordenada do estaleiro Keppel Fels corrigida com fonte; VMD 0 de praça vira `null` (script + teste pytest).
+- [ ] Coordenada do estaleiro Keppel Fels corrigida com fonte; VMD 0 de praça vira `null` — as duas no **script gerador** (`multimodal.py`, `antt.py`) com teste pytest; regenerar o bloco rodando o `build` do script (com `fetch` se o bruto faltar e a fonte responder). Se a fonte não responder, o bloco não é tocado e o item fica no relatório de curadoria; nunca editar o JSON à mão.
 - [ ] Textos: trecho planejado (PLA) com valores ganha explicação; "carteira MT v40" → texto claro; "≤ 5%" da ficha explicado em linguagem simples; linha "relatórios 2023–2025" da spec v3.1 → 2024–2025.
 - [ ] Suítes verdes. Commit.
 
@@ -69,6 +70,7 @@
 
 **Files:** `scripts/extract/` (novo `roadshow_v5.py` ou extensão do extrator de mercado), `data/roadshow/mercado.json` (`abdib`, `debentures`, `pavimento`, `comparativos`), `data/roadshow/regulatorio.json` (`diagramas`), `src/mercado.js`, `src/regulatorio.js`, `src/charts.js` (se faltar forma), tests `tests/test_roadshow.py`, `tests/e2e.test.mjs`.
 
+- [ ] Os valores ficam curados em JSON com página (como o resto de `data/roadshow/`); o extrator é um auxiliar para a próxima versão do RoadShow, e o `scripts/extract/README.md` ganha o passo a passo. Testes que conferem contra o PDF são pulados quando o PDF não está em `data/raw/`. Textos dos diagramas também em JSON (nada fixo no SVG além de forma e cor).
 - [ ] Extrair do PDF, com página: ABDIB p. 39 (público e privado, R$ bi, 2010–2024); debêntures incentivadas para rodovias p. 77 (série anual, R$ bi, base fev/2025); estado do pavimento p. 35 (participações %); comparativos pp. 41 e 45 (valores base × comparado, variação). Testes pytest pinam 3 valores de cada série contra o PDF e que somas/variações impressas fecham (tolerância de arredondamento).
 - [ ] Mercado: cartões "Investimento em infraestrutura (ABDIB)", "Debêntures incentivadas para rodovias", "Comparativos público × privado"; Regulatório (ou Mercado): "Estado do pavimento". Cada um com "Fonte: RoadShow 2026-2027, p. N".
 - [ ] Regulatório: dois diagramas SVG (fluxo do estudo ao leilão, p. 61, com a decisão "deságio acima de 18% → aporte de recursos vinculados" e as duas redações da p. 61 × pp. 65/73; fluxo de financiamento pp. 73–77), cores Galapagos, legenda, `role="img"` com título e descrição.
@@ -100,13 +102,23 @@
 - [ ] Unit: ordenação por data de leilão; sem edital desenha só o leilão; sem data nenhuma fica fora e é contado. 
 - [ ] Projetos > Pipeline: cartão "Linha do tempo: editais e leilões 2026–2027", nome clicável abre a ficha. e2e. Suítes verdes. Commit.
 
-### Task 8: Fichas dos lotes sem ficha no RoadShow (pesquisa)
+### Task 8: Atualização em um comando, relatório de curadoria e testes resistentes a atualização
 
-**Files:** `data/roadshow/verificacao.json` (campos novos de escopo), `scripts/verificacao.py` (campos), `src/ficha.js`; tests.
+(Substitui a pesquisa das fichas sem ficha, retirada pelo princípio "atualização fácil".)
 
-- [ ] Ampliar a camada com campos de escopo de contrato: `pracas` (int), `duplicacao_km` (número), `tir_regulatoria` (texto, ex. "8,47% a.a. real"), sem mudar a regra de fontes; validar tipos (RED→GREEN).
-- [ ] Pesquisar, para os leilões de 2023–2025 sem ficha no RoadShow, na página da concessão/projeto da ANTT, edital e PER: praças, duplicação e TIR/WACC regulatória. Registrar só o que for lido no documento; o resto fica ausente.
-- [ ] Ficha mostra esses campos com selo. Suítes verdes; build. Commit.
+**Files:** `scripts/atualizar.py` (novo), `scripts/curadoria.py` (novo, funções puras), `data/atualizacao.md` (gerado), `data/roadshow/mercado.json` (constantes impressas, ex. `desagio_medio_impresso` com página), `src/mercado.js` e demais abas com número/período digitado, `tests/test_atualizar.py`, `tests/test_curadoria.py`, `tests/e2e*.test.mjs`, `README.md` ("Como atualizar").
+
+**Interfaces:**
+- `scripts/atualizar.py [--baixar] [--dominios trafego,antt,...] [--sem-html]` — ordem: `trafego antt carga agro multimodal pipeline estaduais`, `vmda2025` (pula com aviso se o zip faltar), `rotas`, `fontes_bloco`, validação da camada de verificação, `build.py`. Chama as funções dos scripts existentes (sem duplicar lógica); falha de um domínio com `--baixar` não derruba os outros (aviso no relatório). Código de saída ≠ 0 só se o build ou a validação falhar.
+- `curadoria.itens(conc_aplicado, intel, verif, hoje) -> [{tipo, item, motivo}]` com os tipos: `pipeline_atrasado`, `leilao_sem_verificacao`, `pipeline_nao_verificado`, `fonte_antiga` (> 365 dias), `nome_sem_grupo`.
+- `curadoria.diff_blocos(antes: dict, depois: dict) -> [{bloco, registros_antes, registros_depois, kb_antes, kb_depois}]`.
+- `data/atualizacao.md`: data, passos executados/pulados, tabela do diff, lista de curadoria.
+
+- [ ] Unit RED/GREEN de `curadoria` com fixtures (item atrasado, leilão sem entrada, fonte antiga, tudo em dia → lista vazia).
+- [ ] `atualizar.py` sem `--baixar` roda do zero neste container (só builds), gera o HTML idêntico ao do `build.py` e o relatório; teste que roda `atualizar.py --sem-html` num diretório temporário com cópia dos dados é opcional (pode ser lento) — no mínimo teste da ordem e do pular-com-aviso com funções simuladas.
+- [ ] Tirar do código da interface números e períodos de dado digitados (ex.: `MEDIA_IMPRESSA`, "Programa 2023–2027"): vêm de `mercado.json` ou são derivados dos dados.
+- [ ] Auditar os e2e: asserções que fixam valor de dado (ex.: vitórias da OHL Brasil, 23,83% do Lote 5) passam a comparar com o modelo calculado na página, ou vão para pytest de dados com mensagem "dado mudou: revise …".
+- [ ] README "Como atualizar": dados públicos (um comando), nova versão do RoadShow, leilão novo. Suítes verdes. Commit.
 
 ### Task 9: Aba Resumo (página inicial)
 
@@ -125,5 +137,5 @@
 **Files:** `README.md`, `docs/HANDOFF.md`, `mapa-rodovias.html`.
 
 - [ ] README: v4 final (aba Resumo, linha do tempo, pista SNV, gráficos e diagramas novos, reconciliação, fichas enriquecidas).
-- [ ] HANDOFF: estado final; §6 reduzido a "O que depende de você" (PNCT, LAI, ANTAQ, malha estadual 2024, editais estaduais, reclassificação por esfera) e itens novos com motivo; contagens de testes.
+- [ ] HANDOFF: estado final; seção "Como atualizar" apontando para o README e o `atualizar.py`; §6 reduzido a "O que depende de você" (PNCT, LAI, ANTAQ, malha estadual 2024, editais estaduais, reclassificação por esfera) e itens novos com motivo; contagens de testes.
 - [ ] Três suítes e build (≤ 15 MB). Commit e push do branch.

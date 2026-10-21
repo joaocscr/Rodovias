@@ -8,6 +8,15 @@ Fechar o projeto: entregar um HTML final sem pendências que dependam só de nó
 
 O trabalho vai no mesmo branch e entra no PR joaocscr/Rodovias#4: a entrega continua sendo a **v4** (regra de versão: um número inteiro por PR mergeado), que passa a se chamar "v4 — final" na documentação.
 
+### Princípio (do usuário, 21/10/2026)
+
+"A ideia, ao final, é que possamos atualizar os dados do HTML com facilidade. Não monte o projeto 'a qualquer custo' para entregar a vF." Consequências, que valem para todas as tarefas:
+- **Atualização em um comando**, com um relatório que diz o que mudou e o que precisa de curadoria manual (§2.5).
+- **Nenhum JSON gerado editado à mão.** Correção de dado vai no script que gera o bloco (ou no arquivo curado de origem: `pipeline.csv`, `verificacao.json`, `data/roadshow/*.json`), nunca no `data/intel/*.json` resultante.
+- **Nada de número ou período digitado no código da interface.** Constantes do RoadShow (ex.: média impressa 12,36%) e períodos de títulos (ex.: "2023–2027") vêm dos dados.
+- **Testes que sobrevivem a uma atualização.** e2e compara a tela com o modelo, não com números literais; conferência de valores concretos fica nos testes de dados (pytest), com mensagem que diz o que revisar.
+- **Cada dado novo tem caminho de atualização documentado.** Dado que só se mantém com pesquisa manual grande e pouco ganho fica de fora.
+
 ## 2. Escopo (decisões do controlador; o usuário pediu para executar)
 
 ### 2.1 Pendências da verificação dos leilões
@@ -25,7 +34,12 @@ Todos os itens das listas "Menores de código da v4" e "Menores, registrados nas
 - **Pista pelo SNV** na ficha e no cartão da concessão: km duplicados, em pista simples, em obra de duplicação e não pavimentados, pelo recorte curado.
 - **Gráficos do RoadShow que faltam**, extraídos do PDF (agora baixável do Drive) com página de origem: ABDIB (p. 39), debêntures incentivadas (p. 77), estado do pavimento (p. 35), comparativos público × privado (pp. 41 e 45); e dois diagramas no Regulatório: fluxo do projeto ao leilão (p. 61) e fluxo de financiamento (pp. 73–77).
 - **Reconciliação** declarado × recalculado do RoadShow como teste pytest (totais das pp. 3, 5, 17, 97, 125).
-- **Fichas dos lotes sem ficha no RoadShow** (leilões de 2023–2025): praças, duplicação, tarifa-teto e TIR/WACC regulatória quando a ANTT publicar, pela mesma regra de fontes da v4 (oficial > RoadShow > imprensa não oficial).
+- ~~Fichas dos lotes sem ficha no RoadShow~~ — **retirado** pelo princípio acima: seriam ~100 campos de pesquisa manual que envelhecem sem caminho automático de atualização. Fica como pendência opcional no HANDOFF.
+
+### 2.5 Atualização em um comando
+- `python scripts/atualizar.py` roda, na ordem certa, o build de todos os blocos, o bloco de fontes, a validação da camada de verificação e o `build.py`; com `--baixar` também baixa as fontes públicas (`fetch`); com `--dominios` limita a domínios. Passos que dependem de arquivo do usuário ausente (VMDa 2025, RoadShow PDF) são pulados com aviso, sem quebrar.
+- Ao fim, gera `data/atualizacao.md` (e imprime um resumo): o que mudou por bloco em relação à versão anterior no git (registros, tamanho) e a **lista de curadoria**: leilões com data passada ainda como "agendado" ou "previsto" no pipeline; leilões realizados sem entrada na camada de verificação; itens do pipeline com `verificado=false`; fontes com acesso há mais de 12 meses; nomes de proponentes sem grupo.
+- README ganha "Como atualizar" com três roteiros: dados públicos (um comando), nova versão do RoadShow (onde re-extrair e o que conferir) e um leilão novo (camada de verificação).
 
 ### 2.4 Fora (depende do usuário ou de terceiros)
 PNCT por posto (portal inacessível daqui), pedidos via LAI (ANTT cargas, PNL 2050), ANTAQ Estatístico (painel sem dado aberto utilizável), malha estadual 2024 (não publicada), editais estaduais com km (por lote, manual), reclassificar entidades por esfera (muda o modelo de estados; a nota da Via Liberdade basta). Ficam numa seção curta "O que depende de você" no HANDOFF.
