@@ -496,7 +496,7 @@
       "titulo": "Lista de concessões — Ecovias Capixaba",
       "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/ecovias-capixaba",
       "acesso": "2026-10-21",
-      "trecho": "Data da Assinatura do Termo Aditivo de Modernização: 26/08/2025 · Início da Concessão: 10/05/2013 · Prazo da Concessão: 24 anos"
+      "trecho": "Empresas Controladoras: ECORODOVIAS INFRAESTRUTURA E LOGÍSTICA S/A e SBS ENGENHARIA E CONSTRUÇÕES LTDA. […] Data da Assinatura do Termo Aditivo de Modernização: 26/08/2025 · Início da Concessão: 10/05/2013 · Prazo da Concessão: 24 anos"
     },
     "ms-epe-ata-sessao-rota-celulose": {
       "tipo": "oficial",
@@ -1560,6 +1560,159 @@
       "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/ecoriominas",
       "acesso": "2026-10-21",
       "trecho": "Empresas Controladoras: EcoRodovias Concessões e Serviços S.A. […] Data da Assinatura: 22/08/2022 · Início da Concessão: 22/09/2022 […] Prazo da Concessão: 30 anos · Edital: 001/2022"
+    },
+    "b3-borainvestir-2025-04-24-ccr-motiva": {
+      "tipo": "oficial",
+      "orgao": "B3 — Bora Investir",
+      "titulo": "CCR muda de ticker na B3 a partir de maio e anuncia pagamento de dividendos",
+      "data": "2025-04-24",
+      "url": "https://borainvestir.b3.com.br/noticias/empresas/ccr-muda-de-ticker-na-b3-a-partir-de-maio-e-anuncia-pagamento-de-dividendos/",
+      "acesso": "2026-10-21",
+      "trecho": "A empresa de logística CCR passará a ser negociada na B3 sob o novo código “MOTV3” a partir de 2 de maio. […] A companhia explica que a mudança é decorrente da alteração do nome da CCR, […] para Motiva Infraestrutura de Mobilidade."
+    },
+    "ccr-ri-2013-12-17-cpc-br-163-ms": {
+      "tipo": "imprensa",
+      "orgao": "CCR S.A. — Relações com Investidores (comunicado ao mercado; fonte da própria empresa)",
+      "titulo": "Notice to the Market – Auction of BR-163 (MS)",
+      "data": "2013-12-17",
+      "url": "https://ri.motiva.com.br/en/noticia/comunicado-ao-mercado-leilao-da-br-163-ms-2/",
+      "acesso": "2026-10-21",
+      "trecho": "declaring the proponent, Companhia de Participações em Concessões (“CPC”), a CCR subsidiary, as qualified"
+    },
+    "revistaoe-2014-09-24-br-393": {
+      "tipo": "imprensa",
+      "orgao": "Revista O Empreiteiro",
+      "titulo": "Operator to invest R$300 million in BR-393",
+      "data": "2014-09-24",
+      "url": "https://revistaoe.com.br/operator-to-invest-r300-million-in-br-393-2/",
+      "acesso": "2026-10-21",
+      "trecho": "In 2008, the division of concessions of Spanish Acciona took over, for 25 years, the administration"
+    },
+    "jb-2013-04-17-eco101": {
+      "tipo": "imprensa",
+      "orgao": "Jornal do Brasil",
+      "titulo": "Assinado primeiro contrato de concessão de rodovia do governo Dilma",
+      "data": "2013-04-17",
+      "url": "https://www.jb.com.br/pais/noticias/2013/04/17/assinado-primeiro-contrato-de-concessao-de-rodovia-do-governo-dilma.html",
+      "acesso": "2026-10-21",
+      "trecho": "o consórcio vencedor do leilão, Rodovia da Vitória […] que passa agora a ser a concessionária Eco 101, sob administração do grupo Ecorodovias"
+    },
+    "suno-2021-10-01-ecovias-araguaia": {
+      "tipo": "imprensa",
+      "orgao": "Suno Notícias",
+      "titulo": "EcoRodovias (ECOR3) fecha contrato para explorar rodovias em GO e TO",
+      "data": "2021-10-01",
+      "url": "https://www.suno.com.br/noticias/?p=190066",
+      "acesso": "2026-10-21",
+      "trecho": "a EcoRodovias Concessões e Serviços, sua controlada direta, detém 65% de participação [na Holding do Araguaia; a GLP X Participações tem os outros 35%]"
+    },
+    "poder360-2023-09-29-rip-lote-2": {
+      "tipo": "imprensa",
+      "orgao": "Poder360",
+      "titulo": "EPR vence leilão rodoviário do Lote 2 Paraná",
+      "data": "2023-09-29",
+      "url": "https://www.poder360.com.br/infraestrutura/epr-vence-leilao-rodoviario-do-lote-2-parana/",
+      "acesso": "2026-10-21",
+      "trecho": "O consórcio liderado pela EPR venceu o certame com uma proposta de desconto na tarifa de pedágio de 0,08%."
+    },
+    "poder360-2024-04-11-br-040-mg": {
+      "tipo": "imprensa",
+      "orgao": "Poder360",
+      "titulo": "EPR vence 1º leilão de relicitação da BR-040",
+      "data": "2024-04-11",
+      "url": "https://www.poder360.com.br/infraestrutura/epr-vence-1o-leilao-de-relicitacao-da-br-040/",
+      "acesso": "2026-10-21",
+      "trecho": "O consórcio Infraestrutura MG, liderado pela EPR"
+    },
+    "jornaldebrasilia-2024-12-12-rota-verde": {
+      "tipo": "imprensa",
+      "orgao": "Jornal de Brasília (Folhapress)",
+      "titulo": "Consórcio Rota Verde leva rodovias em Goiás em leilão dominado por fundos de investimentos",
+      "data": "2024-12-12",
+      "url": "https://jornaldebrasilia.com.br/noticias/brasil/consorcio-rota-verde-leva-rodovias-em-goias-em-leilao-dominado-por-fundos-de-investimentos/",
+      "acesso": "2026-10-21",
+      "trecho": "O Consórcio Rota Verde Goiás, encabeçado pelo fundo de investimentos Aviva, arrematou a Rota Verde […] O Consórcio Infraestrutura GO, que reunia a EPR e a Perfin, propôs 0,9% de desconto e não chegou a ir para o viva-voz. […] Já o Consórcio Rota Cerrado, da XP junto a outras construtoras, ofereceu um deságio de 10,88%."
+    },
+    "istoedinheiro-2024-12-12-rota-verde": {
+      "tipo": "imprensa",
+      "orgao": "IstoÉ Dinheiro (Estadão Conteúdo)",
+      "titulo": "Consórcio Rota Verde leva concessão da Rota Verde com desconto de 18,07%",
+      "data": "2024-12-12",
+      "url": "https://istoedinheiro.com.br/consorcio-rota-verde-leva-concessao-da-rota-verde-com-desconto-de-1807",
+      "acesso": "2026-10-21",
+      "trecho": "O consórcio Rota Cerrado, que tem XP, CLD Construtora, Construtora Caipó, FBS Construção Civil […] fez a quarta proposta, com desconto de 10,88%."
+    },
+    "agenciainfra-2025-11-03-rota-sertaneja": {
+      "tipo": "imprensa",
+      "orgao": "Agência iNFRA",
+      "titulo": "Rota Sertaneja: 4 grupos vão disputar concessão da BR-153/262/GO/MG",
+      "data": "2025-11-03",
+      "url": "https://agenciainfra.com/blog/rota-sertaneja-4-grupos-vao-disputar-concessao-da-br-153-262-go-mg/",
+      "acesso": "2026-10-21",
+      "trecho": "o consórcio Rota do Cerrado – composto por XP e construtoras […] um consórcio com a Construcap e a espanhola Copasa"
+    },
+    "investnews-2024-10-31-rota-do-zebu": {
+      "tipo": "imprensa",
+      "orgao": "InvestNews (Reuters)",
+      "titulo": "Consórcio de Kinea e construtoras leva concessão da Rota do Zebu",
+      "data": "2024-10-31",
+      "url": "https://investnews.com.br/negocios/consorcio-de-kinea-e-construtoras-leva-concessao-da-rota-do-zebu-e-devem-investir-r-44-bilhoes/amp/",
+      "acesso": "2026-10-21",
+      "trecho": "O consórcio formado por Kinea e o grupo de construtoras Way Brasil venceu"
+    },
+    "campograndenews-2025-05-05-rota-celulose": {
+      "tipo": "imprensa",
+      "orgao": "Campo Grande News",
+      "titulo": "Quatro grupos gigantes vão disputar a Rota da Celulose em leilão",
+      "data": "2025-05-05",
+      "url": "https://www.campograndenews.com.br/economia/quatro-grupos-gigantes-vao-disputar-a-rota-da-celulose-em-leilao",
+      "acesso": "2026-10-21",
+      "trecho": "A entrega das propostas, realizada nesta segunda-feira (5), confirmou a presença do consórcio Way/Kinea, XP, BTG e K-Infra […] O consórcio é formado pela Way Brasil, especializada em concessões rodoviárias, e pela Kinea Investimentos"
+    },
+    "pr-gov-2025-10-30-rip-lote-5": {
+      "tipo": "oficial",
+      "orgao": "Governo do Paraná",
+      "titulo": "Grupo Pátria arremata Lote 5 e investirá R$ 11,9 bilhões em novas obras no Paraná",
+      "data": "2025-10-30",
+      "url": "https://www.parana.pr.gov.br/Audio/Grupo-Patria-arremata-Lote-5-e-investira-R-119-bilhoes-em-novas-obras-no-Parana",
+      "acesso": "2026-10-21",
+      "trecho": "O grupo Pátria venceu nesta quinta-feira o leilão do Lote 5 das Rodovias Integradas do Paraná."
+    },
+    "agenciainfra-2025-10-20-rip-lote-4": {
+      "tipo": "imprensa",
+      "orgao": "Agência iNFRA",
+      "titulo": "Quatro grupos vão disputar concessão do Lote 4 das Rodovias do Paraná",
+      "data": "2025-10-20",
+      "url": "https://agenciainfra.com/blog/?p=30134",
+      "acesso": "2026-10-21",
+      "trecho": "Apresentaram propostas pelo ativo a Pátria, a EPR, a Mota-Engil e a Motiva (ex-CCR)."
+    },
+    "jornaldebrasilia-2024-12-12-rip-lote-3": {
+      "tipo": "imprensa",
+      "orgao": "Jornal de Brasília (Folhapress)",
+      "titulo": "CCR leva 570 km de rodovias estaduais e federais do Paraná em leilão disputado",
+      "data": "2024-12-12",
+      "url": "https://jornaldebrasilia.com.br/noticias/economia/ccr-leva-570-km-de-rodovias-estaduais-e-federais-do-parana-em-leilao-disputado/",
+      "acesso": "2026-10-21",
+      "trecho": "No viva-voz, a segunda maior proposta foi do consórcio “Infra BR V Missouri Holding I”, do Pátria Investimentos, de 26,5%."
+    },
+    "poder360-2018-11-01-viasul": {
+      "tipo": "imprensa",
+      "orgao": "Poder360",
+      "titulo": "CCR vence disputa por concessão de rodovia no Rio Grande do Sul",
+      "data": "2018-11-01",
+      "url": "https://www.poder360.com.br/economia/ccr-vence-disputa-por-concessao-de-rodovia-no-rio-grande-do-sul/",
+      "acesso": "2026-10-21",
+      "trecho": "Pátria – R$ 4,43570; [mesmo lance que a ANTT atribui à Infraestrutura Brasil Holding II S.A.]"
+    },
+    "em-2013-12-17-br-163-ms": {
+      "tipo": "imprensa",
+      "orgao": "Estado de Minas (Agência Estado)",
+      "titulo": "CCR vence leilão para BR-163 com deságio de 52,74%",
+      "data": "2013-12-17",
+      "url": "https://www.em.com.br/app/noticia/economia/2013/12/17/internas_economia,480095/ccr-vence-leilao-para-br-163-com-desagio-de-52-74.shtml",
+      "acesso": "2026-10-21",
+      "trecho": "Em segundo lugar ficou o Consórcio Rota do Futuro, liderado pela EcoRodovias, que ofereceu tarifa de R$ 5,175 […] A Queiroz Galvão apresentou proposta de R$ 5,459 para cada 100 quilômetros, o que corresponde a um desconto de 41,11%."
     }
   },
   "leiloes": [
@@ -4059,13 +4212,13 @@
           ]
         },
         "tarifa_teto": {
-          "valor": "R$ 8,29763 por praça (nov/2012)",
+          "valor": "R$ 8,29763 (TBP, categoria 1; nov/2012)",
           "fontes": [
             "antt-nt-2914-2019-via040"
           ]
         },
         "tarifa_vencedora": {
-          "valor": "R$ 3,22528 por praça (nov/2012)",
+          "valor": "R$ 3,22528 (TBP, categoria 1; nov/2012)",
           "fontes": [
             "antt-nt-2914-2019-via040"
           ]
@@ -4223,7 +4376,7 @@
       },
       "notas": [
         {
-          "texto": "Foram seis propostas; além das duas que o RoadShow lista, a ANTT registra CS Brasil Transportes de Passageiros e Serviços Ambientais (21,35%), Infra Bertin Participações (20,14%) e Consórcio Ponte (18,20%).",
+          "texto": "A ANTT registra seis propostas: Ecorodovias Infraestrutura e Logística (36,67%, vencedora), Consórcio Nova Guanabara (35,23%), Triunfo Participações e Investimentos (25,38%), CS Brasil Transportes de Passageiros e Serviços Ambientais (21,35%), Infra Bertin Participações (20,14%) e Consórcio Ponte (18,20%). O RoadShow lista só as três primeiras e omite as três últimas.",
           "fontes": [
             "antt-nt-2014-2023-ecoponte"
           ]
@@ -4428,7 +4581,8 @@
           "valor": 15.31,
           "fontes": [
             "antt-nt-8043-2025-rio-sp"
-          ]
+          ],
+          "limitado_pelo_edital": true
         },
         "tarifa_teto": {
           "valor": "R$ 0,11674 por km na BR-116; R$ 0,04373 por km (pista simples) e R$ 0,05685 por km (pista dupla) na BR-101 (out/2019)",
@@ -4561,7 +4715,8 @@
           "valor": 16.25,
           "fontes": [
             "antt-nt-8473-2025-ecovias-araguaia"
-          ]
+          ],
+          "limitado_pelo_edital": true
         },
         "tarifa_teto": {
           "valor": "R$ 0,12200 por km (pista simples) e R$ 0,17081 por km (pista dupla) (jul/2019)",
@@ -4656,7 +4811,7 @@
       },
       "notas": [
         {
-          "texto": "Proposta única: a ANTT registra só a Ecorodovias Concessões e Serviços (3,11%; desconto máximo do edital 17,50%). O “Ecorodovias (10,6%)” que o RoadShow lista como outro proponente tem o mesmo valor do lance da EcoRodovias no leilão de 2021 da BR-101/116/SP/RJ (10,60%).",
+          "texto": "Proposta única: a ANTT registra só a Ecorodovias Concessões e Serviços, com 3,11%. O critério do leilão foi o maior valor de outorga e o menor valor da TBP, com desconto máximo de 17,50% (nota técnica da ANTT, item 17). O “Ecorodovias (10,6%)” que o RoadShow lista como outro proponente tem o mesmo valor do lance da EcoRodovias no leilão de 2021 da BR-101/116/SP/RJ (10,60%).",
           "fontes": [
             "antt-nt-1854-2026-ecovias-rio-minas",
             "antt-nt-8043-2025-rio-sp"

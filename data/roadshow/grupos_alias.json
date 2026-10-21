@@ -1,24 +1,766 @@
 {
   "aliases": [
     {
-      "nome": "Infraestrutura Brasil Holding XXI S.A.",
-      "grupo": "Pátria",
+      "nome": "4UM Investimentos",
+      "grupo": "4UM Investimentos",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Acciona",
+      "grupo": "Acciona",
+      "motivo": "consórcio liderado por",
+      "fontes": [
+        "antt-res-2522-2008",
+        "revistaoe-2014-09-24-br-393"
+      ]
+    },
+    {
+      "nome": "Arteris S.A.",
+      "grupo": "Arteris",
       "motivo": "razão social do grupo"
     },
     {
-      "nome": "Consórcio Infraestrutura PR",
+      "nome": "Obrascon Huarte Lain Brasil S.A.",
+      "grupo": "Arteris",
+      "motivo": "troca de nome",
+      "fontes": [
+        "antt-nt-7038-2022-eco101",
+        "mercadoeconsumo-2022-07-21-arteris"
+      ]
+    },
+    {
+      "nome": "Obrascon Huarte Lain Brasil S.A. (OHL Brasil)",
+      "grupo": "Arteris",
+      "motivo": "troca de nome",
+      "fontes": [
+        "antt-res-2475-2007",
+        "mercadoeconsumo-2022-07-21-arteris"
+      ]
+    },
+    {
+      "nome": "Consórcio Rota Verde Goiás",
+      "grupo": "Aviva",
+      "motivo": "consórcio liderado por",
+      "fontes": [
+        "antt-delib-12-2025",
+        "jornaldebrasilia-2024-12-12-rota-verde"
+      ]
+    },
+    {
+      "nome": "Bolognesi",
+      "grupo": "Bolognesi",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "BTG Pactual Infraestrutura",
+      "grupo": "BTG Pactual",
+      "motivo": "razão social do grupo",
+      "fontes": [
+        "antt-ata-leilao-br-040-go-mg"
+      ]
+    },
+    {
+      "nome": "BTG Pactual Infraestrutura III - Itaú",
+      "grupo": "BTG Pactual",
+      "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "Fundos de investimentos BTG",
+      "grupo": "BTG Pactual",
+      "motivo": "razão social do grupo",
+      "fontes": [
+        "ms-epe-ata-sessao-rota-celulose"
+      ]
+    },
+    {
+      "nome": "Consórcio Rota da Liberdade",
+      "grupo": "Construtora Metropolitana",
+      "motivo": "consórcio liderado por",
+      "fontes": [
+        "mg-seinfra-homologacao-via-liberdade"
+      ]
+    },
+    {
+      "nome": "Consórcio 116 Sertões",
+      "grupo": "Consórcio 116 Sertões",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio 4UM-Opportunity-BR-364/RO",
+      "grupo": "Consórcio 4UM-Opportunity-BR-364/RO",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio AB Vias",
+      "grupo": "Consórcio AB-Vias",
+      "motivo": "grafia",
+      "fontes": [
+        "antt-nt-1819-2022-autopista-fluminense"
+      ]
+    },
+    {
+      "nome": "Consórcio AB-Vias",
+      "grupo": "Consórcio AB-Vias",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Alpha-Federais",
+      "grupo": "Consórcio Alpha-Federais",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Atlas Rodovias",
+      "grupo": "Consórcio Atlas Rodovias",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Bertin Equipav",
+      "grupo": "Consórcio Bertin Equipav",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio BR Vias",
+      "grupo": "Consórcio BRVias",
+      "motivo": "grafia",
+      "fontes": [
+        "antt-nt-6695-2023-regis-bittencourt"
+      ]
+    },
+    {
+      "nome": "Consórcio BRVias",
+      "grupo": "Consórcio BRVias",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Caminho do Cerrado",
+      "grupo": "Consórcio Caminho do Cerrado",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Caminho Novo",
+      "grupo": "Consórcio Caminho Novo",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Cegems",
+      "grupo": "Consórcio Cegems",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Cia Brasileira de Rodovias",
+      "grupo": "Consórcio Cia Brasileira de Rodovias",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Coparco",
+      "grupo": "Consórcio Coparco",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Cowan CBM",
+      "grupo": "Consórcio Cowan CBM",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Elo",
+      "grupo": "Consórcio Elo",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Flora Brasil",
+      "grupo": "Consórcio Flora Brasil Torc",
+      "motivo": "grafia",
+      "fontes": [
+        "antt-nt-5091-2023-transbrasiliana"
+      ]
+    },
+    {
+      "nome": "Consórcio Flora Brasil Torc",
+      "grupo": "Consórcio Flora Brasil Torc",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Integrasul",
+      "grupo": "Consórcio Integrasul",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Integração",
+      "grupo": "Consórcio Integração",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Integração Sudeste",
+      "grupo": "Consórcio Integração Sudeste",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Isolux",
+      "grupo": "Consórcio Isolux",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Itaúna",
+      "grupo": "Consórcio Itaúna",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Ivaí",
+      "grupo": "Consórcio Ivaí",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio J. Malucelli",
+      "grupo": "Consórcio J. Malucelli",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio K&G Rota da Celulose",
+      "grupo": "Consórcio K&G Rota da Celulose",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Nova BR-040",
+      "grupo": "Consórcio Nova BR-040",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Nova Estrada Real",
+      "grupo": "Consórcio Nova Estrada Real",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Nova Guanabara",
+      "grupo": "Consórcio Nova Guanabara",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Odebrecht Transport - Invepar",
+      "grupo": "Consórcio Odebrecht Transport-Invepar",
+      "motivo": "grafia",
+      "fontes": [
+        "antt-nt-7038-2022-eco101",
+        "antt-nt-5476-2024-eco050"
+      ]
+    },
+    {
+      "nome": "Consórcio Odebrecht Transport-Invepar",
+      "grupo": "Consórcio Odebrecht Transport-Invepar",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Oicn",
+      "grupo": "Consórcio Oiicno",
+      "motivo": "grafia",
+      "fontes": [
+        "antt-nt-6695-2023-regis-bittencourt"
+      ]
+    },
+    {
+      "nome": "Oiicno",
+      "grupo": "Consórcio Oiicno",
+      "motivo": "grafia",
+      "fontes": [
+        "antt-nt-6805-2023-fernao-dias"
+      ]
+    },
+    {
+      "nome": "Oinco",
+      "grupo": "Consórcio Oiicno",
+      "motivo": "grafia",
+      "fontes": [
+        "antt-nt-7872-2023-autopista-litoral-sul"
+      ]
+    },
+    {
+      "nome": "Consórcio Planalto",
+      "grupo": "Consórcio Planalto",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio PR/SC",
+      "grupo": "Consórcio PR/SC",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Qualivias",
+      "grupo": "Consórcio Qualivias",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio RodoBahia",
+      "grupo": "Consórcio RodoBahia",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Rodovia Capixaba",
+      "grupo": "Consórcio Rodovia Capixaba",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Rodovia do Sertão",
+      "grupo": "Consórcio Rodovia do Sertão",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Rodovias Brasil",
+      "grupo": "Consórcio Rodovias Brasil",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Rodovias Brasileiras",
+      "grupo": "Consórcio Rodovias Brasileiras",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "CRB Consórcio Rodovias Brasileiras",
+      "grupo": "Consórcio Rodovias Brasileiras",
+      "motivo": "grafia",
+      "fontes": [
+        "antt-nt-6695-2023-regis-bittencourt"
+      ]
+    },
+    {
+      "nome": "Consórcio Rodovias Federais 2013",
+      "grupo": "Consórcio Rodovias Federais 2013",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Rota Agro Brasil",
+      "grupo": "Consórcio Rota Agro Brasil",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Rota Cerrado - Guide",
+      "grupo": "Consórcio Rota do Cerrado",
+      "motivo": "grafia",
+      "fontes": [
+        "istoedinheiro-2024-12-12-rota-verde",
+        "agenciainfra-2025-11-03-rota-sertaneja"
+      ]
+    },
+    {
+      "nome": "Consórcio Rota do Cerrado",
+      "grupo": "Consórcio Rota do Cerrado",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Verdemar",
+      "grupo": "Consórcio Verdemar",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Via Brasil BR163",
+      "grupo": "Consórcio Via Brasil BR-163",
+      "motivo": "grafia",
+      "fontes": [
+        "antt-concessao-via-brasil"
+      ]
+    },
+    {
+      "nome": "Consórcio Via Capital",
+      "grupo": "Consórcio Via Capital",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Via dos Sertões",
+      "grupo": "Consórcio Via dos Sertões",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Via Espírito Santo BR-101",
+      "grupo": "Consórcio Via Espírito Santo BR-101",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Via Nova",
+      "grupo": "Consórcio Via Nova",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Way",
+      "grupo": "Consórcio Way",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Way (construtoras da antiga MGO e GLP)",
+      "grupo": "Consórcio Way",
+      "motivo": "grafia",
+      "fontes": [
+        "antt-nt-5328-2023-ecovias-cerrado"
+      ]
+    },
+    {
+      "nome": "Contern Construções e Comércio Ltda",
+      "grupo": "Contern",
+      "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "Copel",
+      "grupo": "Copel",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "CS Infra S.A.",
+      "grupo": "CS Infra",
+      "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "Consórcio ECO153",
+      "grupo": "Ecorodovias",
+      "motivo": "consórcio liderado por",
+      "fontes": [
+        "antt-nt-8473-2025-ecovias-araguaia",
+        "antt-concessao-ecovias-araguaia",
+        "suno-2021-10-01-ecovias-araguaia"
+      ]
+    },
+    {
+      "nome": "Consórcio Rodovia da Vitória",
+      "grupo": "Ecorodovias",
+      "motivo": "consórcio liderado por",
+      "fontes": [
+        "antt-res-3814-2012",
+        "antt-concessao-ecovias-capixaba",
+        "jb-2013-04-17-eco101"
+      ]
+    },
+    {
+      "nome": "Consórcio Rota do Futuro",
+      "grupo": "Ecorodovias",
+      "motivo": "consórcio liderado por",
+      "fontes": [
+        "antt-nt-3929-2020-msvia",
+        "em-2013-12-17-br-163-ms"
+      ]
+    },
+    {
+      "nome": "Eco Rodovias",
+      "grupo": "Ecorodovias",
+      "motivo": "grafia",
+      "fontes": [
+        "antt-nt-821-2023-viasul"
+      ]
+    },
+    {
+      "nome": "Ecorodovias",
+      "grupo": "Ecorodovias",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Ecorodovias Concessões e Serviços S.A.",
+      "grupo": "Ecorodovias",
+      "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "Ecorodovias Infraestrutura e Logística S.A.",
+      "grupo": "Ecorodovias",
+      "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "Primav Ecorodovias",
+      "grupo": "Ecorodovias",
+      "motivo": "razão social do grupo",
+      "fontes": [
+        "antt-nt-6695-2023-regis-bittencourt"
+      ]
+    },
+    {
+      "nome": "Consórcio Infraestrutura GO",
       "grupo": "EPR",
-      "motivo": "consórcio liderado por"
+      "motivo": "consórcio liderado por",
+      "fontes": [
+        "jornaldebrasilia-2024-12-12-rota-verde"
+      ]
     },
     {
       "nome": "Consórcio Infraestrutura MG",
       "grupo": "EPR",
-      "motivo": "consórcio liderado por"
+      "motivo": "consórcio liderado por",
+      "fontes": [
+        "antt-delib-134-2024",
+        "poder360-2024-04-11-br-040-mg"
+      ]
     },
     {
-      "nome": "4UM Investimentos",
-      "grupo": "4UM Investimentos",
+      "nome": "Consórcio Infraestrutura PR",
+      "grupo": "EPR",
+      "motivo": "consórcio liderado por",
+      "fontes": [
+        "antt-delib-384-2023",
+        "poder360-2023-09-29-rip-lote-2"
+      ]
+    },
+    {
+      "nome": "Consórcio Infraestrutura PR (Necton Investimentos)",
+      "grupo": "EPR",
+      "motivo": "consórcio liderado por",
+      "fontes": [
+        "antt-ata-leilao-rip-lote-3",
+        "poder360-2023-09-29-rip-lote-2"
+      ]
+    },
+    {
+      "nome": "EPR",
+      "grupo": "EPR",
       "motivo": "mesmo nome"
+    },
+    {
+      "nome": "EPR (Equipav)",
+      "grupo": "EPR",
+      "motivo": "grafia"
+    },
+    {
+      "nome": "EPR Participações S.A.",
+      "grupo": "EPR",
+      "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "Infraestrutura MG",
+      "grupo": "EPR",
+      "motivo": "consórcio liderado por",
+      "fontes": [
+        "antt-ata-processo-competitivo-fernao-dias",
+        "poder360-2024-04-11-br-040-mg"
+      ]
+    },
+    {
+      "nome": "Galvão Engenharia S/A",
+      "grupo": "Galvão Engenharia",
+      "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "Galvão-Alusa",
+      "grupo": "Galvão-Alusa",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Houer Consultoria e Concessões Ltda",
+      "grupo": "Houer",
+      "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "Invepar",
+      "grupo": "Invepar",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Investimentos e Participações em Infraestrutura S/A – Invepar",
+      "grupo": "Invepar",
+      "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "Monte Rodovias",
+      "grupo": "Monte Rodovias",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Mota-Engil Latam Portugal, S.A.",
+      "grupo": "Mota-Engil",
+      "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "CCR",
+      "grupo": "Motiva",
+      "motivo": "troca de nome",
+      "fontes": [
+        "antt-nt-6805-2023-fernao-dias",
+        "b3-borainvestir-2025-04-24-ccr-motiva"
+      ]
+    },
+    {
+      "nome": "CCR S.A.",
+      "grupo": "Motiva",
+      "motivo": "troca de nome",
+      "fontes": [
+        "b3-borainvestir-2025-04-24-ccr-motiva"
+      ]
+    },
+    {
+      "nome": "Companhia de Participações em Concessões",
+      "grupo": "Motiva",
+      "motivo": "razão social do grupo",
+      "fontes": [
+        "ccr-ri-2013-12-17-cpc-br-163-ms",
+        "antt-concessao-motiva-pantanal"
+      ]
+    },
+    {
+      "nome": "Companhia de Participações em Concessões - CCR",
+      "grupo": "Motiva",
+      "motivo": "razão social do grupo",
+      "fontes": [
+        "antt-nt-2914-2019-via040",
+        "ccr-ri-2013-12-17-cpc-br-163-ms"
+      ]
+    },
+    {
+      "nome": "Companhia de Participações em Concessões - CPC",
+      "grupo": "Motiva",
+      "motivo": "razão social do grupo",
+      "fontes": [
+        "antt-nt-1861-2021-concebra",
+        "ccr-ri-2013-12-17-cpc-br-163-ms"
+      ]
+    },
+    {
+      "nome": "Motiva Infraestrutura de Mobilidade S.A.",
+      "grupo": "Motiva",
+      "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "Odebrecht Transport S.A.",
+      "grupo": "Odebrecht Transport",
+      "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "Odebrecht Transport S/A",
+      "grupo": "Odebrecht Transport",
+      "motivo": "grafia"
+    },
+    {
+      "nome": "Consórcio Opportunity Dinâmico FIP Multiestratégia Investimentos no Exterior",
+      "grupo": "Opportunity",
+      "motivo": "razão social do grupo",
+      "fontes": [
+        "antt-ata-leilao-br-381-mg"
+      ]
+    },
+    {
+      "nome": "Plus Byte SRL",
+      "grupo": "Plus Byte",
+      "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "PLUS BYTE SRL (desclassificada)",
+      "grupo": "Plus Byte",
+      "motivo": "grafia"
+    },
+    {
+      "nome": "Ponta Negra (não admitida)",
+      "grupo": "Ponta Negra",
+      "motivo": "grafia"
+    },
+    {
+      "nome": "INFRA BR V Missouri Holding S.A. (Terra Investimentos)",
+      "grupo": "Pátria",
+      "motivo": "razão social do grupo",
+      "fontes": [
+        "antt-ata-leilao-rip-lote-3",
+        "jornaldebrasilia-2024-12-12-rip-lote-3"
+      ]
+    },
+    {
+      "nome": "Infraestrutura Brasil Holding II S.A.",
+      "grupo": "Pátria",
+      "motivo": "razão social do grupo",
+      "fontes": [
+        "antt-nt-821-2023-viasul",
+        "poder360-2018-11-01-viasul"
+      ]
+    },
+    {
+      "nome": "Infraestrutura Brasil Holding XXI S.A.",
+      "grupo": "Pátria",
+      "motivo": "razão social do grupo",
+      "fontes": [
+        "antt-delib-370-2023",
+        "aen-pr-2023-08-25-lote-1"
+      ]
+    },
+    {
+      "nome": "Reune Rodovias Holding II S.A.",
+      "grupo": "Pátria",
+      "motivo": "grafia",
+      "fontes": [
+        "b3-2025-10-30-rip-lote-5",
+        "pr-gov-2025-10-30-rip-lote-5"
+      ]
+    },
+    {
+      "nome": "Reúne Rodovias Holding II S.A.",
+      "grupo": "Pátria",
+      "motivo": "razão social do grupo",
+      "fontes": [
+        "b3-2025-10-30-rip-lote-5",
+        "pr-gov-2025-10-30-rip-lote-5"
+      ]
+    },
+    {
+      "nome": "Reúne Rodovias Holding S.A.",
+      "grupo": "Pátria",
+      "motivo": "razão social do grupo",
+      "fontes": [
+        "antt-ata-leilao-rip-lote-4",
+        "agenciainfra-2025-10-20-rip-lote-4"
+      ]
+    },
+    {
+      "nome": "Construtora Queiroz Galvão S.A.",
+      "grupo": "Queiroz Galvão",
+      "motivo": "razão social do grupo",
+      "fontes": [
+        "antt-nt-5476-2024-eco050"
+      ]
+    },
+    {
+      "nome": "Consórcio Queiroz Galvão Infraestrutura",
+      "grupo": "Queiroz Galvão",
+      "motivo": "consórcio liderado por",
+      "fontes": [
+        "antt-nt-3929-2020-msvia",
+        "em-2013-12-17-br-163-ms"
+      ]
+    },
+    {
+      "nome": "Sacyr",
+      "grupo": "Sacyr",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Silva & Bertoli Empreendimentos",
+      "grupo": "Silva & Bertoli",
+      "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "TPI Triunfo Participações",
+      "grupo": "Triunfo",
+      "motivo": "grafia"
+    },
+    {
+      "nome": "TPI Triunfo Participações e Investimentos",
+      "grupo": "Triunfo",
+      "motivo": "grafia"
+    },
+    {
+      "nome": "TPI Triunfo Participações e Investimentos S/A",
+      "grupo": "Triunfo",
+      "motivo": "grafia"
+    },
+    {
+      "nome": "Triunfo Participações e Investimentos - TPI",
+      "grupo": "Triunfo",
+      "motivo": "grafia"
+    },
+    {
+      "nome": "Triunfo Participações e Investimentos S.A.",
+      "grupo": "Triunfo",
+      "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "Triunfo Participações e Investimentos S/A",
+      "grupo": "Triunfo",
+      "motivo": "grafia"
+    },
+    {
+      "nome": "V.F Gomes Participações Ltda",
+      "grupo": "VF Gomes Participações",
+      "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "Vinci Highways do Brasil - Participações S.A.",
+      "grupo": "Vinci",
+      "motivo": "razão social do grupo"
     },
     {
       "nome": "VINCI Highways S.A.S",
@@ -28,47 +770,11 @@
     {
       "nome": "Rotas do Brasil S.A.",
       "grupo": "Way Concessões",
-      "motivo": "razão social do grupo"
-    },
-    {
-      "nome": "Consórcio Rota Verde Goiás",
-      "grupo": "Aviva Fundo de Investimento",
-      "motivo": "consórcio liderado por"
-    },
-    {
-      "nome": "CCR S.A.",
-      "grupo": "Motiva",
-      "motivo": "troca de nome"
-    },
-    {
-      "nome": "Consórcio 4UM-Opportunity-BR-364/RO",
-      "grupo": "4UM Investimentos",
-      "motivo": "consórcio liderado por"
-    },
-    {
-      "nome": "Consórcio Nova Estrada Real",
-      "grupo": "Construcap; Copasa; Ohla",
-      "motivo": "consórcio liderado por"
-    },
-    {
-      "nome": "Motiva Infraestrutura de Mobilidade S.A.",
-      "grupo": "Motiva",
-      "motivo": "razão social do grupo"
-    },
-    {
-      "nome": "Ecorodovias Concessões e Serviços S.A.",
-      "grupo": "Ecorodovias",
-      "motivo": "razão social do grupo"
-    },
-    {
-      "nome": "Consórcio Caminhos da Celulose",
-      "grupo": "XP Infra V Fundo de Investimento",
-      "motivo": "consórcio liderado por"
-    },
-    {
-      "nome": "CS Infra S.A.",
-      "grupo": "CS Infra S.A.",
-      "motivo": "mesmo nome"
+      "motivo": "razão social do grupo",
+      "fontes": [
+        "antt-ata-leilao-br-262-mg",
+        "investnews-2024-10-31-rota-do-zebu"
+      ]
     },
     {
       "nome": "Way Concessões S.A.",
@@ -76,94 +782,22 @@
       "motivo": "razão social do grupo"
     },
     {
-      "nome": "Reúne Rodovias Holding II S.A.",
-      "grupo": "Pátria",
-      "motivo": "razão social do grupo"
+      "nome": "XP e um consórcio formado por Kinea e Way",
+      "grupo": "Way Concessões",
+      "motivo": "razão social do grupo",
+      "fontes": [
+        "ms-epe-ata-sessao-rota-celulose",
+        "campograndenews-2025-05-05-rota-celulose"
+      ]
     },
     {
-      "nome": "Consórcio Rota da Liberdade",
-      "grupo": "Construtora Metropolitana S.A.",
-      "motivo": "consórcio liderado por"
-    },
-    {
-      "nome": "Arteris S.A.",
-      "grupo": "Arteris",
-      "motivo": "razão social do grupo"
-    },
-    {
-      "nome": "Consórcio 116 Sertões",
-      "grupo": "Neo Invest Latam",
-      "motivo": "consórcio liderado por"
-    },
-    {
-      "nome": "EPR Participações S.A.",
-      "grupo": "EPR",
-      "motivo": "razão social do grupo"
-    },
-    {
-      "nome": "Consórcio BRVias",
-      "grupo": "Consórcio BRVias",
-      "motivo": "mesmo nome"
-    },
-    {
-      "nome": "Obrascon Huarte Lain Brasil S.A. (OHL Brasil)",
-      "grupo": "Arteris",
-      "motivo": "troca de nome"
-    },
-    {
-      "nome": "Consórcio Acciona",
-      "grupo": "Acciona",
-      "motivo": "consórcio liderado por"
-    },
-    {
-      "nome": "Consórcio RodoBahia",
-      "grupo": "Consórcio RodoBahia",
-      "motivo": "mesmo nome"
-    },
-    {
-      "nome": "Consórcio Rodovia da Vitória",
-      "grupo": "Ecorodovias",
-      "motivo": "consórcio liderado por"
-    },
-    {
-      "nome": "Consórcio Planalto",
-      "grupo": "Consórcio Planalto",
-      "motivo": "mesmo nome"
-    },
-    {
-      "nome": "Triunfo Participações e Investimentos S.A.",
-      "grupo": "Triunfo",
-      "motivo": "razão social do grupo"
-    },
-    {
-      "nome": "Companhia de Participações em Concessões",
-      "grupo": "Motiva",
-      "motivo": "razão social do grupo"
-    },
-    {
-      "nome": "Investimentos e Participações em Infraestrutura S/A – Invepar",
-      "grupo": "Invepar",
-      "motivo": "razão social do grupo"
-    },
-    {
-      "nome": "Odebrecht Transport S.A.",
-      "grupo": "Odebrecht Transport",
-      "motivo": "razão social do grupo"
-    },
-    {
-      "nome": "Ecorodovias Infraestrutura e Logística S.A.",
-      "grupo": "Ecorodovias",
-      "motivo": "razão social do grupo"
-    },
-    {
-      "nome": "Consórcio ECO153",
-      "grupo": "Ecorodovias",
-      "motivo": "consórcio liderado por"
-    },
-    {
-      "nome": "Consórcio Via Brasil BR163",
-      "grupo": "Consórcio Via Brasil BR163",
-      "motivo": "mesmo nome"
+      "nome": "Consórcio Caminhos da Celulose",
+      "grupo": "XP",
+      "motivo": "consórcio liderado por",
+      "fontes": [
+        "ms-doe-homologacao-rota-celulose",
+        "ms-agencia-2026-02-07-rota-celulose"
+      ]
     }
   ]
 }

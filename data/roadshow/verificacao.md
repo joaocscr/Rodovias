@@ -243,8 +243,8 @@ Gerado por `scripts/build.py` a partir de `data/roadshow/verificacao.json`. Hier
 | via-040-2013 | leilao | 27/12/2013 | oficial | — | antt-nt-2914-2019-via040 |
 | via-040-2013 | grupo_vencedor | Investimentos e Participações em Infraestrutura S/A – Invepar | oficial | Invepar | antt-nt-2914-2019-via040 |
 | via-040-2013 | desagio | 61,13% | oficial | — | antt-nt-2914-2019-via040 |
-| via-040-2013 | tarifa_teto | R$ 8,29763 por praça (nov/2012) | oficial | — | antt-nt-2914-2019-via040 |
-| via-040-2013 | tarifa_vencedora | R$ 3,22528 por praça (nov/2012) | oficial | — | antt-nt-2914-2019-via040 |
+| via-040-2013 | tarifa_teto | R$ 8,29763 (TBP, categoria 1; nov/2012) | oficial | — | antt-nt-2914-2019-via040 |
+| via-040-2013 | tarifa_vencedora | R$ 3,22528 (TBP, categoria 1; nov/2012) | oficial | — | antt-nt-2914-2019-via040 |
 | via-040-2013 | assinatura | 12/03/2014 | oficial | — | antt-nt-2914-2019-via040, antt-concessao-via-040 |
 | via-040-2013 | prazo_anos | 30 | oficial | — | antt-nt-2914-2019-via040, antt-concessao-via-040 |
 | rota-do-oeste-2013 | leilao | 27/11/2013 | oficial | — | antt-nt-4608-2023-rota-do-oeste |
@@ -365,12 +365,12 @@ Gerado por `scripts/build.py` a partir de `data/roadshow/verificacao.json`. Hier
 - **via-040-2013**: A concessionária pediu a relicitação do contrato (Lei 13.448/2017), citada pela ANTT já em 2019; a página da ANTT lista hoje a VIA 040 como “Contrato Encerrado”. Em 2024 a ANTT leiloou partes da BR-040 em novos contratos (BR-040/MG Belo Horizonte–Juiz de Fora, 11/04/2024; BR-040/GO/MG Rota dos Cristais, 26/09/2024).
 - **via-040-2013**: Na tabela de lances da ANTT, a Triunfo Participações e Investimentos ofereceu 9,48%; o RoadShow imprime 9,98%.
 - **rota-do-oeste-2013**: A Odebrecht Transport venceu e a SPE CRO – Concessionária Rota do Oeste assinou o contrato. Em 15/12/2022 a ANTT anuiu com a transferência do controle da CRO para a MT Participações e Projetos S.A. – MTPAR, do estado de Mato Grosso (Deliberação nº 382/2022; troca de controle, não troca de nome); a concessionária passou a se chamar Nova Rota do Oeste.
-- **ecoponte-2015**: Foram seis propostas; além das duas que o RoadShow lista, a ANTT registra CS Brasil Transportes de Passageiros e Serviços Ambientais (21,35%), Infra Bertin Participações (20,14%) e Consórcio Ponte (18,20%).
+- **ecoponte-2015**: A ANTT registra seis propostas: Ecorodovias Infraestrutura e Logística (36,67%, vencedora), Consórcio Nova Guanabara (35,23%), Triunfo Participações e Investimentos (25,38%), CS Brasil Transportes de Passageiros e Serviços Ambientais (21,35%), Infra Bertin Participações (20,14%) e Consórcio Ponte (18,20%). O RoadShow lista só as três primeiras e omite as três últimas.
 - **viasul-2018**: O lance vencedor foi da Companhia de Participações em Concessões (CPC), que o RoadShow imprime como “CCR S.A”; o resultado foi homologado pela Deliberação ANTT nº 987/2018, a SPE ViaSul assinou o contrato e a ANTT lista hoje a Motiva Infraestrutura de Mobilidade como controladora.
 - **rio-sp-2021**: Critério híbrido: menor tarifa com desconto máximo de 15,31% e, a partir daí, maior outorga. A CCR S.A. deu o desconto máximo (15,31%) e outorga de R$ 1,77 bilhão; a EcoRodovias ofereceu 10,60%. O deságio exibido é o desconto sobre a tarifa, limitado pelo edital.
 - **via-brasil-2021**: Proposta única. A NT 9910/2024 dá como critério “o menor valor da TBP” (a Agência Brasil, no dia do leilão, também: “menor valor no pedágio”); a NT 2285/2023 menciona “o maior valor de Outorga e o menor valor da tarifa”. O número exibido é o desconto sobre a tarifa-teto que as duas notas da ANTT imprimem (8,10%: R$ 0,07867/km sobre R$ 0,08560/km); a Agência Brasil publicou 8,09%.
 - **ecovias-araguaia-2021**: Critério híbrido: menor tarifa com desconto máximo de 16,25% e, a partir daí, maior outorga. O Consórcio ECO153 e a CCR S.A. deram o desconto máximo; o ECO153 venceu com outorga de R$ 320 milhões (homologação pela Deliberação ANTT nº 203/2021). A SPE Ecovias Araguaia tem como controladoras a Ecorodovias Concessões e Serviços e a GLP X Participações.
-- **ecovias-rio-minas-2022**: Proposta única: a ANTT registra só a Ecorodovias Concessões e Serviços (3,11%; desconto máximo do edital 17,50%). O “Ecorodovias (10,6%)” que o RoadShow lista como outro proponente tem o mesmo valor do lance da EcoRodovias no leilão de 2021 da BR-101/116/SP/RJ (10,60%).
+- **ecovias-rio-minas-2022**: Proposta única: a ANTT registra só a Ecorodovias Concessões e Serviços, com 3,11%. O critério do leilão foi o maior valor de outorga e o menor valor da TBP, com desconto máximo de 17,50% (nota técnica da ANTT, item 17). O “Ecorodovias (10,6%)” que o RoadShow lista como outro proponente tem o mesmo valor do lance da EcoRodovias no leilão de 2021 da BR-101/116/SP/RJ (10,60%).
 - **ecovias-rio-minas-2022**: A nota técnica da ANTT dá a assinatura em 19/08/2022 (igual ao RoadShow); a página da concessão na ANTT mostra 22/08/2022.
 
 ## Inabilitados
