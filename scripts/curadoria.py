@@ -241,6 +241,12 @@ def _md(s):
     return str(s).replace("|", "\\|").replace("\n", " ")
 
 
+def _curto(s, n=400):
+    """Texto de célula do relatório: até `n` caracteres (o log do atualizar traz o texto inteiro)."""
+    s = str(s)
+    return s if len(s) <= n else s[:n - 1] + "…"
+
+
 def _mudou(d):
     """'não', 'novo', 'removido' ou 'sim (+9 bytes)' / 'sim (−1,2 KB)': a variação aparece mesmo quando o KB arredondado
     não muda."""
@@ -261,7 +267,7 @@ def relatorio(hoje, passos, diff, itens_curadoria, opcoes="", erros=(), sem_novi
               f"Gerado por `python scripts/atualizar.py`{f' ({opcoes})' if opcoes else ''}. Diferenças em relação à "
               "versão de `data/intel/` no último commit do git.", "",
               "## Passos", "", "| Passo | Resultado | Detalhe |", "|---|---|---|"]
-    linhas += [f"| {_md(p['passo'])} | {p['estado']} | {_md(p.get('detalhe') or '')} |" for p in passos]
+    linhas += [f"| {_md(p['passo'])} | {p['estado']} | {_md(_curto(p.get('detalhe') or ''))} |" for p in passos]
     if erros:
         linhas += ["", "## Erros da camada de verificação", "",
                    "O HTML não foi gerado. Corrija `data/roadshow/verificacao.json` ou `grupos_alias.json`:", ""]

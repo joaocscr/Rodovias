@@ -25,7 +25,10 @@ def blk():
 
 @pytest.fixture(scope="module")
 def conc():
-    return json.loads((ROOT / "data" / "base" / "conc.json").read_text(encoding="utf-8"))
+    """CONC como no build: base congelada + JSON curados de data/roadshow/ (entidades relidas de entidades.json)."""
+    from roadshow import conc_da_base
+    ler = lambda n: json.loads((ROOT / "data" / "base" / n).read_text(encoding="utf-8"))  # noqa: E731
+    return conc_da_base(ler("conc.json"), ROOT / "data" / "roadshow", ler("snv.json"))
 
 
 def test_status_so_da_lista_do_contrato(blk):
@@ -237,3 +240,21 @@ def test_montar_falha_com_camada_de_verificacao_invalida(monkeypatch):
     with pytest.raises(SystemExit) as exc:
         pipeline.montar()
     assert "Falha na verificação dos leilões" in str(exc.value) and "nao-existe" in str(exc.value)
+
+
+
+def test_data_editada_em_entidades_json_chega_ao_pipeline(tmp_path):
+    """O pipeline usa as mesmas entidades do HTML: a data de leilão editada em entidades.json muda o item ligado."""
+    d = tmp_path / "roadshow"
+    d.mkdir()
+    for p in (ROOT / "data" / "roadshow").glob("*.json"):
+        (d / p.name).write_text(p.read_text(encoding="utf-8"), encoding="utf-8")
+    item = next(i for i in pipeline.montar()["itens"] if i["ent"] == "rota-do-pequi")
+    assert item["status"] == "leilao_agendado"
+    ents = json.loads((d / "entidades.json").read_text(encoding="utf-8"))
+    e = next(x for x in ents if x["id"] == "rota-do-pequi")
+    assert e["leilao"] == item["data_prevista"]
+    e["leilao"] = "2027-02-15"
+    (d / "entidades.json").write_text(json.dumps(ents, ensure_ascii=False), encoding="utf-8")
+    novo = next(i for i in pipeline.montar(roadshow_dir=d)["itens"] if i["ent"] == "rota-do-pequi")
+    assert novo["data_prevista"] == "2027-02-15"

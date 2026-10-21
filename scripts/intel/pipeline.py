@@ -19,9 +19,10 @@ Colunas do CSV (as do contrato mais `estudo`):
   - edital, leilao_agendado, tcu, consulta_publica, estudo (e suspenso/cancelado, quando houver): data do leilão;
   - leiloado: data da assinatura do contrato (prevista);
   - contrato: data da assinatura do contrato (efetiva).
-  Quando o item tem `ent`, a data segue data/base/conc.json (`leilao`, `assinatura`, `assinatura_aditivo`) ou a ficha
-  estadual (`assinatura`) para coincidir com as demais abas; divergências de outras fontes (ex.: BNDES Hub) ficam em
-  `obs`. O `km` de item com ficha estadual é o `km_decl` da ficha.
+  Quando o item tem `ent` federal, `montar` usa a data da entidade (data/roadshow/entidades.json relido sobre a base,
+  como no build, com a camada de verificação: `leilao`, `assinatura`, `assinatura_aditivo`), e o valor do CSV fica só
+  como reserva quando a entidade não tem a data; com ficha estadual, a data do CSV segue a `assinatura` da ficha. Assim
+  o pipeline coincide com as demais abas; divergências de outras fontes (ex.: BNDES Hub) ficam em `obs`. O `km` de item com ficha estadual é o `km_decl` da ficha.
 - `obs`: texto exibido ao usuário; fatos em linguagem direta.
 
 Uso: python scripts/intel/pipeline.py [fetch|build|all]
@@ -36,13 +37,15 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from intel.fontes import RAW, ROOT, Manifest, fetch as baixar  # noqa: E402
+from roadshow import conc_da_base  # noqa: E402
 from verificacao import aplicar, carregar, carregar_aliases, validar  # noqa: E402
 
 DOMINIO = "pipeline"
 RAW_DIR = RAW / DOMINIO
 CSV = ROOT / "data" / "intel" / "pipeline.csv"
 OUT = ROOT / "data" / "intel" / "pipeline.json"
-CONC = ROOT / "data" / "base" / "conc.json"
+BASE = ROOT / "data" / "base"
+ROADSHOW = ROOT / "data" / "roadshow"
 ESTADUAIS = ROOT / "data" / "intel" / "estaduais.json"
 ACESSO = "2026-10-20"
 
@@ -185,19 +188,40 @@ def item_de_linha(r, ents, n_estudos, ents_est=frozenset()):
     }
 
 
-def montar(csv_path=CSV, conc_path=CONC, est_path=ESTADUAIS):
-    # valores de leilão exibidos (camada de verificação sobre a base congelada), validada como no build
-    conc = json.loads(Path(conc_path).read_text(encoding="utf-8"))
+def data_da_entidade(status, e):
+    """Data do item ligado à entidade federal `e`: assinatura (prevista no leiloado, com o termo aditivo da otimização;
+    efetiva no contrato) ou leilão (demais status)."""
+    if status == "leiloado":
+        return e.get("assinatura_aditivo") or e.get("assinatura")
+    if status == "contrato":
+        return e.get("assinatura")
+    return e.get("leilao")
+
+
+def montar(csv_path=CSV, base_dir=BASE, roadshow_dir=ROADSHOW, est_path=ESTADUAIS):
+    # o mesmo CONC do build (base congelada + entidades e demais JSON curados de data/roadshow/), com a camada de
+    # verificação validada e aplicada como no build
+    ler = lambda nome: json.loads((Path(base_dir) / nome).read_text(encoding="utf-8"))  # noqa: E731
+    try:
+        conc = conc_da_base(ler("conc.json"), roadshow_dir, ler("snv.json"))
+    except ValueError as e:
+        sys.exit(f"Falha: {e}")
     verif, aliases = carregar(), carregar_aliases()
     erros = validar(verif, conc, aliases)
     if erros:
         sys.exit("Falha na verificação dos leilões:\n" + "\n".join(erros))
     conc = aplicar(conc, verif, aliases)
-    ents = {e["id"] for e in conc["entidades"]}
+    por_id = {e["id"]: e for e in conc["entidades"]}
+    ents = set(por_id)
     est = Path(est_path)
     ents_est = {e["id"] for e in json.loads(est.read_text(encoding="utf-8"))["entidades"]} if est.exists() else set()
     with open(csv_path, encoding="utf-8", newline="") as f:
         itens = [item_de_linha(r, ents, len(conc["estudos"]), ents_est) for r in csv.DictReader(f)]
+    for i in itens:
+        if i["ent"] in por_id:
+            d = data_da_entidade(i["status"], por_id[i["ent"]])
+            if isinstance(d, str) and RE_DATA.fullmatch(d):  # data da entidade (AAAA-MM-DD ou AAAA-MM); senão, a do CSV
+                i["data_prevista"] = d
     return {"fonte": FONTE, "itens": itens, "status": [{"key": k, "label": v} for k, v in STATUS]}
 
 

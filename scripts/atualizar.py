@@ -140,7 +140,7 @@ def executar(passos, intel_dir=INTEL, baixar=False, log=print, manifest_dir=MANI
             _restaura(pastas, antes)
             if not critico:  # o passo crítico é relatado por quem chama, com a mensagem própria
                 log(f"AVISO: {nome} {estado}: {detalhe}")
-        out.append({"passo": nome, "estado": estado, "detalhe": detalhe[:400]})
+        out.append({"passo": nome, "estado": estado, "detalhe": detalhe})  # o relatório encurta; o log, não
     return out
 
 

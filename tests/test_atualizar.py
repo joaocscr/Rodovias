@@ -113,6 +113,8 @@ def _atualiza(tmp_path, chamadas, erros=(), build_falha=False, html=True, renova
 
     def construir():
         chamadas.append("html")
+        if build_falha == "longo":
+            raise SystemExit("Falha: " + "x" * 600 + " FIM")
         if build_falha == "arquivo":
             raise FileNotFoundError(2, "No such file or directory", str(atualizar.ROOT / "vendor/leaflet/leaflet.js"))
         if build_falha:
@@ -259,3 +261,14 @@ def test_renovar_invalido_e_erro_de_uso(args):
     with pytest.raises(SystemExit) as e:
         atualizar.main(args)
     assert e.value.code == 2
+
+
+
+def test_erro_do_html_sai_inteiro_no_log_e_encurtado_no_relatorio(tmp_path):
+    linhas = []
+    codigo, md = _atualiza(tmp_path, [], build_falha="longo", log=linhas.append)
+    assert codigo == 1
+    erro = next(x for x in linhas if x.startswith("ERRO: "))
+    assert erro.endswith(" FIM") and len(erro) > 600
+    celula = next(x for x in md.splitlines() if x.startswith("| build.py (HTML) | falhou |"))
+    assert " FIM" not in celula and "…" in celula
