@@ -1035,6 +1035,76 @@ test('(e, f) Pipeline: ≥ 60 linhas por data prevista, filtros, contagem por st
   await go('#mapa');
 });
 
+test('Pipeline: linha do tempo de editais e leilões bate com o modelo (linhas, marcas, cores, rodapé) e o nome abre a ficha', async () => {
+  await go('#projetos');
+  const m = await page.evaluate(() => {
+    const res = IntelModel.linhaDoTempoResumo(window.CONC, window.INTEL.pipeline);
+    return { res, ficha: res.rows.map(r => !!(r.ent && Ficha.exists(r.ent))), cor: Object.fromEntries(Object.entries(PIPE_STATUS)),
+      lbl: Object.fromEntries(window.INTEL.pipeline.status.map(x => [x.key, x.label])) };
+  });
+  const { res } = m;
+  assert.ok(res.rows.length >= 15, String(res.rows.length));
+  // cartão dentro do Pipeline, antes da tabela; título com os anos dos leilões
+  const pos = await page.evaluate(() => {
+    const c = document.getElementById('pipe-timeline'), t = document.getElementById('pipe-table');
+    return { dentro: !!c.closest('#pipeline'), antes: !!(c.compareDocumentPosition(t) & 4), hidden: c.hidden, h3: c.querySelector('h3').textContent };
+  });
+  assert.deepEqual([pos.dentro, pos.antes, pos.hidden], [true, true, false]);
+  assert.equal(pos.h3, `Linha do tempo: editais e leilões ${res.anos.de}–${res.anos.ate}`);
+  // uma linha e um losango por item do modelo, na mesma ordem; círculo só onde há edital
+  const sel = '#pipe-timeline svg.chart';
+  assert.deepEqual(await page.$$eval(`${sel} .tl-leilao`, ps => ps.map(p => p.dataset.id)), res.rows.map(r => r.id));
+  assert.equal(await page.locator(`${sel} .tl-row`).count(), res.rows.length);
+  assert.deepEqual(await page.$$eval(`${sel} .tl-edital`, cs => cs.map(c => c.dataset.id)), res.rows.filter(r => r.edital).map(r => r.id));
+  assert.equal(await page.locator(`${sel} .tl-span`).count(), res.rows.filter(r => r.edital).length);
+  // posição cresce com a data do leilão; o eixo mostra cada ano entre de e ate (do modelo)
+  const xs = await page.$$eval(`${sel} .tl-leilao`, ps => ps.map(p => Number(p.dataset.leilaoX)));
+  assert.deepEqual(xs, [...xs].sort((a, b) => a - b));
+  const anos = await page.$$eval(`${sel} .tl-ano`, ts => ts.map(t => Number(t.textContent)));
+  assert.deepEqual(anos, Array.from({ length: res.ate - res.de + 1 }, (_, k) => res.de + k));
+  // cor de cada losango e círculo = token do status; legenda com os status usados e as duas marcas
+  const rgb = h => `rgb(${[1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)).join(', ')})`;
+  const fills = await page.$$eval(`${sel} .tl-leilao`, ps => ps.map(p => getComputedStyle(p).fill));
+  fills.forEach((f, i) => assert.equal(f, rgb(m.cor[res.rows[i].status]), res.rows[i].id));
+  const strokes = await page.$$eval(`${sel} .tl-edital`, cs => cs.map(c => [getComputedStyle(c).stroke, getComputedStyle(c).fill]));
+  const comEdital = res.rows.filter(r => r.edital);
+  strokes.forEach(([st, fl], i) => { assert.equal(st, rgb(m.cor[comEdital[i].status])); assert.equal(fl, 'none'); });
+  const leg = await page.textContent('#pipe-timeline .chart-legend:first-of-type');
+  for (const k of new Set(res.rows.map(r => r.status))) assert.ok(leg.includes(m.lbl[k]), k);
+  assert.match(await page.textContent('#pipe-timeline'), /Edital\s*Leilão|Edital.*Leilão/);
+  // só tokens do projeto nas marcas
+  const cores = await page.$$eval(sel + ' [fill], ' + sel + ' [stroke]', els => els.flatMap(e => [e.getAttribute('fill'), e.getAttribute('stroke')]).filter(c => c && c[0] === '#'));
+  const ok = new Set(await page.evaluate(() => [...DATA_TOKENS, '#183C80', '#0071BB', '#231F20', '#525254', '#F7F7F8']));
+  for (const c of cores) assert.ok(ok.has(c.toUpperCase()), c);
+  // rodapé: itens do pipeline sem data de leilão, contados pelo modelo
+  const fora = page.locator('#pipe-timeline-fora');
+  if (res.semData) assert.match(await fora.textContent(), new RegExp(`^${res.semData}\\s`)); else assert.equal(await fora.count(), 0);
+  // data só com mês: marca "(mês)" no texto e na dica, e não nas datas completas
+  const textos = await page.$$eval(`${sel} .tl-row`, gs => gs.map(g => [...g.querySelectorAll(':scope > text')].pop().textContent));
+  res.rows.forEach((r, i) => assert.equal(/\(mês\)$/.test(textos[i]), r.leilao.length === 7, r.id));
+  assert.ok(!/NaN|undefined|null/.test(await page.innerHTML(sel)));
+  // o nome abre a ficha só nas linhas com ficha
+  const ks = await page.$$eval(`${sel} .tl-row`, gs => gs.map(g => g.dataset.k || null));
+  assert.deepEqual(ks, res.rows.map((r, i) => (m.ficha[i] ? r.ent : null)));
+  const i0 = ks.findIndex(Boolean);
+  assert.ok(i0 >= 0);
+  await page.locator(`${sel} .tl-row`).nth(i0).locator(':scope > text').first().click();
+  await routed(page, '#ficha/' + ks[i0]);
+  await escFicha();
+  // teclado: Enter na linha abre a ficha
+  await page.locator(`${sel} .tl-row[data-k]`).first().focus();
+  await page.keyboard.press('Enter');
+  await routed(page, '#ficha/' + ks[i0]);
+  await escFicha();
+  // linha sem ficha não navega
+  const semFicha = ks.findIndex(k => !k);
+  if (semFicha >= 0) {
+    await page.locator(`${sel} .tl-row`).nth(semFicha).locator(':scope > text').first().click();
+    assert.equal(await page.evaluate(() => location.hash), '#projetos');
+  }
+  await go('#mapa');
+});
+
 test('sem window.INTEL: Projetos e ficha da v2 sem esfera, pipeline nem ANTT, sem erros', async () => {
   const errs = [], ext = [];
   const p = await openPage(errs, ext, html => html.replace('window.INTEL=', 'window.INTEL_AUSENTE='));

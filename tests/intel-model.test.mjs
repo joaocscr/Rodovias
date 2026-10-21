@@ -1036,3 +1036,75 @@ test('paisLabelPoint: evita os rótulos já colocados (ocupados), como SR e GF l
   const p3 = IntelModel.paisLabelPoint(quad, [], { hw: 2, hh: 0.5, passo: 0.25, ocupados: [viz], caixa: { hw: 3, hh: 1 } });
   assert.deepEqual([Math.abs(p3[0] + 20), p3[1]], [1.5, -60]);
 });
+
+// ---------- Linha do tempo de editais e leilões ----------
+const tlConc = { entidades: [
+  { id: 'e1', leilao: '2026-12-11', edital: '2026-09-02', cronograma: [{ marco: 'Edital', data: '2026-09-02' }, { marco: 'Leilão', data: '2026-12-11' }] },
+  { id: 'e2', leilao: '2026-05-28', edital: null, cronograma: [{ marco: 'TCU', data: '2025' }, { marco: 'Edital', data: '2026-02-13' }, { marco: 'Leilão', data: '2026-05-28' }] },
+  { id: 'e3', leilao: '2027-06', edital: '2027-03', cronograma: [] },
+  { id: 'e4', leilao: '2027-09', edital: null, cronograma: [{ marco: 'Edital', data: '2027' }] },
+  { id: 'e5', leilao: '2022-04-13', edital: '2022-01-10', cronograma: [] },
+  { id: 'e6', leilao: null, edital: null, cronograma: [{ marco: 'Leilão', data: '2027-02-10' }] },
+] };
+const tlItem = (id, o) => Object.assign({ id, nome: id.toUpperCase(), esfera: 'federal', status: 'edital', data_prevista: null, ent: null }, o);
+const tlPipe = { itens: [
+  tlItem('p-e3', { ent: 'e3', status: 'tcu', data_prevista: '2027-06' }),
+  tlItem('p-e1', { ent: 'e1', status: 'leilao_agendado', data_prevista: '2026-12-11' }),
+  tlItem('p-e2', { ent: 'e2', status: 'contrato', data_prevista: '2026-09-29' }), // data_prevista = assinatura; vale o leilão da entidade
+  tlItem('p-e4', { ent: 'e4', status: 'estudo' }), // edital só com o ano: sem edital
+  tlItem('p-e5', { ent: 'e5', status: 'contrato', data_prevista: '2022-12-22' }), // leilão anterior a 2026: fora do recorte (e não conta como sem data)
+  tlItem('p-e6', { ent: 'e6', status: 'estudo' }), // leilão só no cronograma
+  tlItem('est-a', { esfera: 'estadual', status: 'tcu', data_prevista: '2027-04-26' }), // sem entidade: data_prevista é o leilão
+  tlItem('est-b', { esfera: 'estadual', status: 'contrato', data_prevista: '2022-12-22', ent: 'x-estadual' }), // assinatura não é leilão: sem data de leilão
+  tlItem('est-c', { esfera: 'estadual', status: 'estudo' }),
+  tlItem('fed-d', { status: 'estudo' }),
+] };
+
+test('linhaDoTempo: ordena pela data do leilão (mês sem dia no meio do mês); edital da entidade, senão do cronograma', () => {
+  const r = IntelModel.linhaDoTempo(tlConc, tlPipe);
+  assert.deepEqual(r.map(x => x.id), ['p-e2', 'p-e1', 'p-e6', 'est-a', 'p-e3', 'p-e4']);
+  const by = Object.fromEntries(r.map(x => [x.id, x]));
+  assert.deepEqual([by['p-e1'].edital, by['p-e1'].leilao, by['p-e1'].status, by['p-e1'].nome], ['2026-09-02', '2026-12-11', 'leilao_agendado', 'P-E1']);
+  assert.equal(by['p-e2'].edital, '2026-02-13'); // cronograma quando a entidade não tem edital
+  assert.equal(by['p-e2'].leilao, '2026-05-28'); // leilão da entidade, não a assinatura do pipeline
+  assert.equal(by['p-e3'].edital, '2027-03'); assert.equal(by['p-e3'].leilao, '2027-06');
+});
+
+test('linhaDoTempo: sem edital desenha só o leilão; ano sem mês não é data', () => {
+  const by = Object.fromEntries(IntelModel.linhaDoTempo(tlConc, tlPipe).map(x => [x.id, x]));
+  assert.equal(by['p-e4'].edital, null);
+  assert.equal(by['p-e4'].leilao, '2027-09');
+  assert.equal(by['est-a'].edital, null);
+  assert.equal(by['est-a'].leilao, '2027-04-26');
+  assert.equal(by['p-e6'].leilao, '2027-02-10');
+});
+
+test('linhaDoTempo: leilão anterior a 2026 fica fora; sem data nenhuma fica fora e é contado', () => {
+  const ids = IntelModel.linhaDoTempo(tlConc, tlPipe).map(x => x.id);
+  for (const fora of ['p-e5', 'est-b', 'est-c', 'fed-d']) assert.ok(!ids.includes(fora), fora);
+  const res = IntelModel.linhaDoTempoResumo(tlConc, tlPipe);
+  assert.equal(res.semData, 3); // est-b, est-c, fed-d; p-e5 (2022) não conta
+  assert.deepEqual(res.rows.map(x => x.id), ids);
+  assert.deepEqual([res.anos.de, res.anos.ate], [2026, 2027]); // anos dos leilões
+  assert.deepEqual([res.de, res.ate], [2026, 2027]); // eixo: anos de todas as datas desenhadas
+});
+
+test('linhaDoTempo: o eixo abrange também um edital anterior ao primeiro leilão', () => {
+  const res = IntelModel.linhaDoTempoResumo({ entidades: [{ id: 'z', leilao: '2026-03-01', edital: '2025-07-17', cronograma: [] }] }, { itens: [tlItem('z', { ent: 'z' })] });
+  assert.deepEqual([res.de, res.ate, res.anos.de, res.anos.ate], [2025, 2026, 2026, 2026]);
+});
+
+test('linhaDoTempo: pipeline como lista, sem conc nem itens e item com ent desconhecida não quebram', () => {
+  assert.equal(IntelModel.linhaDoTempo(tlConc, tlPipe.itens).length, 6);
+  assert.deepEqual(IntelModel.linhaDoTempo(null, null), []);
+  assert.deepEqual(IntelModel.linhaDoTempo({}, {}), []);
+  const res = IntelModel.linhaDoTempoResumo(null, { itens: [tlItem('q', { ent: 'nenhum', data_prevista: '2026-08' })] });
+  assert.equal(res.rows.length, 1); assert.equal(res.rows[0].leilao, '2026-08');
+  const vazio = IntelModel.linhaDoTempoResumo(tlConc, { itens: [] });
+  assert.deepEqual([vazio.rows.length, vazio.semData, vazio.de, vazio.ate, vazio.anos], [0, 0, null, null, null]);
+});
+
+test('linhaDoTempo: datas inválidas (mês 13, texto) contam como sem data', () => {
+  const res = IntelModel.linhaDoTempoResumo({ entidades: [{ id: 'w', leilao: '2026-13', edital: 'breve', cronograma: [] }] }, { itens: [tlItem('w', { ent: 'w' })] });
+  assert.equal(res.rows.length, 0); assert.equal(res.semData, 1);
+});

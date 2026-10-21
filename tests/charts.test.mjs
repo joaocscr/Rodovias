@@ -180,3 +180,75 @@ test('legendHtml: formas de diagrama (seta cheia e losango) só com a cor dada',
   assert.match(html, /<path d="M17,2 L23,6 L17,10 Z" fill="#231F20"\/><\/svg>Sequência/);
   assert.match(html, /<path d="M7,1 L13,7 L7,13 L1,7 Z" fill="none" stroke="#0071BB"[^>]*\/><\/svg>Decisão/);
 });
+
+// ---------- timelineSvg: linha do tempo de editais e leilões ----------
+const S_MAP = createRequire(import.meta.url)('../src/styles-map.js');
+const GALAPAGOS = ['#183C80', '#0071BB', '#231F20', '#525254', '#F7F7F8'];
+const tlRows = [
+  { nome: 'Rota A', id: 'a', k: 'a', edital: '2026-09-02', leilao: '2026-12-11', status: 'leilao_agendado' },
+  { nome: 'Rota B só leilão', id: 'b', k: null, edital: null, leilao: '2027-06', status: 'tcu' },
+  { nome: 'Rota C <x> & "y"', id: 'c', k: 'c', edital: '2027-03', leilao: '2027-10-15', status: 'estudo' },
+];
+const tlOpts = { de: 2026, ate: 2027, colors: S_MAP.PIPE_STATUS, statusLabel: k => ({ leilao_agendado: 'Leilão agendado', tcu: 'No TCU/TCE', estudo: 'Em estudo' }[k]) };
+
+test('timelineSvg: um losango por leilão, círculo vazado só quando há edital, linha entre os dois, cor por status', () => {
+  const svg = Charts.timelineSvg(tlRows, tlOpts);
+  assert.equal((svg.match(/<path class="tl-leilao"/g) || []).length, 3);
+  assert.equal((svg.match(/<circle class="tl-edital"/g) || []).length, 2);
+  assert.equal((svg.match(/<line class="tl-span"/g) || []).length, 2);
+  assert.match(svg, /<circle class="tl-edital"[^>]*fill="none"[^>]*stroke="#006a47"/);
+  assert.match(svg, /<path class="tl-leilao"[^>]*fill="#006a47"/);
+  assert.match(svg, /<path class="tl-leilao"[^>]*fill="#009565"/); // tcu
+  assert.ok(!/NaN|undefined|null/.test(svg));
+});
+
+test('timelineSvg: posição proporcional à data; mês sem dia no meio do mês e marcado "(mês)"', () => {
+  const svg = Charts.timelineSvg(tlRows, tlOpts);
+  const x = id => { const m = svg.match(new RegExp(`data-id="${id}"[^>]*data-leilao-x="([\\d.]+)"`)); return Number(m[1]); };
+  assert.ok(x('a') < x('b') && x('b') < x('c'));
+  // 2027-06 (mês) cai no dia 15 de junho: o mesmo x que 2027-06-15
+  const m15 = Charts.timelineSvg([{ nome: 'm', id: 'm', edital: null, leilao: '2027-06', status: 'tcu' }, { nome: 'd', id: 'd', edital: null, leilao: '2027-06-15', status: 'tcu' }], tlOpts);
+  const xs = [...m15.matchAll(/data-leilao-x="([\d.]+)"/g)].map(v => v[1]);
+  assert.equal(xs[0], xs[1]);
+  assert.match(svg, /jun\/2027 \(mês\)/);
+  assert.match(svg, /11\/12\/2026/);
+  assert.ok(!/11\/12\/2026 \(mês\)/.test(svg));
+});
+
+test('timelineSvg: eixo pelos anos recebidos (e, sem eles, pelos dados); nome escapado e clicável só com ficha', () => {
+  const svg = Charts.timelineSvg(tlRows, tlOpts);
+  const anos = [...svg.matchAll(/<text class="tl-ano"[^>]*>(\d{4})</g)].map(v => v[1]);
+  assert.deepEqual(anos, ['2026', '2027']);
+  const auto = Charts.timelineSvg(tlRows, { colors: S_MAP.PIPE_STATUS });
+  assert.deepEqual([...auto.matchAll(/<text class="tl-ano"[^>]*>(\d{4})</g)].map(v => v[1]), ['2026', '2027']);
+  const largo = Charts.timelineSvg(tlRows, Object.assign({}, tlOpts, { de: 2025, ate: 2029 }));
+  assert.deepEqual([...largo.matchAll(/<text class="tl-ano"[^>]*>(\d{4})</g)].map(v => v[1]), ['2025', '2026', '2027', '2028', '2029']);
+  assert.match(svg, /Rota C &lt;x&gt; &amp; &quot;y&quot;/);
+  const clk = Charts.timelineSvg(tlRows, Object.assign({ clickable: true }, tlOpts));
+  assert.equal((clk.match(/<g class="hrow tl-row"[^>]*data-k=/g) || []).length, 2); // a e c têm ficha
+  assert.equal((clk.match(/role="button"/g) || []).length, 2);
+  assert.equal((svg.match(/data-k=/g) || []).length, 0);
+});
+
+test('timelineSvg: só a paleta Galapagos mais os tokens de status; nunca cor de série em texto', () => {
+  const svg = Charts.timelineSvg(tlRows, tlOpts);
+  const ok = new Set([...GALAPAGOS, ...S_MAP.DATA_TOKENS]);
+  for (const c of svg.match(/#[0-9A-Fa-f]{6}/g) || []) assert.ok(ok.has(c.toUpperCase()), c);
+  for (const t of svg.match(/<text[^>]*>/g) || []) assert.ok(!Object.values(S_MAP.PIPE_STATUS).some(c => t.includes(c)), t);
+  // sem cores de status, usa só Galapagos
+  for (const c of Charts.timelineSvg(tlRows, {}).match(/#[0-9A-Fa-f]{6}/g) || []) assert.ok(GALAPAGOS.includes(c.toUpperCase()), c);
+});
+
+test('timelineSvg: sem linhas, "Sem dados"; linha sem leilão é ignorada; título de cada marca traz a data completa', () => {
+  assert.match(Charts.timelineSvg([], tlOpts), /Sem dados/);
+  assert.match(Charts.timelineSvg([{ nome: 'x', id: 'x', edital: '2026-01-01', leilao: null, status: 'tcu' }], tlOpts), /Sem dados/);
+  const svg = Charts.timelineSvg(tlRows, tlOpts);
+  assert.match(svg, /<title>Rota A · edital: 02\/09\/2026<\/title>/);
+  assert.match(svg, /<title>Rota A · leilão: 11\/12\/2026 · Leilão agendado<\/title>/);
+});
+
+test('legendHtml: formas do cronograma (círculo vazado e losango cheio) na cor dada', () => {
+  const html = Charts.legendHtml([{ label: 'Edital', color: Charts.C.spacial, shape: 'circle' }, { label: 'Leilão', color: Charts.C.spacial, shape: 'diamondFill' }]);
+  assert.match(html, /<circle[^>]*fill="none"[^>]*stroke="#231F20"[^>]*\/><\/svg>Edital/);
+  assert.match(html, /<path[^>]*fill="#231F20"[^>]*\/><\/svg>Leilão/);
+});

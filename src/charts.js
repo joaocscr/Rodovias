@@ -209,9 +209,62 @@ const Charts = (() => {
     return frame(w, data.length * rh + 8, body, o.title, o.clickable ? 'group' : 'img');
   }
 
+  // Linha do tempo de editais e leilões: uma linha por item ({nome, id, edital, leilao, status, k?}), já ordenada. Círculo vazado =
+  // edital, losango cheio = leilão, linha entre os dois, cor por status (o.colors: status -> cor, tokens de styles-map.js).
+  // Data "AAAA-MM" (mês sem dia) fica no meio do mês e leva "(mês)". Eixo em anos inteiros o.de..o.ate (padrão: dos dados).
+  // o.clickable: a linha com k vira <g role="button" data-k> (abre a ficha). o.statusLabel: status -> texto da dica.
+  const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  const fmtDia = s => {
+    const [y, m, d] = String(s).split('-');
+    return d ? `${d}/${m}/${y}` : `${MESES[Number(m) - 1]}/${y}`;
+  };
+  const diaN = s => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d || 15) / 864e5; };
+  function timelineSvg(data, o = {}) {
+    const w = o.width || 720, rh = 30;
+    const rows = (data || []).filter(r => r && typeof r.leilao === 'string' && r.leilao);
+    if (!rows.length) return empty(w, 120);
+    const anos = rows.flatMap(r => [r.leilao, r.edital].filter(Boolean).map(d => +d.slice(0, 4)));
+    const de = num(o.de) ? o.de : Math.min(...anos), ate = Math.max(num(o.ate) ? o.ate : Math.max(...anos), de);
+    const fmt = o.formatDate || fmtDia, col = k => (o.colors && o.colors[k]) || C.deep;
+    const L = o.labelWidth || Math.min(300, Math.round(w * 0.4)), R = 128, T = 28, pw = Math.max(80, w - L - R);
+    const d0 = Date.UTC(de, 0, 1) / 864e5, d1 = Date.UTC(ate + 1, 0, 1) / 864e5;
+    const xOf = s => L + Math.min(1, Math.max(0, (diaN(s) - d0) / (d1 - d0))) * pw;
+    const h = T + rows.length * rh + 8, maxCh = Math.max(8, Math.floor((L - 16) / 7.5));
+    const cut = t => (t.length > maxCh ? `${t.slice(0, maxCh - 1)}…` : t);
+    const mes = d => (d.length === 7 ? ' (mês)' : '');
+    let body = '';
+    for (let y = de; y <= ate; y++) {
+      const x = xOf(`${y}-01-01`);
+      for (const q of [4, 7, 10]) body += `<line class="tl-trim" x1="${xOf(`${y}-${String(q).padStart(2, '0')}-01`).toFixed(1)}" x2="${xOf(`${y}-${String(q).padStart(2, '0')}-01`).toFixed(1)}" y1="${T}" y2="${h - 8}" stroke="${C.grey}" stroke-opacity="0.08"/>`;
+      body += `<line class="tl-grid" x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${T - 6}" y2="${h - 8}" stroke="${C.grey}" stroke-opacity="0.3"/>` +
+        `<text class="tl-ano" x="${(x + 6).toFixed(1)}" y="${T - 10}" fill="${C.grey}">${y}</text>`;
+    }
+    body += `<line class="tl-grid" x1="${(L + pw).toFixed(1)}" x2="${(L + pw).toFixed(1)}" y1="${T - 6}" y2="${h - 8}" stroke="${C.grey}" stroke-opacity="0.3"/>`;
+    const st = k => (o.statusLabel && o.statusLabel(k)) || '';
+    body += rows.map((r, i) => {
+      const y = T + i * rh, cy = y + rh / 2, c = col(r.status), nome = String(r.nome);
+      const lx = xOf(r.leilao), ex = r.edital ? xOf(r.edital) : null;
+      const click = o.clickable && r.k != null;
+      const attrs = click ? ` data-k="${esc(r.k)}" role="button" tabindex="0" aria-label="${esc(`${nome}: leilão ${fmt(r.leilao)}${mes(r.leilao)} (abrir ficha)`)}"` : '';
+      let marks = '';
+      if (ex != null) {
+        const a = Math.min(ex, lx), b = Math.max(ex, lx), trim = b - a > 14;
+        marks += `<line class="tl-span" x1="${(trim ? a + 5 : a).toFixed(1)}" x2="${(trim ? b - 7 : b).toFixed(1)}" y1="${cy}" y2="${cy}" stroke="${c}" stroke-width="2.5"/>` +
+          `<circle class="tl-edital" data-id="${esc(r.id)}" cx="${ex.toFixed(1)}" cy="${cy}" r="5" fill="none" stroke="${c}" stroke-width="2.5"><title>${esc(nome)} · edital: ${esc(fmt(r.edital))}${mes(r.edital)}</title></circle>`;
+      }
+      marks += `<path class="tl-leilao" data-id="${esc(r.id)}" data-leilao-x="${lx.toFixed(1)}" d="M${lx.toFixed(1)},${cy - 8} L${(lx + 8).toFixed(1)},${cy} L${lx.toFixed(1)},${cy + 8} L${(lx - 8).toFixed(1)},${cy} Z" fill="${c}" stroke="${C.snow}" stroke-width="1">` +
+        `<title>${esc(nome)} · leilão: ${esc(fmt(r.leilao))}${mes(r.leilao)}${st(r.status) ? ` · ${esc(st(r.status))}` : ''}</title></path>`;
+      return `<g class="hrow tl-row"${attrs}><rect class="hrow__bg" x="0" y="${y}" width="${w}" height="${rh}" fill="${C.bright}" fill-opacity="0"/>` +
+        `<text x="${L - 8}" y="${cy + 5}" text-anchor="end" fill="${C.spacial}">${nome.length > maxCh ? `<title>${esc(nome)}</title>` : ''}${esc(cut(nome))}</text>` +
+        `${marks}<text x="${L + pw + 16}" y="${cy + 5}" fill="${C.grey}">${esc(fmt(r.leilao))}${mes(r.leilao)}</text></g>`;
+    }).join('');
+    return frame(w, h, body, o.title, o.clickable ? 'group' : 'img');
+  }
+
   // Legenda. Item = [rótulo, cor, opacidade?, tracejado?] (barra) ou {label, color, shape}, com shape
   // 'dot' (ponto cheio), 'ring' (anel vazado tracejado, como a marca de imprensa), 'line' (linha de referência tracejada),
-  // 'limite' (anel do ponto limitado pelo edital), 'arrow' (seta cheia) ou 'diamond' (losango vazado).
+  // 'limite' (anel do ponto limitado pelo edital), 'arrow' (seta cheia), 'diamond' (losango vazado),
+  // 'circle' (círculo vazado) ou 'diamondFill' (losango cheio).
   const SHAPES = {
     dot: c => `<svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="5" fill="${c}" fill-opacity="0.85"/></svg>`,
     ring: c => `<svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="4.5" fill="none" stroke="${c}" stroke-width="2" stroke-dasharray="2 2"/></svg>`,
@@ -220,6 +273,9 @@ const Charts = (() => {
     // diagramas: seta cheia (sequência / fluxo) e losango vazado (decisão)
     arrow: c => `<svg width="24" height="12" aria-hidden="true"><line x1="0" x2="18" y1="6" y2="6" stroke="${c}" stroke-width="1.5"/><path d="M17,2 L23,6 L17,10 Z" fill="${c}"/></svg>`,
     diamond: c => `<svg width="14" height="14" aria-hidden="true"><path d="M7,1 L13,7 L7,13 L1,7 Z" fill="none" stroke="${c}" stroke-width="2"/></svg>`,
+    // linha do tempo: círculo vazado (edital) e losango cheio (leilão)
+    circle: c => `<svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="none" stroke="${c}" stroke-width="2.5"/></svg>`,
+    diamondFill: c => `<svg width="16" height="16" aria-hidden="true"><path d="M8,1 L15,8 L8,15 L1,8 Z" fill="${c}"/></svg>`,
   };
   function legendHtml(items) {
     return `<div class="chart-legend">${items.map(it => {
@@ -231,7 +287,7 @@ const Charts = (() => {
 
   const into = fn => (el, data, o = {}) => { el.innerHTML = fn(data, Object.assign({ width: Math.max(320, el.clientWidth || 640) }, o)); };
 
-  return { C, barsSvg, hbarsSvg, hstackSvg, scatterSvg, linesSvg, stackedSvg, dotsSvg, legendHtml,
+  return { C, barsSvg, hbarsSvg, hstackSvg, scatterSvg, linesSvg, stackedSvg, dotsSvg, timelineSvg, legendHtml,
     bars: into(barsSvg), hbars: into(hbarsSvg), scatter: into(scatterSvg), lines: into(linesSvg), stacked: into(stackedSvg), dots: into(dotsSvg) };
 })();
 

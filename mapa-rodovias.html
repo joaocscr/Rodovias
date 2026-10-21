@@ -1181,6 +1181,7 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 }
 .pstatus[data-pdot=""]::before { content: none; }
 .pipeline .table-wrap { max-height: calc(100vh - 240px); }
+.pipeline__tl { margin-bottom: 24px; }
 .pipe-obs { margin-top: 8px; font-weight: 400; color: var(--color-spacial-grey); }
 .pipe-obs > summary { display: inline-flex; align-items: center; min-height: 24px; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--color-bright-blue); }
 .pipe-obs > summary:focus-visible { outline: 2px solid var(--color-bright-blue); outline-offset: 2px; }
@@ -2436,6 +2437,48 @@ const IntelModel = (() => {
 
   const pipelineDe = (intel, id) => pipelineRows(intel).filter(i => i.ent === id);
 
+  // ---------- Linha do tempo de editais e leilões (Pipeline, aba Projetos) ----------
+  // Leilões de TL_DESDE em diante. Datas "AAAA-MM-DD" ou "AAAA-MM" (mês sem dia); ano sozinho ou texto não são datas.
+  const TL_DESDE = 2026;
+  // No pipeline, data_prevista é a data do leilão, salvo nestes status (aí é a assinatura do contrato).
+  const TL_STATUS_ASSINATURA = new Set(['leiloado', 'contrato']);
+  const tlData = s => {
+    const m = typeof s === 'string' && /^(\d{4})-(\d{2})(-(\d{2}))?$/.exec(s);
+    if (!m || +m[2] < 1 || +m[2] > 12 || (m[4] && (+m[4] < 1 || +m[4] > 31))) return null;
+    return s;
+  };
+  // Dia usado para ordenar; mês sem dia = meio do mês (como é desenhado).
+  const tlChave = s => (s.length === 7 ? `${s}-15` : s);
+  const tlAno = s => +s.slice(0, 4);
+
+  // Linhas da linha do tempo + o que ficou de fora. Leilão: da entidade (ficha), senão do cronograma, senão a data prevista do
+  // pipeline (itens sem ficha, como os estaduais). Edital: da entidade, senão do cronograma. Sem data de leilão: fora e contado
+  // em semData; leilão anterior a TL_DESDE: fora do recorte (não conta).
+  function linhaDoTempoResumo(conc, pipeline) {
+    const itens = Array.isArray(pipeline) ? pipeline : pipeline && Array.isArray(pipeline.itens) ? pipeline.itens : [];
+    const ents = new Map((conc && Array.isArray(conc.entidades) ? conc.entidades : []).map(e => [e.id, e]));
+    const out = [];
+    let semData = 0;
+    for (const i of itens) {
+      const e = i.ent ? ents.get(i.ent) : null;
+      const marco = nome => {
+        const m = e && Array.isArray(e.cronograma) ? e.cronograma.find(x => x && x.marco === nome) : null;
+        return m ? tlData(m.data) : null;
+      };
+      const leilao = tlData(e && e.leilao) || marco('Leilão') || (TL_STATUS_ASSINATURA.has(i.status) ? null : tlData(i.data_prevista));
+      if (!leilao) { semData++; continue; }
+      if (tlAno(leilao) < TL_DESDE) continue;
+      out.push({ nome: i.nome, id: i.id, ent: i.ent || null, edital: tlData(e && e.edital) || marco('Edital'), leilao, status: i.status });
+    }
+    out.sort((a, b) => (tlChave(a.leilao) < tlChave(b.leilao) ? -1 : tlChave(a.leilao) > tlChave(b.leilao) ? 1
+      : String(a.nome).localeCompare(String(b.nome), 'pt-BR')));
+    const anosL = out.map(r => tlAno(r.leilao)), anosTodos = anosL.concat(out.filter(r => r.edital).map(r => tlAno(r.edital)));
+    return { rows: out, semData,
+      anos: out.length ? { de: Math.min(...anosL), ate: Math.max(...anosL) } : null,
+      de: out.length ? Math.min(...anosTodos) : null, ate: out.length ? Math.max(...anosTodos) : null };
+  }
+  const linhaDoTempo = (conc, pipeline) => linhaDoTempoResumo(conc, pipeline).rows;
+
   // Qualidade do recorte de concessão estadual: o mesmo rótulo no cartão do mapa e na ficha.
   const QUALIDADE_RECORTE = { ok: 'Recorte ok', aproximado: 'Recorte aproximado', nao_mapeado: 'Não mapeado' };
   const qualidadeRecorte = q => (q == null || q === '' ? DASH : QUALIDADE_RECORTE[q] || String(q));
@@ -2743,7 +2786,7 @@ const IntelModel = (() => {
     FUNDOS, PRODUTOS, fundoFonte, fundoValues,
     fundoClasses, munInfo, pointInRings, ringsBBox, fonteRef,
     ROTA_TIPOS, rotasOf, rotaTitulo, rotaLinhas, paisAneis, rotasBounds, rotasNota, rotaLabelAnchor, paisLabel, paisLabelPoint,
-    anttCapa, anttAnteriores, anttSeries, pracasDe, obrasResumo, pipelineRows, filterPipeline, pipelineCounts, statusLabel, pipelineDe,
+    anttCapa, anttAnteriores, anttSeries, pracasDe, obrasResumo, linhaDoTempo, linhaDoTempoResumo, pipelineRows, filterPipeline, pipelineCounts, statusLabel, pipelineDe,
     EST_ESTADOS, QUALIDADE_RECORTE, qualidadeRecorte, estaduaisRows, byEsfera, estIndex, trechosLabel,
     trafegoKpis, pracasRanking, pracasSerie, abcrSazonal, acidentesPorUf, taxaPorBrUf,
     cargasKpis, producaoPorUf, topMunicipios, exportProdutos, exportPorUrf, exportMatriz, siadePares, fretesRows, suspeitosNoFim, cargaTop,
@@ -3210,9 +3253,62 @@ const Charts = (() => {
     return frame(w, data.length * rh + 8, body, o.title, o.clickable ? 'group' : 'img');
   }
 
+  // Linha do tempo de editais e leilões: uma linha por item ({nome, id, edital, leilao, status, k?}), já ordenada. Círculo vazado =
+  // edital, losango cheio = leilão, linha entre os dois, cor por status (o.colors: status -> cor, tokens de styles-map.js).
+  // Data "AAAA-MM" (mês sem dia) fica no meio do mês e leva "(mês)". Eixo em anos inteiros o.de..o.ate (padrão: dos dados).
+  // o.clickable: a linha com k vira <g role="button" data-k> (abre a ficha). o.statusLabel: status -> texto da dica.
+  const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  const fmtDia = s => {
+    const [y, m, d] = String(s).split('-');
+    return d ? `${d}/${m}/${y}` : `${MESES[Number(m) - 1]}/${y}`;
+  };
+  const diaN = s => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d || 15) / 864e5; };
+  function timelineSvg(data, o = {}) {
+    const w = o.width || 720, rh = 30;
+    const rows = (data || []).filter(r => r && typeof r.leilao === 'string' && r.leilao);
+    if (!rows.length) return empty(w, 120);
+    const anos = rows.flatMap(r => [r.leilao, r.edital].filter(Boolean).map(d => +d.slice(0, 4)));
+    const de = num(o.de) ? o.de : Math.min(...anos), ate = Math.max(num(o.ate) ? o.ate : Math.max(...anos), de);
+    const fmt = o.formatDate || fmtDia, col = k => (o.colors && o.colors[k]) || C.deep;
+    const L = o.labelWidth || Math.min(300, Math.round(w * 0.4)), R = 128, T = 28, pw = Math.max(80, w - L - R);
+    const d0 = Date.UTC(de, 0, 1) / 864e5, d1 = Date.UTC(ate + 1, 0, 1) / 864e5;
+    const xOf = s => L + Math.min(1, Math.max(0, (diaN(s) - d0) / (d1 - d0))) * pw;
+    const h = T + rows.length * rh + 8, maxCh = Math.max(8, Math.floor((L - 16) / 7.5));
+    const cut = t => (t.length > maxCh ? `${t.slice(0, maxCh - 1)}…` : t);
+    const mes = d => (d.length === 7 ? ' (mês)' : '');
+    let body = '';
+    for (let y = de; y <= ate; y++) {
+      const x = xOf(`${y}-01-01`);
+      for (const q of [4, 7, 10]) body += `<line class="tl-trim" x1="${xOf(`${y}-${String(q).padStart(2, '0')}-01`).toFixed(1)}" x2="${xOf(`${y}-${String(q).padStart(2, '0')}-01`).toFixed(1)}" y1="${T}" y2="${h - 8}" stroke="${C.grey}" stroke-opacity="0.08"/>`;
+      body += `<line class="tl-grid" x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${T - 6}" y2="${h - 8}" stroke="${C.grey}" stroke-opacity="0.3"/>` +
+        `<text class="tl-ano" x="${(x + 6).toFixed(1)}" y="${T - 10}" fill="${C.grey}">${y}<\/text>`;
+    }
+    body += `<line class="tl-grid" x1="${(L + pw).toFixed(1)}" x2="${(L + pw).toFixed(1)}" y1="${T - 6}" y2="${h - 8}" stroke="${C.grey}" stroke-opacity="0.3"/>`;
+    const st = k => (o.statusLabel && o.statusLabel(k)) || '';
+    body += rows.map((r, i) => {
+      const y = T + i * rh, cy = y + rh / 2, c = col(r.status), nome = String(r.nome);
+      const lx = xOf(r.leilao), ex = r.edital ? xOf(r.edital) : null;
+      const click = o.clickable && r.k != null;
+      const attrs = click ? ` data-k="${esc(r.k)}" role="button" tabindex="0" aria-label="${esc(`${nome}: leilão ${fmt(r.leilao)}${mes(r.leilao)} (abrir ficha)`)}"` : '';
+      let marks = '';
+      if (ex != null) {
+        const a = Math.min(ex, lx), b = Math.max(ex, lx), trim = b - a > 14;
+        marks += `<line class="tl-span" x1="${(trim ? a + 5 : a).toFixed(1)}" x2="${(trim ? b - 7 : b).toFixed(1)}" y1="${cy}" y2="${cy}" stroke="${c}" stroke-width="2.5"/>` +
+          `<circle class="tl-edital" data-id="${esc(r.id)}" cx="${ex.toFixed(1)}" cy="${cy}" r="5" fill="none" stroke="${c}" stroke-width="2.5"><title>${esc(nome)} · edital: ${esc(fmt(r.edital))}${mes(r.edital)}<\/title><\/circle>`;
+      }
+      marks += `<path class="tl-leilao" data-id="${esc(r.id)}" data-leilao-x="${lx.toFixed(1)}" d="M${lx.toFixed(1)},${cy - 8} L${(lx + 8).toFixed(1)},${cy} L${lx.toFixed(1)},${cy + 8} L${(lx - 8).toFixed(1)},${cy} Z" fill="${c}" stroke="${C.snow}" stroke-width="1">` +
+        `<title>${esc(nome)} · leilão: ${esc(fmt(r.leilao))}${mes(r.leilao)}${st(r.status) ? ` · ${esc(st(r.status))}` : ''}<\/title><\/path>`;
+      return `<g class="hrow tl-row"${attrs}><rect class="hrow__bg" x="0" y="${y}" width="${w}" height="${rh}" fill="${C.bright}" fill-opacity="0"/>` +
+        `<text x="${L - 8}" y="${cy + 5}" text-anchor="end" fill="${C.spacial}">${nome.length > maxCh ? `<title>${esc(nome)}<\/title>` : ''}${esc(cut(nome))}<\/text>` +
+        `${marks}<text x="${L + pw + 16}" y="${cy + 5}" fill="${C.grey}">${esc(fmt(r.leilao))}${mes(r.leilao)}<\/text><\/g>`;
+    }).join('');
+    return frame(w, h, body, o.title, o.clickable ? 'group' : 'img');
+  }
+
   // Legenda. Item = [rótulo, cor, opacidade?, tracejado?] (barra) ou {label, color, shape}, com shape
   // 'dot' (ponto cheio), 'ring' (anel vazado tracejado, como a marca de imprensa), 'line' (linha de referência tracejada),
-  // 'limite' (anel do ponto limitado pelo edital), 'arrow' (seta cheia) ou 'diamond' (losango vazado).
+  // 'limite' (anel do ponto limitado pelo edital), 'arrow' (seta cheia), 'diamond' (losango vazado),
+  // 'circle' (círculo vazado) ou 'diamondFill' (losango cheio).
   const SHAPES = {
     dot: c => `<svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="5" fill="${c}" fill-opacity="0.85"/><\/svg>`,
     ring: c => `<svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="4.5" fill="none" stroke="${c}" stroke-width="2" stroke-dasharray="2 2"/><\/svg>`,
@@ -3221,6 +3317,9 @@ const Charts = (() => {
     // diagramas: seta cheia (sequência / fluxo) e losango vazado (decisão)
     arrow: c => `<svg width="24" height="12" aria-hidden="true"><line x1="0" x2="18" y1="6" y2="6" stroke="${c}" stroke-width="1.5"/><path d="M17,2 L23,6 L17,10 Z" fill="${c}"/><\/svg>`,
     diamond: c => `<svg width="14" height="14" aria-hidden="true"><path d="M7,1 L13,7 L7,13 L1,7 Z" fill="none" stroke="${c}" stroke-width="2"/><\/svg>`,
+    // linha do tempo: círculo vazado (edital) e losango cheio (leilão)
+    circle: c => `<svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="none" stroke="${c}" stroke-width="2.5"/><\/svg>`,
+    diamondFill: c => `<svg width="16" height="16" aria-hidden="true"><path d="M8,1 L15,8 L8,15 L1,8 Z" fill="${c}"/><\/svg>`,
   };
   function legendHtml(items) {
     return `<div class="chart-legend">${items.map(it => {
@@ -3232,7 +3331,7 @@ const Charts = (() => {
 
   const into = fn => (el, data, o = {}) => { el.innerHTML = fn(data, Object.assign({ width: Math.max(320, el.clientWidth || 640) }, o)); };
 
-  return { C, barsSvg, hbarsSvg, hstackSvg, scatterSvg, linesSvg, stackedSvg, dotsSvg, legendHtml,
+  return { C, barsSvg, hbarsSvg, hstackSvg, scatterSvg, linesSvg, stackedSvg, dotsSvg, timelineSvg, legendHtml,
     bars: into(barsSvg), hbars: into(hbarsSvg), scatter: into(scatterSvg), lines: into(linesSvg), stacked: into(stackedSvg), dots: into(dotsSvg) };
 })();
 
@@ -4765,6 +4864,7 @@ const Projetos = (() => {
       <h2 class="page__title" style="font-size:22px;margin-top:40px">Pipeline<\/h2>
       <p class="page__lead">Próximos passos de concessões federais e estaduais (estudo, consulta pública, TCU/TCE, edital, leilão), por data prevista; sem data no fim.
         Itens com a etiqueta “não verificado” vêm de uma única fonte secundária. Clique numa linha com ficha (federal ou estadual) para abri-la; “Observação” abre o detalhe do item.<\/p>
+      <article class="ccard ccard--wide pipeline__tl" id="pipe-timeline" hidden><\/article>
       <div class="toolbar">
         <select id="pipe-esfera" aria-label="Filtrar pipeline por esfera"><option value="">Todas as esferas<\/option><option value="federal">Federal<\/option><option value="estadual">Estadual<\/option><\/select>
         <span class="page__src" id="pipe-n"><\/span>
@@ -4798,6 +4898,31 @@ const Projetos = (() => {
     document.getElementById('pipe-n').textContent = `${nf0.format(list.length)} de ${nf0.format(pipe.length)}`;
   }
 
+  // Linha do tempo de editais e leilões (cartão do Pipeline): não depende dos filtros da tabela. Cores = tokens de status do pipeline.
+  function renderTimeline() {
+    const card = document.getElementById('pipe-timeline');
+    if (!card) return;
+    const res = IM.linhaDoTempoResumo(conc, intel && intel.pipeline);
+    if (!res.rows.length) return;
+    const { de, ate } = res.anos;
+    const anos = de === ate ? String(de) : `${de}–${ate}`;
+    const usados = [...new Set((intel.pipeline.status || []).map(x => x.key).concat(res.rows.map(r => r.status)))].filter(k => res.rows.some(r => r.status === k));
+    const cor = k => PIPE_STATUS[k] || Charts.C.deep;
+    const semData = res.semData
+      ? `${nf0.format(res.semData)} ${res.semData === 1 ? 'item do pipeline sem data de leilão não aparece' : 'itens do pipeline sem data de leilão não aparecem'} aqui.` : '';
+    card.hidden = false;
+    card.innerHTML = `<h3>Linha do tempo: editais e leilões ${anos}<\/h3>
+      <p class="sub">Um projeto por linha, em ordem de leilão. A linha liga o edital ao leilão; sem data de edital, só o leilão aparece. Data só com o mês fica no meio do mês e leva “(mês)”. Clique no nome para abrir a ficha.<\/p>
+      ${Charts.legendHtml(usados.map(k => ({ label: IM.statusLabel(intel, k), color: cor(k), shape: 'dot' })))}
+      ${Charts.legendHtml([{ label: 'Edital', color: Charts.C.spacial, shape: 'circle' }, { label: 'Leilão', color: Charts.C.spacial, shape: 'diamondFill' }])}
+      <div class="chart-box" id="pipe-timeline-chart"><\/div>
+      ${semData ? `<p class="src" id="pipe-timeline-fora">${semData}<\/p>` : ''}`;
+    const box = document.getElementById('pipe-timeline-chart');
+    const linhas = res.rows.map(r => Object.assign({}, r, { k: r.ent && Ficha.exists(r.ent) ? r.ent : null }));
+    box.innerHTML = Charts.timelineSvg(linhas, { width: Math.max(640, box.clientWidth || 720), de: res.de, ate: res.ate, colors: PIPE_STATUS, clickable: true,
+      formatDate: ConcModel.fmtData, statusLabel: k => IM.statusLabel(intel, k), title: `Linha do tempo de editais e leilões ${anos}` });
+  }
+
   const estudoLabel = s => `Estudo pós-2027 BR-${s.brs.join('/')}/${s.ufs.join('/')}`;
 
   function init(data, intelData = null) {
@@ -4818,6 +4943,7 @@ const Projetos = (() => {
       ${estudos()}<\/div>`;
     renderTable();
     renderPipeline();
+    renderTimeline();
 
     el.addEventListener('click', ev => {
       const sort = ev.target.closest('[data-sort]');
@@ -4837,6 +4963,8 @@ const Projetos = (() => {
         renderPipeline();
         return;
       }
+      const tl = ev.target.closest('#pipe-timeline .hrow[data-k]');
+      if (tl) { Tabs.go('#ficha/' + tl.dataset.k); return; }
       if (ev.target.closest('#pipe-table a') || ev.target.closest('#pipe-table details')) return;
       const pr = ev.target.closest('#pipe-table tbody tr[data-ent]');
       if (pr) { Tabs.go('#ficha/' + pr.dataset.ent); return; }
@@ -4869,7 +4997,9 @@ const Projetos = (() => {
     el.addEventListener('keydown', ev => {
       if (ev.key !== 'Enter' || ev.target.closest('a') || ev.target.closest('summary')) return;
       const tr = ev.target.closest('tbody tr[data-id]'), pr = ev.target.closest('#pipe-table tbody tr[data-ent]');
-      if (tr) Tabs.go('#ficha/' + tr.dataset.id);
+      const tl = ev.target.closest('#pipe-timeline .hrow[data-k]');
+      if (tl) Tabs.go('#ficha/' + tl.dataset.k);
+      else if (tr) Tabs.go('#ficha/' + tr.dataset.id);
       else if (pr) Tabs.go('#ficha/' + pr.dataset.ent);
     });
     // "toggle" não borbulha: captura para lembrar quais observações estão abertas

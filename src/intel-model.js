@@ -649,6 +649,48 @@ const IntelModel = (() => {
 
   const pipelineDe = (intel, id) => pipelineRows(intel).filter(i => i.ent === id);
 
+  // ---------- Linha do tempo de editais e leilões (Pipeline, aba Projetos) ----------
+  // Leilões de TL_DESDE em diante. Datas "AAAA-MM-DD" ou "AAAA-MM" (mês sem dia); ano sozinho ou texto não são datas.
+  const TL_DESDE = 2026;
+  // No pipeline, data_prevista é a data do leilão, salvo nestes status (aí é a assinatura do contrato).
+  const TL_STATUS_ASSINATURA = new Set(['leiloado', 'contrato']);
+  const tlData = s => {
+    const m = typeof s === 'string' && /^(\d{4})-(\d{2})(-(\d{2}))?$/.exec(s);
+    if (!m || +m[2] < 1 || +m[2] > 12 || (m[4] && (+m[4] < 1 || +m[4] > 31))) return null;
+    return s;
+  };
+  // Dia usado para ordenar; mês sem dia = meio do mês (como é desenhado).
+  const tlChave = s => (s.length === 7 ? `${s}-15` : s);
+  const tlAno = s => +s.slice(0, 4);
+
+  // Linhas da linha do tempo + o que ficou de fora. Leilão: da entidade (ficha), senão do cronograma, senão a data prevista do
+  // pipeline (itens sem ficha, como os estaduais). Edital: da entidade, senão do cronograma. Sem data de leilão: fora e contado
+  // em semData; leilão anterior a TL_DESDE: fora do recorte (não conta).
+  function linhaDoTempoResumo(conc, pipeline) {
+    const itens = Array.isArray(pipeline) ? pipeline : pipeline && Array.isArray(pipeline.itens) ? pipeline.itens : [];
+    const ents = new Map((conc && Array.isArray(conc.entidades) ? conc.entidades : []).map(e => [e.id, e]));
+    const out = [];
+    let semData = 0;
+    for (const i of itens) {
+      const e = i.ent ? ents.get(i.ent) : null;
+      const marco = nome => {
+        const m = e && Array.isArray(e.cronograma) ? e.cronograma.find(x => x && x.marco === nome) : null;
+        return m ? tlData(m.data) : null;
+      };
+      const leilao = tlData(e && e.leilao) || marco('Leilão') || (TL_STATUS_ASSINATURA.has(i.status) ? null : tlData(i.data_prevista));
+      if (!leilao) { semData++; continue; }
+      if (tlAno(leilao) < TL_DESDE) continue;
+      out.push({ nome: i.nome, id: i.id, ent: i.ent || null, edital: tlData(e && e.edital) || marco('Edital'), leilao, status: i.status });
+    }
+    out.sort((a, b) => (tlChave(a.leilao) < tlChave(b.leilao) ? -1 : tlChave(a.leilao) > tlChave(b.leilao) ? 1
+      : String(a.nome).localeCompare(String(b.nome), 'pt-BR')));
+    const anosL = out.map(r => tlAno(r.leilao)), anosTodos = anosL.concat(out.filter(r => r.edital).map(r => tlAno(r.edital)));
+    return { rows: out, semData,
+      anos: out.length ? { de: Math.min(...anosL), ate: Math.max(...anosL) } : null,
+      de: out.length ? Math.min(...anosTodos) : null, ate: out.length ? Math.max(...anosTodos) : null };
+  }
+  const linhaDoTempo = (conc, pipeline) => linhaDoTempoResumo(conc, pipeline).rows;
+
   // Qualidade do recorte de concessão estadual: o mesmo rótulo no cartão do mapa e na ficha.
   const QUALIDADE_RECORTE = { ok: 'Recorte ok', aproximado: 'Recorte aproximado', nao_mapeado: 'Não mapeado' };
   const qualidadeRecorte = q => (q == null || q === '' ? DASH : QUALIDADE_RECORTE[q] || String(q));
@@ -956,7 +998,7 @@ const IntelModel = (() => {
     FUNDOS, PRODUTOS, fundoFonte, fundoValues,
     fundoClasses, munInfo, pointInRings, ringsBBox, fonteRef,
     ROTA_TIPOS, rotasOf, rotaTitulo, rotaLinhas, paisAneis, rotasBounds, rotasNota, rotaLabelAnchor, paisLabel, paisLabelPoint,
-    anttCapa, anttAnteriores, anttSeries, pracasDe, obrasResumo, pipelineRows, filterPipeline, pipelineCounts, statusLabel, pipelineDe,
+    anttCapa, anttAnteriores, anttSeries, pracasDe, obrasResumo, linhaDoTempo, linhaDoTempoResumo, pipelineRows, filterPipeline, pipelineCounts, statusLabel, pipelineDe,
     EST_ESTADOS, QUALIDADE_RECORTE, qualidadeRecorte, estaduaisRows, byEsfera, estIndex, trechosLabel,
     trafegoKpis, pracasRanking, pracasSerie, abcrSazonal, acidentesPorUf, taxaPorBrUf,
     cargasKpis, producaoPorUf, topMunicipios, exportProdutos, exportPorUrf, exportMatriz, siadePares, fretesRows, suspeitosNoFim, cargaTop,

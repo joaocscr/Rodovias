@@ -508,6 +508,7 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 }
 .pstatus[data-pdot=""]::before { content: none; }
 .pipeline .table-wrap { max-height: calc(100vh - 240px); }
+.pipeline__tl { margin-bottom: 24px; }
 .pipe-obs { margin-top: 8px; font-weight: 400; color: var(--color-spacial-grey); }
 .pipe-obs > summary { display: inline-flex; align-items: center; min-height: 24px; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--color-bright-blue); }
 .pipe-obs > summary:focus-visible { outline: 2px solid var(--color-bright-blue); outline-offset: 2px; }
