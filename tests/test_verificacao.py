@@ -8,7 +8,8 @@ import pytest
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 from verificacao import (  # noqa: E402
-    CAMPOS, aplicar, carregar, carregar_aliases, cobertura, relatorio_markdown, tipo_campo, validar,
+    CAMPOS, MOTIVOS, aplicar, carregar, carregar_aliases, cobertura, nomes_do_ranking, relatorio_markdown,
+    tipo_campo, validar,
 )
 
 RS15 = {"tipo": "roadshow", "pagina": 15}
@@ -42,6 +43,16 @@ def conc():
                                       "desagio": 21.83}],
         },
     }
+
+
+# grupos dos nomes que o fixture `conc` já traz em participantes (vencedor e demais proponentes)
+ALIASES_FIXTURE = [{"nome": "TPI – Triunfo", "grupo": "Triunfo", "motivo": "grafia"},
+                   {"nome": "TPI Triunfo Participações", "grupo": "Triunfo", "motivo": "grafia"},
+                   {"nome": "Reune", "grupo": "Pátria", "motivo": "razão social do grupo"}]
+
+
+def com_fixture(*aliases):
+    return {"aliases": ALIASES_FIXTURE + list(aliases)}
 
 
 def verif(leiloes, fontes=None):
@@ -176,20 +187,79 @@ def test_validar_tarifas_sao_texto(conc):
 
 def test_validar_nome_sem_alias(conc):
     v = verif([leilao({"grupo_vencedor": {"valor": "Consórcio BRVias", "fontes": ["antt"]}})])
-    erros = validar(v, conc, {"aliases": [{"nome": "Outro", "grupo": "Outro", "motivo": "mesmo nome"}]})
+    erros = validar(v, conc, com_fixture({"nome": "Outro", "grupo": "Outro", "motivo": "mesmo nome"}))
     assert len(erros) == 1 and "Consórcio BRVias" in erros[0]
-    com = {"aliases": [{"nome": "Consórcio BRVias", "grupo": "BRVias", "motivo": "mesmo nome"}]}
+    com = com_fixture({"nome": "Consórcio BRVias", "grupo": "BRVias", "motivo": "mesmo nome"})
     assert validar(v, conc, com) == []
     assert validar(v, conc) == []  # sem tabela de aliases, não confere nomes
+
+
+def test_validar_exige_alias_para_todo_nome_de_participantes(conc):
+    # vencedor exibido (verificado), demais proponentes e inabilitados ligados à linha precisam de grupo
+    v = verif([{"chave": "transbrasiliana", "participantes": {"ano": 2007, "lote": "Transbrasiliana"},
+                "campos": {"grupo_vencedor": {"valor": "Consórcio BRVias", "fontes": ["antt"]}},
+                "inabilitados": [{"grupo": "K&G", "desagio": 9.0, "data": "2025-08-04", "fontes": ["infra"]}]}])
+    aliases = {"aliases": [{"nome": "Consórcio BRVias", "grupo": "BRVias", "motivo": "mesmo nome"}]}
+    erros = validar(v, conc, aliases)
+    # "TPI – Triunfo" deixou de ser o vencedor exibido: não precisa de grupo
+    assert sorted(erros) == sorted(f"participantes: nome {n!r} sem grupo em grupos_alias.json"
+                                   for n in ("K&G", "Reune", "TPI Triunfo Participações")), erros
+    tudo = {"aliases": aliases["aliases"] + [{"nome": n, "grupo": n, "motivo": "mesmo nome"}
+                                             for n in ("K&G", "Reune", "TPI Triunfo Participações")]}
+    assert validar(v, conc, tudo) == []
+
+
+def test_nomes_do_ranking_usa_valores_aplicados(conc):
+    v = verif([{"chave": "transbrasiliana", "participantes": {"ano": 2007, "lote": "Transbrasiliana"},
+                "campos": {"grupo_vencedor": {"valor": "Consórcio BRVias", "fontes": ["antt"]}},
+                "inabilitados": [{"grupo": "K&G", "fontes": ["infra"]}]}])
+    assert nomes_do_ranking(aplicar(conc, v, {"aliases": []})) == [
+        "Consórcio BRVias", "K&G", "Reune", "TPI Triunfo Participações"]
 
 
 def test_validar_aliases_formato(conc):
     ruins = [{"nome": "A", "grupo": "A", "motivo": "aquisição"},
              {"nome": "", "grupo": "A", "motivo": "mesmo nome"}]
     for a in ruins:
-        assert len(validar(verif([]), conc, {"aliases": [a]})) == 1, a
+        assert len(validar(verif([]), conc, com_fixture(a))) == 1, a
     dup = [{"nome": "A", "grupo": "A", "motivo": "mesmo nome"}, {"nome": "A", "grupo": "B", "motivo": "grafia"}]
-    assert len(validar(verif([]), conc, {"aliases": dup})) == 1
+    assert len(validar(verif([]), conc, com_fixture(*dup))) == 1
+
+
+def test_validar_alias_fontes(conc):
+    # `fontes` (opcional) cita ids declarados em verificacao.json
+    ok = {"nome": "A", "grupo": "A", "motivo": "consórcio liderado por", "fontes": ["antt"]}
+    assert validar(verif([]), conc, com_fixture(ok)) == []
+    for ruim in (["nao-declarada"], "antt", []):
+        erros = validar(verif([]), conc, com_fixture({**ok, "fontes": ruim}))
+        assert len(erros) == 1 and "'A'" in erros[0], (ruim, erros)
+
+
+def test_validar_limitado_pelo_edital(conc):
+    ok = {"desagio": {"valor": 15.31, "limitado_pelo_edital": True, "fontes": ["antt"]}}
+    assert validar(verif([leilao(ok)]), conc) == []
+    casos = [{"desagio": {"valor": 15.31, "limitado_pelo_edital": "sim", "fontes": ["antt"]}},
+             {"assinatura": {"valor": "2026-03-16", "limitado_pelo_edital": True, "fontes": ["antt"]}}]
+    for campos in casos:
+        erros = validar(verif([leilao(campos)]), conc)
+        assert len(erros) == 1 and "limitado_pelo_edital" in erros[0], (campos, erros)
+
+
+def test_aplicar_limitado_pelo_edital(conc):
+    v = verif([leilao({"desagio": {"valor": 15.31, "limitado_pelo_edital": True, "fontes": ["antt"]}},
+                      participantes={"ano": 2025, "lote": "Lote 5"})])
+    out = aplicar(conc, v, {"aliases": []})
+    assert out["entidades"][0]["verif"]["desagio"]["limitado_pelo_edital"] is True
+    assert out["mercado"]["participantes"][1]["verif"]["desagio"]["limitado_pelo_edital"] is True
+    sem = aplicar(conc, verif([leilao({"desagio": {"valor": 23.83, "fontes": ["antt"]}})]), {"aliases": []})
+    assert sem["entidades"][0]["verif"]["desagio"]["limitado_pelo_edital"] is False
+
+
+def test_aplicar_resolve_fontes_dos_aliases(conc):
+    aliases = {"aliases": [{"nome": "A", "grupo": "G", "motivo": "consórcio liderado por", "fontes": ["antt"]}]}
+    [a] = aplicar(conc, verif([]), aliases)["grupos_alias"]
+    assert a["fontes"][0]["id"] == "antt" and a["fontes"][0]["orgao"] == "ANTT"
+    assert aliases["aliases"][0]["fontes"] == ["antt"]  # entrada intacta
 
 
 def test_aplicar_troca_exibido_sem_duplicar_alternativa(conc):
@@ -333,6 +403,29 @@ def test_relatorio_markdown(conc):
     assert "Nenhum leilão" in relatorio_markdown(vazio, aplicar(conc, vazio, {"aliases": []}))
 
 
+def _conc_real():
+    return json.loads((ROOT / "data" / "base" / "conc.json").read_text(encoding="utf-8"))
+
+
 def test_dados_reais_validos():
-    conc = json.loads((ROOT / "data" / "base" / "conc.json").read_text(encoding="utf-8"))
-    assert validar(carregar(), conc, carregar_aliases()) == []
+    assert validar(carregar(), _conc_real(), carregar_aliases()) == []
+
+
+def test_aliases_cobrem_todos_os_nomes():
+    nomes = {a["nome"] for a in carregar_aliases()["aliases"]}
+    aplicado = aplicar(_conc_real(), carregar(), carregar_aliases())
+    assert [n for n in nomes_do_ranking(aplicado) if n not in nomes] == []
+
+
+def test_alias_motivo_valido():
+    aliases = carregar_aliases()["aliases"]
+    assert [a["nome"] for a in aliases if a.get("motivo") not in MOTIVOS] == []
+    nomes = [a["nome"] for a in aliases]
+    assert sorted({n for n in nomes if nomes.count(n) > 1}) == []
+
+
+def test_alias_motivos_com_evidencia_tem_fonte():
+    # junções que não se leem no próprio nome citam a fonte (ids de verificacao.json)
+    aliases = carregar_aliases()["aliases"]
+    precisa = ("consórcio liderado por", "troca de nome")
+    assert [a["nome"] for a in aliases if a["motivo"] in precisa and not a.get("fontes")] == []

@@ -123,7 +123,7 @@ def _ligacoes(l):
     return lig
 
 
-def _erros_aliases(aliases):
+def _erros_aliases(aliases, fontes):
     erros, vistos = [], {}
     for i, a in enumerate(aliases.get("aliases", [])):
         nome, grupo = a.get("nome"), a.get("grupo")
@@ -132,6 +132,8 @@ def _erros_aliases(aliases):
             continue
         if a.get("motivo") not in MOTIVOS:
             erros.append(f"grupos_alias {nome!r}: motivo {a.get('motivo')!r} fora de {MOTIVOS}")
+        if "fontes" in a:  # opcional: evidência da junção, ids de verificacao.json
+            erros += _erros_refs(f"grupos_alias {nome!r}", "junção", a["fontes"], fontes)
         if nome in vistos and vistos[nome] != grupo:
             erros.append(f"grupos_alias {nome!r}: ligado a dois grupos ({vistos[nome]!r} e {grupo!r})")
         vistos.setdefault(nome, grupo)
@@ -140,7 +142,8 @@ def _erros_aliases(aliases):
 
 def validar(verif, conc, aliases=None):
     """Confere a camada contra a base: fontes completas, ligações que casam, campos e valores válidos e, com
-    `aliases`, grupo econômico para cada vencedor verificado. Devolve as mensagens de erro (lista vazia = válido)."""
+    `aliases`, grupo econômico para cada vencedor verificado e para todo nome que o ranking conta (participantes já
+    com a camada aplicada). Devolve as mensagens de erro (lista vazia = válido)."""
     erros = []
     if verif.get("versao") != 1:
         erros.append(f"verificacao.json: versao {verif.get('versao')!r}, esperada 1")
@@ -190,6 +193,10 @@ def validar(verif, conc, aliases=None):
             if ligacoes and not any(campo in mapa for _, mapa in ligacoes):
                 erros.append(f"{chave}: campo {campo!r} não tem onde ser aplicado nas ligações "
                              f"{[a[0] for a, _ in ligacoes]}")
+            lim = c.get("limitado_pelo_edital")
+            if "limitado_pelo_edital" in c and (campo != "desagio" or not isinstance(lim, bool)):
+                erros.append(f"{chave}.{campo}: limitado_pelo_edital só vale em desagio e deve ser true/false, "
+                             f"veio {lim!r}")
             if c.get("nao_localizado"):
                 if c.get("valor") is not None:
                     erros.append(f"{chave}.{campo}: não localizado deve ter valor null, veio {c['valor']!r}")
@@ -218,7 +225,10 @@ def validar(verif, conc, aliases=None):
             erros += _erros_refs(chave, f"inabilitado #{i}", inab.get("fontes"), fontes)
 
     if aliases is not None:
-        erros += _erros_aliases(aliases)
+        erros += _erros_aliases(aliases, fontes)
+        if not erros:  # `aplicar` supõe a camada válida; com erros, os nomes ficam para a próxima rodada
+            faltam = [n for n in nomes_do_ranking(aplicar(conc, verif, aliases)) if n not in nomes_alias]
+            erros += [f"participantes: nome {n!r} sem grupo em grupos_alias.json" for n in faltam]
     return erros
 
 
@@ -277,9 +287,11 @@ def _aplicar_campo(alvo, chave, campo, c, fontes, entidade):
         alvo[chave] = valor
         if entidade and original is not None:
             _divergencia(alvo, campo, original, valor, tipo)
-    alvo.setdefault("verif", {})[campo] = {
+    info = alvo.setdefault("verif", {})[campo] = {
         "tipo": tipo, "nao_localizado": bool(c.get("nao_localizado")), "fontes": fs,
         "roadshow": original if mudou else None}
+    if campo == "desagio":  # critério híbrido: deságio no teto do edital, desempate por outorga
+        info["limitado_pelo_edital"] = bool(c.get("limitado_pelo_edital"))
 
 
 def _alvos(conc, l):
@@ -298,7 +310,8 @@ def _alvos(conc, l):
 
 def aplicar(conc, verif, aliases):
     """Cópia de `conc` com a camada aplicada (supõe `validar` sem erros). Cada linha ligada ganha `verif`,
-    `notas_verif` e `inabilitados`; `conc.verificacao` resume fontes e cobertura; `conc.grupos_alias` leva os aliases."""
+    `notas_verif` e `inabilitados`; `conc.verificacao` resume fontes e cobertura; `conc.grupos_alias` leva os aliases
+    (com as fontes da junção resolvidas)."""
     out = copy.deepcopy(conc)
     fontes = verif.get("fontes") or {}
     for l in verif.get("leiloes", []):
@@ -317,8 +330,20 @@ def aplicar(conc, verif, aliases):
     lista = sorted((_fonte(fid, fontes) for fid in fontes),
                    key=lambda f: (ordem.get(f["tipo"], len(TIPOS)), f["orgao"] or "", f["id"]))
     out["verificacao"] = {"fontes": lista, "cobertura": cobertura(verif)}
-    out["grupos_alias"] = copy.deepcopy(aliases.get("aliases", []))
+    out["grupos_alias"] = [{**copy.deepcopy(a), "fontes": [_fonte(fid, fontes) for fid in a["fontes"]]}
+                           if "fontes" in a else copy.deepcopy(a) for a in aliases.get("aliases", [])]
     return out
+
+
+def nomes_do_ranking(conc_aplicado):
+    """Nomes que o ranking de grupos conta, já com a camada aplicada: vencedor exibido, demais proponentes e
+    inabilitados de cada linha de `mercado.participantes` (ordenados, sem repetição)."""
+    nomes = set()
+    for r in _linhas(conc_aplicado, "participantes"):
+        nomes.add(r.get("vencedor"))
+        nomes.update(o.get("grupo") for o in r.get("outros") or [])
+        nomes.update(i.get("grupo") for i in r.get("inabilitados") or [])
+    return sorted(n for n in nomes if isinstance(n, str) and n)
 
 
 def cobertura(verif):
