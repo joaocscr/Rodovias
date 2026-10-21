@@ -101,7 +101,7 @@ def camada_verificacao(conc):
     (ROADSHOW / "verificacao.md").write_text(relatorio_markdown(verif, conc), encoding="utf-8")
     c = conc["verificacao"]["cobertura"]
     print(f"verificação: {c['leiloes']} leilões | oficial {c['oficial']} | roadshow {c['roadshow']} | "
-          f"imprensa {c['imprensa']} | não localizado {c['nao_localizado']}")
+          f"imprensa {c['imprensa']} | não localizado {c['nao_localizado']} | não se aplica {c['nao_se_aplica']}")
     return conc
 
 

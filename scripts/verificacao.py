@@ -31,6 +31,8 @@ CONC_KEY = {"desagio": "desagio"}
 DOMINIOS_OFICIAIS = ("gov.br", "b3.com.br", "jus.br", "leg.br", "imprensaoficial.com.br")
 TIPOS = ("oficial", "roadshow", "imprensa")
 ROTULO = {"oficial": "oficial", "roadshow": "RoadShow", "imprensa": "imprensa (não oficial)"}
+# deságio de leilão julgado por outorga: o critério não se aplica (valor null, com a fonte que explica o critério)
+NAO_SE_APLICA = "não se aplica (leilão por outorga)"
 CHAVES_FONTE = ("id", "tipo", "orgao", "titulo", "data", "url", "pagina", "acesso", "trecho")
 # campos obrigatórios por tipo de fonte (além de `tipo`)
 EXIGIDOS = {"oficial": ("orgao", "url", "acesso"), "roadshow": ("pagina",),
@@ -106,6 +108,25 @@ def _erros_refs(chave, onde, ids, fontes, exige=True):
     if not isinstance(ids, list) or (exige and not ids):
         return [f"{chave}: {onde} sem fonte"]
     return [f"{chave}: {onde} cita fonte não declarada {fid!r}" for fid in ids if fid not in fontes]
+
+
+def _erros_alternativas(chave, campo, c, fontes):
+    """`alternativas`: valores de outras fontes que divergem do exibido (não exibidos), cada um com fonte declarada."""
+    if "alternativas" not in c:
+        return []
+    alts = c["alternativas"]
+    if not isinstance(alts, list) or not all(isinstance(a, dict) for a in alts):
+        return [f"{chave}.{campo}: alternativas deve ser lista de {{valor, fontes}}, veio {alts!r}"]
+    erros = []
+    for i, a in enumerate(alts):
+        onde = f"{campo} alternativa #{i}"
+        e = _erros_valor(campo, a.get("valor"))
+        if e:
+            erros.append(f"{chave}.{onde}: {e}")
+        elif a.get("valor") == c.get("valor"):
+            erros.append(f"{chave}.{onde}: igual ao valor exibido ({a['valor']!r})")
+        erros += _erros_refs(chave, onde, a.get("fontes"), fontes)
+    return erros
 
 
 def _linhas(conc, nome):
@@ -199,6 +220,15 @@ def validar(verif, conc, aliases=None):
             if "limitado_pelo_edital" in c and (campo != "desagio" or not isinstance(lim, bool)):
                 erros.append(f"{chave}.{campo}: limitado_pelo_edital só vale em desagio e deve ser true/false, "
                              f"veio {lim!r}")
+            erros += _erros_alternativas(chave, campo, c, fontes)
+            if "nao_se_aplica" in c:
+                nsa = c["nao_se_aplica"]
+                if campo != "desagio" or nsa is not True or c.get("nao_localizado") or c.get("valor") is not None:
+                    erros.append(f"{chave}.{campo}: nao_se_aplica só vale em desagio, como true, com valor null e "
+                                 f"sem nao_localizado (veio {nsa!r}, valor {c.get('valor')!r})")
+                    continue
+                erros += _erros_refs(chave, f"{campo} (nao_se_aplica)", c.get("fontes"), fontes)
+                continue
             if c.get("nao_localizado"):
                 if c.get("valor") is not None:
                     erros.append(f"{chave}.{campo}: não localizado deve ter valor null, veio {c['valor']!r}")
@@ -255,7 +285,7 @@ def _fmt(campo, v):
         return f"{d}/{m}/{a}"
     if isinstance(v, (int, float)) and not isinstance(v, bool):
         s = f"{v:.2f}".replace(".", ",") if isinstance(v, float) else str(v)
-        return s + ("%" if campo == "desagio" else "")
+        return s + {"desagio": "%", "prazo_anos": " anos"}.get(campo, "")
     return str(v)
 
 
@@ -264,13 +294,19 @@ def _sem_valor(v):
     return v is None or str(v).strip() in ("", "-")
 
 
-def _divergencia(e, campo, original, valor, tipo):
+def _sufixo(tipo, nao_se_aplica=False):
+    if nao_se_aplica:
+        return NAO_SE_APLICA + "."
+    return "não localizado em fonte oficial." if tipo is None else f"exibido o valor de fonte {ROTULO[tipo]}."
+
+
+def _divergencia(e, campo, original, valor, tipo, nao_se_aplica=False):
     """Registra na entidade o valor do RoadShow que deixou de ser exibido (sem duplicar o novo valor exibido)."""
     divs = e.setdefault("divergencias", [])
     alt_rs = {"valor": original, "pagina": _pagina(e, campo)}
     d = next((x for x in divs if x.get("campo") == campo), None)
+    sufixo = _sufixo(tipo, nao_se_aplica)
     if d is None:
-        sufixo = "não localizado em fonte oficial." if tipo is None else f"exibido o valor de fonte {ROTULO[tipo]}."
         divs.append({"campo": campo, "exibido": valor, "alternativas": [alt_rs],
                      "nota": f"RoadShow imprime {_fmt(campo, original)}; {sufixo}"})
         return
@@ -280,23 +316,50 @@ def _divergencia(e, campo, original, valor, tipo):
     impressos = [_fmt(campo, a["valor"]) + (f" (p. {a['pagina']})" if a.get("pagina") is not None else "")
                  for a in d["alternativas"] if not _sem_valor(a.get("valor"))]
     lista = impressos[0] if len(impressos) == 1 else ", ".join(impressos[:-1]) + " e " + impressos[-1]
-    sufixo = "não localizado em fonte oficial." if tipo is None else f"exibido o valor de fonte {ROTULO[tipo]}."
     d["nota"] = f"RoadShow imprime {lista}; {sufixo}"
 
 
+def _quem(f):
+    """(órgão ou veículo, data dd/mm/aaaa ou None) de uma fonte: quem dá um valor alternativo."""
+    nome = f.get("orgao") or (f"RoadShow, p. {f['pagina']}" if f.get("tipo") == "roadshow" else f.get("titulo") or "")
+    return nome, (_fmt("leilao", f["data"]) if f.get("data") else None)
+
+
+def _alternativas_declaradas(e, campo, c, fontes, tipo):
+    """Valores de outras fontes que divergem do exibido: entram na divergência do campo (criada se faltar)."""
+    divs = e.setdefault("divergencias", [])
+    d = next((x for x in divs if x.get("campo") == campo), None)
+    frases = []
+    for a in c["alternativas"]:
+        quem = [_quem(fontes[fid]) for fid in a["fontes"]]
+        frases.append(" e ".join(n + (f" ({dt})" if dt else "") for n, dt in quem) + f" informa {_fmt(campo, a['valor'])}")
+        alt = {"valor": a["valor"], "fonte": "; ".join(n + (f", {dt}" if dt else "") for n, dt in quem)}
+        if d is None:
+            d = {"campo": campo, "exibido": e.get(campo), "alternativas": [], "nota": ""}
+            divs.append(d)
+        if alt not in d["alternativas"]:
+            d["alternativas"].append(alt)
+    texto = "; ".join(frases)
+    d["nota"] = (f"{d['nota']} {texto[0].upper() + texto[1:]}." if d["nota"]
+                 else f"{texto}; {_sufixo(tipo, bool(c.get('nao_se_aplica')))}")
+
+
 def _aplicar_campo(alvo, chave, campo, c, fontes, entidade):
-    valor = None if c.get("nao_localizado") else c["valor"]
+    sem_valor = c.get("nao_localizado") or c.get("nao_se_aplica")
+    valor = None if sem_valor else c["valor"]
     fs = [_fonte(fid, fontes) for fid in c.get("fontes", [])]
-    tipo = None if c.get("nao_localizado") else tipo_campo(fs)
+    tipo = None if sem_valor else tipo_campo(fs)
     original = alvo.get(chave)
     mudou = original != valor
     if mudou:
         alvo[chave] = valor
         if entidade and original is not None:
-            _divergencia(alvo, campo, original, valor, tipo)
+            _divergencia(alvo, campo, original, valor, tipo, bool(c.get("nao_se_aplica")))
+    if entidade and c.get("alternativas"):
+        _alternativas_declaradas(alvo, campo, c, fontes, tipo)
     info = alvo.setdefault("verif", {})[campo] = {
-        "tipo": tipo, "nao_localizado": bool(c.get("nao_localizado")), "fontes": fs,
-        "roadshow": original if mudou else None}
+        "tipo": tipo, "nao_localizado": bool(c.get("nao_localizado")), "nao_se_aplica": bool(c.get("nao_se_aplica")),
+        "fontes": fs, "roadshow": original if mudou else None}
     if campo == "desagio":  # critério híbrido: deságio no teto do edital, desempate por outorga
         info["limitado_pelo_edital"] = bool(c.get("limitado_pelo_edital"))
 
@@ -354,11 +417,16 @@ def nomes_do_ranking(conc_aplicado):
 
 
 def cobertura(verif):
-    """Contagem de campos verificados por tipo da fonte mais forte, e de campos não localizados."""
+    """Contagem de campos verificados por tipo da fonte mais forte, de campos não localizados e, à parte, dos que não
+    se aplicam (deságio de leilão por outorga)."""
     fontes = verif.get("fontes") or {}
-    cont = {"leiloes": len(verif.get("leiloes", [])), "oficial": 0, "roadshow": 0, "imprensa": 0, "nao_localizado": 0}
+    cont = {"leiloes": len(verif.get("leiloes", [])), "oficial": 0, "roadshow": 0, "imprensa": 0, "nao_localizado": 0,
+            "nao_se_aplica": 0}
     for l in verif.get("leiloes", []):
         for c in (l.get("campos") or {}).values():
+            if c.get("nao_se_aplica"):
+                cont["nao_se_aplica"] += 1
+                continue
             tipo = None if c.get("nao_localizado") else tipo_campo([fontes[fid] for fid in c.get("fontes", [])])
             cont[tipo or "nao_localizado"] += 1
     return cont
@@ -381,9 +449,10 @@ def relatorio_markdown(verif, conc_aplicado):
         "",
         "## Cobertura",
         "",
-        "| Leilões | Campos oficial | Campos RoadShow | Campos imprensa | Não localizados |",
-        "|---:|---:|---:|---:|---:|",
-        f"| {cob['leiloes']} | {cob['oficial']} | {cob['roadshow']} | {cob['imprensa']} | {cob['nao_localizado']} |",
+        "| Leilões | Campos oficial | Campos RoadShow | Campos imprensa | Não localizados | Não se aplica |",
+        "|---:|---:|---:|---:|---:|---:|",
+        f"| {cob['leiloes']} | {cob['oficial']} | {cob['roadshow']} | {cob['imprensa']} | {cob['nao_localizado']} | "
+        f"{cob['nao_se_aplica']} |",
         "",
         "## Campos verificados",
         "",
@@ -398,7 +467,8 @@ def relatorio_markdown(verif, conc_aplicado):
             alvo, chaves = next(((a, k) for a, k, _ in alvos if campo in k), (None, None))
             info = ((alvo or {}).get("verif") or {}).get(campo) or {}
             exibido = alvo.get(chaves[campo]) if alvo is not None else c.get("valor")
-            origem = "não localizado" if c.get("nao_localizado") else ROTULO.get(info.get("tipo"), "—")
+            origem = (NAO_SE_APLICA if c.get("nao_se_aplica") else "não localizado" if c.get("nao_localizado")
+                      else ROTULO.get(info.get("tipo"), "—"))
             rs = info.get("roadshow")
             linhas.append(f"| {_md(l['chave'])} | {campo} | {_md(None if exibido is None else _fmt(campo, exibido))} | "
                           f"{origem} | {_md(None if rs is None else _fmt(campo, rs))} | "

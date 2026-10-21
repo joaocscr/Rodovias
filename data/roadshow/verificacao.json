@@ -132,7 +132,7 @@
       "data": "2024-08-29",
       "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/br-381-mg/arquivos-para-download/comissao-de-outorga/ata-de-abertura-do-envelope-de-proposta-e-ordem-de-classificacao-do-leilao-do-edital-de-concessao-no-01-2024/view",
       "acesso": "2026-10-21",
-      "trecho": "o leilão foi realizado no dia vinte e nove de agosto de dois mil e vinte e quatro […] 1) 4UM Fundo De Investimento Em Participações Em Infraestrutura […], 0,94% e 2) Opportunity Dinâmico […], 0,10% […] o Diretor do leilão declarou a 4UM Investimentos […] como vencedora do certame"
+      "trecho": "verificou-se, o valor do desconto ofertado sobre a tarifa básica de pedágio (%): 1) 4UM Fundo De Investimento Em Participações Em Infraestrutura De Responsabilidade Limitada, 0,94% e 2) Opportunity Dinâmico Fundo De Investimentos Em Participações Multiestratégia Investimento No Exterior S.A, 0,10%. O Diretor do Leilão comunicou que, em virtude da diferença nominal de até 5% em relação ao maior desconto apresentado, conforme disposto no item 13.3.2 do edital, foi iniciada a etapa de viva-voz entre as proponentes com ofertas mínimas em 0,2%. A proponente Opportunity, representada pela corretora XP Investimentos, manifestou desinteresse em alterar a oferta originalmente apresentada. Em razão dessa decisão e considerando o maior desconto ofertado, o Diretor do leilão declarou a 4UM Investimentos, representada pela Sita Sociedade Corretora de Cambio E Valores Mobiliarios S/A, como vencedora do certame."
     },
     "antt-concessao-nova-381": {
       "tipo": "oficial",
@@ -401,7 +401,7 @@
       "data": "2025",
       "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/reestruturacao-de-contratos-de-concessao/copy_of_BR-msvia/processo%20competitivo/edital-e-anexos/edital-de-processo-competitivo-no-01-2025-msvia-pos-esclarecimentos/view",
       "acesso": "2026-10-21",
-      "trecho": "12.2.2 A TARIFA BÁSICA DE PEDÁGIO a ser considerada para a oferta de DESÁGIO apresentada na PROPOSTA ECONÔMICA é de R$ 0,07521/km […] referenciada a janeiro de 2022"
+      "trecho": "12.2 […] (i) o DESÁGIO, valor percentual ofertado pela PROPONENTE, expresso em 2 (duas) casas decimais, correspondente ao DESCONTO SOBRE A TARIFA BÁSICA DE PEDÁGIO […] 12.2.2 A TARIFA BÁSICA DE PEDÁGIO a ser considerada para a oferta de DESÁGIO apresentada na PROPOSTA ECONÔMICA é de R$ 0,07521/km […] referenciada a janeiro de 2022 […] 13.3 Não havendo PROPONENTES declaradas aptas pela COMISSÃO, a SESSÃO PÚBLICA será encerrada, sendo declarada vencedora a CONTROLADORA."
     },
     "antt-termo-aditivo-msvia-2025": {
       "tipo": "oficial",
@@ -471,7 +471,7 @@
       "data": "2025",
       "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/reestruturacao-de-contratos-de-concessao/BR-101-ES-BA-ECO-101/copy_of_processo-competitivo/edital-e-anexos/edital-de-processo-competitivo-no-02-2025-eco-101-pos-esclarecimentos/view",
       "acesso": "2026-10-21",
-      "trecho": "12.2.5 A TARIFA BÁSICA DE PEDÁGIO a ser considerada para a oferta de DESÁGIO apresentada na PROPOSTA ECONÔMICA é de R$ 0,05525/km […] referenciada a janeiro de 2023"
+      "trecho": "12.2 […] (i) o DESÁGIO, valor percentual ofertado pela PROPONENTE, expresso em 2 (duas) casas decimais, correspondente ao DESCONTO SOBRE A TARIFA BÁSICA DE PEDÁGIO […] 12.2.5 A TARIFA BÁSICA DE PEDÁGIO a ser considerada para a oferta de DESÁGIO apresentada na PROPOSTA ECONÔMICA é de R$ 0,05525/km […] referenciada a janeiro de 2023 […] 13.3 Não havendo PROPONENTES declaradas aptas pela COMISSÃO, a SESSÃO PÚBLICA será encerrada, sendo declarada vencedora a CONTROLADORA."
     },
     "antt-termo-aditivo-eco101-2025": {
       "tipo": "oficial",
@@ -1731,6 +1731,10 @@
       "url": "https://www.moneytimes.com.br/aviva-tecpav-vence-leilao-de-rodovias-em-goias-com-desconto-de-18-sobre-pedagio-raql/",
       "acesso": "2026-10-21",
       "trecho": "A EPR, que também participava do certame, não passou para a segunda etapa, após ofertar desconto de 0,90%."
+    },
+    "rs-p23": {
+      "tipo": "roadshow",
+      "pagina": 23
     }
   },
   "leiloes": [
@@ -2451,7 +2455,7 @@
       },
       "notas": [
         {
-          "texto": "Processo competitivo sem outras proponentes: a controladora (Motiva) foi declarada vencedora e a ata confirma a tarifa básica de R$ 0,07521/km, igual à tarifa de referência do edital (item 12.2.2), ou seja, sem desconto (0,00%); o RoadShow imprime 0,05%.",
+          "texto": "Processo competitivo sem outras proponentes: a controladora (Motiva) foi declarada vencedora e a ata confirma a tarifa básica de R$ 0,07521/km, igual à tarifa de referência do edital (item 12.2.2); como o deságio é o desconto sobre essa tarifa (item 12.2) e, sem outras proponentes, vence a controladora (item 13.3), o deságio é 0,00%; o RoadShow imprime 0,05%.",
           "fontes": [
             "antt-ata-processo-competitivo-msvia",
             "antt-edital-processo-competitivo-msvia"
@@ -2524,7 +2528,7 @@
       },
       "notas": [
         {
-          "texto": "Processo competitivo sem outras proponentes: a controladora (Ecorodovias) foi declarada vencedora e a ata confirma a tarifa básica de R$ 0,05525/km, igual à tarifa de referência do edital (item 12.2.5), ou seja, sem desconto (0,00%); o RoadShow imprime 0,05%.",
+          "texto": "Processo competitivo sem outras proponentes: a controladora (Ecorodovias) foi declarada vencedora e a ata confirma a tarifa básica de R$ 0,05525/km, igual à tarifa de referência do edital (item 12.2.5); como o deságio é o desconto sobre essa tarifa (item 12.2) e, sem outras proponentes, vence a controladora (item 13.3), o deságio é 0,00%; o RoadShow imprime 0,05%.",
           "fontes": [
             "antt-ata-processo-competitivo-eco101",
             "antt-edital-processo-competitivo-eco101"
@@ -2647,8 +2651,10 @@
         },
         "desagio": {
           "valor": null,
-          "nao_localizado": true,
-          "fontes": []
+          "nao_se_aplica": true,
+          "fontes": [
+            "b3-2025-07-16-ponte-sao-borja"
+          ]
         },
         "prazo_anos": {
           "valor": 25,
@@ -2671,7 +2677,7 @@
       ],
       "notas": [
         {
-          "texto": "O critério do leilão foi a maior outorga fixa (em dólares), não o desconto na tarifa. A Plus Byte SRL venceu a sessão com US$ 29 milhões (ágio de 9,43%) e foi desclassificada em agosto de 2025 por não cumprir os requisitos de qualificação; a CS Infra S.A. (grupo Simpar), segunda colocada, ofertou US$ 26,6 milhões, ágio de 0,38% sobre a outorga mínima de US$ 26,5 milhões. O leilão foi decidido pela outorga: os 0,38% (e os 9,43% da Plus Byte) que o RoadShow imprime como deságio são esses ágios sobre a outorga mínima, não desconto de tarifa — por isso o deságio fica como não aplicável (não localizado) e o ativo sai das séries e médias de deságio.",
+          "texto": "O critério do leilão foi a maior outorga fixa (em dólares), não o desconto na tarifa. A Plus Byte SRL venceu a sessão com US$ 29 milhões (ágio de 9,43%) e foi desclassificada em agosto de 2025 por não cumprir os requisitos de qualificação; a CS Infra S.A. (grupo Simpar), segunda colocada, ofertou US$ 26,6 milhões, ágio de 0,38% sobre a outorga mínima de US$ 26,5 milhões. O leilão foi decidido pela outorga: os 0,38% (e os 9,43% da Plus Byte) que o RoadShow imprime como deságio são esses ágios sobre a outorga mínima, não desconto de tarifa — por isso o deságio aparece como \"não se aplica (leilão por outorga)\" e o ativo sai das séries e médias de deságio.",
           "fontes": [
             "b3-2025-07-16-ponte-sao-borja",
             "agenciainfra-2025-07-16-ponte-sao-borja",
@@ -2714,7 +2720,6 @@
           "valor": 19.6,
           "fontes": [
             "antt-ata-leilao-br-060-364",
-            "atlas-publico-2026-02-17-delib-498",
             "rs-p97"
           ]
         },
@@ -3393,6 +3398,14 @@
           "fontes": [
             "antt-minuta-termo-aditivo-regis-bittencourt",
             "antt-projeto-regis-bittencourt"
+          ],
+          "alternativas": [
+            {
+              "valor": 25,
+              "fontes": [
+                "b3-2026-07-23-regis-bittencourt"
+              ]
+            }
           ]
         }
       },
@@ -3406,7 +3419,7 @@
           ]
         },
         {
-          "texto": "O contrato original foi firmado em 14/02/2008 (o RoadShow imprime 14/08/2008). O prazo de 15 anos conta da vigência do termo aditivo, conforme a minuta do edital e a página do projeto; a nota da B3 fala em 25 anos. Não foi localizado o termo aditivo assinado: a assinatura do aditivo (21/12/2026) e o início de operação (21/01/2027) do RoadShow seguem como previsões.",
+          "texto": "O contrato original foi firmado em 14/02/2008 (o RoadShow imprime 14/08/2008). O prazo de 15 anos conta da vigência do termo aditivo, conforme a minuta do edital e a página do projeto; a nota da B3 fala em 25 anos (registrada como divergência no prazo). Não foi localizado o termo aditivo assinado: a assinatura do aditivo (21/12/2026) e o início de operação (21/01/2027) do RoadShow seguem como previsões.",
           "fontes": [
             "antt-concessao-autopista-regis-bittencourt",
             "antt-minuta-termo-aditivo-regis-bittencourt",

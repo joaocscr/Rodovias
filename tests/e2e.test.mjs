@@ -505,10 +505,11 @@ test('v4: ficha da Rota da Celulose mostra nota de inabilitação', async () => 
   // início da operação não localizado: linha com "—" e o selo
   const ini = await fichaDd('Início da operação');
   assert.match(ini.text, /^—não localizado em fonte oficial/);
-  // um só vencedor: o verificado, com o deságio exibido (8%); o que o RoadShow imprime (9%) fica abaixo
+  // um só vencedor: o verificado, com o deságio exibido (8%); o que o RoadShow imprime (9%) fica abaixo. O nome do
+  // RoadShow ("… (XP infra V fundo de Investimento)") é do mesmo grupo (XP): sem sublinha de nome
   const linhas = await partLinhas();
   assert.equal(linhas.filter(l => l.includes('(vencedor)')).length, 1);
-  assert.match(linhas[0], /^Consórcio Caminhos da Celulose \(vencedor\) oficial RoadShow: .*XP infra V.* 8,00% oficial RoadShow: 9,00%$/);
+  assert.match(linhas[0], /^Consórcio Caminhos da Celulose \(vencedor\) oficial 8,00% oficial RoadShow: 9,00%$/);
 });
 
 test('v4: vencedor verificado fora da lista do RoadShow entra no topo (Transbrasiliana)', async () => {
@@ -549,10 +550,13 @@ test('v4: comparador tem a fonte do deságio e Fontes lista a verificação', as
   const i = ths.indexOf('Fonte do deságio');
   assert.equal(ths[i - 1], 'Deságio');
   const vals = await page.$$eval(`#proj-table tbody tr td:nth-child(${i + 1})`, t => [...new Set(t.map(x => x.textContent))]);
-  // desde que a Ponte São Borja virou "não localizado" (leilão por outorga), nenhum deságio fica só com o RoadShow
-  assert.ok(vals.includes('oficial') && vals.includes('não localizado em fonte oficial'), vals.join());
+  // a Ponte São Borja (leilão por outorga) tem o deságio "não se aplica"; nenhum deságio fica só com o RoadShow
+  assert.ok(vals.includes('oficial') && vals.includes('não se aplica (leilão por outorga)'), vals.join());
+  assert.ok(!vals.includes('RoadShow'), vals.join());
   await go('#fontes');
-  assert.match(await page.textContent('#fontes-verif-cobertura'), /\d+ leilões conferidos; campos por origem: \d+ oficial/);
+  const cob = await page.textContent('#fontes-verif-cobertura');
+  assert.match(cob, /\d+ leilões conferidos; campos por origem: \d+ oficial/);
+  assert.match(cob, /1 não se aplica \(deságio de leilão por outorga\)\./);
   const n = await page.locator('#fontes-verificacao-table tbody tr').count();
   assert.equal(n, await page.evaluate(() => window.CONC.verificacao.fontes.length));
   assert.equal(await page.getAttribute('#fontes-verificacao-table', 'data-csv-name'), 'fontes-verificacao');
@@ -679,7 +683,8 @@ test('v4: Mercado mostra abaixo do verificado o vencedor e o deságio que o Road
   await go('#mercado');
   await page.selectOption('#part-ano', '2025');
   const l5 = await page.locator('#chart-part tbody tr', { hasText: 'Rodovias Integradas do Paraná - Lote 5' }).locator('td').allTextContents();
-  assert.match(l5[3], / RoadShow: Pátria$/);
+  // "Pátria" (RoadShow) é o grupo do nome verificado: sem sublinha de nome; o deságio diferente continua
+  assert.equal(l5[3], 'Reúne Rodovias Holding II S.A. (Pátria)');
   assert.equal(l5[4], '23,83% RoadShow: 21,83%');
   const cel = await page.locator('#chart-part tbody tr', { hasText: 'Rota da Celulose' }).locator('td').allTextContents();
   assert.equal(cel[4], '8,00% RoadShow: 9,00%');
@@ -688,6 +693,51 @@ test('v4: Mercado mostra abaixo do verificado o vencedor e o deságio que o Road
   assert.match(regis[3], /^Obrascon Huarte Lain Brasil S\.A\. \(OHL Brasil\) RoadShow: Arteris \(antiga OHL\)$/);
   assert.equal(regis[4], '49,19%', 'deságio igual ao do RoadShow: sem sublinha');
   await page.selectOption('#part-ano', '');
+});
+
+test('fechamento: ficha da Ponte São Borja mostra deságio "não se aplica (leilão por outorga)"', async () => {
+  await go('#ficha/ponte-binacional-sao-borja-santo-tome');
+  const d = await fichaDd('Deságio');
+  assert.match(d.text, /^—não se aplica \(leilão por outorga\)/);
+  assert.match(d.html, /class="selo selo--nao-se-aplica"/);
+  assert.match(await page.getAttribute('#ficha dd .selo--nao-se-aplica', 'title'), /^B3 — /);
+  await page.evaluate(() => {
+    const dt = [...document.querySelectorAll('#ficha dt')].find(x => x.textContent === 'Deságio');
+    dt.nextElementSibling.querySelector('.div-flag').click();
+  });
+  assert.match(await page.textContent('.popover'), /RoadShow imprime 0,38%; não se aplica \(leilão por outorga\)\./);
+  await page.keyboard.press('Escape');
+});
+
+test('fechamento: prazo da Régis Bittencourt com a B3 (25 anos) como divergência', async () => {
+  await go('#ficha/regis-bittencourt');
+  await page.evaluate(() => {
+    const dt = [...document.querySelectorAll('#ficha dt')].find(x => x.textContent === 'Prazo (a partir do termo aditivo)');
+    dt.nextElementSibling.querySelector('.div-flag').click();
+  });
+  const t = await page.textContent('.popover');
+  assert.match(t, /Exibido: 15oficial/);
+  assert.match(t, /25 \(B3, 23\/07\/2026\)/);
+  await page.keyboard.press('Escape');
+});
+
+test('fechamento: "RoadShow: …" de nome só quando o grupo econômico difere', async () => {
+  await go('#mercado');
+  await page.selectOption('#part-ano', '2026');
+  const tr = page.locator('#chart-part tbody tr', { hasText: 'Rota Gerais' });
+  assert.match((await tr.locator('td').allTextContents())[3], /^Ecorodovias Concessões e Serviços S\.A\. \(Ecorodovias\)$/);
+  assert.equal(await tr.locator('td:nth-child(4) .part-rs').count(), 0);
+  await page.selectOption('#part-ano', '2007');
+  const tb = page.locator('#chart-part tbody tr', { hasText: 'Transbrasiliana' });
+  assert.match(await tb.locator('td:nth-child(4) .part-rs').textContent(), /^RoadShow: TPI/);
+  await page.selectOption('#part-ano', '');
+  // ficha: o RoadShow grafa "EcoRodovias Concessões e Ser. S.A" (mesmo grupo): sem sublinha de nome
+  await go('#ficha/rotas-gerais');
+  const venc = (await partLinhas()).filter(l => l.includes('(vencedor)'));
+  assert.deepEqual(venc, ['Ecorodovias Concessões e Serviços S.A. (vencedor) oficial 19,00% oficial']);
+  assert.equal(await page.locator('#ficha table[data-csv-name="ficha-participantes"] .part-rs').count(), 0);
+  await go('#ficha/transbrasiliana');
+  assert.match((await partLinhas())[0], /RoadShow: TPI/);
 });
 
 test('nenhuma requisição externa', () => assert.deepEqual(external, []));

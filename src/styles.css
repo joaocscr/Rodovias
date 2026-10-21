@@ -599,6 +599,7 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 .selo--roadshow { border-color: var(--color-bright-blue); color: var(--color-bright-blue); background: var(--color-snow-white); }
 .selo--imprensa { border: 1px dashed var(--color-light-grey); color: var(--color-spacial-grey); background: var(--color-snow-white); }
 .selo--nao-localizado { border: 1px dashed var(--color-light-grey); color: var(--color-light-grey); background: none; font-style: italic; }
+.selo--nao-se-aplica { border: 1px solid var(--color-light-grey); color: var(--color-spacial-grey); background: none; }
 .fontes-table td .selo { margin-left: 0; }
 .notas-verif .ftext { white-space: normal; }
 .nota-fontes { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; color: var(--color-light-grey); }

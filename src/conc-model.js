@@ -79,11 +79,17 @@ const ConcModel = (() => {
   // v4: origem do valor exibido de um campo de leilão (camada de verificação, `e.verif`), em texto puro.
   const ORIGEM = { oficial: 'oficial', roadshow: 'RoadShow', imprensa: 'imprensa — não oficial' };
   const NAO_LOCALIZADO = 'não localizado em fonte oficial';
-  function rotuloOrigem(tipo) { return ORIGEM[tipo] || NAO_LOCALIZADO; }
-  // Campo verificado: o tipo da fonte (ou "não localizado"); sem verificação, o valor é o do RoadShow; sem valor, null.
+  const NAO_SE_APLICA = 'não se aplica (leilão por outorga)';
+  // Aceita o tipo da fonte ou o verif do campo ({tipo, nao_localizado, nao_se_aplica}): não se aplica > não localizado.
+  function rotuloOrigem(v) {
+    if (v && typeof v === 'object') return v.nao_se_aplica ? NAO_SE_APLICA : v.nao_localizado ? NAO_LOCALIZADO : rotuloOrigem(v.tipo);
+    return ORIGEM[v] || NAO_LOCALIZADO;
+  }
+  // Campo verificado: o tipo da fonte (ou "não localizado"/"não se aplica"); sem verificação, o valor é o do RoadShow;
+  // sem valor, null.
   function origemCampo(e, campo) {
     const v = e.verif && e.verif[campo];
-    if (v) return rotuloOrigem(v.nao_localizado ? null : v.tipo);
+    if (v) return rotuloOrigem(v);
     return e[campo] == null || e[campo] === '' ? null : ORIGEM.roadshow;
   }
 

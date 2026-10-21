@@ -13,6 +13,31 @@ test('grupoDe: usa o alias; sem alias devolve o próprio nome', () => {
   assert.equal(LeiloesModel.grupoDe('CCR', undefined), 'CCR');
 });
 
+test('rsDiverge mantém grupos diferentes', () => {
+  const al = [{ nome: 'Consórcio BRVias', grupo: 'Consórcio BRVias' },
+    { nome: 'Ecorodovias Concessões e Serviços S.A.', grupo: 'Ecorodovias' }];
+  assert.equal(LeiloesModel.rsDiverge('Consórcio BRVias', 'TPI – Triunfo Participações e Investimentos S.A. (antigo Consórcio BRVias)', al), true);
+  assert.equal(LeiloesModel.rsDiverge('Ecorodovias Concessões e Serviços S.A.', 'Ecorodovias', al), false);
+  // sem nome do RoadShow não há linha
+  assert.equal(LeiloesModel.rsDiverge('Ecorodovias Concessões e Serviços S.A.', null, al), false);
+  assert.equal(LeiloesModel.rsDiverge('Ecorodovias Concessões e Serviços S.A.', '', al), false);
+  // sem aliases, só o mesmo nome coincide
+  assert.equal(LeiloesModel.rsDiverge('Ecorodovias Concessões e Serviços S.A.', 'Ecorodovias', []), true);
+  // grafia do RoadShow: acento, caixa, pontuação e "Consórcio" não contam; nome que começa pelo grupo é do grupo
+  const g = [{ nome: 'Infraestrutura Brasil Holding XXI S.A.', grupo: 'Pátria' }, { nome: 'Consórcio Caminhos da Celulose', grupo: 'XP' },
+    { nome: 'Ecorodovias Concessões e Serviços S.A.', grupo: 'Ecorodovias' }, { nome: 'Obrascon Huarte Lain Brasil S.A. (OHL Brasil)', grupo: 'OHL Brasil' }];
+  assert.equal(LeiloesModel.rsDiverge('Infraestrutura Brasil Holding XXI S.A.', 'Patria', g), false);
+  assert.equal(LeiloesModel.rsDiverge('Ecorodovias Concessões e Serviços S.A.', 'EcoRodovias Concessões e Ser. S.A', g), false);
+  assert.equal(LeiloesModel.rsDiverge('Consórcio Caminhos da Celulose', 'XP Infra V Fundo de Investimento', g), false);
+  assert.equal(LeiloesModel.rsDiverge('Consórcio Nova Estrada Real', 'Nova Estrada Real (Construcap; Copasa; Ohla)', []), false);
+  // "Nome (Grupo)": vale o nome ou o que vem entre parênteses
+  assert.equal(LeiloesModel.rsDiverge('Consórcio Caminhos da Celulose', 'Consórcio Caminhos da Celulose (XP infra V fundo de Investimento)', g), false);
+  assert.equal(LeiloesModel.rsDiverge('Infraestrutura Brasil Holding XXI S.A.', 'Infraestrutura Holding XXI S.A. (Patria)', g), false);
+  // grupo de outra época continua visível
+  assert.equal(LeiloesModel.rsDiverge('Obrascon Huarte Lain Brasil S.A. (OHL Brasil)', 'Arteris (Antiga OHL)', g), true);
+  assert.equal(LeiloesModel.rsDiverge('Consórcio Planalto', 'Ecorodovias', g), true);
+});
+
 test('ranking conta vitória e derrota', () => {
   const r = LeiloesModel.rankingGrupos([
     row({ vencedor: 'X', outros: [{ grupo: 'Y', desagio: 1 }] }),

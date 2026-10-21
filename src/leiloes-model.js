@@ -10,6 +10,32 @@ const LeiloesModel = (() => {
     return a && a.grupo ? a.grupo : nome;
   }
 
+  // Palavras de um nome sem acento, caixa e pontuação, sem o "Consórcio" inicial: "Consórcio Nova BR-040" → nova br 040.
+  const palavras = s => {
+    const p = String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+    return p[0] === 'consorcio' ? p.slice(1) : p;
+  };
+  const chave = s => palavras(s).join(' ');
+  // Grupo de um nome com o alias procurado pela grafia normalizada (o RoadShow grafa "Patria", "CS Infra S. A." etc.).
+  function grupoGrafia(nome, aliases) {
+    const a = (aliases || []).find(x => x.nome === nome) || (aliases || []).find(x => chave(x.nome) === chave(nome));
+    return palavras(a && a.grupo ? a.grupo : nome);
+  }
+  const comeca = (p, prefixo) => prefixo.length > 0 && prefixo.every((w, i) => p[i] === w);
+
+  // Linha "RoadShow: …" do nome do vencedor: só quando o nome que o RoadShow imprime é de outro grupo econômico. Mesmo
+  // grupo: `grupoDe` coincide (pela grafia normalizada), o nome começa pelo grupo ("EcoRodovias Concessões e Ser. S.A"
+  // é Ecorodovias) ou, em "Nome (Grupo)", o nome ou o que vem entre parênteses é do grupo. Grupo de outra época
+  // ("Arteris (antiga OHL)" × OHL Brasil) continua divergente.
+  function rsDiverge(nomeExibido, nomeRoadShow, aliases) {
+    if (nomeRoadShow == null || nomeRoadShow === '') return false;
+    if (nomeExibido == null || nomeExibido === '') return true;
+    const g = grupoGrafia(nomeExibido, aliases);
+    const m = /^(.*?)\s*\(([^()]*)\)\s*$/.exec(nomeRoadShow);
+    const nomes = m ? [nomeRoadShow, m[1], m[2]] : [nomeRoadShow];
+    return !nomes.some(n => { const p = grupoGrafia(n, aliases); return comeca(p, g); });
+  }
+
   const noPeriodo = (p, { de, ate } = {}) => (!num(de) || p.ano >= de) && (!num(ate) || p.ano <= ate);
 
   // Por grupo: participações (cada grupo conta uma vez por leilão), vitórias, derrotas (inclui inabilitados),
@@ -62,7 +88,7 @@ const LeiloesModel = (() => {
     return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
   }
 
-  return { grupoDe, rankingGrupos, leiloesSemLista, serieDesagio, mediaDesagio };
+  return { grupoDe, rsDiverge, rankingGrupos, leiloesSemLista, serieDesagio, mediaDesagio };
 })();
 
 if (typeof module !== 'undefined') module.exports = LeiloesModel;

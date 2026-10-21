@@ -30,6 +30,13 @@ test('badge: não localizado, sem link; deságio limitado pelo edital no title',
   assert.doesNotMatch(nl, /<a /);
   assert.match(Selo.badge({ tipo: 'oficial', fontes: [antt], limitado_pelo_edital: true }), /limitado pelo edital; desempate por outorga/);
 });
+test('badge: não se aplica (leilão por outorga), com a fonte que explica o critério', () => {
+  const h = Selo.badge({ tipo: null, nao_localizado: false, nao_se_aplica: true, fontes: [antt] });
+  assert.match(h, /^<span class="selo selo--nao-se-aplica"/);
+  assert.match(h, />não se aplica \(leilão por outorga\)<\/a>/);
+  assert.match(h, /href="https:\/\/www\.gov\.br\/antt\/x"/);
+  assert.match(h, /title="ANTT — Deliberação nº 1 \(30\/10\/2025\)"/);
+});
 test('badge escapa o texto das fontes', () => {
   const h = Selo.badge({ tipo: 'imprensa', fontes: [{ tipo: 'imprensa', orgao: 'A "B" <C>', titulo: null, data: null, url: null }] });
   assert.match(h, /title="A &quot;B&quot; &lt;C&gt;"/);

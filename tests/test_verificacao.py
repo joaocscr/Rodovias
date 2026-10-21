@@ -406,7 +406,8 @@ def test_aplicar_resumo_e_aliases(conc):
 def test_aplicar_semente_vazia_so_acrescenta_chaves(conc):
     out = aplicar(conc, {"versao": 1, "fontes": {}, "leiloes": []}, {"aliases": []})
     assert out == {**conc, "verificacao": {"fontes": [], "cobertura": {"leiloes": 0, "oficial": 0, "roadshow": 0,
-                                                                       "imprensa": 0, "nao_localizado": 0}},
+                                                                       "imprensa": 0, "nao_localizado": 0,
+                                                                       "nao_se_aplica": 0}},
                    "grupos_alias": []}
 
 
@@ -419,7 +420,68 @@ def test_cobertura_conta_por_tipo():
          "campos": {"desagio": {"valor": None, "nao_localizado": True, "fontes": []},
                     "assinatura": {"valor": "2026-02-02", "fontes": ["antt"]}}},
     ])
-    assert cobertura(v) == {"leiloes": 2, "oficial": 2, "roadshow": 1, "imprensa": 1, "nao_localizado": 1}
+    assert cobertura(v) == {"leiloes": 2, "oficial": 2, "roadshow": 1, "imprensa": 1, "nao_localizado": 1,
+                            "nao_se_aplica": 0}
+
+
+def test_nao_se_aplica_valida_e_aplica(conc):
+    # leilão por outorga: o deságio não se aplica (valor null), com a fonte que explica o critério
+    ok = {"desagio": {"valor": None, "nao_se_aplica": True, "fontes": ["antt"]}}
+    v = verif([{"chave": "celulose", "ent": "celulose", "campos": ok}])
+    assert validar(v, conc) == []
+    casos = [{"desagio": {"valor": None, "nao_se_aplica": True, "fontes": []}},           # sem fonte
+             {"desagio": {"valor": 9.0, "nao_se_aplica": True, "fontes": ["antt"]}},      # com valor
+             {"desagio": {"valor": None, "nao_se_aplica": "sim", "fontes": ["antt"]}},    # não booleano
+             {"desagio": {"valor": None, "nao_se_aplica": True, "nao_localizado": True, "fontes": ["antt"]}},
+             {"assinatura": {"valor": None, "nao_se_aplica": True, "fontes": ["antt"]}}]  # só no deságio
+    for campos in casos:
+        erros = validar(verif([leilao(campos)]), conc)
+        assert len(erros) == 1 and "nao_se_aplica" in erros[0], (campos, erros)
+    e = aplicar(conc, v, {"aliases": []})["entidades"][1]
+    assert e["desagio"] is None
+    info = e["verif"]["desagio"]
+    assert info["nao_se_aplica"] is True and info["nao_localizado"] is False and info["tipo"] is None
+    assert info["roadshow"] == 9.0 and [f["id"] for f in info["fontes"]] == ["antt"]
+    [d] = e["divergencias"]
+    assert d["nota"] == "RoadShow imprime 9,00%; não se aplica (leilão por outorga)."
+    outro = aplicar(conc, verif([leilao({"desagio": {"valor": 23.83, "fontes": ["antt"]}})]), {"aliases": []})
+    assert outro["entidades"][0]["verif"]["desagio"]["nao_se_aplica"] is False
+    md = relatorio_markdown(v, aplicar(conc, v, {"aliases": []}))
+    assert "| celulose | desagio | — | não se aplica (leilão por outorga) | 9,00% | antt |" in md
+
+
+def test_cobertura_conta_nao_se_aplica():
+    v = verif([leilao({"desagio": {"valor": None, "nao_se_aplica": True, "fontes": ["antt"]},
+                       "assinatura": {"valor": None, "nao_localizado": True, "fontes": []},
+                       "leilao": {"valor": "2025-10-30", "fontes": ["antt"]}})])
+    assert cobertura(v) == {"leiloes": 1, "oficial": 1, "roadshow": 0, "imprensa": 0, "nao_localizado": 1,
+                            "nao_se_aplica": 1}
+
+
+def test_alternativa_declarada_valida_e_aplica(conc):
+    # outra fonte dá outro valor (não exibido): fica como divergência declarada, com a fonte
+    b3 = {**OFICIAL, "orgao": "B3", "data": "2026-07-23", "url": "https://www.b3.com.br/x"}
+    fontes = {"antt": OFICIAL, "b3": b3, "rs-p15": RS15}
+    campos = {"prazo_anos": {"valor": 15, "fontes": ["antt"], "alternativas": [{"valor": 25, "fontes": ["b3"]}]}}
+    v = verif([leilao(campos)], fontes)
+    assert validar(v, conc) == []
+    ruins = [[{"valor": 25, "fontes": []}], [{"valor": "25", "fontes": ["b3"]}], [{"valor": 25, "fontes": ["x"]}],
+             [{"valor": 15, "fontes": ["b3"]}], {"valor": 25}]
+    for alts in ruins:
+        erros = validar(verif([leilao({"prazo_anos": {**campos["prazo_anos"], "alternativas": alts}})], fontes), conc)
+        assert len(erros) == 1 and "alternativa" in erros[0], (alts, erros)
+    e = aplicar(conc, v, {"aliases": []})["entidades"][0]
+    assert e["prazo_anos"] == 15
+    [d] = [x for x in e["divergencias"] if x["campo"] == "prazo_anos"]
+    assert d == {"campo": "prazo_anos", "exibido": 15, "alternativas": [{"valor": 25, "fonte": "B3, 23/07/2026"}],
+                 "nota": "B3 (23/07/2026) informa 25 anos; exibido o valor de fonte oficial."}
+    # com o valor do RoadShow trocado, a alternativa declarada se soma à divergência do RoadShow
+    com_rs = {"desagio": {"valor": 23.83, "fontes": ["antt"], "alternativas": [{"valor": 22.0, "fontes": ["b3"]}]}}
+    [d] = [x for x in aplicar(conc, verif([leilao(com_rs)], fontes), {"aliases": []})["entidades"][0]["divergencias"]
+           if x["campo"] == "desagio"]
+    assert d["alternativas"] == [{"valor": 21.83, "pagina": 97}, {"valor": 22.0, "fonte": "B3, 23/07/2026"}]
+    assert d["nota"] == ("RoadShow imprime 21,83% (p. 97); exibido o valor de fonte oficial. "
+                         "B3 (23/07/2026) informa 22,00%.")
 
 
 def test_relatorio_markdown(conc):
@@ -437,6 +499,16 @@ def _conc_real():
 
 def test_dados_reais_validos():
     assert validar(carregar(), _conc_real(), carregar_aliases()) == []
+
+
+def test_dados_ponte_nao_se_aplica_e_regis_com_b3():
+    ents = {e["id"]: e for e in aplicar(_conc_real(), carregar(), carregar_aliases())["entidades"]}
+    ponte = ents["ponte-binacional-sao-borja-santo-tome"]
+    assert ponte["desagio"] is None and ponte["verif"]["desagio"]["nao_se_aplica"] is True
+    regis = ents["regis-bittencourt"]
+    assert regis["prazo_anos"] == 15
+    [d] = [x for x in regis["divergencias"] if x["campo"] == "prazo_anos"]
+    assert d["alternativas"] == [{"valor": 25, "fonte": "B3, 23/07/2026"}]
 
 
 def test_aliases_cobrem_todos_os_nomes():

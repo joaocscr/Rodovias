@@ -97,6 +97,16 @@ test('rotuloOrigem e origemCampo', () => {
   assert.equal(ConcModel.origemCampo(e, 'assinatura'), 'não localizado em fonte oficial');
   assert.equal(ConcModel.origemCampo(e, 'desagio'), null);
 });
+test('rotuloOrigem nao_se_aplica', () => {
+  // aceita o verif do campo: não se aplica > não localizado > tipo da fonte
+  assert.equal(ConcModel.rotuloOrigem(vf(null, { nao_se_aplica: true })), 'não se aplica (leilão por outorga)');
+  assert.equal(ConcModel.rotuloOrigem(vf('oficial', { nao_localizado: true })), 'não localizado em fonte oficial');
+  assert.equal(ConcModel.rotuloOrigem(vf('imprensa')), 'imprensa — não oficial');
+  const e = ent({ verif: { desagio: vf(null, { nao_se_aplica: true }) } });
+  assert.equal(ConcModel.origemCampo(e, 'desagio'), 'não se aplica (leilão por outorga)');
+  const rows = ConcModel.comparatorRows({ entidades: [ent({ id: 'p', nome: 'Ponte', estado: 'vigente', verif: { desagio: vf(null, { nao_se_aplica: true }) } })] });
+  assert.equal(rows[0].desagioOrigem, 'não se aplica (leilão por outorga)');
+});
 test('participantesExibidos: um só vencedor, o verificado', () => {
   const V = vf('oficial');
   // proponente diferente (nome e grupo) e a linha do RoadShow sem deságio: o verificado entra no topo e a linha marcada

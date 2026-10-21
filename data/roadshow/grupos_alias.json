@@ -2,8 +2,21 @@
   "aliases": [
     {
       "nome": "4UM Investimentos",
-      "grupo": "4UM Investimentos",
-      "motivo": "mesmo nome"
+      "grupo": "4UM",
+      "motivo": "razão social do grupo",
+      "fontes": [
+        "antt-ata-leilao-br-381-mg",
+        "rs-p23"
+      ]
+    },
+    {
+      "nome": "Consórcio 4UM-Opportunity-BR-364/RO",
+      "grupo": "4UM",
+      "motivo": "consórcio liderado por",
+      "fontes": [
+        "antt-delib-131-2025",
+        "rs-p23"
+      ]
     },
     {
       "nome": "Consórcio Acciona",
@@ -18,6 +31,14 @@
       "nome": "Arteris S.A.",
       "grupo": "Arteris",
       "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "Ateris S.A",
+      "grupo": "Arteris",
+      "motivo": "grafia",
+      "fontes": [
+        "antt-ata-processo-competitivo-autopista-fluminense"
+      ]
     },
     {
       "nome": "Obrascon Huarte Lain Brasil S.A.",
@@ -86,11 +107,6 @@
     {
       "nome": "Consórcio 116 Sertões",
       "grupo": "Consórcio 116 Sertões",
-      "motivo": "mesmo nome"
-    },
-    {
-      "nome": "Consórcio 4UM-Opportunity-BR-364/RO",
-      "grupo": "Consórcio 4UM-Opportunity-BR-364/RO",
       "motivo": "mesmo nome"
     },
     {
@@ -336,7 +352,7 @@
     {
       "nome": "Consórcio Rota Cerrado - Guide",
       "grupo": "Consórcio Rota do Cerrado",
-      "motivo": "grafia",
+      "motivo": "mesmo nome",
       "fontes": [
         "istoedinheiro-2024-12-12-rota-verde",
         "agenciainfra-2025-11-03-rota-sertaneja"

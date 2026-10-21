@@ -46,7 +46,9 @@ const Mercado = (() => {
     return `<div class="table-wrap" style="max-height:480px"><table class="grid" data-csv-name="participantes-leiloes"><thead><tr><th>Ano</th><th>Data</th><th>Lote</th><th>Vencedor</th><th class="num">Deságio vencedor</th><th>Fonte</th><th>Demais proponentes (deságio)</th></tr></thead><tbody>${
       rows.map(p => {
         const v = p.verif || {};
-        const rsG = v.grupo_vencedor && v.grupo_vencedor.roadshow, rsD = v.desagio && v.desagio.roadshow;
+        // nome do RoadShow só quando é de outro grupo; deságio diferente sempre aparece
+        const rsG0 = v.grupo_vencedor && v.grupo_vencedor.roadshow, rsD = v.desagio && v.desagio.roadshow;
+        const rsG = LeiloesModel.rsDiverge(p.vencedor, rsG0, aliases) ? rsG0 : null;
         return `<tr><td>${p.ano}</td><td>${p.data ? ConcModel.fmtData(p.data) : '—'}</td><td class="wrap">${esc(p.lote)}</td><td class="wrap">${esc(vencedorTxt(p.vencedor))}${rsTxt(rsG)}</td>
         <td class="num">${p.desagio_vencedor == null ? '—' : nf2.format(p.desagio_vencedor) + '%'}${rsTxt(rsD == null ? null : nf2.format(rsD) + '%')}</td><td>${Selo.badge(v.desagio || v.grupo_vencedor) || '—'}</td>
         <td class="wrap wrap--wide">${proponentesTxt(p)}</td></tr>`;

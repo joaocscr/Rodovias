@@ -117,8 +117,10 @@ const Ficha = (() => {
     // v4: um só vencedor, o verificado; o que o RoadShow imprime na linha dele fica abaixo, quando difere
     const plist = ConcModel.participantesExibidos(e, conc.grupos_alias);
     const rsTxt = v => (v != null ? ` <span class="part-rs">RoadShow: ${esc(v)}</span>` : '');
+    // nome do RoadShow só quando é de outro grupo econômico; deságio diferente sempre aparece
+    const rsNome = p => (p.roadshow && LeiloesModel.rsDiverge(p.grupo, p.roadshow.grupo, conc.grupos_alias) ? p.roadshow.grupo : null);
     const part = plist.length ? `<table class="grid" data-csv-name="ficha-participantes"><thead><tr><th>Proponente</th><th class="num">Deságio</th></tr></thead><tbody>${
-      plist.map(p => `<tr><td>${esc(p.grupo)}${p.vencedor ? ' <b>(vencedor)</b>' : ''}${p.verificado ? ' ' + Selo.badge(e.verif.grupo_vencedor) : ''}${rsTxt(p.roadshow && p.roadshow.grupo)}</td>
+      plist.map(p => `<tr><td>${esc(p.grupo)}${p.vencedor ? ' <b>(vencedor)</b>' : ''}${p.verificado ? ' ' + Selo.badge(e.verif.grupo_vencedor) : ''}${rsTxt(rsNome(p))}</td>
         <td class="num">${esc(F.pct(p.desagio))}${p.verificado && e.verif.desagio ? ' ' + Selo.badge(e.verif.desagio) : ''}${rsTxt(p.roadshow && p.roadshow.desagio != null ? F.pct(p.roadshow.desagio) : null)}</td></tr>`).join('')}</tbody></table>` : '';
     const rel = (e.relaciona || []).map(id => conc.entidades.find(x => x.id === id)).filter(Boolean);
     const relHtml = rel.length ? `<ul class="timeline">${rel.map(r => `<li><a href="#ficha/${esc(r.id)}">${esc(r.nome)}</a> · ${esc(estadoLabel(r.estado))}</li>`).join('')}</ul>` : '';
