@@ -121,6 +121,12 @@ def build_conc(records, groups, data_dir):
     return conc, report
 
 
+def curados(conc, data_dir):
+    """`conc` com `mercado` e `regulatorio` relidos de data/roadshow/: os JSON curados são a fonte única desses
+    blocos também no build pela base congelada (a cópia em data/base/conc.json pode estar defasada)."""
+    return dict(conc, mercado=_load(data_dir, "mercado.json", {}), regulatorio=_load(data_dir, "regulatorio.json", {}))
+
+
 def _br(x):
     return "—" if x is None else f"{x:,.1f}".replace(",", "X").replace(".", ",").replace("X", ".")
 

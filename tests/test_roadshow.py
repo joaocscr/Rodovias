@@ -209,3 +209,197 @@ def test_notas_de_trecho_sem_fontes_externas():
     for k, v in load_json("trechos.json").items():
         nota = v.get("nota") or ""
         assert not re.search(r"\bPER\b|edital|briefing|http|Diário|imprensa", nota, re.I), (k, nota)
+
+
+# ---------- Fechamento (Task 4): ABDIB, debêntures, pavimento, comparativos e diagramas ----------
+
+sys.path.insert(0, str(ROOT / "scripts" / "extract"))
+PDF = ROOT / "data" / "raw" / "roadshow.pdf"
+try:
+    import pymupdf
+except ImportError:  # pragma: no cover
+    pymupdf = None
+needs_pdf = pytest.mark.skipif(pymupdf is None or not PDF.exists(), reason="PDF do RoadShow ausente em data/raw/")
+
+
+def _texto(pag):
+    """Texto da página `pag` (numeração do RoadShow, 1 = primeira) com espaços normalizados."""
+    with pymupdf.open(PDF) as doc:
+        return " ".join(doc[pag - 1].get_text().split())
+
+
+def _br(v):
+    """84.5 → '84,5'; 54.0 → '54' (como o RoadShow imprime)."""
+    s = repr(float(v))
+    return (s[:-2] if s.endswith(".0") else s).replace(".", ",")
+
+
+def _intervalo(v, casas):
+    """Faixa de valores que, arredondados a `casas` decimais, são impressos como `v`."""
+    h = 0.5 * 10 ** -casas
+    return v - h, v + h
+
+
+def _casas(v):
+    s = _br(v)
+    return len(s.split(",")[1]) if "," in s else 0
+
+
+def _razao_fecha(base, comp, impresso):
+    """`impresso` (múltiplo) cabe na razão comp/base, considerando o arredondamento de cada valor impresso."""
+    b0, b1 = _intervalo(base, _casas(base))
+    c0, c1 = _intervalo(comp, _casas(comp))
+    i0, i1 = _intervalo(impresso, _casas(impresso))
+    return c0 / b1 <= i1 and c1 / b0 >= i0
+
+
+ABDIB_PINS = [(2010, 84.5, 109.3, 193.8), (2017, 54, 105.6, 159.6), (2024, 62.2, 197.1, 259.3)]
+DEB_PINS = [(2018, 1.6), (2021, 7.5), (2025, 28.2)]
+PAV_PINS = [("Bom", 18.8), ("Ruim", 65.6), ("Péssimo", 91.5)]
+# (id, lado, valor acumulado impresso) — pelo menos 3 valores por página
+COMP_PINS = [("publico", "base", 26.22), ("publico", "comparado", 48.29), ("privado", "comparado", 218),
+             ("total", "base", 118.29), ("total", "comparado", 353.53), ("por_km", "base", 0.88), ("por_km", "comparado", 2.64)]
+
+
+def test_abdib_serie_e_totais():
+    m = load_json("mercado.json")
+    a = m["abdib"]
+    assert m["fontes"]["abdib"] == 39 and m["notas"]["abdib"]
+    assert a["fonte_original"]
+    anos = [x["ano"] for x in a["serie"]]
+    assert anos == list(range(anos[0], anos[-1] + 1)) and anos[0] == 2010 and anos[-1] == 2024
+    for x in a["serie"]:  # total impresso = público + privado (cada um com 1 casa)
+        assert abs(x["publico"] + x["privado"] - x["total"]) <= 0.15, x
+    por_ano = {x["ano"]: x for x in a["serie"]}
+    for ano, pub, priv, tot in ABDIB_PINS:
+        assert (por_ano[ano]["publico"], por_ano[ano]["privado"], por_ano[ano]["total"]) == (pub, priv, tot)
+
+
+def test_debentures_serie():
+    m = load_json("mercado.json")
+    d = m["debentures"]
+    assert m["fontes"]["debentures"] == 77 and m["notas"]["debentures"]
+    assert "fev/2025" in d["precos"]
+    anos = [x["ano"] for x in d["serie"]]
+    assert anos == list(range(2018, 2026))
+    por_ano = {x["ano"]: x["valor"] for x in d["serie"]}
+    for ano, v in DEB_PINS:
+        assert por_ano[ano] == v
+    assert d["destaque"] == {"ano": 2025, "valor": por_ano[2025]}  # "R$ 28,2 bi emitidos ... em 2025" = último ponto
+
+
+def test_pavimento():
+    m = load_json("mercado.json")
+    p = m["pavimento"]
+    assert m["fontes"]["pavimento"] == 35 and m["notas"]["pavimento"]
+    assert [e["estado"] for e in p["estados"]] == ["Bom", "Regular", "Ruim", "Péssimo"]
+    vals = {e["estado"]: e["aumento_pct"] for e in p["estados"]}
+    for est, v in PAV_PINS:
+        assert vals[est] == v
+    assert p["acrescimo_medio"] == 32.5 and p["fonte_original"]
+    assert sorted(vals.values()) == [vals[e] for e in ["Bom", "Regular", "Ruim", "Péssimo"]]  # cresce com a piora
+
+
+def test_comparativos_fecham():
+    m = load_json("mercado.json")
+    assert m["fontes"]["comparativos"] == [41, 45] and m["notas"]["comparativos"]
+    cs = {c["id"]: c for c in m["comparativos"]}
+    assert list(cs) == ["publico", "privado", "total", "por_km"]
+    for cid, lado, v in COMP_PINS:
+        assert cs[cid][lado]["valor"] == v, (cid, lado)
+    for c in cs.values():
+        assert c["pagina"] in (41, 45) and c["rotulo"] and c["curto"] and c["unidade"]
+        b, k = c["base"], c["comparado"]
+        assert not b["previsto"] and k["previsto"]
+        for lado in (b, k):  # período "AAAA a AAAA" com o número de anos impresso
+            ini, fim = map(int, lado["periodo"].split(" a "))
+            assert fim - ini + 1 == lado["anos"], c["id"]
+            if "media_anual" in lado:  # média anual impressa = acumulado ÷ anos, no arredondamento
+                lo, hi = _intervalo(lado["valor"], _casas(lado["valor"]))
+                m0, m1 = _intervalo(lado["media_anual"], _casas(lado["media_anual"]))
+                assert lo / lado["anos"] <= m1 and hi / lado["anos"] >= m0, (c["id"], lado)
+        assert _razao_fecha(b["valor"], k["valor"], c["multiplo"]), c["id"]
+        # variação impressa (+84%, +311%, +199%) = múltiplo − 1, no arredondamento dos valores
+        assert _razao_fecha(b["valor"], k["valor"], round(1 + c["variacao_pct"] / 100, 2)), c["id"]
+
+
+def test_comparativo_total_reconcilia_com_serie_anual():
+    # p. 45, 2016–2022: público + privado da série anual da p. 43 (investimentos) = R$ 118,29 bi
+    m = load_json("mercado.json")
+    tot = next(c for c in m["comparativos"] if c["id"] == "total")
+    inv = [x for x in m["investimentos"] if 2016 <= x["ano"] <= 2022]
+    assert abs(sum((x["publico"] or 0) + x["privado"] for x in inv) - tot["base"]["valor"]) < 0.01
+
+
+@needs_pdf
+def test_pins_contra_o_pdf():
+    t39, t77, t35 = _texto(39), _texto(77), _texto(35)
+    for _, pub, priv, tot in ABDIB_PINS:
+        for v in (pub, priv, tot):
+            assert _br(v) in t39.split(), v
+    for _, v in DEB_PINS:
+        assert _br(v) in t77.split(), v
+    for est, v in PAV_PINS:
+        assert f"{est} {_br(v)}%" in t35, (est, v)
+    assert "é de 32,5% devido" in t35
+    t = {41: _texto(41), 45: _texto(45)}
+    m = load_json("mercado.json")
+    pag = {c["id"]: c["pagina"] for c in m["comparativos"]}
+    for cid, _, v in COMP_PINS:
+        assert f"R$ {_br(v)} {'mi' if cid == 'por_km' else 'bi'}" in t[pag[cid]], (cid, v)
+
+
+@needs_pdf
+def test_extrator_reproduz_o_json():
+    import roadshow_v5
+    m = load_json("mercado.json")
+    with pymupdf.open(PDF) as doc:
+        assert roadshow_v5.abdib(doc) == m["abdib"]["serie"]
+        assert roadshow_v5.debentures(doc) == m["debentures"]["serie"]
+        assert roadshow_v5.pavimento(doc) == {"acrescimo_medio": m["pavimento"]["acrescimo_medio"], "estados": m["pavimento"]["estados"]}
+        assert roadshow_v5.comparativos(doc) == m["comparativos"]
+
+
+DIAGRAMAS = ["fluxo-projeto", "fluxo-financiamento"]
+
+
+def test_diagramas_regulatorio():
+    r = load_json("regulatorio.json")
+    ds = {d["id"]: d for d in r["diagramas"]}
+    assert list(ds) == DIAGRAMAS
+    secoes = {s["id"] for s in r["secoes"]}
+    for d in ds.values():
+        assert d["secao"] in secoes and d["titulo"] and d["descricao"] and d["paginas"]
+        assert all(p % 2 == 1 for p in d["paginas"]), d["id"]  # só páginas em português
+        assert d["legenda"]
+    f = ds["fluxo-projeto"]
+    ids = [e["id"] for e in f["etapas"]]
+    assert len(ids) == len(set(ids)) == 10 and all(e["titulo"] for e in f["etapas"])
+    dec = f["decisao"]
+    assert dec["apos"] in ids and dec["para"] in ids and ids.index(dec["para"]) == ids.index(dec["apos"]) + 1
+    assert "18%" in dec["pergunta"] and "aporte" in dec["sim"].lower()
+    assert [x["pagina"] for x in f["redacoes"]] == [61, 65, 73] and f["nota"]
+    g = ds["fluxo-financiamento"]
+    nos = {n["id"]: n for n in g["nos"]}
+    assert {n["tipo"] for n in nos.values()} == {"fonte", "concessionaria", "destino", "garantia"}
+    assert all(n["pagina"] in (65, 73, 75, 77) for n in nos.values() if n["tipo"] != "concessionaria")
+    for a in g["arestas"]:
+        assert a["de"] in nos and a["para"] in nos and a["tipo"] in ("recursos", "garantia"), a
+    for tipo in ("fonte", "concessionaria", "destino", "garantia", "recursos"):
+        assert g["legenda"].get(tipo), tipo
+
+
+@needs_pdf
+def test_diagramas_contra_o_pdf():
+    import roadshow_v5
+    r = load_json("regulatorio.json")
+    f = next(d for d in r["diagramas"] if d["id"] == "fluxo-projeto")
+    for red in f["redacoes"]:  # as duas redações do limite de 18% estão como citadas
+        assert red["texto"] in _texto(red["pagina"]), red
+    t61 = _texto(61)
+    assert "a partir de 18% de deságio" in t61
+    for e in f["etapas"]:
+        if e.get("responsavel"):
+            assert e["responsavel"] in t61, e
+    with pymupdf.open(PDF) as doc:
+        assert [p for p, _ in roadshow_v5.trechos_18(doc, [61, 65, 73])] == [61, 65, 73]

@@ -45,6 +45,13 @@
    123,
    125,
    129
+  ],
+  "abdib": 39,
+  "debentures": 77,
+  "pavimento": 35,
+  "comparativos": [
+   41,
+   45
   ]
  },
  "notas": {
@@ -54,11 +61,15 @@
   "faixas_desagio": "Faixas da p27. Pela p97 só há 1 leilão com 0,00% (Fluminense) e 4 com 0,05%; pela p97 as faixas seriam ≥18%: 10, 10–<18%: 6, >0–<10%: 8, 0%: 1 (a p27 dá 6 e 3, provavelmente contando 0,05%/0,08% como 0%). desagio_por_n_concorrentes vem da p25; as médias da p25 não batem com a p97 (recalculadas: 2 conc. 17,14%; 3 conc. 16,30%; 4 conc. 17,50%; 5 conc. 19,60% vs 17,65/18,47/17,30/19,70 na p25).",
   "grupos": "p17 (2008–2026, 39 concessões, 19.195 km, R$ 269,3 bi capex, R$ 196,3 bi opex). p19 traz só contagens (inclui 'TPI - Triunfo' com 2 concessões, que na p17 está em 'Outros 6 grupos'); p21 não acrescenta grupos.",
   "gestao": "p37, km da malha federal pavimentada; pct_concedido conforme rótulos do gráfico.",
-  "investimentos": "Série anual da p43 (rodovias federais): 'publico' = Públicas (OGU), 'privado' = Capex + Opex das concessões, R$ bi, base de preços não informada na p43 (p47 indica valores nominais). 2003–2009 sem barra pública (null); eixo '1995...' sem valor. 2023–2029 previstos. Soma privada 2003–2022 = 115,25 vs 'R$ 129 bi realizado 1995–2022'; soma 2023–2029 = 223,23 vs 'R$ 218 bi'. p41 dá público 2023–2026 = R$ 48,29 bi, enquanto a p43 soma 75,6. p39 (ABDIB, toda a infraestrutura) não foi usada.",
+  "investimentos": "Série anual da p43 (rodovias federais): 'publico' = Públicas (OGU), 'privado' = Capex + Opex das concessões, R$ bi, base de preços não informada na p43 (p47 indica valores nominais). 2003–2009 sem barra pública (null); eixo '1995...' sem valor. 2023–2029 previstos. Soma privada 2003–2022 = 115,25 vs 'R$ 129 bi realizado 1995–2022'; soma 2023–2029 = 223,23 vs 'R$ 218 bi'. p41 dá público 2023–2026 = R$ 48,29 bi, enquanto a p43 soma 75,6. p39 (ABDIB, toda a infraestrutura) está em cartão próprio; os comparativos das pp. 41 e 45 também.",
   "indicadores_40": "pp.51–55. p125 traz 4.400 km de duplicação e 3.701 km de faixa adicional (vs 4.374/3.702 na p51). p53 diz R$ 400 bi, p125 R$ 440 bi.",
   "diagnostico": "p29. 'valor' = 'R$ X bi de rodovias concedidas' (valor dos contratos); 'invest_executado_acum' = investimentos executados acumulados.",
   "concorrencia_2023_26": "p21 (29 leilões previstos e realizados 2023–2026, igual à p123). Difere do total dos 25 leilões realizados da p97: 12.198 km, capex R$ 169,04 bi, opex R$ 113,6 bi.",
-  "programa_por_ano": "2023–2025 de p95/p123; 2026 previsto (7 leilões) de p101/p123, realizado até jul/2026 de p95; 2027 de p129 (p125 arredonda). Valores em R$ bi."
+  "programa_por_ano": "2023–2025 de p95/p123; 2026 previsto (7 leilões) de p101/p123, realizado até jul/2026 de p95; 2027 de p129 (p125 arredonda). Valores em R$ bi.",
+  "abdib": "p. 39, Livro Azul da Infraestrutura 2024 (ABDIB): investimento em toda a infraestrutura do país (não só rodovias), R$ bi por ano; a página não informa a base de preços. O total impresso é a soma de público e privado em todos os anos.",
+  "debentures": "p. 77: emissões anuais de debêntures incentivadas para rodovias, a preços de fev/2025 (correção pelo IPCA). O destaque da página (R$ 28,2 bi em 2025) é o último ponto da série.",
+  "pavimento": "p. 35 (fonte citada: CNT, com dados da NTC&Logística): os percentuais são o aumento do custo operacional do transporte rodoviário de cargas em cada estado do pavimento, não a parcela da malha em cada estado. O acréscimo médio no Brasil (32,5%) não é a média simples dos quatro estados (54,2%); a página não informa os pesos.",
+  "comparativos": "Médias anuais = acumulado ÷ anos; múltiplos e variações conferem com os acumulados impressos, dentro do arredondamento. Na p. 45, 2016–2022 (R$ 118,29 bi) é a soma de público e privado da série anual da p. 43; para 2023–2029 a mesma soma dá R$ 354,03 bi (impresso: R$ 353,53 bi). A p. 41 não fecha com a p. 43 no investimento público (2019–2022: R$ 30,9 bi na p. 43 × R$ 26,22 bi; 2023–2026: R$ 75,6 bi × R$ 48,29 bi) nem no privado previsto (2023–2029: R$ 223,23 bi × R$ 218 bi); o privado 2016–2022 fecha (R$ 53,09 bi). Por km/ano: R$ 2,64 mi ÷ R$ 0,88 mi = 3,0, impresso 2,99x (+199%), diferença de arredondamento."
  },
  "leiloes_por_ano": [
   {
@@ -2087,6 +2098,256 @@
    "duplicacao_km": 569.07,
    "faixa_km": 550.29,
    "previsto": true
+  }
+ ],
+ "abdib": {
+  "fonte_original": "Livro Azul da Infraestrutura 2024 (ABDIB)",
+  "serie": [
+   {
+    "ano": 2010,
+    "publico": 84.5,
+    "privado": 109.3,
+    "total": 193.8
+   },
+   {
+    "ano": 2011,
+    "publico": 81.3,
+    "privado": 127.4,
+    "total": 208.7
+   },
+   {
+    "ano": 2012,
+    "publico": 90.8,
+    "privado": 132.1,
+    "total": 222.9
+   },
+   {
+    "ano": 2013,
+    "publico": 91.9,
+    "privado": 145.6,
+    "total": 237.5
+   },
+   {
+    "ano": 2014,
+    "publico": 94.7,
+    "privado": 145,
+    "total": 239.7
+   },
+   {
+    "ano": 2015,
+    "publico": 66.9,
+    "privado": 134.2,
+    "total": 201.1
+   },
+   {
+    "ano": 2016,
+    "publico": 53.1,
+    "privado": 109.7,
+    "total": 162.8
+   },
+   {
+    "ano": 2017,
+    "publico": 54,
+    "privado": 105.6,
+    "total": 159.6
+   },
+   {
+    "ano": 2018,
+    "publico": 50.2,
+    "privado": 119.9,
+    "total": 170.1
+   },
+   {
+    "ano": 2019,
+    "publico": 44.6,
+    "privado": 120,
+    "total": 164.6
+   },
+   {
+    "ano": 2020,
+    "publico": 34.7,
+    "privado": 123.2,
+    "total": 157.9
+   },
+   {
+    "ano": 2021,
+    "publico": 36.1,
+    "privado": 135,
+    "total": 171.1
+   },
+   {
+    "ano": 2022,
+    "publico": 34.9,
+    "privado": 153.3,
+    "total": 188.2
+   },
+   {
+    "ano": 2023,
+    "publico": 52.3,
+    "privado": 172.6,
+    "total": 224.9
+   },
+   {
+    "ano": 2024,
+    "publico": 62.2,
+    "privado": 197.1,
+    "total": 259.3
+   }
+  ]
+ },
+ "debentures": {
+  "precos": "a preços de fev/2025, corrigidos pelo IPCA",
+  "serie": [
+   {
+    "ano": 2018,
+    "valor": 1.6
+   },
+   {
+    "ano": 2019,
+    "valor": 4.2
+   },
+   {
+    "ano": 2020,
+    "valor": 1.5
+   },
+   {
+    "ano": 2021,
+    "valor": 7.5
+   },
+   {
+    "ano": 2022,
+    "valor": 4.1
+   },
+   {
+    "ano": 2023,
+    "valor": 3.7
+   },
+   {
+    "ano": 2024,
+    "valor": 24.4
+   },
+   {
+    "ano": 2025,
+    "valor": 28.2
+   }
+  ],
+  "destaque": {
+   "ano": 2025,
+   "valor": 28.2
+  }
+ },
+ "pavimento": {
+  "fonte_original": "CNT, com dados da NTC&Logística",
+  "acrescimo_medio": 32.5,
+  "estados": [
+   {
+    "estado": "Bom",
+    "aumento_pct": 18.8
+   },
+   {
+    "estado": "Regular",
+    "aumento_pct": 41
+   },
+   {
+    "estado": "Ruim",
+    "aumento_pct": 65.6
+   },
+   {
+    "estado": "Péssimo",
+    "aumento_pct": 91.5
+   }
+  ]
+ },
+ "comparativos": [
+  {
+   "id": "publico",
+   "rotulo": "Investimento público em rodovias",
+   "curto": "Público",
+   "pagina": 41,
+   "unidade": "R$ bi",
+   "base": {
+    "periodo": "2019 a 2022",
+    "anos": 4,
+    "valor": 26.22,
+    "previsto": false,
+    "media_anual": 6.6
+   },
+   "comparado": {
+    "periodo": "2023 a 2026",
+    "anos": 4,
+    "valor": 48.29,
+    "previsto": true,
+    "media_anual": 12.1
+   },
+   "multiplo": 1.84,
+   "variacao_pct": 84
+  },
+  {
+   "id": "privado",
+   "rotulo": "Investimento privado em rodovias",
+   "curto": "Privado",
+   "pagina": 41,
+   "unidade": "R$ bi",
+   "base": {
+    "periodo": "2016 a 2022",
+    "anos": 7,
+    "valor": 53.1,
+    "previsto": false,
+    "media_anual": 7.6
+   },
+   "comparado": {
+    "periodo": "2023 a 2029",
+    "anos": 7,
+    "valor": 218,
+    "previsto": true,
+    "media_anual": 31.1
+   },
+   "multiplo": 4.1,
+   "variacao_pct": 311
+  },
+  {
+   "id": "total",
+   "rotulo": "Investimento total na malha federal",
+   "curto": "Malha federal",
+   "pagina": 45,
+   "unidade": "R$ bi",
+   "base": {
+    "periodo": "2016 a 2022",
+    "anos": 7,
+    "valor": 118.29,
+    "previsto": false,
+    "media_anual": 16.9
+   },
+   "comparado": {
+    "periodo": "2023 a 2029",
+    "anos": 7,
+    "valor": 353.53,
+    "previsto": true,
+    "media_anual": 50.5
+   },
+   "multiplo": 2.99,
+   "variacao_pct": 199
+  },
+  {
+   "id": "por_km",
+   "rotulo": "Investimento por km por ano na malha federal",
+   "curto": "Malha federal por km",
+   "pagina": 45,
+   "unidade": "R$ mi por km/ano",
+   "base": {
+    "periodo": "2016 a 2022",
+    "anos": 7,
+    "valor": 0.88,
+    "previsto": false
+   },
+   "comparado": {
+    "periodo": "2023 a 2029",
+    "anos": 7,
+    "valor": 2.64,
+    "previsto": true
+   },
+   "multiplo": 2.99,
+   "variacao_pct": 199
   }
  ]
 }

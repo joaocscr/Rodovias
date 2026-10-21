@@ -138,8 +138,8 @@ secoes=[
    "Aprovação do Plano de Outorga pelo MT (Portaria MT nº 995/2023).",
    "Análise do controle externo (TCU): fiscalização prévia da desestatização.",
    "Publicação do Edital (ANTT), em português e inglês.",
-   "Leilão na B3: menor valor da tarifa, com aporte a partir de 18% de deságio.",
-   "Assinatura do Contrato (MT + ANTT) e início das obras."),
+   "Leilão na B3 (MT + ANTT): menor valor da tarifa, com aporte a partir de 18% de deságio.",
+   "Assinatura do Contrato e início das obras."),
  P("Rotas e corredores: a carteira se articula às Rotas de Integração Sul-Americana (1 Ilha das Guianas, 2 Amazônica, 3 Quadrante Rondon, 4 Bioceânica de Capricórnio, 5 Bioceânica do Sul). Mapas de corredores logísticos sobrepõem a carteira à produção de soja, minério, bovinos e aves (fonte: SFPLAN/SE/MT, atualizado em 24/01/2025)."),
 ]},
 {"id":"estudos","titulo":"Estudos pós-2027","pagina":119,"paginas":[119,121],"blocos":[
@@ -163,4 +163,8 @@ otim=[
  o("Transbrasiliana",["153"],["SP"],321.6,4.84,15,False,"na ANTT"),
  o("Planalto Sul",["116"],["SC","PR"],412.7,5.48,15,False,"na ANTT"),
 ]
-json.dump({"secoes":secoes,"otimizacoes":otim},open("/home/user/Rodovias/data/roadshow/regulatorio.json","w"),ensure_ascii=False,indent=1)
+out="/home/user/Rodovias/data/roadshow/regulatorio.json"
+# os diagramas (textos curados à mão, ver README) são preservados
+import os
+diag=json.load(open(out)).get("diagramas") if os.path.exists(out) else None
+json.dump({"secoes":secoes,"otimizacoes":otim,**({"diagramas":diag} if diag else {})},open(out,"w"),ensure_ascii=False,indent=1)

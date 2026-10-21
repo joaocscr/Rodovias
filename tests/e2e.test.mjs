@@ -813,6 +813,68 @@ test('fechamento: "RoadShow: …" de nome só quando o grupo econômico difere',
   assert.match((await partLinhas())[0], /RoadShow: TPI/);
 });
 
+test('fechamento: Mercado tem ABDIB, debêntures, comparativos e pavimento com a página e sem NaN', async () => {
+  await go('#mercado');
+  const m = await page.evaluate(() => window.CONC.mercado);
+  for (const id of ['abdib', 'debentures', 'comparativos', 'pavimento']) {
+    const card = page.locator('#card-' + id);
+    assert.equal(await card.count(), 1, id);
+    const txt = await card.textContent();
+    assert.ok(!/NaN|undefined|null/.test(txt), `${id}: ${txt.slice(0, 200)}`);
+    assert.ok(txt.includes(`Fonte: RoadShow 2026-2027, p. ${[].concat(m.fontes[id]).join(', ')}`), id);
+    assert.equal(await card.locator('svg.chart').count(), 1, id);
+    assert.ok(await card.locator('.chart-legend').count() >= 1, `${id}: legenda`);
+    const titles = await card.locator('svg.chart title').allTextContents();
+    assert.ok(titles.length && !titles.some(t => /NaN|undefined/.test(t)), id);
+  }
+  const fmt = (v, d = 1) => v.toLocaleString('pt-BR', { maximumFractionDigits: d });
+  // ABDIB: público e privado empilhados por ano, total impresso na dica
+  const ab = m.abdib.serie, ab0 = ab[0];
+  assert.equal(await page.locator('#chart-abdib rect.cbar').count(), 2 * ab.length);
+  assert.equal(await page.locator('#chart-abdib rect.cbar title').first().textContent(),
+    `${ab0.ano} (total impresso: R$ ${fmt(ab0.total)} bi) · Público: ${fmt(ab0.publico)} R$ bi`);
+  // debêntures: uma barra por ano
+  const deb = m.debentures.serie;
+  assert.deepEqual(await page.locator('#chart-debentures rect.cbar title').allTextContents(), deb.map(x => `${x.ano}: ${fmt(x.valor)} R$ bi`));
+  // pavimento: uma barra por estado, com o percentual
+  assert.deepEqual(await page.locator('#chart-pavimento rect.cbar title').allTextContents(), m.pavimento.estados.map(e => `${e.estado}: ${fmt(e.aumento_pct)}%`));
+  // comparativos: barras dos acumulados na unidade da primeira linha; tabela com todas as linhas e a variação impressa
+  const bi = m.comparativos.filter(c => c.unidade === m.comparativos[0].unidade);
+  assert.equal(await page.locator('#chart-comparativos rect.cbar').count(), 2 * bi.length);
+  const linhas = await page.locator('#comparativos tbody tr').allTextContents();
+  assert.equal(linhas.length, m.comparativos.length);
+  m.comparativos.forEach((c, i) => assert.ok(linhas[i].includes(`${fmt(c.multiplo, 2)}x (+${fmt(c.variacao_pct, 2)}%)`), linhas[i]));
+});
+
+test('fechamento: Regulatório desenha os dois diagramas com título, descrição, legenda e a nota dos 18%', async () => {
+  await go('#regulatorio');
+  const ds = await page.evaluate(() => window.CONC.regulatorio.diagramas);
+  assert.equal(ds.length, 2);
+  for (const d of ds) {
+    const fig = page.locator(`#reg-${d.secao} #diagrama-${d.id}`);
+    assert.equal(await fig.count(), 1, d.id);
+    const svg = fig.locator('svg.diagrama__svg');
+    assert.equal(await svg.getAttribute('role'), 'img');
+    assert.equal(await svg.locator(':scope > title').textContent(), d.titulo);
+    assert.equal(await svg.locator(':scope > desc').textContent(), d.descricao);
+    assert.ok(await fig.locator('.chart-legend span').count() >= 4, `${d.id}: legenda`);
+    const txt = await fig.textContent();
+    assert.ok(!/NaN|undefined|null/.test(txt), d.id);
+    assert.ok(txt.includes(`Fonte: RoadShow 2026-2027, p. ${d.paginas.join(', ')}`), d.id);
+    const box = await svg.boundingBox();
+    assert.ok(box.width > 300 && box.height > 200, `${d.id}: ${JSON.stringify(box)}`);
+  }
+  const f = ds.find(d => d.id === 'fluxo-projeto');
+  assert.deepEqual(await page.locator('#diagrama-fluxo-projeto [data-etapa]').evaluateAll(gs => gs.map(g => g.dataset.etapa)), f.etapas.map(e => e.id));
+  assert.equal(await page.locator('#diagrama-fluxo-projeto .decisao title').textContent(), f.decisao.pergunta);
+  const nota = await page.locator('#diagrama-fluxo-projeto .diagrama__nota').textContent();
+  for (const r of f.redacoes) assert.ok(nota.includes(`p. ${r.pagina}, “${r.texto}”`), r.pagina);
+  assert.ok(nota.includes(f.nota));
+  const g = ds.find(d => d.id === 'fluxo-financiamento');
+  assert.equal(await page.locator('#diagrama-fluxo-financiamento [data-no]').count(), g.nos.length);
+  assert.equal(await page.locator('#diagrama-fluxo-financiamento line.aresta').count(), g.arestas.length);
+});
+
 test('nenhuma requisição externa', () => assert.deepEqual(external, []));
 
 test('sem erros no console', () => assert.deepEqual(errors, []));

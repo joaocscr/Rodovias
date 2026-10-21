@@ -174,3 +174,9 @@ test('dotsSvg: ponto limitado pelo edital ganha um anel que não captura o mouse
   assert.equal((svg.match(/<circle class="dot"/g) || []).length, 2);
   assert.equal((svg.match(/<circle class="dot-limite"[^>]*fill="none"[^>]*pointer-events="none"/g) || []).length, 1);
 });
+
+test('legendHtml: formas de diagrama (seta cheia e losango) só com a cor dada', () => {
+  const html = Charts.legendHtml([{ label: 'Sequência', color: Charts.C.spacial, shape: 'arrow' }, { label: 'Decisão', color: Charts.C.bright, shape: 'diamond' }]);
+  assert.match(html, /<path d="M17,2 L23,6 L17,10 Z" fill="#231F20"\/><\/svg>Sequência/);
+  assert.match(html, /<path d="M7,1 L13,7 L7,13 L1,7 Z" fill="none" stroke="#0071BB"[^>]*\/><\/svg>Decisão/);
+});

@@ -394,6 +394,11 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 .reg__sec h2 { margin: 0 0 4px; font-family: var(--font-title); font-weight: 700; font-size: 22px; color: var(--color-deep-blue); }
 .reg__sec p, .reg__sec li { font-size: 16px; }
 .reg__sec table { margin: 16px 0; }
+.diagrama { margin: 24px 0 0; padding: 24px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--color-snow-white); }
+.diagrama figcaption { margin: 0 0 8px; font-family: var(--font-title); font-weight: 700; font-size: 18px; color: var(--color-deep-blue); }
+.diagrama__box { width: 100%; overflow-x: auto; }
+.diagrama__svg { display: block; width: 100%; max-width: 760px; height: auto; }
+.reg__sec .diagrama .src { margin: 8px 0 0; font-size: 14px; color: var(--color-light-grey); }
 @media (max-width: 900px) {
   .tabs a { padding: 0 8px; }
   .page { padding: 24px 16px 48px; }

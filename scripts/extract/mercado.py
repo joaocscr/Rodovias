@@ -205,6 +205,13 @@ fontes={"leiloes_por_ano":[7,9],"participantes":[11,13,15,97],"concorrentes_desa
 d={"fontes":fontes,"notas":notas,"leiloes_por_ano":leiloes,"participantes":participantes,"concorrentes_desagio":conc,
    "faixas_desagio":faixas,"desagio_por_n_concorrentes":por_n,"grupos":grupos,"gestao":gestao,"investimentos":investimentos,
    "indicadores_40":indicadores,"diagnostico":diag,"concorrencia_2023_26":conc2326,"programa_por_ano":prog}
+# preserva as chaves que este script não gera (ex.: abdib, debentures, pavimento, comparativos de roadshow_v5.py)
+import os
+if os.path.exists(out):
+    old=json.load(open(out))
+    for k,v in old.items(): d.setdefault(k,v)
+    for k in ("fontes","notas"):
+        for kk,v in old[k].items(): d[k].setdefault(kk,v)
 json.dump(d,open(out,"w"),ensure_ascii=False,indent=1)
 
 # checks

@@ -210,13 +210,16 @@ const Charts = (() => {
   }
 
   // Legenda. Item = [rótulo, cor, opacidade?, tracejado?] (barra) ou {label, color, shape}, com shape
-  // 'dot' (ponto cheio), 'ring' (anel vazado tracejado, como a marca de imprensa), 'line' (linha de referência tracejada)
-  // ou 'limite' (anel do ponto limitado pelo edital).
+  // 'dot' (ponto cheio), 'ring' (anel vazado tracejado, como a marca de imprensa), 'line' (linha de referência tracejada),
+  // 'limite' (anel do ponto limitado pelo edital), 'arrow' (seta cheia) ou 'diamond' (losango vazado).
   const SHAPES = {
     dot: c => `<svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="5" fill="${c}" fill-opacity="0.85"/></svg>`,
     ring: c => `<svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="4.5" fill="none" stroke="${c}" stroke-width="2" stroke-dasharray="2 2"/></svg>`,
     line: c => `<svg width="24" height="12" aria-hidden="true"><line x1="0" x2="24" y1="6" y2="6" stroke="${c}" stroke-width="1.5" stroke-dasharray="6 4"/></svg>`,
     limite: c => `<svg width="20" height="20" aria-hidden="true"><circle cx="10" cy="10" r="8.5" fill="none" stroke="${c}" stroke-width="1.5"/></svg>`,
+    // diagramas: seta cheia (sequência / fluxo) e losango vazado (decisão)
+    arrow: c => `<svg width="24" height="12" aria-hidden="true"><line x1="0" x2="18" y1="6" y2="6" stroke="${c}" stroke-width="1.5"/><path d="M17,2 L23,6 L17,10 Z" fill="${c}"/></svg>`,
+    diamond: c => `<svg width="14" height="14" aria-hidden="true"><path d="M7,1 L13,7 L7,13 L1,7 Z" fill="none" stroke="${c}" stroke-width="2"/></svg>`,
   };
   function legendHtml(items) {
     return `<div class="chart-legend">${items.map(it => {

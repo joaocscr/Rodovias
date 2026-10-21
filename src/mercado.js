@@ -87,6 +87,19 @@ const Mercado = (() => {
     }).join('')}</ul></details>`;
   }
 
+  // "2010–2024" a partir dos anos da série
+  const periodoSerie = serie => (serie.length ? `${serie[0].ano}–${serie[serie.length - 1].ano}` : '');
+  const fmtNum = v => (v == null ? '—' : nfPct.format(v));
+
+  // Comparativos das pp. 41 e 45: período base (realizado) × comparado (previsto), média anual e variação impressas.
+  function comparativosTable(lista) {
+    const lado = l => `${esc(l.periodo)}${l.previsto ? ' (previsto)' : ''}: ${fmtNum(l.valor)}`;
+    return `<div class="table-wrap" style="max-height:none"><table class="grid" id="comparativos" data-csv-name="mercado-comparativos"><thead><tr><th>Comparativo</th><th>Período base</th><th>Período comparado</th><th class="num">Média anual</th><th class="num">Variação</th><th class="num">Página</th></tr></thead><tbody>${
+      lista.map(c => `<tr><td class="wrap">${esc(c.rotulo)} (${esc(c.unidade)})</td><td>${lado(c.base)}</td><td>${lado(c.comparado)}</td>
+        <td class="num">${c.base.media_anual == null ? '—' : `${fmtNum(c.base.media_anual)} → ${fmtNum(c.comparado.media_anual)}`}</td>
+        <td class="num">${fmtNum(c.multiplo)}x (+${fmtNum(c.variacao_pct)}%)</td><td class="num">${esc(c.pagina)}</td></tr>`).join('')}</tbody></table></div>`;
+  }
+
   function render() {
     const el = document.getElementById('page-mercado');
     const anos = [...new Set(m.participantes.map(p => p.ano))].sort();
@@ -128,6 +141,14 @@ const Mercado = (() => {
           legend: Charts.legendHtml([['Concedida', Charts.C.deep], ['Gestão direta', Charts.C.bright]]) })}
         ${card('invest', 'Investimentos públicos × privados', 'R$ bi por ano (orçamento federal × capex + opex privado)', { key: 'investimentos',
           legend: Charts.legendHtml([['Público', Charts.C.deep], ['Privado', Charts.C.bright]]) })}
+        ${m.comparativos ? card('comparativos', 'Comparativos público × privado', 'Investimento acumulado no período base (realizado) e no comparado (previsto), em R$ bi; a tabela traz as médias anuais e as variações impressas', { key: 'comparativos', wide: true,
+          legend: Charts.legendHtml([['Realizado', C.deep], ['Previsto', C.bright]]), foot: comparativosTable(m.comparativos) }) : ''}
+        ${m.abdib ? card('abdib', 'Investimento em infraestrutura (ABDIB)', `${m.abdib.fonte_original}: toda a infraestrutura do país, não só rodovias. R$\u00a0bi por ano, ${periodoSerie(m.abdib.serie)}`, { key: 'abdib',
+          legend: Charts.legendHtml([['Público', C.deep], ['Privado', C.bright]]) }) : ''}
+        ${m.debentures ? card('debentures', 'Debêntures incentivadas para rodovias', `Emissões por ano, ${periodoSerie(m.debentures.serie)}, em R$ bi ${m.debentures.precos}`, { key: 'debentures',
+          legend: Charts.legendHtml([['Emissões no ano', C.deep]]) }) : ''}
+        ${m.pavimento ? card('pavimento', 'Estado do pavimento', `Aumento do custo operacional do transporte rodoviário de cargas conforme o estado do pavimento. Acréscimo médio no Brasil: ${nf1.format(m.pavimento.acrescimo_medio)}%`, { key: 'pavimento',
+          src: `${roadshow('pavimento')} (${m.pavimento.fonte_original})`, legend: Charts.legendHtml([['Aumento do custo operacional', C.deep]]) }) : ''}
         ${card('diag', 'Diagnóstico da carteira', 'Contratos, extensão e valor concedido', { key: 'diagnostico' })}
         ${card('indic', 'Indicadores dos 40 leilões', 'Obras e equipamentos previstos', { key: 'indicadores_40', wide: true,
           html: `<div class="kpis">${m.indicadores_40.map(i => `<div class="kpi-tile"><b>${nf0.format(i.valor)}</b><span>${esc(i.unidade)} · ${esc(i.rotulo)}</span></div>`).join('')}</div>` })}
@@ -161,6 +182,21 @@ const Mercado = (() => {
       { name: 'Gestão direta', points: m.gestao.map(g => ({ x: g.ano, y: g.direta_km })) },
     ], { unit: 'km', format: v => nf0.format(v) });
     Charts.stacked(box('invest'), m.investimentos.map(x => ({ label: String(x.ano) + (x.previsto ? '*' : ''), parts: [x.publico, x.privado] })), { names: ['Público', 'Privado'], unit: 'R$ bi', format: v => nf1.format(v) });
+    if (m.comparativos) {
+      const bi = m.comparativos.filter(c => c.unidade === m.comparativos[0].unidade); // só os acumulados na mesma unidade
+      Charts.hbars(box('comparativos'), bi.flatMap(c => [c.base, c.comparado].map(l => ({ label: `${c.curto} · ${l.periodo}${l.previsto ? '*' : ''}`, value: l.valor, alt: l.previsto }))),
+        { unit: bi.length ? bi[0].unidade : '', format: fmtNum, labelWidth: Math.min(260, box('comparativos').clientWidth * 0.45), title: 'Comparativos público × privado' });
+    }
+    if (m.abdib) {
+      Charts.stacked(box('abdib'), m.abdib.serie.map(x => ({ label: String(x.ano), tip: `${x.ano} (total impresso: R$ ${nf1.format(x.total)} bi)`, parts: [x.publico, x.privado] })),
+        { names: ['Público', 'Privado'], unit: 'R$ bi', format: v => nf1.format(v), title: 'Investimento em infraestrutura (ABDIB)' });
+    }
+    if (m.debentures) {
+      Charts.bars(box('debentures'), m.debentures.serie.map(x => ({ label: String(x.ano), value: x.valor })), { unit: 'R$ bi', format: v => nf1.format(v), title: 'Debêntures incentivadas para rodovias' });
+    }
+    if (m.pavimento) {
+      Charts.hbars(box('pavimento'), m.pavimento.estados.map(e => ({ label: e.estado, value: e.aumento_pct })), { format: v => nf1.format(v) + '%', title: 'Estado do pavimento' });
+    }
     box('diag').innerHTML = `<table class="grid" data-csv-name="mercado-diagnostico"><thead><tr><th>Ano</th><th class="num">Contratos</th><th class="num">km concedidos</th><th class="num">Valor (R$ bi)</th><th class="num">Invest. executado acum. (R$ bi)</th></tr></thead><tbody>${
       m.diagnostico.map(d => `<tr><td>${d.ano}</td><td class="num">${d.contratos ?? '—'}</td><td class="num">${d.km == null ? '—' : nf0.format(d.km)}</td><td class="num">${d.valor == null ? '—' : nf1.format(d.valor)}</td><td class="num">${d.invest_executado_acum == null ? '—' : nf1.format(d.invest_executado_acum)}</td></tr>`).join('')}</tbody></table>`;
     document.getElementById('part-ano').addEventListener('change', ev => { box('part').innerHTML = participantesTable(ev.target.value); });
