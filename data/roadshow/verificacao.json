@@ -666,6 +666,15 @@
       "url": "https://atlaspublico.com.br/noticias/antt-homologa-concessao-da-br-060-364-rota-do-agro-a-way-20760",
       "acesso": "2026-10-21",
       "trecho": "homologou, por meio da Deliberação nº 498 de 17 de dezembro de 2025, o resultado do leilão […] A empresa Way Concessões S.A. foi declarada vencedora do certame ao oferecer um desconto de 19,60%"
+    },
+    "campo-grande-news-2026-02-02-rota-celulose": {
+      "tipo": "imprensa",
+      "orgao": "Campo Grande News",
+      "titulo": "Rota da Celulose começa com plano emergencial de reparos em 150 km de rodovias",
+      "data": "2026-02-02",
+      "url": "https://www.campograndenews.com.br/brasil/cidades/rota-da-celulose-comeca-com-plano-emergencial-de-reparos-em-150-km-de-rodovias",
+      "acesso": "2026-10-21",
+      "trecho": "Com o contrato assinado, a Caminhos da Celulose assume oficialmente a responsabilidade pela malha rodoviária […] A apresentação marca o início formal da operação privada sobre 870 quilômetros de rodovias estaduais e federais (apresentação “nesta segunda-feira (2)”; publicado em 02/02/2026 12:51)"
     }
   },
   "leiloes": [
@@ -1512,6 +1521,11 @@
             "ms-agencia-2026-02-07-rota-celulose"
           ]
         },
+        "inicio_operacao": {
+          "valor": null,
+          "nao_localizado": true,
+          "fontes": []
+        },
         "prazo_anos": {
           "valor": 30,
           "fontes": [
@@ -1542,10 +1556,11 @@
           ]
         },
         {
-          "texto": "Data de assinatura: a Agência de Notícias do Governo de MS informa que o contrato foi firmado na sexta-feira, 06/02/2026, em cerimônia em Inocência; o Correio do Estado noticiou em 02/02/2026 que o contrato foi assinado naquela segunda-feira. O extrato no Diário Oficial de MS não pôde ser consultado (o site não responde deste ambiente). O início de operação de 30/12/2025 impresso no RoadShow é anterior à assinatura e não foi localizado em fonte oficial.",
+          "texto": "Data de assinatura: a Agência de Notícias do Governo de MS informa que o contrato foi firmado na sexta-feira, 06/02/2026, em cerimônia em Inocência (valor exibido, fonte oficial). Dois veículos de imprensa dão segunda-feira, 02/02/2026: o Correio do Estado noticiou nesse dia que o contrato foi assinado, e o Campo Grande News, também em 02/02/2026, que, com o contrato assinado, a concessionária assumiu a malha e começou formalmente a operação privada. O extrato no Diário Oficial de MS não pôde ser consultado (o site não responde deste ambiente). O início de operação de 30/12/2025 impresso no RoadShow é anterior a qualquer das duas datas de assinatura e não foi localizado em fonte oficial; o campo fica como não localizado.",
           "fontes": [
             "ms-agencia-2026-02-07-rota-celulose",
-            "correio-do-estado-2026-02-02-rota-celulose"
+            "correio-do-estado-2026-02-02-rota-celulose",
+            "campo-grande-news-2026-02-02-rota-celulose"
           ]
         }
       ]
