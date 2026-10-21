@@ -772,7 +772,9 @@ test('v4: Mercado mostra ranking com taxa de êxito e filtro de período altera 
   assert.equal(await page.getAttribute('#ranking-grupos', 'data-csv-name'), 'mercado-ranking-grupos');
   const ths = await page.$$eval('#ranking-grupos thead th', t => t.map(x => x.textContent.trim().replace(/ [↑↓]$/, '')));
   assert.deepEqual(ths, ['Grupo', 'Participações', 'Vitórias', 'Derrotas', 'Êxito (%)', '1ª aparição', 'Última']);
-  const anos = await anosPart(), de = anos[0], ate = anos[anos.length - 1], recente = anos[anos.length - 4];
+  const anos = await anosPart();
+  assert.ok(anos.length >= 4, `o teste do período recente precisa de 4 anos com leilão, há ${anos.length}`);
+  const de = anos[0], ate = anos[anos.length - 1], recente = anos[anos.length - 4];
   assert.equal(await page.inputValue('#rank-de'), String(de));
   assert.equal(await page.inputValue('#rank-ate'), String(ate));
   const modelo = periodo => page.evaluate(p => {
@@ -814,7 +816,9 @@ test('v4: Mercado mostra ranking com taxa de êxito e filtro de período altera 
 
 test('fechamento: seletores de período trocam de lugar quando de > até', async () => {
   await go('#mercado');
-  const anos = await anosPart(), a = anos[1], b = anos[anos.length - 2];
+  const anos = await anosPart();
+  assert.ok(anos.length >= 4, `precisa de 4 anos com leilão, há ${anos.length}`);
+  const a = anos[1], b = anos[anos.length - 2];
   await rankPeriodo(anos[0], anos[anos.length - 1]);
   await page.selectOption('#rank-ate', String(a));
   await page.selectOption('#rank-de', String(b)); // de passa de até: os dois trocam e a tabela segue o período a–b

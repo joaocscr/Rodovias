@@ -15,9 +15,10 @@ import atualizar  # noqa: E402
 HOJE = dt.date(2026, 10, 21)
 
 
-def _modulos(chamadas, tmp_path, falha=None, sem_bruto=None, zip_existe=True):
+def _modulos(chamadas, tmp_path, falha=None, sem_bruto=None, zip_existe=True, renovam=None):
     """Módulo simulado por domínio: fetch/registrar/build anotam a chamada; `falha` levanta RuntimeError no build,
-    `sem_bruto` levanta FileNotFoundError (bruto ausente)."""
+    `sem_bruto` levanta FileNotFoundError (bruto ausente); `renovam`: {domínio: função chamada no fetch}."""
+    renovam = renovam or {}
     zip_ = tmp_path / "vgeo_vmda2025.zip"
     if zip_existe:
         zip_.write_bytes(b"zip")
@@ -29,7 +30,11 @@ def _modulos(chamadas, tmp_path, falha=None, sem_bruto=None, zip_existe=True):
                 raise RuntimeError("quebrou")
             if d == sem_bruto:
                 raise FileNotFoundError(2, "No such file or directory", str(atualizar.ROOT / "data/raw/x/y.csv"))
-        m = types.SimpleNamespace(build=build, fetch=lambda d=d: chamadas.append(f"{d}.fetch"))
+        def fetch(force=False, d=d):
+            chamadas.append(f"{d}.fetch" + ("(force)" if force else ""))
+            if d in renovam:
+                renovam[d]()
+        m = types.SimpleNamespace(build=build, fetch=fetch)
         if d == "vmda2025":
             m = types.SimpleNamespace(build=build, ZIP=zip_, registrar=lambda: chamadas.append("vmda2025.registrar"))
         mods[f"intel.{d}"] = m
@@ -37,7 +42,7 @@ def _modulos(chamadas, tmp_path, falha=None, sem_bruto=None, zip_existe=True):
 
 
 def _roda(passos, tmp_path):
-    return atualizar.executar(passos, intel_dir=tmp_path)
+    return atualizar.executar(passos, intel_dir=tmp_path, manifest_dir=None)
 
 
 def test_ordem_fixa_e_so_build_sem_baixar(tmp_path):
@@ -99,7 +104,8 @@ def test_passo_que_falha_deixa_os_json_como_estavam(tmp_path):
     assert json.loads((tmp_path / "a.json").read_text(encoding="utf-8")) == {"v": 3}
 
 
-def _atualiza(tmp_path, chamadas, erros=(), build_falha=False, html=True, **kw):
+def _atualiza(tmp_path, chamadas, erros=(), build_falha=False, html=True, renovar=(), dominios=("antt",),
+              manifest_dir=None, **kw):
     intel = tmp_path / "intel"
     intel.mkdir(exist_ok=True)
     (intel / "pipeline.json").write_text(json.dumps({"itens": [{"id": "x", "nome": "X", "verificado": False}]}),
@@ -107,6 +113,8 @@ def _atualiza(tmp_path, chamadas, erros=(), build_falha=False, html=True, **kw):
 
     def construir():
         chamadas.append("html")
+        if build_falha == "arquivo":
+            raise FileNotFoundError(2, "No such file or directory", str(atualizar.ROOT / "vendor/leaflet/leaflet.js"))
         if build_falha:
             raise SystemExit("Falha: arquivo maior que 15 MB")
 
@@ -115,7 +123,10 @@ def _atualiza(tmp_path, chamadas, erros=(), build_falha=False, html=True, **kw):
         return list(erros), (None if erros else {"entidades": []}), {"leiloes": []}
 
     saida = tmp_path / "atualizacao.md"
-    codigo = atualizar.atualizar(["antt"], baixar=False, html=html, hoje=HOJE, intel_dir=intel, saida=saida,
+    md_dir = manifest_dir or tmp_path / "manifest"
+    md_dir.mkdir(exist_ok=True)
+    codigo = atualizar.atualizar(list(dominios), baixar=False, renovar=renovar, html=html, hoje=HOJE, intel_dir=intel,
+                                 saida=saida, manifest_dir=md_dir,
                                  importar=_modulos(chamadas, tmp_path, **kw), validar=validar, construir=construir,
                                  fontes=lambda: chamadas.append("fontes_bloco"),
                                  anterior=lambda _d: {"pipeline": {"itens": []}})
@@ -184,6 +195,63 @@ def test_com_baixar_arquivo_ainda_ausente_e_falha(tmp_path):
     chamadas = []
     passos = atualizar.passos_dominios(["trafego", "antt"], baixar=True,
                                        importar=_modulos(chamadas, tmp_path, sem_bruto="trafego"))
-    res = atualizar.executar(passos, intel_dir=tmp_path, baixar=True)
+    res = atualizar.executar(passos, intel_dir=tmp_path, baixar=True, manifest_dir=None)
     assert [(r["estado"], r["detalhe"]) for r in res] == [("falhou", "arquivo ausente: data/raw/x/y.csv"), ("ok", "")]
     assert chamadas == ["trafego.fetch", "trafego.build", "antt.fetch", "antt.build"]
+
+
+
+def test_renovar_baixa_de_novo_so_os_dominios_pedidos(tmp_path):
+    chamadas = []
+    passos = atualizar.passos_dominios(["antt", "agro", "vmda2025"], baixar=False, renovar={"antt"},
+                                       importar=_modulos(chamadas, tmp_path))
+    atualizar.executar(passos, intel_dir=tmp_path, manifest_dir=None)
+    assert chamadas == ["antt.fetch(force)", "antt.build", "agro.build", "vmda2025.build"]
+
+
+def test_renovar_sem_mudanca_vai_para_o_relatorio(tmp_path):
+    md_dir = tmp_path / "manifest"
+    md_dir.mkdir()
+    for d, sha in (("antt", "a1"), ("agro", "g1")):
+        (md_dir / f"{d}.json").write_text(json.dumps([{"arquivo": f"data/raw/{d}/x", "sha256": sha}]), encoding="utf-8")
+
+    def agro_mudou():  # a fonte do agro publicou arquivo novo; a da ANTT devolveu o mesmo conteúdo
+        (md_dir / "agro.json").write_text(json.dumps([{"arquivo": "data/raw/agro/x", "sha256": "g2"}]), encoding="utf-8")
+
+    chamadas = []
+    codigo, md = _atualiza(tmp_path, chamadas, renovar={"antt", "agro"}, dominios=("antt", "agro"), manifest_dir=md_dir,
+                           renovam={"agro": agro_mudou})
+    assert codigo == 0
+    assert chamadas[:4] == ["antt.fetch(force)", "antt.build", "agro.fetch(force)", "agro.build"]
+    assert "## Fontes renovadas sem dado novo" in md
+    secao = md.split("## Fontes renovadas sem dado novo")[1].split("##")[0]
+    assert "- antt" in secao and "agro" not in secao
+    assert "| antt | ok | renovado: nenhum arquivo mudou" in md
+
+
+def test_passo_que_falha_restaura_tambem_o_manifesto(tmp_path):
+    intel, md_dir = tmp_path / "intel", tmp_path / "manifest"
+    intel.mkdir()
+    md_dir.mkdir()
+    (md_dir / "antt.json").write_text("[1]", encoding="utf-8")
+
+    def estraga():
+        (md_dir / "antt.json").write_text("[2]", encoding="utf-8")
+        raise RuntimeError("build quebrou depois do download")
+
+    (r,) = atualizar.executar([("antt", estraga)], intel_dir=intel, manifest_dir=md_dir)
+    assert r["estado"] == "falhou" and (md_dir / "antt.json").read_text(encoding="utf-8") == "[1]"
+
+
+def test_html_que_falha_por_arquivo_ausente_nao_e_pulado(tmp_path):
+    codigo, md = _atualiza(tmp_path, [], build_falha="arquivo")
+    assert codigo == 1
+    assert "| build.py (HTML) | falhou | o HTML não foi gerado: arquivo ausente: vendor/leaflet/leaflet.js" in md
+
+
+@pytest.mark.parametrize("args", [["--renovar", "vmda2025"], ["--dominios", "antt", "--renovar", "agro"],
+                                  ["--renovar", "xyz"]])
+def test_renovar_invalido_e_erro_de_uso(args):
+    with pytest.raises(SystemExit) as e:
+        atualizar.main(args)
+    assert e.value.code == 2

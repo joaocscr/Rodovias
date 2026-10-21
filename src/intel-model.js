@@ -650,8 +650,8 @@ const IntelModel = (() => {
   const pipelineDe = (intel, id) => pipelineRows(intel).filter(i => i.ent === id);
 
   // ---------- Linha do tempo de editais e leilões (Pipeline, aba Projetos) ----------
-  // Leilões de TL_DESDE em diante. Datas "AAAA-MM-DD" ou "AAAA-MM" (mês sem dia); ano sozinho ou texto não são datas.
-  const TL_DESDE = 2026;
+  // Leilões do ano `desde` em diante (padrão: o ano corrente, no relógio de quem abre o arquivo). Datas "AAAA-MM-DD" ou
+  // "AAAA-MM" (mês sem dia); ano sozinho ou texto não são datas.
   // No pipeline, data_prevista é a data do leilão, salvo nestes status (aí é a assinatura do contrato).
   const TL_STATUS_ASSINATURA = new Set(['leiloado', 'contrato']);
   const tlData = s => {
@@ -665,8 +665,8 @@ const IntelModel = (() => {
 
   // Linhas da linha do tempo + o que ficou de fora. Leilão: da entidade (ficha), senão do cronograma, senão a data prevista do
   // pipeline (itens sem ficha, como os estaduais). Edital: da entidade, senão do cronograma. Sem data de leilão: fora e contado
-  // em semData; leilão anterior a TL_DESDE: fora do recorte (não conta).
-  function linhaDoTempoResumo(conc, pipeline) {
+  // em semData; leilão anterior a `desde`: fora do recorte (não conta).
+  function linhaDoTempoResumo(conc, pipeline, desde = new Date().getFullYear()) {
     const itens = Array.isArray(pipeline) ? pipeline : pipeline && Array.isArray(pipeline.itens) ? pipeline.itens : [];
     const ents = new Map((conc && Array.isArray(conc.entidades) ? conc.entidades : []).map(e => [e.id, e]));
     const out = [];
@@ -679,7 +679,7 @@ const IntelModel = (() => {
       };
       const leilao = tlData(e && e.leilao) || marco('Leilão') || (TL_STATUS_ASSINATURA.has(i.status) ? null : tlData(i.data_prevista));
       if (!leilao) { semData++; continue; }
-      if (tlAno(leilao) < TL_DESDE) continue;
+      if (tlAno(leilao) < desde) continue;
       out.push({ nome: i.nome, id: i.id, ent: i.ent || null, edital: tlData(e && e.edital) || marco('Edital'), leilao, status: i.status });
     }
     out.sort((a, b) => (tlChave(a.leilao) < tlChave(b.leilao) ? -1 : tlChave(a.leilao) > tlChave(b.leilao) ? 1
@@ -689,7 +689,7 @@ const IntelModel = (() => {
       anos: out.length ? { de: Math.min(...anosL), ate: Math.max(...anosL) } : null,
       de: out.length ? Math.min(...anosTodos) : null, ate: out.length ? Math.max(...anosTodos) : null };
   }
-  const linhaDoTempo = (conc, pipeline) => linhaDoTempoResumo(conc, pipeline).rows;
+  const linhaDoTempo = (conc, pipeline, desde) => linhaDoTempoResumo(conc, pipeline, desde).rows;
 
   // Qualidade do recorte de concessão estadual: o mesmo rótulo no cartão do mapa e na ficha.
   const QUALIDADE_RECORTE = { ok: 'Recorte ok', aproximado: 'Recorte aproximado', nao_mapeado: 'Não mapeado' };

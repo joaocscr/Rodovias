@@ -105,19 +105,39 @@ São três roteiros. Todos terminam do mesmo jeito: o `mapa-rodovias.html` gerad
 
 ```bash
 python scripts/atualizar.py --baixar                         # baixa o que falta, gera todos os blocos, valida e gera o HTML
+python scripts/atualizar.py --renovar                        # baixa de novo tudo (mesmo o que já está em data/raw/) e gera
+python scripts/atualizar.py --renovar antt,agro              # baixa de novo só esses domínios; os outros usam o que há
 python scripts/atualizar.py                                  # sem baixar: usa só os brutos que já estão em data/raw/
 python scripts/atualizar.py --dominios antt,pipeline --sem-html   # só alguns domínios, sem gerar o HTML
 ```
 
 - A ordem é fixa: `trafego`, `antt`, `carga`, `agro`, `multimodal`, `pipeline`, `estaduais`, `vmda2025`, `rotas`; depois o bloco de fontes, a validação da camada de verificação dos leilões e o `build.py`. O comando chama os scripts de `scripts/intel/` (os mesmos da seção "Atualizar os dados", abaixo).
 - Domínio sem o arquivo bruto (sem `--baixar`), ou cujo download falha, é pulado com aviso no relatório, e o bloco dele fica como estava. O VMDa 2025 é pulado se o zip do Google Drive não estiver em `data/raw/trafego/vmda2025/`.
-- O comando só termina com erro quando a validação da verificação ou a geração do HTML falham.
-- `--baixar` baixa só o que falta: arquivo que já está em `data/raw/` não é baixado de novo. Para renovar um domínio, apague antes a pasta dele em `data/raw/`. Fontes cujo nome de arquivo traz a data (planilhas anuais da ANTT, boletim da CONAB, planilha da ABCR) só mudam quando a URL é trocada no script do domínio (listas `ARQUIVOS` e constantes no topo).
+- O comando só termina com erro quando a validação da verificação ou a geração do HTML falham. Se o HTML não puder ser gerado por qualquer motivo, o passo aparece como falha (nunca como pulado).
+- `--baixar` baixa só o que falta: arquivo que já está em `data/raw/` não é baixado de novo. Para trazer a versão mais nova de uma fonte, use `--renovar` (todos os domínios) ou `--renovar antt,agro` (só esses): o download é refeito mesmo que o arquivo exista. Não apague pastas de `data/raw/` à mão: ali também ficam arquivos que só você tem (o zip do VMDa 2025) e brutos usados por mais de um domínio (`data/raw/graos/`).
+- A data de acesso de cada arquivo (manifesto e aba Fontes) só muda quando o conteúdo baixado muda (SHA-256 diferente). Se um domínio renovado vier igual, o relatório lista-o em "Fontes renovadas sem dado novo": a fonte não publicou dado novo ou o endereço mudou (muitas URLs trazem o ano ou o mês no nome; veja a tabela abaixo).
 - Depois, leia `data/atualizacao.md`:
   - **O que mudou por bloco**: registros e tamanho de cada bloco antes e depois, comparados com o último commit.
-  - **Curadoria manual**: cada item diz o arquivo a editar. São cinco tipos: item do pipeline com data passada ainda como previsto (`pipeline.csv`); leilão realizado sem entrada na camada de verificação (roteiro 3); item do pipeline sem fonte oficial; fonte acessada há mais de 12 meses; nome de proponente sem grupo econômico (`data/roadshow/grupos_alias.json`).
+  - **Curadoria manual**: cada item diz o arquivo a editar. São seis tipos: item do pipeline com data passada ainda como previsto (`pipeline.csv`); leilão realizado sem entrada na camada de verificação (roteiro 3); concessão ainda como "a leiloar" com leilão já passado (roteiro 3); item do pipeline sem fonte oficial; fonte acessada há mais de 12 meses (para fontes baixadas, `--renovar` o domínio; para as curadas, a constante `ACESSO` no script indicado); nome de proponente sem grupo econômico (`data/roadshow/grupos_alias.json`).
 - Rode os testes (seção "Testes"). Os testes de navegador comparam a tela com o que a própria página calcula e passam com dados novos. Os testes que conferem um valor concreto (`tests/test_dados_conferidos.py` e os `tests/test_intel_*.py`) falham com a mensagem "dado mudou: revise …": confira o novo valor na fonte indicada e, se estiver certo, atualize o valor esperado no teste.
 - Faça o commit dos JSON, do relatório e do HTML.
+
+**Período novo de uma fonte.** Os scripts baixam endereços fixos, e vários trazem o ano ou o mês no nome do arquivo. Quando a fonte publica um período novo (um ano a mais da ANTT, outro boletim da CONAB), edite estas constantes no script do domínio antes de `--renovar`:
+
+| Domínio | Script | O que editar para um período novo |
+|---|---|---|
+| trafego | `scripts/intel/trafego.py` | VMDa da Infra S.A.: `VMDA_LAYER` e `VMDA_FILE` (camada `VMDa_2023`), `"ano": 2023` em `build_vmda` e o texto das fontes; ABCR: `ABCR_URL`/`ABCR_FILE` (`base_0926.xlsx`, mês no nome), `ABCR_MESES` (janela de 120 meses) e os períodos "1999-set/2026" (`fetch`) e "out/2016 a set/2026" (`fontes`); PRF: `PRF_IDS` (id do Drive por ano), `ANOS` (anos somados) e os textos "2024 e 2025" e "2026-01 a 2026-08 (parcial)" |
+| antt | `scripts/intel/antt.py` | `MESES` (anos 2024–2026 e o corte `[:32]`, até ago/2026), `ANOS` (`range(2010, 2026)`, séries anuais), `ARQUIVOS` (nomes com ano: `dados-dos-pracas-de-pedagio6_2026.csv`, `volume-trafego-praca-pedagio-<ano>_mensal_consolidado.csv`, `receita_por_praca_2025.csv`), os anos em `_load_volumes` (2024, 2025, 2026), os mesmos nomes de arquivo lidos em `build_pracas`, `PRACAS_ANO`, `SAT_ANO`, `SAT_JANELA`, o período "2022-2026" dos SATs em `fetch` e os períodos das fontes ("jan/2024 a ago/2026", "2025", "2010 a 2025", "planejamentos de 2023 a 2026") |
+| carga | `scripts/intel/carga.py` | Fixo: PNL 2035, cenário-base 2017 (`URL`, `"ano_base": 2017`). Um cenário novo do PNL é trabalho de script |
+| agro | `scripts/intel/agro.py` | `ARQUIVOS` (URLs do SIDRA com `/p/2025/` e arquivos `pam*_2025.json`; a Pesquisa de Estoques usa `p/last`, mas o texto "2º semestre 2025" está escrito), `PRODUTOS` (chaves `pam1612_2025` etc.), a malha 2025 de MT (`MT_NOVOS`, `_mt2025`) se surgirem municípios novos, e os períodos nos `_fonte` |
+| multimodal | `scripts/intel/multimodal.py` | `ARQUIVOS` (BaseFerro abr/2024; ANTAQ com data no nome; `producao_origem_destino_2025.csv`; IBGE Logística 2024; `EXP_2025.csv`; boletim `boletim-logistico-setembro-2026`), `FRETES_CSV`/`FRETES_PDF`, as conferências de ano em `build_siade` (`"/2025"`) e `build_exportacao` (`CO_ANO == "2025"`, `"ano": 2025`), o mês dos fretes em `fetch` e os períodos em `fontes` |
+| pipeline | `scripts/intel/pipeline.py` | O conteúdo é curado em `data/intel/pipeline.csv`; ao revisar a carteira, atualize `ACESSO` e os períodos de `FONTE` (e `BRUTOS`, que guarda a carteira e as APIs 2026/2027) |
+| estaduais | `scripts/intel/estaduais.py` | `INFRA_URL` (camada com CIDE 2021/DNIT 2002; a de ano-base 2024 não respondia), `ARTESP_KMZ` (id de recurso por lote), `AGERGS_XLSX` (caminho com data), os dicionários curados das concessões (`CURADO_SP` e as fichas das demais UFs) e o período "2026" em `fetch` |
+| vmda2025 | `scripts/intel/vmda2025.py` | Arquivo do usuário (Google Drive): `ZIP`, `PASTA`, `SHP`, `"ano": 2025` em `build` e os textos de período; um VMDa de outro ano é, na prática, um bloco novo |
+| rotas | `scripts/intel/rotas.py` | `PDF` (`apresentacao_rotas_2026-07-01.pdf`), `URL_APRESENTACAO`, `URL_RELATORIO` (2024 e 2025), `DOCS`, os textos de `ROTAS` (transcritos), `PAGINA` e os coeficientes `CX`/`CY` (georreferência do mapa do PDF) |
+| fontes | `scripts/intel/fontes_bloco.py` | `ACESSO` e `BASE` (versão do SNV e do RoadShow), `INDISPONIVEIS` |
+
+Depois de editar, rode `python scripts/atualizar.py --renovar <domínio>` e confira o relatório e os testes "dado mudou".
 
 ### 2. Nova versão do RoadShow
 
@@ -133,7 +153,7 @@ Para consultar os trechos de uma BR ao curar o recorte, use `python scripts/snv_
 ### 3. Um leilão novo
 
 1. Atualize o item em `data/intel/pipeline.csv` (status `leiloado` ou `contrato`, data, fonte oficial em `fonte_url` e `verificado = true`) e rode `python scripts/atualizar.py --dominios pipeline`.
-2. O relatório passa a listar o leilão em "Leilão realizado sem entrada na camada de verificação".
+2. O relatório passa a listar o leilão em "Leilão realizado sem entrada na camada de verificação" e, se a concessão ainda estiver como "Leilão agendado" ou "Projeto" no RoadShow, em "Concessão ainda como a leiloar, com leilão já passado". O status do pipeline (passo 1) é a atualização imediata. O estado no mapa e no comparador vem do RoadShow (`data/roadshow/entidades.json`) e chega ao HTML pela base congelada: mude o `estado` ali e gere a base de novo com `python scripts/build.py --shp …` (seção "Regenerar com um SNV novo"), ou espere a próxima versão do RoadShow. Até lá, o relatório continua listando o item.
 3. Acrescente-o à camada de verificação seguindo a receita de [`docs/HANDOFF.md`](docs/HANDOFF.md) (§2, "Como acrescentar um leilão verificado"): `data/roadshow/verificacao.json` (campos, valores e fontes) e `data/roadshow/grupos_alias.json` (grupo econômico de cada proponente).
 4. Rode `python -m pytest tests/test_verificacao.py` e `python scripts/atualizar.py`.
 

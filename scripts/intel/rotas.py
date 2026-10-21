@@ -208,11 +208,12 @@ ROTAS = [
 ]
 
 
-def fetch():
-    """Garante os documentos brutos (não rebaixa o que já existe) e os registra no manifesto."""
+def fetch(force=False):
+    """Garante os documentos brutos (não rebaixa o que já existe; com `force`, baixa de novo) e os registra no
+    manifesto."""
     m = Manifest("rotas")
     for url, dest, desc, periodo, lic in DOCS:
-        _fetch(url, dest)
+        _fetch(url, dest, force=force)
         m.add(url, dest, desc, periodo=periodo, licenca=lic)
     m.save()
 

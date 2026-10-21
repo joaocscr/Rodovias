@@ -11,6 +11,7 @@ planejado são estradas estaduais existentes, não o trecho federal.
 import datetime as dt
 import glob
 import json
+import shutil
 import sys
 import zipfile
 from collections import namedtuple
@@ -39,9 +40,12 @@ BRASIL = (-76.0, -35.0, -27.0, 7.0)  # lon/lat mín/máx: descarta links interna
 Links = namedtuple("Links", "geoms tree gsa total veic")
 
 
-def fetch():
-    """Garante o zip bruto (não rebaixa se já existe) e o registra no manifesto."""
-    dest = _fetch(URL, ZIP)
+def fetch(force=False):
+    """Garante o zip bruto (não rebaixa se já existe; com `force`, baixa de novo e descarta a extração antiga) e o
+    registra no manifesto."""
+    dest = _fetch(URL, ZIP, force=force)
+    if force and EXTRAIDO.exists():
+        shutil.rmtree(EXTRAIDO)
     m = Manifest("carga")
     m.add(URL, dest, "PNL 2035, cenário-base 2017 (shapefile com carregamento por link + dicionário de dados)",
           periodo="2017 (cenário-base do PNL 2035)",

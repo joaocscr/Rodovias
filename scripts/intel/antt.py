@@ -304,33 +304,34 @@ def sat_files():
     return sorted((RAW / "sat").glob("*mensal_consolidado.csv"))
 
 
-def fetch():
+def fetch(force=False):
+    """Baixa o que falta (com `force`, baixa tudo de novo, inclusive a lista de capas) e registra no manifesto."""
     man = Manifest("antt")
     for slug in DATASETS:
         dest = RAW / "ckan" / f"{slug}.json"
-        fetch_url(CKAN + slug, dest)
+        fetch_url(CKAN + slug, dest, force=force)
         man.add(CKAN + slug, dest, f"Metadados CKAN: {slug}", licenca=LICENCA)
     for pasta, slug, fname, desc, periodo in ARQUIVOS:
         url = _resource_url(ckan_meta(slug), fname)
         if url is None:
             raise RuntimeError(f"recurso {fname} não está em {slug}")
-        man.add(url, fetch_url(url, RAW / pasta / fname), desc, periodo, LICENCA)
+        man.add(url, fetch_url(url, RAW / pasta / fname, force=force), desc, periodo, LICENCA)
     meta = ckan_meta(SAT_SLUG)
     sat_res = [r for r in meta["resources"] if (r.get("url") or "").endswith("mensal_consolidado.csv")]
     for r in sat_res:
         base = r["url"].rsplit("/", 1)[-1]
         fname = base if base != "volume-sat-_mensal_consolidado.csv" else f"{r['id']}_{base}"
-        man.add(r["url"], fetch_url(r["url"], RAW / "sat" / fname), "Volume nos SATs (mensal consolidado)",
+        man.add(r["url"], fetch_url(r["url"], RAW / "sat" / fname, force=force), "Volume nos SATs (mensal consolidado)",
                 "2022-2026", LICENCA)
     lista = RAW / "capas" / "lista.html"
-    fetch_url(GOVBR, lista)
+    fetch_url(GOVBR, lista, force=force)
     man.add(GOVBR, lista, "Lista de concessões (gov.br/antt)")
     urls = RAW / "capas" / "capas_urls.txt"
-    if not urls.exists():
+    if force or not urls.exists():
         urls.write_text("\n".join(capa_urls_from_list(lista.read_text(encoding="utf-8"))) + "\n", encoding="utf-8")
     for u in urls.read_text(encoding="utf-8").split():
         dest = RAW / "capas" / (u.split("/lista-de-concessoes/")[1].replace("/", "__") + ".html")
-        man.add(u, fetch_url(u, dest), "Capa da concessão (gov.br/antt)")
+        man.add(u, fetch_url(u, dest, force=force), "Capa da concessão (gov.br/antt)")
     man.save()
     return man
 

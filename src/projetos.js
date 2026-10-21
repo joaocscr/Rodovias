@@ -112,8 +112,11 @@ const Projetos = (() => {
   }
 
   function estudos() {
+    // quantidade e páginas vêm do dado (conc.estudos[].pagina)
+    const pp = [...new Set(conc.estudos.map(s => s.pagina).filter(Number.isFinite))].sort((a, b) => a - b);
+    const ref = pp.length ? ` (${pp.length > 1 ? 'pp.' : 'p.'} ${pp.join(', ')})` : '';
     return `<h2 class="page__title" style="font-size:22px;margin-top:40px">Estudos pós-2027</h2>
-      <p class="page__lead">27 estudos contratados, só com BRs e UFs no RoadShow (p. 121). No mapa, aparecem como a BR inteira na UF.</p>
+      <p class="page__lead" id="estudos-lead">${conc.estudos.length} ${conc.estudos.length === 1 ? 'estudo contratado' : 'estudos contratados'}, só com BRs e UFs no RoadShow${ref}. No mapa, aparecem como a BR inteira na UF.</p>
       <ul class="timeline" id="estudos-list">${conc.estudos.map((s, i) => `<li>BR-${esc(s.brs.join('/'))}/${esc(s.ufs.join('/'))}${s.possivel_2027 ? ' · <b>possível 2027</b>' : ''}
         <button type="button" class="link-btn" data-estudo="${i}" ${s.fis.length ? '' : 'disabled'}>ver no mapa</button></li>`).join('')}</ul>`;
   }

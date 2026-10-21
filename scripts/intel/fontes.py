@@ -50,10 +50,15 @@ class Manifest:
         self.items = json.loads(self.path.read_text(encoding="utf-8")) if self.path.exists() else []
 
     def add(self, url, path, descricao, periodo="", licenca=""):
+        """Registra o arquivo. `acesso` é a data em que o conteúdo apareceu: se o arquivo já estava no manifesto com o
+        mesmo SHA-256 (não foi baixado de novo, ou a fonte devolveu o mesmo conteúdo), a data anterior fica."""
         path = Path(path)
         item = {"dominio": self.dominio, "descricao": descricao, "url": url, "arquivo": str(path.relative_to(ROOT)),
                 "bytes": path.stat().st_size, "sha256": sha256(path), "periodo": periodo, "licenca": licenca,
                 "acesso": dt.date.today().isoformat()}
+        antes = next((i for i in self.items if i["arquivo"] == item["arquivo"]), None)
+        if antes and antes.get("sha256") == item["sha256"] and antes.get("acesso"):
+            item["acesso"] = antes["acesso"]
         self.items = [i for i in self.items if i["arquivo"] != item["arquivo"]] + [item]
         return item
 

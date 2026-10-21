@@ -75,9 +75,9 @@ def _arcgis_pagina(url, tries=5):
     raise RuntimeError(f"falha em {url}: {ultimo}")
 
 
-def fetch_vmda(dest=VMDA_FILE, page=2000):
+def fetch_vmda(dest=VMDA_FILE, page=2000, force=False):
     """Tabela `data` do VMDa 2023, paginada (maxRecordCount 2000), no formato {count, features}."""
-    if dest.exists() and dest.stat().st_size > 0:
+    if not force and dest.exists() and dest.stat().st_size > 0:
         return dest
     q = {"where": "1=1", "returnCountOnly": "true", "f": "json"}
     n = _arcgis_pagina(f"{VMDA_LAYER}/query?" + urllib.parse.urlencode(q))["count"]
@@ -97,18 +97,19 @@ def fetch_vmda(dest=VMDA_FILE, page=2000):
     return dest
 
 
-def fetch():
-    """Baixa o que falta e registra no manifesto (arquivos já existentes entram com a URL original)."""
+def fetch(force=False):
+    """Baixa o que falta e registra no manifesto (arquivos já existentes entram com a URL original); com `force`, baixa
+    tudo de novo e extrai de novo os CSV da PRF."""
     mf = Manifest("trafego")
-    fetch_vmda()
+    fetch_vmda(force=force)
     mf.add(VMDA_LAYER, VMDA_FILE, "VMDa 2023 por subtrecho de modelagem (Leves/Pesados), tabela `data`, SNV 202401A",
            "2023", "Dados abertos Infra S.A.")
-    baixar(ABCR_URL, ABCR_FILE)
+    baixar(ABCR_URL, ABCR_FILE, force=force)
     mf.add(ABCR_URL, ABCR_FILE, "Índice ABCR de fluxo de veículos pedagiados, série mensal 1999-set/2026", "1999-2026-09",
            "Divulgação pública ABCR (citar a fonte)")
     for ano in PRF_IDS:
-        z = baixar(prf_url(ano), prf_zip(ano))
-        if not prf_csv(ano).exists():
+        z = baixar(prf_url(ano), prf_zip(ano), force=force)
+        if force or not prf_csv(ano).exists():
             with zipfile.ZipFile(z) as zf:
                 nome = next(n for n in zf.namelist() if n.lower().endswith(".csv"))
                 prf_csv(ano).parent.mkdir(parents=True, exist_ok=True)

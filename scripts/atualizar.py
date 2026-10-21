@@ -1,15 +1,19 @@
 """Atualiza os dados do HTML em um comando e escreve o relatório data/atualizacao.md.
 
-Uso: python scripts/atualizar.py [--baixar] [--dominios trafego,antt,...] [--sem-html]
+Uso: python scripts/atualizar.py [--baixar] [--renovar [dominios]] [--dominios trafego,antt,...] [--sem-html]
 
-Ordem: os domínios de `ORDEM` (o `build` de cada script de scripts/intel/; com --baixar, antes o `fetch`), o bloco de
-fontes (`fontes_bloco.py`), a validação da camada de verificação dos leilões e o `build.py` (HTML único). Cada passo
-chama a função do script existente; nada de lógica de dados aqui.
+Ordem: os domínios de `ORDEM` (o `build` de cada script de scripts/intel/; com --baixar, antes o `fetch`, que baixa só
+o que falta; com --renovar, o `fetch(force=True)`, que baixa tudo de novo), o bloco de fontes (`fontes_bloco.py`), a
+validação da camada de verificação dos leilões e o `build.py` (HTML único). Cada passo chama a função do script
+existente; nada de lógica de dados aqui.
 
 - Domínio cujo bruto falta em data/raw/ (sem --baixar) ou cujo arquivo do usuário falta (VMDa 2025) é pulado com
   aviso; domínio que falha (download, build) também não derruba os outros. Em ambos os casos os JSON de data/intel/
   ficam como estavam antes do passo.
-- O código de saída só é diferente de 0 quando a validação da verificação ou o build do HTML falham.
+- O código de saída só é diferente de 0 quando a validação da verificação ou o build do HTML falham (qualquer
+  resultado do HTML que não seja ok conta como falha, nunca como passo pulado).
+- Domínio renovado cujos arquivos brutos vieram com o mesmo SHA-256 do manifesto entra no relatório como "fonte
+  renovada sem dado novo".
 - O relatório compara cada bloco com a versão do último commit (`git show HEAD:data/intel/<bloco>.json`; sem git, com
   a cópia lida antes de rodar) e lista o que precisa de curadoria manual (`curadoria.itens`).
 """
@@ -27,6 +31,7 @@ import curadoria  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 INTEL = ROOT / "data" / "intel"
+MANIFESTO = ROOT / "data" / "manifest"
 BASE = ROOT / "data" / "base"
 ROADSHOW = ROOT / "data" / "roadshow"
 SAIDA = ROOT / "data" / "atualizacao.md"
@@ -34,6 +39,9 @@ HTML = ROOT / "mapa-rodovias.html"
 PDF_ROADSHOW = ROOT / "data" / "raw" / "roadshow.pdf"
 # vmda2025 lê a malha estadual (estaduais.json); pipeline confere `ent` contra conc.json e estaduais.json
 ORDEM = ("trafego", "antt", "carga", "agro", "multimodal", "pipeline", "estaduais", "vmda2025", "rotas")
+# o zip do VMDa 2025 vem do Drive do usuário: não há o que baixar de novo
+RENOVAVEIS = tuple(d for d in ORDEM if d != "vmda2025")
+PASSO_HTML = "build.py (HTML)"
 
 
 class Pular(Exception):
@@ -49,9 +57,12 @@ def _rel(p):
 
 # ---------- passos ----------
 
-def passos_dominios(dominios, baixar, importar=importlib.import_module):
+def passos_dominios(dominios, baixar, importar=importlib.import_module, renovar=()):
     """[(nome, função)] dos domínios pedidos, sempre na ordem de ORDEM. Com `baixar`, `fetch` (no vmda2025,
-    `registrar`, que só grava no manifesto o zip fornecido pelo usuário) antes do `build`."""
+    `registrar`, que só grava no manifesto o zip fornecido pelo usuário) antes do `build`; os domínios de `renovar`
+    usam `fetch(force=True)`."""
+    renovar = set(renovar)
+
     def passo(d):
         def rodar():
             m = importar(f"intel.{d}")
@@ -61,6 +72,8 @@ def passos_dominios(dominios, baixar, importar=importlib.import_module):
                                 "\"Atualizar os dados\"); vmda2025.json ficou como estava")
                 if baixar:
                     m.registrar()
+            elif d in renovar:
+                m.fetch(force=True)
             elif baixar:
                 m.fetch()
             m.build()
@@ -81,27 +94,31 @@ def _arquivo_ausente(e):
     return _rel(nome)
 
 
-def _instantaneo(intel_dir):
-    return {p.name: p.read_bytes() for p in Path(intel_dir).glob("*.json")}
+def _instantaneo(pastas):
+    return {p: p.read_bytes() for d in pastas if d is not None for p in Path(d).glob("*.json")}
 
 
-def _restaura(intel_dir, antes):
-    for p in Path(intel_dir).glob("*.json"):
-        if p.name not in antes:
-            p.unlink()
-    for nome, conteudo in antes.items():
-        p = Path(intel_dir) / nome
+def _restaura(pastas, antes):
+    for d in pastas:
+        if d is None:
+            continue
+        for p in Path(d).glob("*.json"):
+            if p not in antes:
+                p.unlink()
+    for p, conteudo in antes.items():
         if not p.exists() or p.read_bytes() != conteudo:
             p.write_bytes(conteudo)
 
 
-def executar(passos, intel_dir=INTEL, baixar=False, log=print):
-    """Roda cada passo; um passo pulado ou que falha não interrompe os seguintes e tem os JSON de `intel_dir`
-    restaurados. Devolve [{passo, estado ('ok' | 'pulado' | 'falhou'), detalhe}]."""
-    out = []
+def executar(passos, intel_dir=INTEL, baixar=False, log=print, manifest_dir=MANIFESTO):
+    """Roda cada passo; um passo pulado ou que falha não interrompe os seguintes e tem os JSON de `intel_dir` e o
+    manifesto (`manifest_dir`) restaurados. `baixar`: True/False, ou o conjunto dos passos que baixam (para eles,
+    arquivo ausente é falha). Devolve [{passo, estado ('ok' | 'pulado' | 'falhou'), detalhe}]."""
+    out, pastas = [], (intel_dir, manifest_dir)
     for nome, rodar in passos:
         log(f"== {nome}")
-        antes = _instantaneo(intel_dir)
+        baixou = baixar if isinstance(baixar, bool) else nome in baixar
+        antes = _instantaneo(pastas)
         estado, detalhe = "ok", ""
         try:
             rodar()
@@ -112,12 +129,12 @@ def executar(passos, intel_dir=INTEL, baixar=False, log=print):
         except Exception as e:  # noqa: BLE001 — qualquer falha do domínio vira aviso no relatório
             ausente = _arquivo_ausente(e)
             if ausente:  # sem --baixar o bruto ausente é esperado (pula); com --baixar, o download não o trouxe (falha)
-                estado = "falhou" if baixar else "pulado"
-                detalhe = f"arquivo ausente: {ausente}" + ("" if baixar else " (baixe com `--baixar`)")
+                estado = "falhou" if baixou else "pulado"
+                detalhe = f"arquivo ausente: {ausente}" + ("" if baixou else " (baixe com `--baixar`)")
             else:
                 estado, detalhe = "falhou", f"{type(e).__name__}: {e}"
         if estado != "ok":
-            _restaura(intel_dir, antes)
+            _restaura(pastas, antes)
             log(f"AVISO: {nome} {estado}: {detalhe}")
         out.append({"passo": nome, "estado": estado, "detalhe": detalhe[:400]})
     return out
@@ -179,14 +196,37 @@ def versao_anterior(intel_dir):
 
 # ---------- orquestração ----------
 
-def atualizar(dominios=ORDEM, baixar=False, html=True, hoje=None, intel_dir=INTEL, saida=SAIDA,
-              importar=importlib.import_module, validar=validar_camada, construir=construir_html, fontes=fontes_bloco,
-              anterior=versao_anterior, log=print):
+def _shas(manifest_dir, dominio):
+    """Conteúdo registrado no manifesto do domínio: {arquivo: sha256}."""
+    p = Path(manifest_dir) / f"{dominio}.json"
+    try:
+        return {i["arquivo"]: i.get("sha256") for i in json.loads(p.read_text(encoding="utf-8"))}
+    except (OSError, ValueError, KeyError, TypeError):
+        return {}
+
+
+SEM_NOVIDADE = "renovado: nenhum arquivo mudou (a fonte não publicou dado novo ou o endereço mudou)"
+
+
+def atualizar(dominios=ORDEM, baixar=False, html=True, hoje=None, intel_dir=INTEL, saida=SAIDA, renovar=(),
+              manifest_dir=MANIFESTO, importar=importlib.import_module, validar=validar_camada, construir=construir_html,
+              fontes=fontes_bloco, anterior=versao_anterior, log=print):
     """Roda a atualização e escreve o relatório em `saida`; devolve o código de saída (0, ou 1 se a validação ou o
-    HTML falharem). As funções injetáveis existem para os testes."""
+    HTML falharem). `renovar`: domínios baixados de novo (fetch com force). As funções injetáveis existem para os
+    testes."""
     hoje = hoje or dt.date.today()
+    renovar = set(renovar)
     antes = anterior(intel_dir)
-    passos = executar(passos_dominios(dominios, baixar, importar) + [("fontes_bloco", fontes)], intel_dir, baixar, log)
+    shas_antes = {d: _shas(manifest_dir, d) for d in renovar}
+    baixam = set(ORDEM) if baixar else renovar
+    passos = executar(passos_dominios(dominios, baixar, importar, renovar) + [("fontes_bloco", fontes)], intel_dir,
+                      baixam, log, manifest_dir)
+    sem_novidade = []
+    for p in passos:
+        d = p["passo"]
+        if d in renovar and p["estado"] == "ok" and _shas(manifest_dir, d) == shas_antes[d]:
+            sem_novidade.append(d)
+            p["detalhe"] = SEM_NOVIDADE
 
     log("== validação da camada de verificação")
     try:
@@ -196,11 +236,15 @@ def atualizar(dominios=ORDEM, baixar=False, html=True, hoje=None, intel_dir=INTE
     passos.append({"passo": "validação da verificação", "estado": "falhou" if erros else "ok",
                    "detalhe": f"{len(erros)} erro(s), listados abaixo" if erros else ""})
     if erros:
-        passos.append({"passo": "build.py (HTML)", "estado": "pulado", "detalhe": "a validação da verificação falhou"})
+        passos.append({"passo": PASSO_HTML, "estado": "pulado", "detalhe": "a validação da verificação falhou"})
     elif not html:
-        passos.append({"passo": "build.py (HTML)", "estado": "pulado", "detalhe": "--sem-html"})
+        passos.append({"passo": PASSO_HTML, "estado": "pulado", "detalhe": "--sem-html"})
     else:
-        passos += executar([("build.py (HTML)", construir)], intel_dir, baixar, log)
+        (r,) = executar([(PASSO_HTML, construir)], intel_dir, False, log, None)
+        if r["estado"] != "ok":  # o HTML nunca é "pulado": qualquer resultado que não seja ok é falha
+            r = {"passo": PASSO_HTML, "estado": "falhou", "detalhe": f"o HTML não foi gerado: {r['detalhe']}"}
+            log(f"ERRO: {r['detalhe']}")
+        passos.append(r)
     if not PDF_ROADSHOW.exists():
         passos.append({"passo": "RoadShow (PDF)", "estado": "pulado",
                        "detalhe": "data/raw/roadshow.pdf ausente: os testes que conferem o PDF ficam pulados; os "
@@ -209,11 +253,12 @@ def atualizar(dominios=ORDEM, baixar=False, html=True, hoje=None, intel_dir=INTE
     depois = carregar_blocos(intel_dir)
     diff = curadoria.diff_blocos(antes, depois)
     itens = None if aplicado is None else curadoria.itens(aplicado, depois, verif, hoje)
+    pedidos = set(dominios)
     opcoes = ", ".join(["--baixar" if baixar else "sem --baixar"]
-                       + ([f"--dominios {','.join(d for d in ORDEM if d in set(dominios))}"]
-                          if set(dominios) != set(ORDEM) else [])
+                       + ([f"--renovar {','.join(d for d in ORDEM if d in renovar)}"] if renovar else [])
+                       + ([f"--dominios {','.join(d for d in ORDEM if d in pedidos)}"] if pedidos != set(ORDEM) else [])
                        + ([] if html else ["--sem-html"]))
-    Path(saida).write_text(curadoria.relatorio(hoje, passos, diff, itens, opcoes, erros), encoding="utf-8")
+    Path(saida).write_text(curadoria.relatorio(hoje, passos, diff, itens, opcoes, erros, sem_novidade), encoding="utf-8")
 
     conta = {e: sum(p["estado"] == e for p in passos) for e in ("ok", "pulado", "falhou")}
     mudou = [d["bloco"] for d in diff if (d["registros_antes"], d["kb_antes"]) != (d["registros_depois"], d["kb_depois"])]
@@ -221,25 +266,41 @@ def atualizar(dominios=ORDEM, baixar=False, html=True, hoje=None, intel_dir=INTE
         f"blocos que mudaram: {', '.join(mudou) or 'nenhum'} | curadoria: "
         f"{'não calculada' if itens is None else len(itens)} item(ns) | relatório em {_rel(saida)}")
     for p in passos:
-        if p["estado"] != "ok":
+        if p["estado"] != "ok" or p["passo"] in sem_novidade:
             log(f"  {p['estado']}: {p['passo']} — {p['detalhe']}")
-    falhou = erros or any(p["passo"] == "build.py (HTML)" and p["estado"] == "falhou" for p in passos)
+    falhou = erros or any(p["passo"] == PASSO_HTML and p["estado"] == "falhou" for p in passos)
     return 1 if falhou else 0
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Atualiza os dados do HTML e escreve data/atualizacao.md.")
     ap.add_argument("--baixar", action="store_true", help="baixa antes as fontes públicas (fetch de cada domínio)")
+    ap.add_argument("--renovar", nargs="?", const="", metavar="DOMINIOS",
+                    help="baixa de novo, mesmo o que já existe em data/raw/, os domínios listados (vírgula) ou, sem "
+                         f"lista, todos os pedidos; não vale para vmda2025 (arquivo do usuário). Entre: {','.join(RENOVAVEIS)}")
     ap.add_argument("--dominios", help=f"lista separada por vírgula, entre: {','.join(ORDEM)} (padrão: todos)")
     ap.add_argument("--sem-html", action="store_true", help="não gera o mapa-rodovias.html")
     args = ap.parse_args(argv)
+    lista = lambda txt: [d.strip() for d in txt.split(",") if d.strip()]  # noqa: E731
     dominios = ORDEM
     if args.dominios:
-        dominios = [d.strip() for d in args.dominios.split(",") if d.strip()]
+        dominios = lista(args.dominios)
         ruins = [d for d in dominios if d not in ORDEM]
         if ruins:
             ap.error(f"domínio(s) desconhecido(s): {', '.join(ruins)} (use: {', '.join(ORDEM)})")
-    return atualizar(dominios, baixar=args.baixar, html=not args.sem_html)
+    renovar = ()
+    if args.renovar is not None:
+        renovar = lista(args.renovar) or [d for d in dominios if d in RENOVAVEIS]
+        if "vmda2025" in renovar:
+            ap.error("vmda2025 vem do Google Drive do usuário: troque o zip em data/raw/trafego/vmda2025/ e rode sem "
+                     "--renovar")
+        ruins = [d for d in renovar if d not in ORDEM]
+        if ruins:
+            ap.error(f"domínio(s) desconhecido(s) em --renovar: {', '.join(ruins)} (use: {', '.join(RENOVAVEIS)})")
+        fora = [d for d in renovar if d not in dominios]
+        if fora:
+            ap.error(f"--renovar {', '.join(fora)}: domínio fora de --dominios")
+    return atualizar(dominios, baixar=args.baixar, html=not args.sem_html, renovar=renovar)
 
 
 if __name__ == "__main__":

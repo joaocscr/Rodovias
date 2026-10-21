@@ -109,11 +109,11 @@ BRUTOS = [
 ]
 
 
-def fetch():
-    """Baixa o que falta em data/raw/pipeline/ e registra em data/manifest/pipeline.json."""
+def fetch(force=False):
+    """Baixa o que falta em data/raw/pipeline/ (com `force`, tudo de novo) e registra em data/manifest/pipeline.json."""
     m = Manifest(DOMINIO)
     for nome, url, descricao, periodo in BRUTOS:
-        dest = baixar(url, RAW_DIR / nome)
+        dest = baixar(url, RAW_DIR / nome, force=force)
         m.add(url, dest, descricao, periodo=periodo, licenca="Informação pública")
     m.save()
     return m

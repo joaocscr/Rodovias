@@ -26,7 +26,7 @@ Registros: itens das coleções principais de cada bloco (valores preenchidos); 
 | Bloco | Registros antes | Registros depois | KB antes | KB depois | Mudou |
 |---|---:|---:|---:|---:|---|
 | agro | 5.571 | 5.571 | 210,5 | 210,5 | não |
-| antt | 1.938 | 1.938 | 399,2 | 399,2 | sim (+11 bytes) |
+| antt | 1.938 | 1.938 | 399,2 | 399,2 | não |
 | carga | 4.312 | 4.312 | 141,3 | 141,3 | não |
 | estaduais | 16.238 | 16.238 | 2.949,8 | 2.949,8 | não |
 | fontes | 49 | 49 | 24,5 | 24,5 | não |

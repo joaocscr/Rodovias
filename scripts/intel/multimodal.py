@@ -464,19 +464,20 @@ def _cacert_serpro():
     return dest
 
 
-def fetch():
+def fetch(force=False):
+    """Baixa o que falta (com `force`, baixa tudo de novo e refaz os derivados) e registra no manifesto."""
     m = Manifest("multimodal")
     for url, rel, desc, periodo, comex in ARQUIVOS:
         dest = RAW / rel
-        extra = () if dest.exists() or not comex else ("--cacert", str(_cacert_serpro()))
-        baixar(url, dest, extra=extra)
+        extra = () if (dest.exists() and not force) or not comex else ("--cacert", str(_cacert_serpro()))
+        baixar(url, dest, extra=extra, force=force)
         m.add(url, dest, desc, periodo=periodo, licenca=LIC_GOV)
-    if not GPKG_FERR.exists():
+    if force or not GPKG_FERR.exists():
         with zipfile.ZipFile(RAW / "logistica" / "detalhados" / "Fluxos_Ferroviarios.zip") as z:
             (n,) = [n for n in z.namelist() if n.endswith(".gpkg")]
             GPKG_FERR.parent.mkdir(parents=True, exist_ok=True)
             GPKG_FERR.write_bytes(z.read(n))
-    if not FRETES_CSV.exists():
+    if force or not FRETES_CSV.exists():
         extrair_fretes(FRETES_PDF, FRETES_CSV)
     m.add(ARQUIVOS[7][0], FRETES_CSV, "CONAB — fretes extraídos do Boletim Logístico set/2026 (derivado do PDF)",
           periodo="ago/2026", licenca=LIC_GOV)

@@ -15,6 +15,7 @@ from verificacao import nomes_do_ranking
 TIPOS = {
     "pipeline_atrasado": "Pipeline com data passada ainda como previsto",
     "leilao_sem_verificacao": "Leilão realizado sem entrada na camada de verificação",
+    "estado_vencido": "Concessão ainda como a leiloar, com leilão já passado",
     "pipeline_nao_verificado": "Itens do pipeline sem fonte oficial",
     "fonte_antiga": "Fontes acessadas há mais de 12 meses",
     "nome_sem_grupo": "Nomes de proponentes sem grupo econômico",
@@ -22,6 +23,18 @@ TIPOS = {
 # status do pipeline cuja data ainda é uma previsão (leilão; no "leiloado", a assinatura prevista)
 PREVISTOS = ("estudo", "consulta_publica", "tcu", "edital", "leilao_agendado", "leiloado")
 REALIZADOS = ("leiloado", "contrato")
+# estados do RoadShow de concessão ainda a leiloar (chaves do modelo, em data/base/conc.json `estados`)
+ESTADOS_A_LEILOAR = ("agendado2026", "projeto2027")
+# fontes curadas à mão: a data de acesso é uma constante do script, não a de um download
+ACESSO_CURADO = {
+    "pipeline": "revise as fontes e as linhas de data/intel/pipeline.csv e atualize ACESSO e FONTE em "
+                "scripts/intel/pipeline.py",
+    "base": "revise a fonte e atualize ACESSO e BASE em scripts/intel/fontes_bloco.py",
+    "vmda2025": "o arquivo vem do Google Drive do usuário: troque o zip em data/raw/trafego/vmda2025/ por uma versão nova "
+                "e rode `python scripts/atualizar.py --baixar --dominios vmda2025`",
+}
+# bloco de data/intel/ → domínio (script de scripts/intel/) que o gera, quando o nome difere
+DOMINIO_DO_BLOCO = {"municipios": "agro"}
 DIAS_FONTE_ANTIGA = 365
 # o que conta como registro em cada bloco: caminhos (a.b) de listas — conta os valores preenchidos — ou de dicionários
 # — conta as chaves. Bloco fora daqui: listas de primeiro nível e `linhas` dos sub-blocos (sem `fonte`).
@@ -109,6 +122,17 @@ def _leilao_sem_verificacao(conc, itens, verif, hoje):
     return out
 
 
+def _estado_vencido(conc, hoje):
+    """Concessão que o RoadShow dá como a leiloar e cuja data de leilão já passou, com ou sem verificação."""
+    rotulo = {s.get("key"): s.get("label") for s in conc.get("estados") or []}
+    return [("estado_vencido", _nome(e),
+             f"estado \"{rotulo.get(e['estado'], e['estado'])}\", mas o leilão foi em {_fmt(e['leilao'])}: atualize o "
+             "status em data/intel/pipeline.csv; o estado do mapa vem do RoadShow (data/roadshow/entidades.json, que "
+             "chega ao HTML pela base congelada: `python scripts/build.py --shp …` ou a próxima versão do RoadShow)")
+            for e in conc.get("entidades") or []
+            if e.get("estado") in ESTADOS_A_LEILOAR and _passou(e.get("leilao"), hoje)]
+
+
 def _pipeline_nao_verificado(itens):
     return [("pipeline_nao_verificado", _nome(i),
              "fonte só de imprensa (verificado = false): procure página ou documento oficial e atualize "
@@ -124,9 +148,11 @@ def _fonte_antiga(fontes, hoje):
         if d is None or chave in vistos or (hoje - d).days <= DIAS_FONTE_ANTIGA:
             continue
         vistos.add(chave)
+        o_que = ACESSO_CURADO.get(bloco) or (
+            f"rode `python scripts/atualizar.py --renovar {DOMINIO_DO_BLOCO.get(bloco, bloco)}`; se nada mudar, a fonte não publicou dado novo ou o "
+            "endereço mudou (veja a tabela de constantes por domínio no README)")
         out.append(("fonte_antiga", f"{f.get('nome')} ({bloco})",
-                    f"acesso em {_fmt(f['acesso'])}, há {(hoje - d).days} dias: rode `python scripts/atualizar.py "
-                    f"--baixar` para o domínio ou confira a fonte e o script que a registra"))
+                    f"acesso em {_fmt(f['acesso'])}, há {(hoje - d).days} dias: {o_que}"))
     return out
 
 
@@ -153,7 +179,7 @@ def itens(conc_aplicado, intel, verif, hoje=None):
     lista = pipe.get("itens") or []
     rotulo = {s["key"]: s["label"] for s in pipe.get("status") or []}
     brutos = (_pipeline_atrasado(lista, rotulo, hoje) + _leilao_sem_verificacao(conc_aplicado, lista, verif, hoje)
-              + _pipeline_nao_verificado(lista) + _fonte_antiga(intel.get("fontes") or {}, hoje)
+              + _estado_vencido(conc_aplicado, hoje) + _pipeline_nao_verificado(lista) + _fonte_antiga(intel.get("fontes") or {}, hoje)
               + _nome_sem_grupo(conc_aplicado, verif))
     ordem = {t: k for k, t in enumerate(TIPOS)}
     brutos.sort(key=lambda x: (ordem[x[0]], x[1]))
@@ -227,9 +253,10 @@ def _mudou(d):
     return f"sim ({sinal}{_n(abs(delta))} bytes)" if abs(delta) < 1000 else f"sim ({sinal}{_n(abs(delta) / 1e3, 1)} KB)"
 
 
-def relatorio(hoje, passos, diff, itens_curadoria, opcoes="", erros=()):
+def relatorio(hoje, passos, diff, itens_curadoria, opcoes="", erros=(), sem_novidade=()):
     """Markdown de data/atualizacao.md. `passos`: [{passo, estado, detalhe}]; `diff`: saída de diff_blocos;
-    `itens_curadoria`: saída de itens (None quando não pôde ser calculada); `erros`: da validação da verificação."""
+    `itens_curadoria`: saída de itens (None quando não pôde ser calculada); `erros`: da validação da verificação;
+    `sem_novidade`: domínios renovados (--renovar) cujos arquivos brutos vieram iguais."""
     linhas = [f"# Atualização dos dados — {hoje.strftime('%d/%m/%Y')}", "",
               f"Gerado por `python scripts/atualizar.py`{f' ({opcoes})' if opcoes else ''}. Diferenças em relação à "
               "versão de `data/intel/` no último commit do git.", "",
@@ -239,6 +266,12 @@ def relatorio(hoje, passos, diff, itens_curadoria, opcoes="", erros=()):
         linhas += ["", "## Erros da camada de verificação", "",
                    "O HTML não foi gerado. Corrija `data/roadshow/verificacao.json` ou `grupos_alias.json`:", ""]
         linhas += [f"- {_md(e)}" for e in erros]
+    if sem_novidade:
+        linhas += ["", "## Fontes renovadas sem dado novo", "",
+                   "Baixados de novo com `--renovar`, os arquivos destes domínios vieram com o mesmo conteúdo (SHA-256): "
+                   "a fonte não publicou dado novo ou o endereço mudou. Confira a página da fonte e as constantes do "
+                   "período no script do domínio (README, \"Como atualizar\").", ""]
+        linhas += [f"- {d}" for d in sem_novidade]
     linhas += ["", "## O que mudou por bloco", "",
                "Registros: itens das coleções principais de cada bloco (valores preenchidos); KB: JSON compacto, como "
                "entra no HTML.", "",

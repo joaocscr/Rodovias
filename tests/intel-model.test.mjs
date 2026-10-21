@@ -1061,7 +1061,7 @@ const tlPipe = { itens: [
 ] };
 
 test('linhaDoTempo: ordena pela data do leilão (mês sem dia no meio do mês); edital da entidade, senão do cronograma', () => {
-  const r = IntelModel.linhaDoTempo(tlConc, tlPipe);
+  const r = IntelModel.linhaDoTempo(tlConc, tlPipe, 2026);
   assert.deepEqual(r.map(x => x.id), ['p-e2', 'p-e1', 'p-e6', 'est-a', 'p-e3', 'p-e4']);
   const by = Object.fromEntries(r.map(x => [x.id, x]));
   assert.deepEqual([by['p-e1'].edital, by['p-e1'].leilao, by['p-e1'].status, by['p-e1'].nome], ['2026-09-02', '2026-12-11', 'leilao_agendado', 'P-E1']);
@@ -1071,7 +1071,7 @@ test('linhaDoTempo: ordena pela data do leilão (mês sem dia no meio do mês); 
 });
 
 test('linhaDoTempo: sem edital desenha só o leilão; ano sem mês não é data', () => {
-  const by = Object.fromEntries(IntelModel.linhaDoTempo(tlConc, tlPipe).map(x => [x.id, x]));
+  const by = Object.fromEntries(IntelModel.linhaDoTempo(tlConc, tlPipe, 2026).map(x => [x.id, x]));
   assert.equal(by['p-e4'].edital, null);
   assert.equal(by['p-e4'].leilao, '2027-09');
   assert.equal(by['est-a'].edital, null);
@@ -1080,9 +1080,9 @@ test('linhaDoTempo: sem edital desenha só o leilão; ano sem mês não é data'
 });
 
 test('linhaDoTempo: leilão anterior a 2026 fica fora; sem data nenhuma fica fora e é contado', () => {
-  const ids = IntelModel.linhaDoTempo(tlConc, tlPipe).map(x => x.id);
+  const ids = IntelModel.linhaDoTempo(tlConc, tlPipe, 2026).map(x => x.id);
   for (const fora of ['p-e5', 'est-b', 'est-c', 'fed-d']) assert.ok(!ids.includes(fora), fora);
-  const res = IntelModel.linhaDoTempoResumo(tlConc, tlPipe);
+  const res = IntelModel.linhaDoTempoResumo(tlConc, tlPipe, 2026);
   assert.equal(res.semData, 3); // est-b, est-c, fed-d; p-e5 (2022) não conta
   assert.deepEqual(res.rows.map(x => x.id), ids);
   assert.deepEqual([res.anos.de, res.anos.ate], [2026, 2027]); // anos dos leilões
@@ -1090,22 +1090,22 @@ test('linhaDoTempo: leilão anterior a 2026 fica fora; sem data nenhuma fica for
 });
 
 test('linhaDoTempo: o eixo abrange também um edital anterior ao primeiro leilão', () => {
-  const res = IntelModel.linhaDoTempoResumo({ entidades: [{ id: 'z', leilao: '2026-03-01', edital: '2025-07-17', cronograma: [] }] }, { itens: [tlItem('z', { ent: 'z' })] });
+  const res = IntelModel.linhaDoTempoResumo({ entidades: [{ id: 'z', leilao: '2026-03-01', edital: '2025-07-17', cronograma: [] }] }, { itens: [tlItem('z', { ent: 'z' })] }, 2026);
   assert.deepEqual([res.de, res.ate, res.anos.de, res.anos.ate], [2025, 2026, 2026, 2026]);
 });
 
 test('linhaDoTempo: pipeline como lista, sem conc nem itens e item com ent desconhecida não quebram', () => {
-  assert.equal(IntelModel.linhaDoTempo(tlConc, tlPipe.itens).length, 6);
+  assert.equal(IntelModel.linhaDoTempo(tlConc, tlPipe.itens, 2026).length, 6);
   assert.deepEqual(IntelModel.linhaDoTempo(null, null), []);
   assert.deepEqual(IntelModel.linhaDoTempo({}, {}), []);
-  const res = IntelModel.linhaDoTempoResumo(null, { itens: [tlItem('q', { ent: 'nenhum', data_prevista: '2026-08' })] });
+  const res = IntelModel.linhaDoTempoResumo(null, { itens: [tlItem('q', { ent: 'nenhum', data_prevista: '2026-08' })] }, 2026);
   assert.equal(res.rows.length, 1); assert.equal(res.rows[0].leilao, '2026-08');
-  const vazio = IntelModel.linhaDoTempoResumo(tlConc, { itens: [] });
+  const vazio = IntelModel.linhaDoTempoResumo(tlConc, { itens: [] }, 2026);
   assert.deepEqual([vazio.rows.length, vazio.semData, vazio.de, vazio.ate, vazio.anos], [0, 0, null, null, null]);
 });
 
 test('linhaDoTempo: datas inválidas (mês 13, texto) contam como sem data', () => {
-  const res = IntelModel.linhaDoTempoResumo({ entidades: [{ id: 'w', leilao: '2026-13', edital: 'breve', cronograma: [] }] }, { itens: [tlItem('w', { ent: 'w' })] });
+  const res = IntelModel.linhaDoTempoResumo({ entidades: [{ id: 'w', leilao: '2026-13', edital: 'breve', cronograma: [] }] }, { itens: [tlItem('w', { ent: 'w' })] }, 2026);
   assert.equal(res.rows.length, 0); assert.equal(res.semData, 1);
 });
 
@@ -1122,4 +1122,12 @@ test('rotasDocs: data da apresentação e anos dos relatórios a partir das font
     { nome: 'MPO — Relatório 2025', periodo: '2025' }, { nome: 'MPO — Relatório 2024', periodo: '2024' }, { nome: 'Natural Earth', periodo: 'x' }] };
   assert.deepEqual(IntelModel.rotasDocs(rotas), { apresentacao: '01/07/2026', relatorios: ['2024', '2025'] });
   assert.deepEqual(IntelModel.rotasDocs(null), { apresentacao: null, relatorios: [] });
+});
+
+test('linhaDoTempo: o início do recorte é o ano passado (padrão: o ano corrente)', () => {
+  const ids = desde => IntelModel.linhaDoTempo(tlConc, tlPipe, desde).map(x => x.id);
+  const em2026 = ids(2026), em2027 = ids(2027);
+  assert.ok(em2027.length < em2026.length && em2027.every(i => em2026.includes(i)));
+  const anoAtual = new Date().getFullYear();
+  assert.deepEqual(IntelModel.linhaDoTempo(tlConc, tlPipe).map(x => x.id), ids(anoAtual));
 });

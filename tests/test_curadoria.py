@@ -159,3 +159,43 @@ def test_relatorio_markdown():
     assert "Nada a revisar" in vazio
     com_erro = curadoria.relatorio(HOJE, passos, diff, None, opcoes="", erros=["x: sem fonte"])
     assert "x: sem fonte" in com_erro and "não foi calculada" in com_erro
+
+
+def test_estado_vencido_mesmo_com_verificacao():
+    conc, intel, verif = _em_dia()
+    conc["estados"] = [{"key": "agendado2026", "label": "Leilão agendado 2026"}, {"key": "projeto2027", "label": "Projeto 2027"}]
+    conc["entidades"] += [{"id": "ag", "nome": "Agendada", "estado": "agendado2026", "leilao": "2026-10-20"},
+                          {"id": "pj", "nome": "Projeto", "estado": "projeto2027", "leilao": "2026-09"},
+                          {"id": "pj2", "nome": "Projeto no mês", "estado": "projeto2027", "leilao": "2026-10"},  # mês corrente
+                          {"id": "fut", "nome": "Futura", "estado": "agendado2026", "leilao": "2026-12-11"},
+                          {"id": "ct", "nome": "Contrato", "estado": "programa", "leilao": "2024-01-01"}]
+    verif["leiloes"] += [{"chave": k, "ent": k} for k in ("ag", "pj", "pj2", "fut", "ct")]
+    itens = curadoria.itens(conc, intel, verif, hoje=HOJE)
+    assert _tipos(itens) == [("estado_vencido", "Agendada (ag)"), ("estado_vencido", "Projeto (pj)")]
+    m = itens[0]["motivo"]
+    assert "Leilão agendado 2026" in m and "20/10/2026" in m and "pipeline.csv" in m and "entidades.json" in m
+    assert "09/2026" in itens[1]["motivo"]
+
+
+def test_fonte_antiga_curada_aponta_o_lugar_da_data():
+    conc, intel, verif = _em_dia()
+    intel["fontes"]["fontes"].append({"bloco": "pipeline", "nome": "Carteira", "url": "https://c", "acesso": "2025-01-01"})
+    intel["fontes"]["base"].append({"nome": "RoadShow", "url": "https://r", "acesso": "2025-01-01"})
+    intel["fontes"]["fontes"].append({"bloco": "antt", "nome": "ANTT capas", "url": "https://a", "acesso": "2025-01-01"})
+    m = {i["item"]: i["motivo"] for i in curadoria.itens(conc, intel, verif, hoje=HOJE)}
+    assert "scripts/intel/pipeline.py" in m["Carteira (pipeline)"] and "pipeline.csv" in m["Carteira (pipeline)"]
+    assert "--renovar" not in m["Carteira (pipeline)"]
+    assert "scripts/intel/fontes_bloco.py" in m["RoadShow (base)"]
+    assert "--renovar antt" in m["ANTT capas (antt)"]
+    intel["fontes"]["fontes"] = [{"bloco": "municipios", "nome": "Malha", "url": "https://m", "acesso": "2025-01-01"},
+                                 {"bloco": "vmda2025", "nome": "VMDa", "url": "https://v", "acesso": "2025-01-01"}]
+    m = {i["item"]: i["motivo"] for i in curadoria.itens(conc, intel, verif, hoje=HOJE)}
+    assert "--renovar agro" in m["Malha (municipios)"]
+    assert "Google Drive" in m["VMDa (vmda2025)"] and "--renovar" not in m["VMDa (vmda2025)"]
+
+
+def test_relatorio_lista_fontes_renovadas_sem_dado_novo():
+    md = curadoria.relatorio(HOJE, [], [], [], sem_novidade=["antt", "agro"])
+    assert "## Fontes renovadas sem dado novo" in md
+    assert "- antt" in md and "fonte não publicou dado novo ou o endereço mudou" in md
+    assert "Fontes renovadas" not in curadoria.relatorio(HOJE, [], [], [])

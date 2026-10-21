@@ -2039,43 +2039,56 @@ test('1366 × 768: a legenda das rotas reavalia o recolhimento quando a janela m
 });
 
 test('fechamento: períodos e constantes impressas seguem os dados (dados alterados na página)', async () => {
+  // valores originais (página sem alteração) e os mesmos deslocados 10 anos: nenhum ano esperado fica digitado aqui
+  const o = await page.evaluate(() => {
+    const c = window.CONC, m = c.mercado, I = window.INTEL;
+    return { per: m.periodo_concorrencia.split('–').map(Number), anos: ConcModel.anosPrograma(c), pracas: I.antt.pracas.ano,
+      vmda: I.trafego.vmda.ano, pnl: I.carga.ano_base, ap: I.rotas.fonte.find(f => /Apresentação/.test(f.nome)).periodo };
+  });
+  const D = 10, mais = a => a + D, novo = {
+    per: o.per.map(mais).join('–'), anos: o.anos.map(mais), pracas: mais(o.pracas), vmda: mais(o.vmda), pnl: mais(o.pnl),
+    ap: o.ap.replace(/(\d{4})$/, a => String(mais(+a))) };
   const errs = [], ext = [];
   // muda, antes de a interface montar, os valores que davam rótulos: nenhum deles pode estar digitado no código
   const inject = html => {
     const i = html.indexOf('</script>', html.indexOf('window.INTEL='));
-    return `${html.slice(0, i)};(() => { const c = window.CONC, m = c.mercado;
-      m.desagio_medio_impresso = 11.11; m.fontes.desagio_medio_impresso = [99]; m.periodo_concorrencia = '2031–2034';
-      for (const k of ['programa_por_ano', 'gestao', 'leiloes_por_ano']) m[k].forEach(x => { x.ano += 10; });
-      c.entidades.forEach(e => { if (e.ano_programa) e.ano_programa += 10; });
-      window.INTEL.antt.pracas.ano = 2035; window.INTEL.trafego.vmda.ano = 2033; window.INTEL.carga.ano_base = 2027;
-      window.INTEL.rotas.fonte.find(f => /Apresentação/.test(f.nome)).periodo = '05/05/2035'; })();${html.slice(i)}`;
+    return `${html.slice(0, i)};(() => { const c = window.CONC, m = c.mercado, D = ${D}, I = window.INTEL;
+      m.desagio_medio_impresso += 1.11; m.fontes.desagio_medio_impresso = [999]; m.periodo_concorrencia = ${JSON.stringify(novo.per)};
+      for (const k of ['programa_por_ano', 'gestao', 'leiloes_por_ano']) m[k].forEach(x => { x.ano += D; });
+      c.entidades.forEach(e => { if (e.ano_programa) e.ano_programa += D; });
+      c.estudos.forEach(e => { e.pagina = 999; });
+      I.antt.pracas.ano += D; I.trafego.vmda.ano += D; I.carga.ano_base += D;
+      I.rotas.fonte.find(f => /Apresentação/.test(f.nome)).periodo = ${JSON.stringify(novo.ap)}; })();${html.slice(i)}`;
   };
   const p = await openPage(errs, ext, inject);
   const x = await p.evaluate(() => {
-    const m = window.CONC.mercado, per = s => `${Math.min(...s.map(r => r.ano))}–${Math.max(...s.map(r => r.ano))}`;
-    return { prog: per(m.programa_por_ano), gestao: per(m.gestao), leiloes: per(m.leiloes_por_ano), anos: ConcModel.anosPrograma(window.CONC) };
+    const c = window.CONC, m = c.mercado, per = s => `${Math.min(...s.map(r => r.ano))}–${Math.max(...s.map(r => r.ano))}`;
+    const nf2 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return { prog: per(m.programa_por_ano), gestao: per(m.gestao), leiloes: per(m.leiloes_por_ano), anos: ConcModel.anosPrograma(c),
+      media: nf2.format(m.desagio_medio_impresso), nEstudos: c.estudos.length };
   });
-  assert.deepEqual(x.anos, [2033, 2034, 2035, 2036, 2037]);
+  assert.deepEqual(x.anos, novo.anos);
   await goTab(p, '#mercado');
-  assert.equal(await p.textContent('#card-kpis h3'), 'Concorrência 2031–2034');
-  assert.ok((await p.textContent('#card-desagio .sub')).endsWith('(RoadShow, p. 99: 11,11%)'));
-  for (const id of ['faixas', 'porN']) assert.equal(await p.textContent(`#card-${id} .sub`), '2031–2034, como impresso no RoadShow');
+  assert.equal(await p.textContent('#card-kpis h3'), `Concorrência ${novo.per}`);
+  assert.ok((await p.textContent('#card-desagio .sub')).endsWith(`(RoadShow, p. 999: ${x.media}%)`));
+  for (const id of ['faixas', 'porN']) assert.equal(await p.textContent(`#card-${id} .sub`), `${novo.per}, como impresso no RoadShow`);
   assert.equal(await p.textContent('#card-programa h3'), `Programa ${x.prog} por ano`);
   assert.ok((await p.textContent('#card-leiloes .sub')).endsWith(`, ${x.leiloes}`));
   assert.equal(await p.textContent('#card-gestao .sub'), `Extensão em km, ${x.gestao}`);
   await goTab(p, '#projetos');
-  assert.deepEqual(await p.$$eval('#page-projetos .chip[data-f="ano"]', bs => bs.map(b => +b.dataset.v)), x.anos);
-  assert.ok((await p.textContent('#page-projetos .page__lead')).includes('programa 2033–2037'));
+  assert.deepEqual(await p.$$eval('#page-projetos .chip[data-f="ano"]', bs => bs.map(b => +b.dataset.v)), novo.anos);
+  assert.ok((await p.textContent('#page-projetos .page__lead')).includes(`programa ${novo.anos[0]}–${novo.anos[novo.anos.length - 1]}`));
+  assert.ok((await p.textContent('#estudos-lead')).startsWith(`${x.nEstudos} estudos contratados, só com BRs e UFs no RoadShow (p. 999).`));
   await goTab(p, '#trafego');
-  assert.ok((await p.textContent('#kpi-pracas span')).includes('em 2035'));
-  assert.equal(await p.textContent('#card-t-rank h3'), 'As 20 praças de maior VMD em 2035');
+  assert.ok((await p.textContent('#kpi-pracas span')).includes(`em ${novo.pracas}`));
+  assert.equal(await p.textContent('#card-t-rank h3'), `As 20 praças de maior VMD em ${novo.pracas}`);
   await goTab(p, '#fontes');
   const prosa = await p.textContent('.fontes-nota');
-  assert.ok(prosa.includes('Infra S.A. (2033)') && prosa.includes('ano-base 2027'), prosa);
+  assert.ok(prosa.includes(`Infra S.A. (${novo.vmda})`) && prosa.includes(`ano-base ${novo.pnl}`), prosa);
   await p.evaluate(() => { location.hash = '#mapa'; });
   await p.waitForFunction(() => Tabs.current().active === 'mapa');
-  assert.deepEqual(await p.$$eval('input[data-cfilter="ano"]', is => is.map(i => +i.value)), x.anos);
-  assert.match(await p.locator('#layers-section label:has(input[data-layer="rotas"])').getAttribute('title'), /apresentação de 05\/05\/2035/);
+  assert.deepEqual(await p.$$eval('input[data-cfilter="ano"]', is => is.map(i => +i.value)), novo.anos);
+  assert.ok((await p.locator('#layers-section label:has(input[data-layer="rotas"])').getAttribute('title')).includes(`apresentação de ${novo.ap}`));
   assert.deepEqual(errs, []);
   assert.deepEqual(ext, []);
 });
