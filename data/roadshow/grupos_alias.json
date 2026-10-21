@@ -134,6 +134,36 @@
       "nome": "Triunfo Participações e Investimentos S.A.",
       "grupo": "Triunfo",
       "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "Companhia de Participações em Concessões",
+      "grupo": "Motiva",
+      "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "Investimentos e Participações em Infraestrutura S/A – Invepar",
+      "grupo": "Invepar",
+      "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "Odebrecht Transport S.A.",
+      "grupo": "Odebrecht Transport",
+      "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "Ecorodovias Infraestrutura e Logística S.A.",
+      "grupo": "Ecorodovias",
+      "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "Consórcio ECO153",
+      "grupo": "Ecorodovias",
+      "motivo": "consórcio liderado por"
+    },
+    {
+      "nome": "Consórcio Via Brasil BR163",
+      "grupo": "Consórcio Via Brasil BR163",
+      "motivo": "mesmo nome"
     }
   ]
 }
