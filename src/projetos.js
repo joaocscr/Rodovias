@@ -132,7 +132,7 @@ const Projetos = (() => {
         <span class="page__src" id="pipe-n"></span>
       </div>
       <div class="chips" id="pipe-counts" aria-label="Status (clique para filtrar)"></div>
-      <div class="table-wrap"><table class="grid" id="pipe-table"></table></div>
+      <div class="table-wrap"><table class="grid" id="pipe-table" data-csv-name="pipeline"></table></div>
       ${fontes.length ? `<p class="page__src">Fonte: ${esc(fontes.join('; '))}${acesso ? ` · acesso ${esc(ConcModel.fmtData(acesso))}` : ''}.</p>` : ''}
     </section>`;
   }
@@ -175,7 +175,7 @@ const Projetos = (() => {
       <h1 class="page__title">Projetos e contratos</h1>
       <p class="page__lead">Contratos vigentes e projetos do programa 2023–2027${hasEst ? ', e concessões rodoviárias estaduais' : ''}. Capex e opex na base comparável (tabelas em dez/2024 quando existirem; senão, a data-base da ficha, indicada na coluna). Clique numa linha para abrir a ficha.</p>
       ${toolbar()}
-      <div class="table-wrap"><table class="grid" id="proj-table"></table></div>
+      <div class="table-wrap"><table class="grid" id="proj-table" data-csv-name="projetos-comparador"></table></div>
       ${pipelineSection()}
       ${estudos()}</div>`;
     renderTable();

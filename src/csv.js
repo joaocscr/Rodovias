@@ -29,7 +29,8 @@ const Csv = (() => {
   // Texto da célula sem o conteúdo só para leitores de tela; links http(s)/mailto acrescentam " (<href>)".
   function cellText(el) {
     const clone = el.cloneNode(true);
-    clone.querySelectorAll('.visually-hidden').forEach(n => n.remove());
+    // Fora da tela (leitor de tela, <details> recolhido com observação) não vai para o arquivo.
+    clone.querySelectorAll('.visually-hidden, details, summary').forEach(n => n.remove());
     let txt = norm(clone.textContent);
     const hrefs = [...el.querySelectorAll('a[href]')].map(a => a.href).filter(h => /^(https?:|mailto:)/i.test(h));
     for (const h of [...new Set(hrefs)]) txt += ` (${h})`;
@@ -87,7 +88,7 @@ const Csv = (() => {
       if (prev && prev.classList.contains('csv-btn')) { prev._csvTable = table; return; }
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = 'csv-btn';
+      btn.className = 'btn csv-btn';
       btn.textContent = 'Exportar CSV';
       btn._csvTable = table;
       btn.addEventListener('click', () => download(btn._csvTable));

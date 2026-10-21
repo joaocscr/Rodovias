@@ -18,7 +18,7 @@ const Mercado = (() => {
 
   function participantesTable(anoSel) {
     const rows = m.participantes.filter(p => !anoSel || String(p.ano) === anoSel);
-    return `<div class="table-wrap" style="max-height:480px"><table class="grid"><thead><tr><th>Ano</th><th>Lote</th><th>Vencedor</th><th class="num">Deságio vencedor</th><th>Demais proponentes (deságio)</th></tr></thead><tbody>${
+    return `<div class="table-wrap" style="max-height:480px"><table class="grid" data-csv-name="participantes-leiloes"><thead><tr><th>Ano</th><th>Lote</th><th>Vencedor</th><th class="num">Deságio vencedor</th><th>Demais proponentes (deságio)</th></tr></thead><tbody>${
       rows.map(p => `<tr><td>${p.ano}</td><td>${esc(p.lote)}</td><td>${esc(p.vencedor)}</td><td class="num">${p.desagio_vencedor == null ? '—' : nf2.format(p.desagio_vencedor) + '%'}</td>
         <td style="white-space:normal">${(p.outros || []).map(o => `${esc(o.grupo)}${o.desagio == null ? '' : ` (${nf2.format(o.desagio)}%)`}`).join('; ') || '—'}</td></tr>`).join('')}</tbody></table></div>`;
   }
@@ -72,7 +72,7 @@ const Mercado = (() => {
       { name: 'Gestão direta', points: m.gestao.map(g => ({ x: g.ano, y: g.direta_km })) },
     ], { unit: 'km', format: v => nf0.format(v) });
     Charts.stacked(box('invest'), m.investimentos.map(x => ({ label: String(x.ano) + (x.previsto ? '*' : ''), parts: [x.publico, x.privado] })), { names: ['Público', 'Privado'], unit: 'R$ bi', format: v => nf1.format(v) });
-    box('diag').innerHTML = `<table class="grid"><thead><tr><th>Ano</th><th class="num">Contratos</th><th class="num">km concedidos</th><th class="num">Valor (R$ bi)</th><th class="num">Invest. executado acum. (R$ bi)</th></tr></thead><tbody>${
+    box('diag').innerHTML = `<table class="grid" data-csv-name="mercado-diagnostico"><thead><tr><th>Ano</th><th class="num">Contratos</th><th class="num">km concedidos</th><th class="num">Valor (R$ bi)</th><th class="num">Invest. executado acum. (R$ bi)</th></tr></thead><tbody>${
       m.diagnostico.map(d => `<tr><td>${d.ano}</td><td class="num">${d.contratos ?? '—'}</td><td class="num">${d.km == null ? '—' : nf0.format(d.km)}</td><td class="num">${d.valor == null ? '—' : nf1.format(d.valor)}</td><td class="num">${d.invest_executado_acum == null ? '—' : nf1.format(d.invest_executado_acum)}</td></tr>`).join('')}</tbody></table>`;
     document.getElementById('part-ano').addEventListener('change', ev => { box('part').innerHTML = participantesTable(ev.target.value); });
   }

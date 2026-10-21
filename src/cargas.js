@@ -114,7 +114,7 @@ const Cargas = (() => {
         '(ou origem e destino são o mesmo município); nessas rotas o R$/t·km não é calculado e elas ficam no fim da tabela.',
       legend: `<div class="toolbar"><label class="sub" for="frete-uf">UF de origem</label><select id="frete-uf"><option value="">Todas</option>${ufs.map(u => `<option>${esc(u)}</option>`).join('')}</select>
         <span class="page__src" id="frete-n"></span></div>`,
-      html: '<div class="table-wrap" style="max-height:480px"><table class="grid" id="frete-table"></table></div>' });
+      html: '<div class="table-wrap" style="max-height:480px"><table class="grid" id="frete-table" data-csv-name="fretes"></table></div>' });
   }
 
   function cargaCard() {
@@ -133,7 +133,7 @@ const Cargas = (() => {
       { width: width(bars), labelWidth: 280, names: [nome], colors: [Charts.C.deep], format: v => IM.fmtT(v), title: `Exportação de ${nome} por URF` });
     bars.dataset.sh4 = sh4;
     const m = IM.exportMatriz(intel, sh4, 10, 8);
-    mat.innerHTML = `<table class="grid grid--static"><thead><tr><th>UF</th>${m.urfs.map(u => `<th class="num">${esc(u)}</th>`).join('')}</tr></thead><tbody>${
+    mat.innerHTML = `<table class="grid grid--static" data-csv-name="cargas-matriz-uf-urf"><thead><tr><th>UF</th>${m.urfs.map(u => `<th class="num">${esc(u)}</th>`).join('')}</tr></thead><tbody>${
       m.ufs.map((uf, a) => `<tr><td>${esc(uf)}</td>${m.m[a].map(v => `<td class="num">${IM.fmtMt(v)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
   }
 
@@ -155,7 +155,7 @@ const Cargas = (() => {
     const el = box('c-pnl');
     if (!el) return;
     const list = IM.cargaTop(intel, snv, 15), max = list.length ? list[0].gsa : 1;
-    el.innerHTML = `<div class="table-wrap table-wrap--static"><table class="grid grid--static grid--rows" id="pnl-table"><thead><tr><th>BR/UF</th><th>Trecho (início → fim)</th><th class="num">Carga agrícola por ano</th><th><span class="visually-hidden">Proporção</span></th></tr></thead><tbody>${
+    el.innerHTML = `<div class="table-wrap table-wrap--static"><table class="grid grid--static grid--rows" id="pnl-table" data-csv-name="cargas-pnl"><thead><tr><th>BR/UF</th><th>Trecho (início → fim)</th><th class="num">Carga agrícola por ano</th><th><span class="visually-hidden">Proporção</span></th></tr></thead><tbody>${
       list.map(r => `<tr tabindex="0" data-k="${r.j}" title="Ver no mapa"><td class="name">${esc(r.br)}/${esc(r.uf)}</td><td class="wrap">${esc(r.ini)} → ${esc(r.fim)}</td>
         <td class="num">${IM.fmtT(r.gsa)}</td><td class="bar-cell"><span style="width:${(r.gsa / max * 100).toFixed(1)}%"></span></td></tr>`).join('')}</tbody></table></div>`;
     onRows(el, openFis);

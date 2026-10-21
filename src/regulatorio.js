@@ -8,14 +8,14 @@ const Regulatorio = (() => {
     if (b.tipo === 'p') return `<p>${esc(b.texto)}</p>`;
     if (b.tipo === 'lista') return `<ul>${b.itens.map(i => `<li>${esc(i)}</li>`).join('')}</ul>`;
     if (b.tipo === 'tabela') {
-      return `<div class="table-wrap" style="max-height:none"><table class="grid"><thead><tr>${b.cabecalho.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead>` +
+      return `<div class="table-wrap" style="max-height:none"><table class="grid" data-csv-name="regulatorio-${esc(b.cabecalho[0])}"><thead><tr>${b.cabecalho.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead>` +
         `<tbody>${b.linhas.map(l => `<tr>${l.map(c => `<td style="white-space:normal">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
     }
     return '';
   }
 
   function otimizacoesTable(list) {
-    return `<div class="table-wrap" style="max-height:none"><table class="grid" id="otimizacoes"><thead><tr><th>Contrato</th><th>BR/UF</th><th class="num">km</th><th class="num">Capex + opex (R$ bi)</th><th class="num">Prorrogação (anos)</th><th>Relicitação</th><th>Status</th></tr></thead><tbody>${
+    return `<div class="table-wrap" style="max-height:none"><table class="grid" id="otimizacoes" data-csv-name="regulatorio-otimizacoes"><thead><tr><th>Contrato</th><th>BR/UF</th><th class="num">km</th><th class="num">Capex + opex (R$ bi)</th><th class="num">Prorrogação (anos)</th><th>Relicitação</th><th>Status</th></tr></thead><tbody>${
       list.map(o => `<tr><td>${esc(o.nome)}</td><td>${esc('BR-' + o.brs.join('/') + '/' + o.ufs.join('/'))}</td><td class="num">${o.km == null ? '—' : nf1.format(o.km)}</td>
         <td class="num">${o.capex_opex == null ? '—' : nf1.format(o.capex_opex)}</td><td class="num">${o.prorrogacao_anos ?? '—'}</td>
         <td>${o.relicitacao == null ? '—' : o.relicitacao ? 'Sim' : 'Não'}</td><td>${esc(o.status || '—')}</td></tr>`).join('')}</tbody></table></div>`;

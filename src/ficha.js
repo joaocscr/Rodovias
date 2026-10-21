@@ -98,7 +98,7 @@ const Ficha = (() => {
     const extras = has(f.extras) ? dl(f.extras.map(x => `<dt>${esc(x.rotulo)}</dt><dd>${esc(x.valor)}</dd>`).join('')) : '';
     const capexChart = has(f.capex_anual) ? `<div class="chart-box" id="ficha-capex"></div><p class="page__src">R$ mi por ano de concessão, ciclo de obras${f.data_base ? ` · data-base ${esc(f.data_base)}` : ''}.</p>` : '';
     const crono = has(e.cronograma) ? `<ul class="timeline">${e.cronograma.map(c => `<li><b>${esc(c.marco)}</b>${esc(F.data(c.data))}</li>`).join('')}</ul>` : '';
-    const part = has(e.participantes_lista) ? `<table class="grid"><thead><tr><th>Proponente</th><th class="num">Deságio</th></tr></thead><tbody>${
+    const part = has(e.participantes_lista) ? `<table class="grid" data-csv-name="ficha-participantes"><thead><tr><th>Proponente</th><th class="num">Deságio</th></tr></thead><tbody>${
       e.participantes_lista.map(p => `<tr><td>${esc(p.grupo)}${p.vencedor ? ' <b>(vencedor)</b>' : ''}</td><td class="num">${esc(F.pct(p.desagio))}</td></tr>`).join('')}</tbody></table>` : '';
     const rel = (e.relaciona || []).map(id => conc.entidades.find(x => x.id === id)).filter(Boolean);
     const relHtml = rel.length ? `<ul class="timeline">${rel.map(r => `<li><a href="#ficha/${esc(r.id)}">${esc(r.nome)}</a> · ${esc(estadoLabel(r.estado))}</li>`).join('')}</ul>` : '';
@@ -194,7 +194,7 @@ const Ficha = (() => {
   function pracasBlock(id) {
     const { linhas, receita } = IM.pracasDe(intel, id);
     if (!linhas.length) return '';
-    return block('Praças da concessão', `<div class="table-wrap table-wrap--static"><table class="grid grid--static" id="ficha-pracas">
+    return block('Praças da concessão', `<div class="table-wrap table-wrap--static"><table class="grid grid--static" id="ficha-pracas" data-csv-name="ficha-pracas">
       <thead><tr><th>Praça</th><th class="num">VMD 2025 (veíc./dia)</th><th class="num">% pesados</th><th class="num">Receita 2025</th></tr></thead>
       <tbody>${linhas.map(p => `<tr><td>${esc(p.nome || '—')}</td><td class="num">${esc(IM.fmtInt(p.vmd))}</td><td class="num">${esc(IM.fmtPct(p.pctPes))}</td>
         <td class="num">${esc(IM.fmtBRL(p.receita))}</td></tr>`).join('')}</tbody>
@@ -229,7 +229,7 @@ const Ficha = (() => {
     const counts = dl(rows({}, [['Concluídas', o.concluidas, 'int'], ['Em andamento', o.andamento, 'int'], ['Não iniciadas', o.naoIniciadas, 'int'],
       ['Sem dado de execução', o.semDado || null, 'int']]));
     const top = o.top.length ? `<p class="fserie__name">${o.top.length === 1 ? 'Obra não concluída com maior avanço previsto' : `Obras não concluídas com maior avanço previsto (${fmtInt.format(o.top.length)})`}</p>
-      <div class="table-wrap table-wrap--static"><table class="grid grid--static"><thead><tr><th>Obra</th><th>Rodovia/km</th><th class="num">Executado</th></tr></thead>
+      <div class="table-wrap table-wrap--static"><table class="grid grid--static" data-csv-name="ficha-obras"><thead><tr><th>Obra</th><th>Rodovia/km</th><th class="num">Executado</th></tr></thead>
       <tbody>${o.top.map(r => `<tr><td class="wrap">${esc(r.descricao || r.tipo || 'Obra')}</td><td>${esc(kmTxt(r))}</td><td class="num">${esc(IM.fmtPct(r.executado))}</td></tr>`).join('')}</tbody></table></div>` : '';
     return block('Obras acompanhadas pela ANTT', `<div id="ficha-obras">${counts}${top}
       <p class="page__src">${fmtInt.format(o.total)} obras · previsto × executado no ano · ANTT, acompanhamento anual de investimentos. Concluída = executado ≥ 100%.</p></div>`, true);

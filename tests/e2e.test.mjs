@@ -407,7 +407,7 @@ test('v4: CSV do comparador respeita filtro', async () => {
     page.waitForEvent('download'),
     page.locator('.csv-btn:has(+ .table-wrap #proj-table)').click(),
   ]);
-  assert.match(download.suggestedFilename(), /^proj-table-\d{4}-\d{2}-\d{2}\.csv$/);
+  assert.match(download.suggestedFilename(), /^projetos-comparador-\d{4}-\d{2}-\d{2}\.csv$/);
   const txt = (await import('node:fs')).readFileSync(await download.path(), 'utf8');
   assert.equal(txt.charCodeAt(0), 0xFEFF);
   const linhas = txt.split('\r\n');
@@ -416,6 +416,26 @@ test('v4: CSV do comparador respeita filtro', async () => {
   assert.ok(!linhas[0].includes('Mapa'), 'coluna de botões fica de fora');
   assert.ok(linhas.slice(1).every(l => l.split('";"').length === linhas[0].split('";"').length));
   await page.selectOption('#proj-uf', '');
+});
+
+test('v4: CSV do pipeline exporta só o nome, sem a observação recolhida', async () => {
+  await go('#projetos');
+  const nomes = await page.$$eval('#pipe-table tbody tr', trs => trs.map(tr => {
+    const td = tr.querySelector('td.name');
+    const d = td.querySelector('details');
+    return { nome: [...td.childNodes].filter(n => n !== d).map(n => n.textContent).join('').replace(/\s+/g, ' ').trim(), obs: !!d };
+  }));
+  assert.ok(nomes.some(n => n.obs), 'há linha com observação');
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('.csv-btn:has(+ .table-wrap #pipe-table)').click(),
+  ]);
+  assert.match(download.suggestedFilename(), /^pipeline-\d{4}-\d{2}-\d{2}\.csv$/);
+  const txt = (await import('node:fs')).readFileSync(await download.path(), 'utf8');
+  const linhas = txt.split('\r\n').slice(1);
+  assert.equal(linhas.length, nomes.length);
+  linhas.forEach((l, i) => assert.equal(l.split('";"')[0], '"' + nomes[i].nome.replace(/"/g, '""'), `linha ${i + 1}`));
+  assert.ok(!txt.includes('Observação'), 'sem texto de observação');
 });
 
 test('nenhuma requisição externa', () => assert.deepEqual(external, []));

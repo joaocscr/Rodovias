@@ -11,7 +11,7 @@ const Fontes = (() => {
   const link = (url, nome) => (url ? `<a class="link-btn" href="${esc(url)}" target="_blank" rel="noopener">${esc(nome || url)}</a>` : txt(nome));
 
   function tabela(id, rows, cols) {
-    return `<div class="table-wrap table-wrap--static"><table class="grid grid--static fontes-table" id="${id}">
+    return `<div class="table-wrap table-wrap--static"><table class="grid grid--static fontes-table" id="${id}" data-csv-name="${id.replace(/-table$/, '')}">
       <thead><tr>${cols.map(c => `<th>${esc(c[0])}</th>`).join('')}</tr></thead>
       <tbody>${rows.map(r => `<tr>${cols.map(c => `<td${c[2] ? ` class="${c[2]}"` : ''}>${c[1](r)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
   }

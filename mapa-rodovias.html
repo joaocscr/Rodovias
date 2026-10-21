@@ -813,15 +813,8 @@ button, input { font: inherit; color: inherit; }
 .btn:hover:not(:disabled) { background: var(--tint); border-color: var(--color-bright-blue); }
 .btn:active:not(:disabled) { background: var(--tint-strong); }
 .btn:disabled { opacity: 0.5; cursor: default; }
-.csv-btn {
-  display: block; height: 32px; margin: 0 0 8px; padding: 0 16px; border-radius: var(--radius-md); cursor: pointer;
-  border: 1px solid var(--line-strong); background: var(--color-snow-white);
-  font-size: 14px; font-weight: 600; color: var(--color-deep-blue);
-  transition: background var(--transition), border-color var(--transition);
-}
-.csv-btn:hover { background: var(--tint); border-color: var(--color-bright-blue); }
-.csv-btn:active { background: var(--tint-strong); }
-.csv-btn:focus-visible { outline: 2px solid var(--color-bright-blue); outline-offset: 2px; }
+/* Aparência vem de .btn; aqui só o encaixe acima da tabela. */
+.csv-btn { display: block; margin: 0 0 8px; }
 .fgroup { border-bottom: 1px solid var(--line); }
 .fgroup:last-child { border-bottom: 0; }
 .fgroup > summary {
@@ -4025,7 +4018,7 @@ const Ficha = (() => {
     const extras = has(f.extras) ? dl(f.extras.map(x => `<dt>${esc(x.rotulo)}<\/dt><dd>${esc(x.valor)}<\/dd>`).join('')) : '';
     const capexChart = has(f.capex_anual) ? `<div class="chart-box" id="ficha-capex"><\/div><p class="page__src">R$ mi por ano de concessão, ciclo de obras${f.data_base ? ` · data-base ${esc(f.data_base)}` : ''}.<\/p>` : '';
     const crono = has(e.cronograma) ? `<ul class="timeline">${e.cronograma.map(c => `<li><b>${esc(c.marco)}<\/b>${esc(F.data(c.data))}<\/li>`).join('')}<\/ul>` : '';
-    const part = has(e.participantes_lista) ? `<table class="grid"><thead><tr><th>Proponente<\/th><th class="num">Deságio<\/th><\/tr><\/thead><tbody>${
+    const part = has(e.participantes_lista) ? `<table class="grid" data-csv-name="ficha-participantes"><thead><tr><th>Proponente<\/th><th class="num">Deságio<\/th><\/tr><\/thead><tbody>${
       e.participantes_lista.map(p => `<tr><td>${esc(p.grupo)}${p.vencedor ? ' <b>(vencedor)<\/b>' : ''}<\/td><td class="num">${esc(F.pct(p.desagio))}<\/td><\/tr>`).join('')}<\/tbody><\/table>` : '';
     const rel = (e.relaciona || []).map(id => conc.entidades.find(x => x.id === id)).filter(Boolean);
     const relHtml = rel.length ? `<ul class="timeline">${rel.map(r => `<li><a href="#ficha/${esc(r.id)}">${esc(r.nome)}<\/a> · ${esc(estadoLabel(r.estado))}<\/li>`).join('')}<\/ul>` : '';
@@ -4121,7 +4114,7 @@ const Ficha = (() => {
   function pracasBlock(id) {
     const { linhas, receita } = IM.pracasDe(intel, id);
     if (!linhas.length) return '';
-    return block('Praças da concessão', `<div class="table-wrap table-wrap--static"><table class="grid grid--static" id="ficha-pracas">
+    return block('Praças da concessão', `<div class="table-wrap table-wrap--static"><table class="grid grid--static" id="ficha-pracas" data-csv-name="ficha-pracas">
       <thead><tr><th>Praça<\/th><th class="num">VMD 2025 (veíc./dia)<\/th><th class="num">% pesados<\/th><th class="num">Receita 2025<\/th><\/tr><\/thead>
       <tbody>${linhas.map(p => `<tr><td>${esc(p.nome || '—')}<\/td><td class="num">${esc(IM.fmtInt(p.vmd))}<\/td><td class="num">${esc(IM.fmtPct(p.pctPes))}<\/td>
         <td class="num">${esc(IM.fmtBRL(p.receita))}<\/td><\/tr>`).join('')}<\/tbody>
@@ -4156,7 +4149,7 @@ const Ficha = (() => {
     const counts = dl(rows({}, [['Concluídas', o.concluidas, 'int'], ['Em andamento', o.andamento, 'int'], ['Não iniciadas', o.naoIniciadas, 'int'],
       ['Sem dado de execução', o.semDado || null, 'int']]));
     const top = o.top.length ? `<p class="fserie__name">${o.top.length === 1 ? 'Obra não concluída com maior avanço previsto' : `Obras não concluídas com maior avanço previsto (${fmtInt.format(o.top.length)})`}<\/p>
-      <div class="table-wrap table-wrap--static"><table class="grid grid--static"><thead><tr><th>Obra<\/th><th>Rodovia/km<\/th><th class="num">Executado<\/th><\/tr><\/thead>
+      <div class="table-wrap table-wrap--static"><table class="grid grid--static" data-csv-name="ficha-obras"><thead><tr><th>Obra<\/th><th>Rodovia/km<\/th><th class="num">Executado<\/th><\/tr><\/thead>
       <tbody>${o.top.map(r => `<tr><td class="wrap">${esc(r.descricao || r.tipo || 'Obra')}<\/td><td>${esc(kmTxt(r))}<\/td><td class="num">${esc(IM.fmtPct(r.executado))}<\/td><\/tr>`).join('')}<\/tbody><\/table><\/div>` : '';
     return block('Obras acompanhadas pela ANTT', `<div id="ficha-obras">${counts}${top}
       <p class="page__src">${fmtInt.format(o.total)} obras · previsto × executado no ano · ANTT, acompanhamento anual de investimentos. Concluída = executado ≥ 100%.<\/p><\/div>`, true);
@@ -4443,7 +4436,7 @@ const Projetos = (() => {
         <span class="page__src" id="pipe-n"><\/span>
       <\/div>
       <div class="chips" id="pipe-counts" aria-label="Status (clique para filtrar)"><\/div>
-      <div class="table-wrap"><table class="grid" id="pipe-table"><\/table><\/div>
+      <div class="table-wrap"><table class="grid" id="pipe-table" data-csv-name="pipeline"><\/table><\/div>
       ${fontes.length ? `<p class="page__src">Fonte: ${esc(fontes.join('; '))}${acesso ? ` · acesso ${esc(ConcModel.fmtData(acesso))}` : ''}.<\/p>` : ''}
     <\/section>`;
   }
@@ -4486,7 +4479,7 @@ const Projetos = (() => {
       <h1 class="page__title">Projetos e contratos<\/h1>
       <p class="page__lead">Contratos vigentes e projetos do programa 2023–2027${hasEst ? ', e concessões rodoviárias estaduais' : ''}. Capex e opex na base comparável (tabelas em dez/2024 quando existirem; senão, a data-base da ficha, indicada na coluna). Clique numa linha para abrir a ficha.<\/p>
       ${toolbar()}
-      <div class="table-wrap"><table class="grid" id="proj-table"><\/table><\/div>
+      <div class="table-wrap"><table class="grid" id="proj-table" data-csv-name="projetos-comparador"><\/table><\/div>
       ${pipelineSection()}
       ${estudos()}<\/div>`;
     renderTable();
@@ -4869,7 +4862,7 @@ const Cargas = (() => {
         '(ou origem e destino são o mesmo município); nessas rotas o R$/t·km não é calculado e elas ficam no fim da tabela.',
       legend: `<div class="toolbar"><label class="sub" for="frete-uf">UF de origem<\/label><select id="frete-uf"><option value="">Todas<\/option>${ufs.map(u => `<option>${esc(u)}<\/option>`).join('')}<\/select>
         <span class="page__src" id="frete-n"><\/span><\/div>`,
-      html: '<div class="table-wrap" style="max-height:480px"><table class="grid" id="frete-table"><\/table><\/div>' });
+      html: '<div class="table-wrap" style="max-height:480px"><table class="grid" id="frete-table" data-csv-name="fretes"><\/table><\/div>' });
   }
 
   function cargaCard() {
@@ -4888,7 +4881,7 @@ const Cargas = (() => {
       { width: width(bars), labelWidth: 280, names: [nome], colors: [Charts.C.deep], format: v => IM.fmtT(v), title: `Exportação de ${nome} por URF` });
     bars.dataset.sh4 = sh4;
     const m = IM.exportMatriz(intel, sh4, 10, 8);
-    mat.innerHTML = `<table class="grid grid--static"><thead><tr><th>UF<\/th>${m.urfs.map(u => `<th class="num">${esc(u)}<\/th>`).join('')}<\/tr><\/thead><tbody>${
+    mat.innerHTML = `<table class="grid grid--static" data-csv-name="cargas-matriz-uf-urf"><thead><tr><th>UF<\/th>${m.urfs.map(u => `<th class="num">${esc(u)}<\/th>`).join('')}<\/tr><\/thead><tbody>${
       m.ufs.map((uf, a) => `<tr><td>${esc(uf)}<\/td>${m.m[a].map(v => `<td class="num">${IM.fmtMt(v)}<\/td>`).join('')}<\/tr>`).join('')}<\/tbody><\/table>`;
   }
 
@@ -4910,7 +4903,7 @@ const Cargas = (() => {
     const el = box('c-pnl');
     if (!el) return;
     const list = IM.cargaTop(intel, snv, 15), max = list.length ? list[0].gsa : 1;
-    el.innerHTML = `<div class="table-wrap table-wrap--static"><table class="grid grid--static grid--rows" id="pnl-table"><thead><tr><th>BR/UF<\/th><th>Trecho (início → fim)<\/th><th class="num">Carga agrícola por ano<\/th><th><span class="visually-hidden">Proporção<\/span><\/th><\/tr><\/thead><tbody>${
+    el.innerHTML = `<div class="table-wrap table-wrap--static"><table class="grid grid--static grid--rows" id="pnl-table" data-csv-name="cargas-pnl"><thead><tr><th>BR/UF<\/th><th>Trecho (início → fim)<\/th><th class="num">Carga agrícola por ano<\/th><th><span class="visually-hidden">Proporção<\/span><\/th><\/tr><\/thead><tbody>${
       list.map(r => `<tr tabindex="0" data-k="${r.j}" title="Ver no mapa"><td class="name">${esc(r.br)}/${esc(r.uf)}<\/td><td class="wrap">${esc(r.ini)} → ${esc(r.fim)}<\/td>
         <td class="num">${IM.fmtT(r.gsa)}<\/td><td class="bar-cell"><span style="width:${(r.gsa / max * 100).toFixed(1)}%"><\/span><\/td><\/tr>`).join('')}<\/tbody><\/table><\/div>`;
     onRows(el, openFis);
@@ -4997,7 +4990,7 @@ const Mercado = (() => {
 
   function participantesTable(anoSel) {
     const rows = m.participantes.filter(p => !anoSel || String(p.ano) === anoSel);
-    return `<div class="table-wrap" style="max-height:480px"><table class="grid"><thead><tr><th>Ano<\/th><th>Lote<\/th><th>Vencedor<\/th><th class="num">Deságio vencedor<\/th><th>Demais proponentes (deságio)<\/th><\/tr><\/thead><tbody>${
+    return `<div class="table-wrap" style="max-height:480px"><table class="grid" data-csv-name="participantes-leiloes"><thead><tr><th>Ano<\/th><th>Lote<\/th><th>Vencedor<\/th><th class="num">Deságio vencedor<\/th><th>Demais proponentes (deságio)<\/th><\/tr><\/thead><tbody>${
       rows.map(p => `<tr><td>${p.ano}<\/td><td>${esc(p.lote)}<\/td><td>${esc(p.vencedor)}<\/td><td class="num">${p.desagio_vencedor == null ? '—' : nf2.format(p.desagio_vencedor) + '%'}<\/td>
         <td style="white-space:normal">${(p.outros || []).map(o => `${esc(o.grupo)}${o.desagio == null ? '' : ` (${nf2.format(o.desagio)}%)`}`).join('; ') || '—'}<\/td><\/tr>`).join('')}<\/tbody><\/table><\/div>`;
   }
@@ -5051,7 +5044,7 @@ const Mercado = (() => {
       { name: 'Gestão direta', points: m.gestao.map(g => ({ x: g.ano, y: g.direta_km })) },
     ], { unit: 'km', format: v => nf0.format(v) });
     Charts.stacked(box('invest'), m.investimentos.map(x => ({ label: String(x.ano) + (x.previsto ? '*' : ''), parts: [x.publico, x.privado] })), { names: ['Público', 'Privado'], unit: 'R$ bi', format: v => nf1.format(v) });
-    box('diag').innerHTML = `<table class="grid"><thead><tr><th>Ano<\/th><th class="num">Contratos<\/th><th class="num">km concedidos<\/th><th class="num">Valor (R$ bi)<\/th><th class="num">Invest. executado acum. (R$ bi)<\/th><\/tr><\/thead><tbody>${
+    box('diag').innerHTML = `<table class="grid" data-csv-name="mercado-diagnostico"><thead><tr><th>Ano<\/th><th class="num">Contratos<\/th><th class="num">km concedidos<\/th><th class="num">Valor (R$ bi)<\/th><th class="num">Invest. executado acum. (R$ bi)<\/th><\/tr><\/thead><tbody>${
       m.diagnostico.map(d => `<tr><td>${d.ano}<\/td><td class="num">${d.contratos ?? '—'}<\/td><td class="num">${d.km == null ? '—' : nf0.format(d.km)}<\/td><td class="num">${d.valor == null ? '—' : nf1.format(d.valor)}<\/td><td class="num">${d.invest_executado_acum == null ? '—' : nf1.format(d.invest_executado_acum)}<\/td><\/tr>`).join('')}<\/tbody><\/table>`;
     document.getElementById('part-ano').addEventListener('change', ev => { box('part').innerHTML = participantesTable(ev.target.value); });
   }
@@ -5077,14 +5070,14 @@ const Regulatorio = (() => {
     if (b.tipo === 'p') return `<p>${esc(b.texto)}<\/p>`;
     if (b.tipo === 'lista') return `<ul>${b.itens.map(i => `<li>${esc(i)}<\/li>`).join('')}<\/ul>`;
     if (b.tipo === 'tabela') {
-      return `<div class="table-wrap" style="max-height:none"><table class="grid"><thead><tr>${b.cabecalho.map(h => `<th>${esc(h)}<\/th>`).join('')}<\/tr><\/thead>` +
+      return `<div class="table-wrap" style="max-height:none"><table class="grid" data-csv-name="regulatorio-${esc(b.cabecalho[0])}"><thead><tr>${b.cabecalho.map(h => `<th>${esc(h)}<\/th>`).join('')}<\/tr><\/thead>` +
         `<tbody>${b.linhas.map(l => `<tr>${l.map(c => `<td style="white-space:normal">${esc(c)}<\/td>`).join('')}<\/tr>`).join('')}<\/tbody><\/table><\/div>`;
     }
     return '';
   }
 
   function otimizacoesTable(list) {
-    return `<div class="table-wrap" style="max-height:none"><table class="grid" id="otimizacoes"><thead><tr><th>Contrato<\/th><th>BR/UF<\/th><th class="num">km<\/th><th class="num">Capex + opex (R$ bi)<\/th><th class="num">Prorrogação (anos)<\/th><th>Relicitação<\/th><th>Status<\/th><\/tr><\/thead><tbody>${
+    return `<div class="table-wrap" style="max-height:none"><table class="grid" id="otimizacoes" data-csv-name="regulatorio-otimizacoes"><thead><tr><th>Contrato<\/th><th>BR/UF<\/th><th class="num">km<\/th><th class="num">Capex + opex (R$ bi)<\/th><th class="num">Prorrogação (anos)<\/th><th>Relicitação<\/th><th>Status<\/th><\/tr><\/thead><tbody>${
       list.map(o => `<tr><td>${esc(o.nome)}<\/td><td>${esc('BR-' + o.brs.join('/') + '/' + o.ufs.join('/'))}<\/td><td class="num">${o.km == null ? '—' : nf1.format(o.km)}<\/td>
         <td class="num">${o.capex_opex == null ? '—' : nf1.format(o.capex_opex)}<\/td><td class="num">${o.prorrogacao_anos ?? '—'}<\/td>
         <td>${o.relicitacao == null ? '—' : o.relicitacao ? 'Sim' : 'Não'}<\/td><td>${esc(o.status || '—')}<\/td><\/tr>`).join('')}<\/tbody><\/table><\/div>`;
@@ -5139,7 +5132,7 @@ const Fontes = (() => {
   const link = (url, nome) => (url ? `<a class="link-btn" href="${esc(url)}" target="_blank" rel="noopener">${esc(nome || url)}<\/a>` : txt(nome));
 
   function tabela(id, rows, cols) {
-    return `<div class="table-wrap table-wrap--static"><table class="grid grid--static fontes-table" id="${id}">
+    return `<div class="table-wrap table-wrap--static"><table class="grid grid--static fontes-table" id="${id}" data-csv-name="${id.replace(/-table$/, '')}">
       <thead><tr>${cols.map(c => `<th>${esc(c[0])}<\/th>`).join('')}<\/tr><\/thead>
       <tbody>${rows.map(r => `<tr>${cols.map(c => `<td${c[2] ? ` class="${c[2]}"` : ''}>${c[1](r)}<\/td>`).join('')}<\/tr>`).join('')}<\/tbody><\/table><\/div>`;
   }
@@ -5214,7 +5207,8 @@ const Csv = (() => {
   // Texto da célula sem o conteúdo só para leitores de tela; links http(s)/mailto acrescentam " (<href>)".
   function cellText(el) {
     const clone = el.cloneNode(true);
-    clone.querySelectorAll('.visually-hidden').forEach(n => n.remove());
+    // Fora da tela (leitor de tela, <details> recolhido com observação) não vai para o arquivo.
+    clone.querySelectorAll('.visually-hidden, details, summary').forEach(n => n.remove());
     let txt = norm(clone.textContent);
     const hrefs = [...el.querySelectorAll('a[href]')].map(a => a.href).filter(h => /^(https?:|mailto:)/i.test(h));
     for (const h of [...new Set(hrefs)]) txt += ` (${h})`;
@@ -5272,7 +5266,7 @@ const Csv = (() => {
       if (prev && prev.classList.contains('csv-btn')) { prev._csvTable = table; return; }
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = 'csv-btn';
+      btn.className = 'btn csv-btn';
       btn.textContent = 'Exportar CSV';
       btn._csvTable = table;
       btn.addEventListener('click', () => download(btn._csvTable));
