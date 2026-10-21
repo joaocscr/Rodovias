@@ -316,8 +316,10 @@
         "pagina": 125
       }
     },
-    "realizado_ate_jul_2026": {
+    "realizado_parcial": {
       "_origem": "Leilões de 2026 realizados até jul/2026, p. 95.",
+      "ano": 2026,
+      "chave_mercado": "realizado_ate_jul_2026",
       "leiloes": {
         "valor": 3,
         "casas": 0,
@@ -496,6 +498,19 @@
           "pagina": 25
         }
       }
+    }
+  },
+  "explicacoes": {
+    "_origem": "Parâmetros dos testes *_explicado_*: onde o RoadShow se contradiz e a causa foi verificada nos dados curados.",
+    "paginas_tabela_contratos": [
+      3,
+      5
+    ],
+    "lote_5": {
+      "entidade": "rodovias-integradas-do-parana-lote-5",
+      "leilao_mercado": "Rodovias Integradas do Paraná - Lote 5",
+      "n_concorrentes": "2",
+      "pagina_desagio_alternativo": 15
     }
   }
 }

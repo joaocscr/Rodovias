@@ -33,8 +33,6 @@ except ImportError:  # pragma: no cover
 needs_pdf = pytest.mark.skipif(pymupdf is None or not PDF.exists(), reason="PDF do RoadShow ausente em data/raw/")
 
 EPS = 1e-9
-ANOS = ["2023", "2024", "2025", "2026", "2027"]
-LOTE_5 = "rodovias-integradas-do-parana-lote-5"
 
 
 def _json(nome):
@@ -44,6 +42,9 @@ def _json(nome):
 DECL = _json("reconciliacao.json")
 ENTIDADES = _json("entidades.json")
 MERCADO = _json("mercado.json")
+ANOS = list(DECL["programa_por_ano"]["anos"])  # anos do programa declarados na p. 125
+EXPL = DECL["explicacoes"]
+NS = list(DECL["desagio"]["por_concorrentes"])  # nº de concorrentes da tabela da p. 25
 
 # ---------- divergências conhecidas (xfail strict) ----------
 # chave: (seção, campo[, ano ou nº de concorrentes]) — o valor é o motivo, mostrado no relatório do pytest.
@@ -89,9 +90,10 @@ DIVERGENCIAS = {
                            "23,83% (p. 15) em vez de 21,83% (p. 97), a média arredonda para 12,37%, a 1 centésimo do "
                            "impresso (ver test_desagio_explicado_pelo_lote_5)"),
     ("desagio", "maior"): "p. 27: maior deságio 25,9% × 26,6% (Lote 3, p. 97). Causa não identificada",
-    ("desagio_faixa", "de_0_a_10"): ("p. 27: 6 leilões em >0% e <10% × 8 pela p. 97 (0,05% ×3, 0,08% ×2, 0,38%, 0,94%, "
-                                     "9%); a p. 27 provavelmente conta 0,05% e 0,08% como 0%"),
-    ("desagio_faixa", "zero"): "p. 27: 3 leilões com 0% × 1 pela p. 97 (só o Fluminense tem 0,00%); ver faixa >0% e <10%",
+    ("desagio_faixa", "de_0_a_10"): ("p. 27: 6 leilões em >0% e <10% × 8 pelos deságios da p. 97 (0,05% ×3, 0,08% ×2, "
+                                     "0,38%, 0,94%, 9%). Causa não identificada"),
+    ("desagio_faixa", "zero"): ("p. 27: 3 leilões com 0% × 1 pelos deságios da p. 97 (só o Fluminense tem 0,00%). "
+                                "Causa não identificada"),
     ("desagio_n", "2"): ("p. 25: média 17,65% × 17,145% da p. 97; a p. 25 se reproduz com o Lote 5 a 23,83% "
                          "(ver test_desagio_explicado_pelo_lote_5)"),
     ("desagio_n", "3"): "p. 25: média 18,47% × 16,30% recalculada. " + P25_X_P97 + "; causa não identificada",
@@ -101,15 +103,22 @@ DIVERGENCIAS = {
 }
 
 
-def caso(*chave):
-    """pytest.param da `chave` (o último item é o id do caso); xfail estrito se for divergência conhecida."""
+CASOS = set()  # chaves de todos os casos parametrizados (guarda contra chave velha em DIVERGENCIAS)
+
+
+def caso(*chave, valores=None, id=None):
+    """pytest.param de um caso identificado por `chave`; xfail estrito se a chave for divergência conhecida.
+
+    Por padrão os argumentos do teste são chave[1:] e o id é chave[1:] unido por '-'.
+    """
+    CASOS.add(chave)
     motivo = DIVERGENCIAS.get(chave)
     marks = [pytest.mark.xfail(strict=True, reason=motivo)] if motivo else []
-    return pytest.param(*chave[1:], marks=marks, id="-".join(chave[1:]))
+    return pytest.param(*(chave[1:] if valores is None else valores), marks=marks, id=id or "-".join(chave[1:]))
 
 
 def casos(secao, *itens):
-    return [caso(secao, *(i if isinstance(i, tuple) else (i,))) for i in itens]
+    return [caso(secao, i) for i in itens]
 
 
 # ---------- ferramentas ----------
@@ -177,7 +186,9 @@ def folhas(no, caminho=""):
 
 def test_declarados_bem_formados():
     fs = list(folhas(DECL))
-    assert len(fs) > 80
+    for secao, v in DECL.items():  # nenhuma seção de declarados vazia
+        if isinstance(v, dict) and not secao.startswith("_") and secao != "explicacoes":
+            assert list(folhas(v)), secao
     for caminho, d in fs:
         assert isinstance(d["valor"], (int, float)) and isinstance(d["casas"], int) and d["casas"] >= 0, caminho
         for p in [d["pagina"], *d.get("tambem_em", [])]:
@@ -222,7 +233,7 @@ def test_contratos_totais(campo):
 def test_contratos_capex_opex_explicado_pela_linha_23():
     # trocando o total da linha 23 pelo impresso na p. 5 (17,05), o total impresso (455) fecha
     d = DECL["contratos_vigentes"]["capex_opex"]
-    r = soma_com_total_impresso(contratos(), {3, 5})
+    r = soma_com_total_impresso(contratos(), set(EXPL["paginas_tabela_contratos"]))
     assert r > soma(contratos(), "capex_opex") + 1, "a linha 23 deveria trazer total divergente (divergencias.capex+opex)"
     assert fecha(r, d), msg("capex_opex com a linha 23 como impressa", r, d)
 
@@ -271,25 +282,19 @@ def test_leiloes_totais(campo):
 
 def test_leiloes_capex_opex_explicado_pela_linha_23():
     d = DECL["leiloes_p97"]["capex_opex"]
-    r = soma_com_total_impresso(leiloes_realizados(), {5})
+    r = soma_com_total_impresso(leiloes_realizados(), set(EXPL["paginas_tabela_contratos"]))
     assert r > soma(leiloes_realizados(), "capex_opex") + 1
     assert fecha(r, d), msg("capex_opex com a linha 23 como impressa", r, d)
 
 
 # ---------- p. 125: programa por ano ----------
 
-def caso_ano(campo, ano):
-    motivo = DIVERGENCIAS.get(("programa", campo, ano))
-    marks = [pytest.mark.xfail(strict=True, reason=motivo)] if motivo else []
-    return pytest.param(ano, campo, marks=marks, id=f"{ano}-{campo}")
-
-
 @pytest.mark.parametrize("ano", ANOS)
 def test_programa_n_de_leiloes(ano):
     assert len(do_ano(ano)) == DECL["programa_por_ano"]["anos"][ano]["leiloes"]["valor"]
 
 
-@pytest.mark.parametrize("ano,campo", [caso_ano(c, a) for a in ANOS for c in ("km", "capex", "opex")])
+@pytest.mark.parametrize("ano,campo", [caso("programa", c, a, valores=(a, c), id=f"{a}-{c}") for a in ANOS for c in ("km", "capex", "opex")])
 def test_programa_totais_por_ano(ano, campo):
     d = DECL["programa_por_ano"]["anos"][ano][campo]
     r = soma(do_ano(ano), campo)
@@ -331,14 +336,15 @@ def test_programa_mercado_transcrito_confere_com_p125(ano):
     assert fecha(m["capex"] + m["opex"], a["capex_opex"], unidade(a["capex"]))
 
 
-def test_programa_realizado_ate_jul_2026():
-    d = DECL["programa_por_ano"]["realizado_ate_jul_2026"]
-    ents = [x for x in do_ano(2026) if x["estado"] == "programa"]
+def test_programa_realizado_parcial():
+    d = DECL["programa_por_ano"]["realizado_parcial"]
+    ano = d["ano"]
+    ents = [x for x in do_ano(ano) if x["estado"] == "programa"]
     assert len(ents) == d["leiloes"]["valor"]
     for campo in ("km", "capex", "opex", "capex_opex"):
         r = soma(ents, campo)
-        assert fecha(r, d[campo]), msg(f"realizado 2026 {campo}", r, d[campo])
-    m = next(x for x in MERCADO["programa_por_ano"] if x["ano"] == 2026)["realizado_ate_jul_2026"]
+        assert fecha(r, d[campo]), msg(f"realizado {ano} {campo}", r, d[campo])
+    m = next(x for x in MERCADO["programa_por_ano"] if x["ano"] == ano)[d["chave_mercado"]]
     assert m["leiloes"] == d["leiloes"]["valor"]
     for campo in ("km", "capex", "opex"):
         assert fecha(m[campo], d[campo]), campo
@@ -360,9 +366,11 @@ def test_desagio_estatisticas(estat):
 
 def _com_lote_5_da_p15():
     """Deságios da p. 97 trocando o do Lote 5 pelo da p. 15 (divergencias.desagio da entidade)."""
-    e = next(x for x in ENTIDADES if x["id"] == LOTE_5)
-    alt = next(a["valor"] for d in e["divergencias"] if d["campo"] == "desagio" for a in d["alternativas"] if a["pagina"] == 15)
-    return [alt if x["leilao"].endswith("Lote 5") else x["desagio"] for x in MERCADO["concorrentes_desagio"]]
+    ex = EXPL["lote_5"]
+    e = next(x for x in ENTIDADES if x["id"] == ex["entidade"])
+    alt = next(a["valor"] for d in e["divergencias"] if d["campo"] == "desagio"
+               for a in d["alternativas"] if a["pagina"] == ex["pagina_desagio_alternativo"])
+    return [alt if x["leilao"] == ex["leilao_mercado"] else x["desagio"] for x in MERCADO["concorrentes_desagio"]]
 
 
 def test_desagio_explicado_pelo_lote_5():
@@ -371,10 +379,12 @@ def test_desagio_explicado_pelo_lote_5():
     assert ds != desagios()
     d = DECL["desagio"]["media"]
     assert fecha(round(statistics.fmean(ds), 2), d), statistics.fmean(ds)
-    # média dos leilões com 2 concorrentes: reproduz a p. 25 (17,65%)
-    n2 = DECL["desagio"]["por_concorrentes"]["2"]["media"]
-    dois = [v for v, x in zip(ds, MERCADO["concorrentes_desagio"]) if x["n"] == 2]
-    assert len(dois) == 4 and fecha(round(statistics.fmean(dois), 2), n2), dois
+    # média dos leilões com o mesmo nº de concorrentes do Lote 5: reproduz a p. 25 (17,65%)
+    n_ = EXPL["lote_5"]["n_concorrentes"]
+    n2 = DECL["desagio"]["por_concorrentes"][n_]["media"]
+    dois = [v for v, x in zip(ds, MERCADO["concorrentes_desagio"]) if x["n"] == int(n_)]
+    assert len(dois) == DECL["desagio"]["por_concorrentes"][n_]["leiloes"]["valor"]
+    assert fecha(round(statistics.fmean(dois), 2), n2), dois
 
 
 @pytest.mark.parametrize("faixa", casos("desagio_faixa", "ge_18", "de_10_a_18", "de_0_a_10", "zero"))
@@ -400,7 +410,7 @@ def test_desagio_3_ou_mais_concorrentes():
     assert fecha(100 * n3 / len(ns), DECL["desagio"]["pct_3_ou_mais_concorrentes"])
 
 
-@pytest.mark.parametrize("n", ["5", "4", "3", "2", "1"])
+@pytest.mark.parametrize("n", NS)
 def test_desagio_por_concorrentes_contagem(n):
     d = DECL["desagio"]["por_concorrentes"][n]
     ns = [x["n"] for x in MERCADO["concorrentes_desagio"]]
@@ -409,7 +419,7 @@ def test_desagio_por_concorrentes_contagem(n):
     assert fecha(100 * c / len(ns), d["pct_total"])
 
 
-@pytest.mark.parametrize("n", casos("desagio_n", "5", "4", "3", "2", "1"))
+@pytest.mark.parametrize("n", casos("desagio_n", *NS))
 def test_desagio_por_concorrentes_media(n):
     d = DECL["desagio"]["por_concorrentes"][n]["media"]
     r = statistics.fmean(x["desagio"] for x in MERCADO["concorrentes_desagio"] if x["n"] == int(n))
@@ -424,3 +434,8 @@ def test_desagio_tabela_p25_transcrita():
         assert linhas[n]["leiloes"] == d["leiloes"]["valor"], n
         assert abs(linhas[n]["pct_total"] - d["pct_total"]["valor"]) <= EPS, n
         assert abs(linhas[n]["desagio_medio"] - d["media"]["valor"]) <= EPS, n
+
+
+def test_divergencias_conhecidas_apontam_para_casos_existentes():
+    # chave velha ou com erro de digitação deixaria de marcar xfail sem ninguém notar
+    assert set(DIVERGENCIAS) <= CASOS, sorted(set(DIVERGENCIAS) - CASOS)
