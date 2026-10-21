@@ -1,1 +1,44 @@
-{"aliases": []}
+{
+  "aliases": [
+    {
+      "nome": "Infraestrutura Brasil Holding XXI S.A.",
+      "grupo": "Pátria",
+      "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "Consórcio Infraestrutura PR",
+      "grupo": "EPR",
+      "motivo": "consórcio liderado por"
+    },
+    {
+      "nome": "Consórcio Infraestrutura MG",
+      "grupo": "EPR",
+      "motivo": "consórcio liderado por"
+    },
+    {
+      "nome": "4UM Investimentos",
+      "grupo": "4UM Investimentos",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "VINCI Highways S.A.S",
+      "grupo": "Vinci",
+      "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "Rotas do Brasil S.A.",
+      "grupo": "Way Concessões",
+      "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "Consórcio Rota Verde Goiás",
+      "grupo": "Aviva Fundo de Investimento",
+      "motivo": "consórcio liderado por"
+    },
+    {
+      "nome": "CCR S.A.",
+      "grupo": "Motiva",
+      "motivo": "troca de nome"
+    }
+  ]
+}

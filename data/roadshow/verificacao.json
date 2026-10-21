@@ -1,1 +1,851 @@
-{"versao": 1, "fontes": {}, "leiloes": []}
+{
+  "versao": 1,
+  "fontes": {
+    "rs-p97": {
+      "tipo": "roadshow",
+      "pagina": 97
+    },
+    "antt-ata-leilao-rip-lote-1": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Comissão de Outorga",
+      "titulo": "Ata de abertura do envelope de qualificação da proponente primeira colocada no leilão do Edital nº 01/2023 (BR-277/373/376/476/PR e PR-418/423/427)",
+      "data": "2023-08-25",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/br-277-373-376-476-pr-e-pr-418-423-427/arquivos-para-download/comissao-de-outorga/ata-de-comissao-de-outorgas-abertura-do-envelope/view",
+      "acesso": "2026-10-21",
+      "trecho": "o leilão foi realizado no dia vinte e cinco de agosto de dois mil e vinte e três […] 1) Infraestrutura Holding XXI. S.A, 18,25% e 2) Consórcio Infraestrutura PR, 8,30%"
+    },
+    "antt-delib-370-2023": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Diretoria Colegiada",
+      "titulo": "Deliberação nº 370, de 26 de outubro de 2023 — Homologação (Edital nº 1/2023)",
+      "data": "2023-10-26",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/br-277-373-376-476-pr-e-pr-418-423-427/arquivos-para-download/comissao-de-outorga/deliberacao-no-370-de-26-de-outubro-de-2023-homologacao/view",
+      "acesso": "2026-10-21",
+      "trecho": "Homologar o resultado do Leilão […] à proponente consagrada vencedora Infraestrutura Brasil Holding XXI S.A., que apresentou desconto sobre a tarifa básica de pedágio de 18,25% (ato do DOU reproduzido na página da ANTT; o DOU não responde deste ambiente)"
+    },
+    "aen-pr-2023-08-25-lote-1": {
+      "tipo": "oficial",
+      "orgao": "Governo do Paraná — Agência Estadual de Notícias",
+      "titulo": "Grupo Pátria arremata Lote 1 e tarifa por quilômetro rodado fica 65% menor no Paraná",
+      "data": "2023-08-25",
+      "url": "https://www.parana.pr.gov.br/aen/Noticia/Grupo-Patria-arremata-Lote-1-e-tarifa-por-quilometro-rodado-fica-65-menor-no-Parana",
+      "acesso": "2026-10-21",
+      "trecho": "O grupo Pátria (Infraestrutura Brasil Holding XXI SA) arrematou o Lote 1 […] com desconto de 18,25%"
+    },
+    "antt-concessao-via-araucaria": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Lista de concessões — Via Araucária",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/via-araucaria",
+      "acesso": "2026-10-21",
+      "trecho": "Data da Assinatura: 30/01/2024 · Início da Concessão: 28/02/2024 · Prazo da Concessão: 30 anos"
+    },
+    "antt-projeto-rip-lote-1": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Novos projetos em rodovias — BR-277/373/376/476/PR e PR-418/423/427 (linha do tempo)",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/br-277-373-376-476-pr-e-pr-418-423-427",
+      "acesso": "2026-10-21",
+      "trecho": "Imagem da linha do tempo na página do projeto: Leilão de Projeto — Data: 25/08/2023; Contrato — Assinado em: 30/01/2024"
+    },
+    "antt-ata-leilao-rip-lote-2": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Comissão de Outorga",
+      "titulo": "Ata de abertura do envelope de qualificação da proponente primeira colocada (Edital nº 02/2023, BR-153/277/369/PR e PR-092/151/239/407/408/411/508/804/855)",
+      "data": "2023-09-29",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/2br-153-277-369-pr-e-pr-092-151-239-407-408-411-508-804-855/arquivos-para-download/comissao-de-outorga/ata-da-comissao-de-outorga-abertura-de-envelope/view",
+      "acesso": "2026-10-21",
+      "trecho": "o leilão foi realizado no dia vinte e nove de setembro de dois mil e vinte e três […] desconto ofertado […] pelo Consórcio Infraestrutura PR, no valor de 0,08%"
+    },
+    "antt-delib-384-2023": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Diretoria Colegiada",
+      "titulo": "Deliberação nº 384, de 9 de novembro de 2023 — Homologação (Edital nº 2/2023)",
+      "data": "2023-11-09",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/2br-153-277-369-pr-e-pr-092-151-239-407-408-411-508-804-855/arquivos-para-download/comissao-de-outorga/deliberacao-no-384-de-9-de-novembro-de-2023-deliberacao-no-384-de-9-de-novembro-de-2023-dou-imprensa-nacional/view",
+      "acesso": "2026-10-21",
+      "trecho": "Homologar o resultado do Leilão […] ao proponente consagrado vencedor o Consórcio Infraestrutura PR, que apresentou desconto sobre a tarifa básica de pedágio de 0,08% (ato do DOU reproduzido na página da ANTT; o DOU não responde deste ambiente)"
+    },
+    "antt-concessao-epr-litoral-pioneiro": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Lista de concessões — EPR Litoral Pioneiro",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/epr-litoral-pioneiro",
+      "acesso": "2026-10-21",
+      "trecho": "Data da Assinatura: 30/01/2024 · Início da Concessão: 28/02/2024 · Prazo da Concessão: 30 anos"
+    },
+    "antt-projeto-rip-lote-2": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Novos projetos em rodovias — BR-153/277/369/PR e PR-092/151/239/407/408/411/508/804/855 (linha do tempo)",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/2br-153-277-369-pr-e-pr-092-151-239-407-408-411-508-804-855",
+      "acesso": "2026-10-21",
+      "trecho": "Imagem da linha do tempo na página do projeto: Leilão de Projeto — Data: 29/09/2023; Contrato — Assinado em: 30/01/2024"
+    },
+    "antt-ata-julgamento-br-040-mg": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Comissão de Outorga",
+      "titulo": "Ata de análise e julgamento dos documentos de qualificação da proponente primeira colocada no leilão do Edital nº 04/2023 (BR-040/MG)",
+      "data": "2024-04-23",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/BR-040-MG-BH-JF/arquivos-para-download/comissao-de-outorga/ata-de-analise-e-julgamento-dos-documentos-de-qualificacao/view",
+      "acesso": "2026-10-21",
+      "trecho": "a Sessão Pública de Leilão foi realizada no dia onze de abril de dois mil e vinte e quatro […] 1) Consórcio Infraestrutura MG, 11,21%, 2) Consórcio Vetor Norte, 0,00%, 3) CCR S.A., 1,00%"
+    },
+    "antt-delib-134-2024": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Diretor-Geral",
+      "titulo": "Deliberação nº 134, de 28 de maio de 2024 — Homologação (Edital nº 04/2023)",
+      "data": "2024-05-28",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/BR-040-MG-BH-JF/arquivos-para-download/comissao-de-outorga/deliberacao-no-134-de-28-de-maio-de-2024-homologacao/view",
+      "acesso": "2026-10-21",
+      "trecho": "Homologar o resultado do Leilão […] da Rodovia BR-040/MG ao proponente consagrado vencedor, o Consórcio Infraestrutura MG, que apresentou desconto sobre a tarifa básica de pedágio de 11,21% (ato do DOU reproduzido na página da ANTT; o DOU não responde deste ambiente)"
+    },
+    "antt-extrato-contrato-br-040-mg": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Extrato de contrato — Contrato de concessão do trecho da rodovia BR-040/MG (DOU nº 128, 05/07/2024)",
+      "data": "2024-07-05",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/BR-040-MG-BH-JF/arquivos-para-download/comissao-de-outorga/extrato-de-contrato/view",
+      "acesso": "2026-10-21",
+      "trecho": "Concessionária: EPR MINAS GERAIS S/A […] Prazo de vigência: 30 anos a partir da data de assunção […] Data de assinatura: 4 de julho de 2024 (ato do DOU reproduzido na página da ANTT; o DOU não responde deste ambiente)"
+    },
+    "antt-concessao-epr-via-mineira": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Lista de concessões — EPR Via Mineira",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/epr-via-mineira",
+      "acesso": "2026-10-21",
+      "trecho": "Data da Assinatura: 04/07/2024 · Início da Concessão: 06/08/2024 · Prazo da Concessão: 30 anos"
+    },
+    "antt-projeto-br-040-mg": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Novos projetos em rodovias — BR-040/MG Belo Horizonte – Juiz de Fora (linha do tempo)",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/BR-040-MG-BH-JF",
+      "acesso": "2026-10-21",
+      "trecho": "Imagem da linha do tempo na página do projeto: Leilão de Projeto — Data: 11/04/2024; Contrato — Assinatura: 04/07/2024"
+    },
+    "antt-ata-leilao-br-381-mg": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Comissão de Outorga",
+      "titulo": "Ata de abertura do envelope de proposta e ordem de classificação do leilão do Edital de Concessão nº 01/2024 (BR-381/MG)",
+      "data": "2024-08-29",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/br-381-mg/arquivos-para-download/comissao-de-outorga/ata-de-abertura-do-envelope-de-proposta-e-ordem-de-classificacao-do-leilao-do-edital-de-concessao-no-01-2024/view",
+      "acesso": "2026-10-21",
+      "trecho": "o leilão foi realizado no dia vinte e nove de agosto de dois mil e vinte e quatro […] 1) 4UM Fundo De Investimento Em Participações Em Infraestrutura […], 0,94% e 2) Opportunity Dinâmico […], 0,10% […] o Diretor do leilão declarou a 4UM Investimentos […] como vencedora do certame"
+    },
+    "antt-concessao-nova-381": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Lista de concessões — Nova 381",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/nova-381",
+      "acesso": "2026-10-21",
+      "trecho": "Data da Assinatura: 23/01/2025 · Início da Concessão: 06/02/2025 · Prazo da Concessão: 30 anos"
+    },
+    "antt-projeto-br-381-mg": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Novos projetos em rodovias — BR-381/MG (linha do tempo)",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/br-381-mg",
+      "acesso": "2026-10-21",
+      "trecho": "Imagem da linha do tempo na página do projeto: Leilão de Projeto — Data: 29/08/2024; Contrato — Data: 23/01/2025"
+    },
+    "antt-ata-leilao-br-040-go-mg": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Comissão de Outorga",
+      "titulo": "Ata de abertura do envelope de qualificação da proponente primeira colocada no leilão do Edital de Concessão nº 02/2024 (BR-040/GO/MG)",
+      "data": "2024-09-26",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/br-040-go-mg-rota-dos-cristais/arquivos-para-download/comissao-de-outorga/ata-de-abertura-do-envelope-de-qualificacao-da-proponente-primeira-colocada-1/view",
+      "acesso": "2026-10-21",
+      "trecho": "o leilão foi realizado no dia vinte e seis de setembro de dois mil e vinte e quatro […] 1) BTG Pactual Infraestrutura III, 7,50%; 2) CCR S.A., 1,75%; 3) Consórcio Nova BR 040, 9,09%; 4) VINCI Highways S.A.S, 14,32%"
+    },
+    "antt-delib-422-2024": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Diretoria Colegiada",
+      "titulo": "Deliberação nº 422, de 31 de outubro de 2024 — Homologação (Edital nº 2/2024)",
+      "data": "2024-10-31",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/br-040-go-mg-rota-dos-cristais/arquivos-para-download/comissao-de-outorga/deliberacao-no-422-de-31-de-outubro-de-2024-homologacao/view",
+      "acesso": "2026-10-21",
+      "trecho": "Homologar o resultado do Leilão […] da Rodovia BR-040/GO/MG à proponente VINCI Highways S.A.S., consagrada vencedora, que apresentou desconto sobre a tarifa básica de pedágio de 14,32% (ato do DOU reproduzido na página da ANTT; o DOU não responde deste ambiente)"
+    },
+    "antt-concessao-via-cristais": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Lista de concessões — Via Cristais",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/via-cristais",
+      "acesso": "2026-10-21",
+      "trecho": "Data da Assinatura: 10/02/2025 · Início da Concessão: 10/03/2025 · Prazo da Concessão: 30 anos"
+    },
+    "antt-projeto-br-040-go-mg": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Novos projetos em rodovias — BR-040/GO/MG Rota dos Cristais (linha do tempo)",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/br-040-go-mg-rota-dos-cristais",
+      "acesso": "2026-10-21",
+      "trecho": "Imagem da linha do tempo na página do projeto: Leilão de Projeto — Data: 26/09/2024; Contrato — Data: 10/02/2025"
+    },
+    "antt-ata-leilao-br-262-mg": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Comissão de Outorga",
+      "titulo": "Ata de abertura do envelope de qualificação da proponente primeira colocada no leilão do Edital de Concessão nº 03/2024 (BR-262/MG)",
+      "data": "2024-10-31",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/rodovia-br-262-mg-rota-do-zebu/arquivos-para-download/comissao-de-outorga/ata-de-abertura-do-envelope-de-qualificacao-da-proponente-primeira-colocada-no-leilao-do-edital-de-concessao-no-03-2024/view",
+      "acesso": "2026-10-21",
+      "trecho": "o leilão foi realizado no dia trinta e um de outubro de dois mil e vinte e quatro […] A Rotas do Brasil S.A. ofertou um desconto de até 15,30%, enquanto a BTG Pactual Infraestrutura III apresentou um desconto de 15,20%"
+    },
+    "antt-ata-julgamento-br-262-mg": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Comissão de Outorga",
+      "titulo": "Ata de análise e julgamento dos documentos de qualificação da proponente primeira colocada (Edital nº 03/2024, BR-262/MG)",
+      "data": "2024-11-14",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/rodovia-br-262-mg-rota-do-zebu/arquivos-para-download/comissao-de-outorga/ata-de-analise-e-julgamento-dos-documentos-de-qualificacao-da-poponente-primeira-colocada/view",
+      "acesso": "2026-10-21",
+      "trecho": "esta Comissão confirma a Proponente Rotas do Brasil S.A., como vencedora do Leilão para concessão do sistema rodoviário da rodovia BR-262/MG"
+    },
+    "antt-concessao-way-262": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Lista de concessões — Way-262",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/way-262",
+      "acesso": "2026-10-21",
+      "trecho": "Data da Assinatura: 14/02/2025 · Início da Concessão: 20/03/2025 · Prazo da Concessão: 30 anos"
+    },
+    "antt-projeto-br-262-mg": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Novos projetos em rodovias — BR-262/MG Rota do Zebu (linha do tempo)",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/rodovia-br-262-mg-rota-do-zebu",
+      "acesso": "2026-10-21",
+      "trecho": "Imagem da linha do tempo na página do projeto: Leilão de Projeto — Data: 31/10/2024; Contrato — Data: 14/02/2025"
+    },
+    "b3-2024-12-12-rip-lote-3-rota-verde": {
+      "tipo": "oficial",
+      "orgao": "B3",
+      "titulo": "ANTT realiza leilões na B3 para concessão de rodovias em Goiás e Paraná",
+      "data": "2024-12-12",
+      "url": "https://www.b3.com.br/pt_br/noticias/leilao-8AE490C895C89E89019612C1C9110392.htm",
+      "acesso": "2026-10-21",
+      "trecho": "São Paulo, 12 de dezembro de 2024 […] A CCR venceu o leilão das rodovias BR-369/373/376/PR e PR-090/170/323/445 com uma oferta de 26,60% de desconto […] o leilão da “Rota Verde” foi vencido pelo consórcio Rota Verde Goiás, que ofereceu 18,07% de desconto"
+    },
+    "antt-delib-12-2025": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Diretoria Colegiada",
+      "titulo": "Deliberação nº 12, de 17 de janeiro de 2025 — Homologação Rota Verde (Edital nº 04/2024)",
+      "data": "2025-01-17",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/bndes-cn1-centro-oeste-norte/copy_of_arquivos-para-download/comissao-de-outorga/deliberacao-no-12-de-17-de-janeiro-de-2025-homologacao-rota-verde/view",
+      "acesso": "2026-10-21",
+      "trecho": "Homologar o resultado do Leilão para concessão do sistema rodoviário BR-060/452/GO à proponente Consórcio Rota Verde Goiás, consagrada vencedora, que apresentou desconto sobre a tarifa básica de pedágio de 18,07% (ato do DOU reproduzido na página da ANTT; o DOU não responde deste ambiente)"
+    },
+    "antt-concessao-rota-verde-goias": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Lista de concessões — Rota Verde Goiás",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/rota-verde-goias",
+      "acesso": "2026-10-21",
+      "trecho": "Data da Assinatura: 28/03/2025 · Início da Concessão: 28/04/2025 · Prazo da Concessão: 30 anos"
+    },
+    "antt-projeto-br-060-452-go": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Novos projetos em rodovias — BR-060/452/GO Rota Verde (linha do tempo)",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/bndes-cn1-centro-oeste-norte",
+      "acesso": "2026-10-21",
+      "trecho": "Imagem da linha do tempo na página do projeto: Leilão de Projeto — Data: 12/12/2024; Contrato — Data: 28/03/2025"
+    },
+    "antt-ata-leilao-rip-lote-6": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Comissão de Outorga",
+      "titulo": "Ata de abertura do envelope de qualificação da proponente primeira colocada no leilão do Edital de Concessão nº 05/2024 (BR-163/277/469/PR e PR-158/180/182/280/483)",
+      "data": "2024-12-19",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/rodovias-integradas-do-parana-lote-6/arquivos-para-download/comissao-de-outorga/ata-de-analise-e-julgamento-dos-documentos-de-qualificacao-da-poponente-primeira-colocada/view",
+      "acesso": "2026-10-21",
+      "trecho": "o leilão foi realizado no dia dezenove de dezembro de dois mil e vinte e quatro […] 1) Consórcio Infraestrutura PR, 0,08%. O Diretor do Leilão declarou como vencedor do leilão, a proponente Consórcio Infraestrutura PR"
+    },
+    "antt-concessao-epr-iguacu": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Lista de concessões — EPR Iguaçu",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/epr-iguacu",
+      "acesso": "2026-10-21",
+      "trecho": "Data da Assinatura: 11/04/2025 · Início da Concessão: 08/05/2025 · Prazo da Concessão: 30 anos"
+    },
+    "antt-projeto-rip-lote-6": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Novos projetos em rodovias — Rodovias Integradas do Paraná — Lote 6 (linha do tempo)",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/rodovias-integradas-do-parana-lote-6",
+      "acesso": "2026-10-21",
+      "trecho": "Imagem da linha do tempo na página do projeto: Leilão de Projeto — Data: 19/12/2024; Contrato — Data: 11/04/2025"
+    },
+    "antt-ata-leilao-rip-lote-3": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Comissão de Outorga",
+      "titulo": "Ata de abertura do envelope de qualificação da proponente primeira colocada no leilão do Edital de Concessão nº 05/2024 (BR-369/373/376/PR e PR-090/170/323/445)",
+      "data": "2024-12-12",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/br-369-373-376-pr-e-pr-090-170-323-445/arquivos-para-download/comissao-de-outorga/ata-de-analise-e-julgamento-dos-documentos-de-qualificacao-da-poponente-primeira-colocada/view",
+      "acesso": "2026-10-21",
+      "trecho": "o leilão foi realizado no dia doze de dezembro de dois mil e vinte e quatro […] A CCR S.A. ofertou um desconto de 26,60%, enquanto a Infra BR V Missouri Holding I S.A. apresentou um desconto de 26,50% e o Consórcio Infraestrutura PR apresentou um desconto de 25,90%"
+    },
+    "antt-ata-julgamento-rip-lote-3": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Comissão de Outorga",
+      "titulo": "Ata de análise e julgamento dos documentos de qualificação — Lote 03 (Edital nº 05/2024)",
+      "data": "2025-01-10",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/br-369-373-376-pr-e-pr-090-170-323-445/arquivos-para-download/comissao-de-outorga/ata-de-analise-e-julgamento-dos-documentos-de-qualificacao-lote-03/view",
+      "acesso": "2026-10-21",
+      "trecho": "esta Comissão confirma a Proponente CCR S.A., como vencedora do Leilão para concessão do sistema rodoviário da Rodovias Integradas do Paraná Lote 3"
+    },
+    "antt-concessao-motiva-parana": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Lista de concessões — Motiva Paraná (PRVias)",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/pr-vias",
+      "acesso": "2026-10-21",
+      "trecho": "Data da Assinatura: 14/04/2025 · Início da Concessão: 08/05/2025 · Prazo da Concessão: 30 anos"
+    },
+    "antt-projeto-rip-lote-3": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Novos projetos em rodovias — BR-369/373/376/PR e PR-090/170/323/445 (linha do tempo)",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias/br-369-373-376-pr-e-pr-090-170-323-445",
+      "acesso": "2026-10-21",
+      "trecho": "Imagem da linha do tempo na página do projeto: Leilão de Projeto — Data: 12/12/2024; Contrato — Data: 14/04/2025"
+    }
+  },
+  "leiloes": [
+    {
+      "chave": "rip-lote-1",
+      "ent": "rodovias-integradas-do-parana-lote-1",
+      "participantes": {
+        "ano": 2023,
+        "lote": "Lote 1 - BR-277/373/376/476/PR e PR-418/423/427"
+      },
+      "concorrentes": "Rodovias Integradas do Paraná - Lote 1",
+      "campos": {
+        "leilao": {
+          "valor": "2023-08-25",
+          "fontes": [
+            "antt-ata-leilao-rip-lote-1",
+            "antt-projeto-rip-lote-1",
+            "rs-p97"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Infraestrutura Brasil Holding XXI S.A.",
+          "fontes": [
+            "antt-delib-370-2023",
+            "aen-pr-2023-08-25-lote-1"
+          ]
+        },
+        "desagio": {
+          "valor": 18.25,
+          "fontes": [
+            "antt-ata-leilao-rip-lote-1",
+            "antt-delib-370-2023",
+            "rs-p97"
+          ]
+        },
+        "assinatura": {
+          "valor": "2024-01-30",
+          "fontes": [
+            "antt-concessao-via-araucaria",
+            "antt-projeto-rip-lote-1",
+            "rs-p97"
+          ]
+        },
+        "inicio_operacao": {
+          "valor": "2024-02-28",
+          "fontes": [
+            "antt-concessao-via-araucaria",
+            "rs-p97"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 30,
+          "fontes": [
+            "antt-concessao-via-araucaria"
+          ]
+        }
+      },
+      "notas": [
+        {
+          "texto": "A ata da sessão do leilão grafa o vencedor como “Infraestrutura Holding XXI S.A.”; a homologação da ANTT e o Governo do Paraná usam a razão social “Infraestrutura Brasil Holding XXI S.A.” (veículo do Pátria), adotada aqui.",
+          "fontes": [
+            "antt-ata-leilao-rip-lote-1",
+            "antt-delib-370-2023",
+            "aen-pr-2023-08-25-lote-1"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "rip-lote-2",
+      "ent": "rodovias-integradas-do-parana-lote-2",
+      "participantes": {
+        "ano": 2023,
+        "lote": "Lote 2 - BR-153/277/369/PR e PR-092/151/239/407/408/411/508/804/855"
+      },
+      "concorrentes": "Rodovias Integradas do Paraná - Lote 2",
+      "campos": {
+        "leilao": {
+          "valor": "2023-09-29",
+          "fontes": [
+            "antt-ata-leilao-rip-lote-2",
+            "antt-projeto-rip-lote-2",
+            "rs-p97"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Consórcio Infraestrutura PR",
+          "fontes": [
+            "antt-ata-leilao-rip-lote-2",
+            "antt-delib-384-2023",
+            "rs-p97"
+          ]
+        },
+        "desagio": {
+          "valor": 0.08,
+          "fontes": [
+            "antt-ata-leilao-rip-lote-2",
+            "antt-delib-384-2023",
+            "rs-p97"
+          ]
+        },
+        "assinatura": {
+          "valor": "2024-01-30",
+          "fontes": [
+            "antt-concessao-epr-litoral-pioneiro",
+            "antt-projeto-rip-lote-2",
+            "rs-p97"
+          ]
+        },
+        "inicio_operacao": {
+          "valor": "2024-02-28",
+          "fontes": [
+            "antt-concessao-epr-litoral-pioneiro",
+            "rs-p97"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 30,
+          "fontes": [
+            "antt-concessao-epr-litoral-pioneiro"
+          ]
+        }
+      }
+    },
+    {
+      "chave": "belo-horizonte-juiz-de-fora",
+      "ent": "belo-horizonte-juiz-de-fora",
+      "participantes": {
+        "ano": 2024,
+        "lote": "BR-040/MG"
+      },
+      "concorrentes": "Belo Horizonte - Juiz de Fora",
+      "campos": {
+        "leilao": {
+          "valor": "2024-04-11",
+          "fontes": [
+            "antt-ata-julgamento-br-040-mg",
+            "antt-projeto-br-040-mg",
+            "rs-p97"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Consórcio Infraestrutura MG",
+          "fontes": [
+            "antt-ata-julgamento-br-040-mg",
+            "antt-delib-134-2024",
+            "rs-p97"
+          ]
+        },
+        "desagio": {
+          "valor": 11.21,
+          "fontes": [
+            "antt-ata-julgamento-br-040-mg",
+            "antt-delib-134-2024",
+            "rs-p97"
+          ]
+        },
+        "assinatura": {
+          "valor": "2024-07-04",
+          "fontes": [
+            "antt-extrato-contrato-br-040-mg",
+            "antt-concessao-epr-via-mineira",
+            "antt-projeto-br-040-mg",
+            "rs-p97"
+          ]
+        },
+        "inicio_operacao": {
+          "valor": "2024-08-06",
+          "fontes": [
+            "antt-concessao-epr-via-mineira",
+            "rs-p97"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 30,
+          "fontes": [
+            "antt-extrato-contrato-br-040-mg",
+            "antt-concessao-epr-via-mineira"
+          ]
+        }
+      },
+      "notas": [
+        {
+          "texto": "Segundo a ata da Comissão de Outorga, os outros lances foram do Consórcio Vetor Norte (0,00%) e da CCR S.A. (1,00%); a tabela de participantes do RoadShow lista “EPR (Equipav)” com 8,30% como outro proponente.",
+          "fontes": [
+            "antt-ata-julgamento-br-040-mg"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "nova-381",
+      "ent": "nova-381",
+      "participantes": {
+        "ano": 2024,
+        "lote": "BR-381/MG"
+      },
+      "concorrentes": "Governador Valadares - Belo Horizonte",
+      "campos": {
+        "leilao": {
+          "valor": "2024-08-29",
+          "fontes": [
+            "antt-ata-leilao-br-381-mg",
+            "antt-projeto-br-381-mg",
+            "rs-p97"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "4UM Investimentos",
+          "fontes": [
+            "antt-ata-leilao-br-381-mg",
+            "rs-p97"
+          ]
+        },
+        "desagio": {
+          "valor": 0.94,
+          "fontes": [
+            "antt-ata-leilao-br-381-mg",
+            "rs-p97"
+          ]
+        },
+        "assinatura": {
+          "valor": "2025-01-23",
+          "fontes": [
+            "antt-concessao-nova-381",
+            "antt-projeto-br-381-mg",
+            "rs-p97"
+          ]
+        },
+        "inicio_operacao": {
+          "valor": "2025-02-06",
+          "fontes": [
+            "antt-concessao-nova-381"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 30,
+          "fontes": [
+            "antt-concessao-nova-381"
+          ]
+        }
+      },
+      "notas": [
+        {
+          "texto": "A ata do leilão registra 2 proponentes: o 4UM FIP em Infraestrutura (0,94%) e o Opportunity Dinâmico FIP Multiestratégia (0,10%), que, na etapa de viva-voz, não melhorou a oferta.",
+          "fontes": [
+            "antt-ata-leilao-br-381-mg"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "rota-dos-cristais",
+      "ent": "rota-dos-cristais",
+      "participantes": {
+        "ano": 2024,
+        "lote": "BR-040/GO/MG"
+      },
+      "concorrentes": "Rota dos Cristais",
+      "campos": {
+        "leilao": {
+          "valor": "2024-09-26",
+          "fontes": [
+            "antt-ata-leilao-br-040-go-mg",
+            "antt-projeto-br-040-go-mg",
+            "rs-p97"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "VINCI Highways S.A.S",
+          "fontes": [
+            "antt-ata-leilao-br-040-go-mg",
+            "antt-delib-422-2024",
+            "rs-p97"
+          ]
+        },
+        "desagio": {
+          "valor": 14.32,
+          "fontes": [
+            "antt-ata-leilao-br-040-go-mg",
+            "antt-delib-422-2024",
+            "rs-p97"
+          ]
+        },
+        "assinatura": {
+          "valor": "2025-02-10",
+          "fontes": [
+            "antt-concessao-via-cristais",
+            "antt-projeto-br-040-go-mg",
+            "rs-p97"
+          ]
+        },
+        "inicio_operacao": {
+          "valor": "2025-03-10",
+          "fontes": [
+            "antt-concessao-via-cristais",
+            "rs-p97"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 30,
+          "fontes": [
+            "antt-concessao-via-cristais"
+          ]
+        }
+      }
+    },
+    {
+      "chave": "rota-zebu",
+      "ent": "rota-zebu",
+      "participantes": {
+        "ano": 2024,
+        "lote": "BR-262/MG"
+      },
+      "concorrentes": "Rota Zebu",
+      "campos": {
+        "leilao": {
+          "valor": "2024-10-31",
+          "fontes": [
+            "antt-ata-leilao-br-262-mg",
+            "antt-projeto-br-262-mg",
+            "rs-p97"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Rotas do Brasil S.A.",
+          "fontes": [
+            "antt-ata-leilao-br-262-mg",
+            "antt-ata-julgamento-br-262-mg",
+            "rs-p97"
+          ]
+        },
+        "desagio": {
+          "valor": 15.3,
+          "fontes": [
+            "antt-ata-leilao-br-262-mg",
+            "rs-p97"
+          ]
+        },
+        "assinatura": {
+          "valor": "2025-02-14",
+          "fontes": [
+            "antt-concessao-way-262",
+            "antt-projeto-br-262-mg",
+            "rs-p97"
+          ]
+        },
+        "inicio_operacao": {
+          "valor": "2025-03-20",
+          "fontes": [
+            "antt-concessao-way-262",
+            "rs-p97"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 30,
+          "fontes": [
+            "antt-concessao-way-262"
+          ]
+        }
+      }
+    },
+    {
+      "chave": "rota-verde",
+      "ent": "rota-verde-goias",
+      "participantes": {
+        "ano": 2024,
+        "lote": "CN 1 - BR-060/452/GO"
+      },
+      "concorrentes": "Rota Verde",
+      "campos": {
+        "leilao": {
+          "valor": "2024-12-12",
+          "fontes": [
+            "b3-2024-12-12-rip-lote-3-rota-verde",
+            "antt-projeto-br-060-452-go",
+            "rs-p97"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Consórcio Rota Verde Goiás",
+          "fontes": [
+            "antt-delib-12-2025",
+            "b3-2024-12-12-rip-lote-3-rota-verde",
+            "rs-p97"
+          ]
+        },
+        "desagio": {
+          "valor": 18.07,
+          "fontes": [
+            "antt-delib-12-2025",
+            "b3-2024-12-12-rip-lote-3-rota-verde",
+            "rs-p97"
+          ]
+        },
+        "assinatura": {
+          "valor": "2025-03-28",
+          "fontes": [
+            "antt-concessao-rota-verde-goias",
+            "antt-projeto-br-060-452-go",
+            "rs-p97"
+          ]
+        },
+        "inicio_operacao": {
+          "valor": "2025-04-28",
+          "fontes": [
+            "antt-concessao-rota-verde-goias",
+            "rs-p97"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 30,
+          "fontes": [
+            "antt-concessao-rota-verde-goias"
+          ]
+        }
+      }
+    },
+    {
+      "chave": "rip-lote-6",
+      "ent": "rodovias-integradas-do-parana-lote-6",
+      "participantes": {
+        "ano": 2024,
+        "lote": "Lote 6 - BR-163/277/PR e PR-158/180/182/280/483"
+      },
+      "concorrentes": "Rodovias Integradas do Paraná - Lote 6",
+      "campos": {
+        "leilao": {
+          "valor": "2024-12-19",
+          "fontes": [
+            "antt-ata-leilao-rip-lote-6",
+            "antt-projeto-rip-lote-6",
+            "rs-p97"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Consórcio Infraestrutura PR",
+          "fontes": [
+            "antt-ata-leilao-rip-lote-6",
+            "rs-p97"
+          ]
+        },
+        "desagio": {
+          "valor": 0.08,
+          "fontes": [
+            "antt-ata-leilao-rip-lote-6",
+            "rs-p97"
+          ]
+        },
+        "assinatura": {
+          "valor": "2025-04-11",
+          "fontes": [
+            "antt-concessao-epr-iguacu",
+            "antt-projeto-rip-lote-6",
+            "rs-p97"
+          ]
+        },
+        "inicio_operacao": {
+          "valor": "2025-05-08",
+          "fontes": [
+            "antt-concessao-epr-iguacu",
+            "rs-p97"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 30,
+          "fontes": [
+            "antt-concessao-epr-iguacu"
+          ]
+        }
+      }
+    },
+    {
+      "chave": "rip-lote-3",
+      "ent": "rodovias-integradas-do-parana-lote-3",
+      "participantes": {
+        "ano": 2024,
+        "lote": "Lote 3 - BR-369/373/376/PR e PR-090/170/323/445"
+      },
+      "concorrentes": "Rodovias Integradas do Paraná - Lote 3",
+      "campos": {
+        "leilao": {
+          "valor": "2024-12-12",
+          "fontes": [
+            "antt-ata-leilao-rip-lote-3",
+            "b3-2024-12-12-rip-lote-3-rota-verde",
+            "antt-projeto-rip-lote-3",
+            "rs-p97"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "CCR S.A.",
+          "fontes": [
+            "antt-ata-julgamento-rip-lote-3",
+            "antt-ata-leilao-rip-lote-3",
+            "rs-p97"
+          ]
+        },
+        "desagio": {
+          "valor": 26.6,
+          "fontes": [
+            "antt-ata-leilao-rip-lote-3",
+            "b3-2024-12-12-rip-lote-3-rota-verde",
+            "rs-p97"
+          ]
+        },
+        "assinatura": {
+          "valor": "2025-04-14",
+          "fontes": [
+            "antt-concessao-motiva-parana",
+            "antt-projeto-rip-lote-3",
+            "rs-p97"
+          ]
+        },
+        "inicio_operacao": {
+          "valor": "2025-05-08",
+          "fontes": [
+            "antt-concessao-motiva-parana",
+            "rs-p97"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 30,
+          "fontes": [
+            "antt-concessao-motiva-parana"
+          ]
+        }
+      },
+      "notas": [
+        {
+          "texto": "A ata do leilão registra 4 proponentes (o RoadShow lista 3). Lances escritos: CCR S.A. 21,10%, Consórcio Paraná 4um Opportunity 16,42%, Consórcio Infraestrutura PR 24,18% e Infra BR V Missouri Holding I S.A. 22%; no viva-voz, CCR 26,60%, Infra BR V Missouri 26,50% e Consórcio Infraestrutura PR 25,90% (o RoadShow imprime 25,2% e 25,8% para os dois últimos).",
+          "fontes": [
+            "antt-ata-leilao-rip-lote-3"
+          ]
+        }
+      ]
+    }
+  ]
+}

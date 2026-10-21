@@ -8,6 +8,7 @@ import pytest
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 from intel import pipeline  # noqa: E402
+from verificacao import aplicar, carregar, carregar_aliases  # noqa: E402
 
 STATUS = ["estudo", "consulta_publica", "tcu", "edital", "leilao_agendado", "leiloado", "contrato", "suspenso",
           "cancelado"]
@@ -159,8 +160,9 @@ def test_obs_sem_linguagem_de_processo(blk):
 
 
 def test_data_prevista_com_ent_segue_conc(blk, conc):
-    """Com `ent`, a data segue conc.json: leilão (agendado/estudo/tcu/consulta/edital), assinatura (leiloado/contrato)."""
-    E = {e["id"]: e for e in conc["entidades"]}
+    """Com `ent`, a data segue conc.json com a camada de verificação aplicada (como em `pipeline.montar`): leilão
+    (agendado/estudo/tcu/consulta/edital), assinatura (leiloado/contrato)."""
+    E = {e["id"]: e for e in aplicar(conc, carregar(), carregar_aliases())["entidades"]}
     n = 0
     for i in blk["itens"]:
         if i["ent"] is None or i["ent"] not in E:
