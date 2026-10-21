@@ -110,13 +110,24 @@ const IntelModel = (() => {
     return c;
   }
 
+  // Registro principal do físico j (o primeiro de `r`; os demais são BRs coincidentes), ou null.
+  function fisRec(snv, j) {
+    const f = snv && snv.fis && snv.fis[j];
+    return f && f.r && snv.trechos ? (snv.trechos[f.r[0]] || null) : null;
+  }
+
   // Superfície do registro principal do físico j ('PAV', 'N_PAV', 'PLA'); sem dicionário = null.
   const I_SUP = 5; // posição de Model.FIELD.superficie no registro de SNV.trechos
   function fisSup(snv, j) {
-    const d = snv && snv.dict && snv.dict.superficie, f = snv && snv.fis && snv.fis[j];
-    if (!d || !f || !f.r || !snv.trechos) return null;
-    const t = snv.trechos[f.r[0]];
-    return t ? (d[t[I_SUP]] ?? null) : null;
+    const d = snv && snv.dict && snv.dict.superficie, t = fisRec(snv, j);
+    return d && t ? (d[t[I_SUP]] ?? null) : null;
+  }
+
+  // Situação (texto do SNV, ex.: 'Duplicada') do registro principal do físico j; sem dicionário = null.
+  const I_SIT = 4; // posição de Model.FIELD.situacao
+  function fisSit(snv, j) {
+    const d = snv && snv.dict && snv.dict.situacao, t = fisRec(snv, j);
+    return d && t ? (d[t[I_SIT]] ?? null) : null;
   }
 
   // Volume total do físico j usado no Tráfego e no veíc·km: VMDa 2025 quando o bloco existe (0 = sem dado), senão
@@ -939,7 +950,7 @@ const IntelModel = (() => {
   const fmtVkm = x => scaled(x, [[1, 0, '', ' veíc·km/dia'], [1e6, 1, '', ' mi veíc·km/dia'], [1e9, 1, '', ' bi veíc·km/dia']]);
   const fmtTkm = x => scaled(x, [[1, 0, '', ' t·km/ano'], [1e6, 1, '', ' mi t·km/ano'], [1e9, 1, '', ' bi t·km/ano'], [1e12, 1, '', ' tri t·km/ano']]);
 
-  return { MODES, has, sumNullable, nAnos, vmdaOf, v25Of, acidOf, cargaOf, fisSup, estTrafego,
+  return { MODES, has, sumNullable, nAnos, vmdaOf, v25Of, acidOf, cargaOf, fisSup, fisSit, estTrafego,
     rows, metricArray, quantileBreaks, classOf, aggregateIntel, fisIntel, taxaAcidentes, pointsOfFis, decodeTopo,
     rodLabel, decodeLine, estConcLines, distToSegment, pointRadius, lineWeight, PORTO_TIPOS, PORTO_FORMA, portoTipo, monthLabel, mesX, xMes, fmtMesX, anosLabel,
     FUNDOS, PRODUTOS, fundoFonte, fundoValues,

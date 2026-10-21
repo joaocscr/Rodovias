@@ -4,6 +4,7 @@ const ConcModel = (() => {
   const RANK = Object.fromEntries(PRIORITY.map((k, i) => [k, i]));
   const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
   const fmt2 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmt1 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const collator = new Intl.Collator('pt-BR', { sensitivity: 'base', numeric: true });
 
   const norm = s => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -136,6 +137,41 @@ const ConcModel = (() => {
     return lista;
   }
 
+  // Perfil de pista da concessão pelo SNV: km dos físicos do recorte curado (`conc.entFis[idx]`, cada físico uma vez)
+  // por categoria, pela situação do registro principal do físico (IntelModel.fisSit):
+  //   duplicada = 'Duplicada'; obraDup = 'Em obra de Duplicação'; simples = 'Pavimentada' (pista simples pavimentada);
+  //   naoPav = todo o resto (Implantada, Leito Natural, Travessia, Planejada, Em obra de Pavimentação/Implantação,
+  //   situação ausente), para a soma das quatro categorias ser sempre o `km` — nenhum km fica de fora.
+  // Sem recorte (sem físicos, qualidade 'falha'/'nao_mapeado' ou sem SNV) = semRecorte true e nenhum número (null, nunca 0).
+  // Com recorte 'aproximado' os números valem para o recorte aproximado.
+  const PISTA = [
+    { key: 'duplicada', label: 'Duplicada' }, { key: 'obraDup', label: 'Em obra de duplicação' },
+    { key: 'simples', label: 'Pista simples pavimentada' }, { key: 'naoPav', label: 'Sem pavimento ou planejada' },
+  ];
+  const PISTA_SIT = { 'Duplicada': 'duplicada', 'Em obra de Duplicação': 'obraDup', 'Pavimentada': 'simples' };
+  function pistaSNV(conc, snv, idx) {
+    const e = conc.entidades[idx], fis = [...new Set((conc.entFis && conc.entFis[idx]) || [])];
+    if (!snv || !snv.fis || !fis.length || !e || e.qualidade === 'falha' || e.qualidade === 'nao_mapeado') {
+      return { km: null, duplicada: null, obraDup: null, simples: null, naoPav: null, semRecorte: true };
+    }
+    const IM = typeof IntelModel !== 'undefined' ? IntelModel : require('./intel-model.js');
+    const r = { duplicada: 0, obraDup: 0, simples: 0, naoPav: 0 };
+    for (const j of fis) r[PISTA_SIT[IM.fisSit(snv, j)] || 'naoPav'] += snv.fis[j].ext;
+    return { km: r.duplicada + r.obraDup + r.simples + r.naoPav, ...r, semRecorte: false };
+  }
+
+  // Categorias da pista com km e fração do total (só as que têm km); [] sem recorte.
+  function pistaPartes(p) {
+    if (!p || p.semRecorte || !(p.km > 0)) return [];
+    return PISTA.filter(c => p[c.key] > 0).map(c => ({ ...c, km: p[c.key], pct: p[c.key] / p.km }));
+  }
+
+  // Resumo de uma linha da pista (cartão do mapa): "12,3 km no SNV · 80,0% duplicada · 20,0% pista simples pavimentada".
+  function pistaLinha(p) {
+    if (!p || p.semRecorte) return 'sem recorte no SNV';
+    return [`${fmt1.format(p.km)} km no SNV`, ...pistaPartes(p).map(c => `${fmt1.format(c.pct * 100)}% ${c.label.toLowerCase()}`)].join(' · ');
+  }
+
   function filterRows(rows, { estado, uf, ano, tipo, q } = {}) {
     const nq = q ? norm(q) : '';
     return rows.filter(r =>
@@ -174,7 +210,7 @@ const ConcModel = (() => {
   }
 
   return { PRIORITY, entitiesOfFis, stateOfFis, stateArray, emptyConcFilters, passes, kmPorEstado,
-    comparatorRows, rotuloOrigem, origemCampo, participantesExibidos, filterRows, sortRows, totals, fmtBi, fmtPct, fmtData, brsUfs, dataChave, norm };
+    comparatorRows, PISTA, pistaSNV, pistaPartes, pistaLinha, rotuloOrigem, origemCampo, participantesExibidos, filterRows, sortRows, totals, fmtBi, fmtPct, fmtData, brsUfs, dataChave, norm };
 })();
 
 if (typeof module !== 'undefined') module.exports = ConcModel;

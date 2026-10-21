@@ -737,6 +737,13 @@ test('fisSup: superfície do registro principal (PAV, N_PAV, PLA); sem dicionár
   assert.equal(IntelModel.fisSup({ fis: [{ ext: 1 }] }, 0), null);
 });
 
+test('fisSit: situação do registro principal; sem dicionário = null', () => {
+  const s = { dict: { situacao: ['Duplicada', 'Pavimentada'] }, trechos: [['x', 0, 0, 0, 1], ['y', 0, 0, 0, 0]], fis: [{ ext: 1, r: [0, 1] }] };
+  assert.equal(IntelModel.fisSit(s, 0), 'Pavimentada');
+  assert.equal(IntelModel.fisSit(s, 5), null);
+  assert.equal(IntelModel.fisSit({ fis: [{ ext: 1 }] }, 0), null);
+});
+
 test('qualidadeRecorte: um rótulo só para mapa e ficha', () => {
   assert.equal(IntelModel.qualidadeRecorte('ok'), 'Recorte ok');
   assert.equal(IntelModel.qualidadeRecorte('aproximado'), 'Recorte aproximado');

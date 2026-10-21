@@ -798,7 +798,8 @@ const UI = (() => {
       const e = conc.entidades[i];
       const chave = ConcModel.dataChave(e);
       return `<div class="conc-item"><span class="conc-item__name">${concStyleSwatch(e.estado, 24)} ${esc(e.nome)}
-        <span class="conc-item__sub">${esc(concLabel(e.estado))}${chave ? ` · ${e.estado === 'vigente' ? 'assinatura' : 'leilão'} ${esc(ConcModel.fmtData(chave))}` : ''}</span></span>
+        <span class="conc-item__sub">${esc(concLabel(e.estado))}${chave ? ` · ${e.estado === 'vigente' ? 'assinatura' : 'leilão'} ${esc(ConcModel.fmtData(chave))}` : ''}</span>
+        <span class="conc-item__sub" data-pista-resumo="${esc(e.id)}">Pista da concessão: ${esc(ConcModel.pistaLinha(ConcModel.pistaSNV(conc, snv, i)))}</span></span>
         <a class="btn" href="#ficha/${esc(e.id)}">Ver ficha</a></div>`;
     }).join('') : `<div class="conc-item"><span class="conc-item__name">${concStyleSwatch(st, 24)} ${esc(concLabel(st))}</span></div>`;
     return `<div class="card__conc"><h3 class="section-title">Concessão</h3>${body}</div>`;

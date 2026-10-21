@@ -169,3 +169,57 @@ test('participantesExibidos: um só vencedor, o verificado', () => {
   assert.deepEqual(ConcModel.participantesExibidos(ent({ grupo_vencedor: 'Consórcio X', participantes_lista: lista })), lista);
   assert.deepEqual(ConcModel.participantesExibidos(ent({})), []);
 });
+
+// ---------- pista pelo SNV ----------
+// Físicos: 0 Duplicada 10 km, 1 Pavimentada 20, 2 Em obra de Duplicação 5, 3 Implantada 4, 4 Planejada 2,
+// 5 Em obra de Pavimentação 1, 6 Travessia 0,5, 7 físico com dois registros (principal = o primeiro: Pavimentada) 3.
+const snvPista = (() => {
+  const sit = ['Duplicada', 'Pavimentada', 'Em obra de Duplicação', 'Implantada', 'Planejada', 'Em obra de Pavimentação', 'Travessia', 'Leito Natural'];
+  const rec = s => ['x', 0, 0, 0, s, 0];
+  const trechos = [0, 1, 2, 3, 4, 5, 6, 1, 7].map(rec);
+  const fis = [[0, 10], [1, 20], [2, 5], [3, 4], [4, 2], [5, 1], [6, 0.5], [7, 3]].map(([r, ext]) => ({ ext, r: r === 7 ? [7, 8] : [r] }));
+  return { dict: { situacao: sit, superficie: ['PAV'] }, trechos, fis };
+})();
+const concPista = (entFis, e = {}) => ({ entidades: [ent(e)], entFis: [entFis] });
+
+test('pistaSNV: cada categoria pela situação do registro principal; a soma é o km sem perda', () => {
+  const p = ConcModel.pistaSNV(concPista([0, 1, 2, 3, 4, 5, 6, 7], { km_mapeado: 45.5, qualidade: 'ok' }), snvPista, 0);
+  assert.equal(p.semRecorte, false);
+  assert.equal(p.duplicada, 10);
+  assert.equal(p.obraDup, 5);
+  assert.equal(p.simples, 23); // 20 + o físico de dois registros (principal Pavimentada)
+  assert.equal(p.naoPav, 7.5); // implantada 4 + planejada 2 + obra de pavimentação 1 + travessia 0,5
+  assert.equal(p.km, p.duplicada + p.obraDup + p.simples + p.naoPav);
+  assert.ok(Math.abs(p.km - 45.5) < 1e-9);
+});
+
+test('pistaSNV: soma bate com km_mapeado e físico repetido não conta duas vezes', () => {
+  const p = ConcModel.pistaSNV(concPista([1, 3, 1, 3], { km_mapeado: 24, qualidade: 'aproximado' }), snvPista, 0);
+  assert.equal(p.km, 24);
+  assert.deepEqual([p.duplicada, p.obraDup, p.simples, p.naoPav], [0, 0, 20, 4]);
+  assert.equal(p.semRecorte, false);
+});
+
+test('pistaSNV: sem recorte (sem físicos, qualidade falha ou não mapeada) não traz número algum', () => {
+  for (const [fis, q] of [[[], 'nao_mapeado'], [[], 'ok'], [[0, 1], 'falha'], [[0], 'nao_mapeado']]) {
+    const p = ConcModel.pistaSNV(concPista(fis, { qualidade: q }), snvPista, 0);
+    assert.deepEqual(p, { km: null, duplicada: null, obraDup: null, simples: null, naoPav: null, semRecorte: true }, `${fis}/${q}`);
+  }
+  assert.equal(ConcModel.pistaSNV(concPista([0]), null, 0).semRecorte, true);
+});
+
+test('pistaSNV: situação desconhecida cai em não pavimentada (nada de km perdido)', () => {
+  const s = { dict: { situacao: ['Duplicada'] }, trechos: [['x', 0, 0, 0, 9, 0]], fis: [{ ext: 2.5, r: [0] }] };
+  const p = ConcModel.pistaSNV(concPista([0]), s, 0);
+  assert.deepEqual([p.km, p.naoPav], [2.5, 2.5]);
+});
+
+test('pistaLinha e pistaPartes: só categorias com km; sem recorte, aviso e nenhum número', () => {
+  const p = ConcModel.pistaSNV(concPista([0, 1], { qualidade: 'ok' }), snvPista, 0);
+  assert.deepEqual(ConcModel.pistaPartes(p).map(c => c.key), ['duplicada', 'simples']);
+  assert.ok(Math.abs(ConcModel.pistaPartes(p).reduce((a, c) => a + c.pct, 0) - 1) < 1e-9);
+  assert.equal(ConcModel.pistaLinha(p), '30,0 km no SNV · 33,3% duplicada · 66,7% pista simples pavimentada');
+  const sem = ConcModel.pistaSNV(concPista([], { qualidade: 'nao_mapeado' }), snvPista, 0);
+  assert.equal(ConcModel.pistaLinha(sem), 'sem recorte no SNV');
+  assert.deepEqual(ConcModel.pistaPartes(sem), []);
+});

@@ -239,6 +239,70 @@ test('ficha: recorte conferido explicado em linguagem simples (sem "≤")', asyn
   assert.doesNotMatch(t, /≤/);
 });
 
+// Pista pelo SNV: a ficha e o cartão do mapa mostram o que o modelo (pistaSNV) calcula na própria página.
+const numPt = t => Number(t.replace(/\./g, '').replace(',', '.'));
+for (const qualidade of ['ok', 'aproximado']) {
+  test(`ficha: bloco "Pista no SNV" bate com o modelo (recorte ${qualidade})`, async () => {
+    const { id, p } = await page.evaluate(q => {
+      const i = window.CONC.entidades.findIndex((e, k) => e.qualidade === q && window.CONC.entFis[k].length);
+      return { id: window.CONC.entidades[i].id, p: ConcModel.pistaSNV(window.CONC, window.SNV, i) };
+    }, qualidade);
+    assert.equal(p.semRecorte, false);
+    await go('#ficha/' + id);
+    const bloco = page.locator('#ficha section.fblock', { has: page.locator('h3', { hasText: 'Pista no SNV' }) });
+    assert.equal(await bloco.count(), 1);
+    let soma = 0;
+    for (const k of ['duplicada', 'obraDup', 'simples', 'naoPav']) {
+      const dd = bloco.locator(`dd[data-pista="${k}"]`);
+      if (p[k] > 0) {
+        const m = /^([\d.,]+) km \(([\d.,]+)%\)$/.exec((await dd.textContent()).trim());
+        assert.ok(m, k);
+        assert.ok(Math.abs(numPt(m[1]) - p[k]) <= 0.05, `${k} km`);
+        assert.ok(Math.abs(numPt(m[2]) - 100 * p[k] / p.km) <= 0.05, `${k} %`);
+        soma += numPt(m[1]);
+      } else assert.equal(await dd.count(), 0, k);
+    }
+    const tot = numPt(/^([\d.,]+) km$/.exec((await bloco.locator('dd[data-pista="km"]').textContent()).trim())[1]);
+    assert.ok(Math.abs(tot - p.km) <= 0.05);
+    assert.ok(Math.abs(soma - tot) <= 0.3, 'categorias somam o total (tolerância de arredondamento)');
+    assert.match(await bloco.textContent(), /Pelo recorte curado; aproximado quando o recorte é aproximado/);
+    assert.doesNotMatch(await bloco.textContent(), /undefined|null|NaN/);
+  });
+}
+
+test('ficha: concessão sem recorte mostra "sem recorte", nunca 0 km', async () => {
+  // força a qualidade "falha" numa cópia em memória (o dado não muda) e volta ao valor original
+  const { id, q } = await page.evaluate(() => {
+    const e = window.CONC.entidades.find((x, k) => window.CONC.entFis[k].length);
+    const q = e.qualidade; e.qualidade = 'falha';
+    return { id: e.id, q };
+  });
+  try {
+    await go('#ficha/' + id);
+    assert.match(await page.textContent('#ficha'), /Sem recorte no SNV/);
+    assert.equal(await page.locator('#ficha dd[data-pista]').count(), 0);
+    assert.doesNotMatch(await page.textContent('#ficha'), /Pista no SNV[\s\S]*\b0 km/);
+  } finally {
+    await page.evaluate(([i, v]) => { window.CONC.entidades.find(e => e.id === i).qualidade = v; }, [id, q]);
+    await go('#mapa');
+  }
+});
+
+test('cartão do mapa: uma linha resumo da pista da concessão, igual ao modelo', async () => {
+  await go('#mapa');
+  const { j, linha, id } = await page.evaluate(() => {
+    const c = window.CONC, i = c.entidades.findIndex((e, k) => c.entFis[k].length && !ConcModel.pistaSNV(c, window.SNV, k).semRecorte);
+    return { j: c.entFis[i][0], id: c.entidades[i].id, linha: ConcModel.pistaLinha(ConcModel.pistaSNV(c, window.SNV, i)) };
+  });
+  await page.evaluate(j => MapView.pick(j), j);
+  await page.waitForSelector('#card:not([hidden])');
+  const el = page.locator(`#card [data-pista-resumo="${id}"]`);
+  assert.equal(await el.count(), 1);
+  assert.equal((await el.textContent()).trim(), `Pista da concessão: ${linha}`);
+  assert.match(linha, /^[\d.,]+ km no SNV · [\d.,]+% /);
+  await page.keyboard.press('Escape');
+});
+
 test('v2: ficha da Rota dos Sertões mostra data-base e valor dez/2024', async () => {
   await go('#ficha/rota-dos-sertoes');
   const t = await page.textContent('#ficha');

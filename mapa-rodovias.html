@@ -1474,6 +1474,7 @@ const ConcModel = (() => {
   const RANK = Object.fromEntries(PRIORITY.map((k, i) => [k, i]));
   const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
   const fmt2 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmt1 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const collator = new Intl.Collator('pt-BR', { sensitivity: 'base', numeric: true });
 
   const norm = s => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -1606,6 +1607,41 @@ const ConcModel = (() => {
     return lista;
   }
 
+  // Perfil de pista da concessão pelo SNV: km dos físicos do recorte curado (`conc.entFis[idx]`, cada físico uma vez)
+  // por categoria, pela situação do registro principal do físico (IntelModel.fisSit):
+  //   duplicada = 'Duplicada'; obraDup = 'Em obra de Duplicação'; simples = 'Pavimentada' (pista simples pavimentada);
+  //   naoPav = todo o resto (Implantada, Leito Natural, Travessia, Planejada, Em obra de Pavimentação/Implantação,
+  //   situação ausente), para a soma das quatro categorias ser sempre o `km` — nenhum km fica de fora.
+  // Sem recorte (sem físicos, qualidade 'falha'/'nao_mapeado' ou sem SNV) = semRecorte true e nenhum número (null, nunca 0).
+  // Com recorte 'aproximado' os números valem para o recorte aproximado.
+  const PISTA = [
+    { key: 'duplicada', label: 'Duplicada' }, { key: 'obraDup', label: 'Em obra de duplicação' },
+    { key: 'simples', label: 'Pista simples pavimentada' }, { key: 'naoPav', label: 'Sem pavimento ou planejada' },
+  ];
+  const PISTA_SIT = { 'Duplicada': 'duplicada', 'Em obra de Duplicação': 'obraDup', 'Pavimentada': 'simples' };
+  function pistaSNV(conc, snv, idx) {
+    const e = conc.entidades[idx], fis = [...new Set((conc.entFis && conc.entFis[idx]) || [])];
+    if (!snv || !snv.fis || !fis.length || !e || e.qualidade === 'falha' || e.qualidade === 'nao_mapeado') {
+      return { km: null, duplicada: null, obraDup: null, simples: null, naoPav: null, semRecorte: true };
+    }
+    const IM = typeof IntelModel !== 'undefined' ? IntelModel : require('./intel-model.js');
+    const r = { duplicada: 0, obraDup: 0, simples: 0, naoPav: 0 };
+    for (const j of fis) r[PISTA_SIT[IM.fisSit(snv, j)] || 'naoPav'] += snv.fis[j].ext;
+    return { km: r.duplicada + r.obraDup + r.simples + r.naoPav, ...r, semRecorte: false };
+  }
+
+  // Categorias da pista com km e fração do total (só as que têm km); [] sem recorte.
+  function pistaPartes(p) {
+    if (!p || p.semRecorte || !(p.km > 0)) return [];
+    return PISTA.filter(c => p[c.key] > 0).map(c => ({ ...c, km: p[c.key], pct: p[c.key] / p.km }));
+  }
+
+  // Resumo de uma linha da pista (cartão do mapa): "12,3 km no SNV · 80,0% duplicada · 20,0% pista simples pavimentada".
+  function pistaLinha(p) {
+    if (!p || p.semRecorte) return 'sem recorte no SNV';
+    return [`${fmt1.format(p.km)} km no SNV`, ...pistaPartes(p).map(c => `${fmt1.format(c.pct * 100)}% ${c.label.toLowerCase()}`)].join(' · ');
+  }
+
   function filterRows(rows, { estado, uf, ano, tipo, q } = {}) {
     const nq = q ? norm(q) : '';
     return rows.filter(r =>
@@ -1644,7 +1680,7 @@ const ConcModel = (() => {
   }
 
   return { PRIORITY, entitiesOfFis, stateOfFis, stateArray, emptyConcFilters, passes, kmPorEstado,
-    comparatorRows, rotuloOrigem, origemCampo, participantesExibidos, filterRows, sortRows, totals, fmtBi, fmtPct, fmtData, brsUfs, dataChave, norm };
+    comparatorRows, PISTA, pistaSNV, pistaPartes, pistaLinha, rotuloOrigem, origemCampo, participantesExibidos, filterRows, sortRows, totals, fmtBi, fmtPct, fmtData, brsUfs, dataChave, norm };
 })();
 
 if (typeof module !== 'undefined') module.exports = ConcModel;
@@ -1861,13 +1897,24 @@ const IntelModel = (() => {
     return c;
   }
 
+  // Registro principal do físico j (o primeiro de `r`; os demais são BRs coincidentes), ou null.
+  function fisRec(snv, j) {
+    const f = snv && snv.fis && snv.fis[j];
+    return f && f.r && snv.trechos ? (snv.trechos[f.r[0]] || null) : null;
+  }
+
   // Superfície do registro principal do físico j ('PAV', 'N_PAV', 'PLA'); sem dicionário = null.
   const I_SUP = 5; // posição de Model.FIELD.superficie no registro de SNV.trechos
   function fisSup(snv, j) {
-    const d = snv && snv.dict && snv.dict.superficie, f = snv && snv.fis && snv.fis[j];
-    if (!d || !f || !f.r || !snv.trechos) return null;
-    const t = snv.trechos[f.r[0]];
-    return t ? (d[t[I_SUP]] ?? null) : null;
+    const d = snv && snv.dict && snv.dict.superficie, t = fisRec(snv, j);
+    return d && t ? (d[t[I_SUP]] ?? null) : null;
+  }
+
+  // Situação (texto do SNV, ex.: 'Duplicada') do registro principal do físico j; sem dicionário = null.
+  const I_SIT = 4; // posição de Model.FIELD.situacao
+  function fisSit(snv, j) {
+    const d = snv && snv.dict && snv.dict.situacao, t = fisRec(snv, j);
+    return d && t ? (d[t[I_SIT]] ?? null) : null;
   }
 
   // Volume total do físico j usado no Tráfego e no veíc·km: VMDa 2025 quando o bloco existe (0 = sem dado), senão
@@ -2690,7 +2737,7 @@ const IntelModel = (() => {
   const fmtVkm = x => scaled(x, [[1, 0, '', ' veíc·km/dia'], [1e6, 1, '', ' mi veíc·km/dia'], [1e9, 1, '', ' bi veíc·km/dia']]);
   const fmtTkm = x => scaled(x, [[1, 0, '', ' t·km/ano'], [1e6, 1, '', ' mi t·km/ano'], [1e9, 1, '', ' bi t·km/ano'], [1e12, 1, '', ' tri t·km/ano']]);
 
-  return { MODES, has, sumNullable, nAnos, vmdaOf, v25Of, acidOf, cargaOf, fisSup, estTrafego,
+  return { MODES, has, sumNullable, nAnos, vmdaOf, v25Of, acidOf, cargaOf, fisSup, fisSit, estTrafego,
     rows, metricArray, quantileBreaks, classOf, aggregateIntel, fisIntel, taxaAcidentes, pointsOfFis, decodeTopo,
     rodLabel, decodeLine, estConcLines, distToSegment, pointRadius, lineWeight, PORTO_TIPOS, PORTO_FORMA, portoTipo, monthLabel, mesX, xMes, fmtMesX, anosLabel,
     FUNDOS, PRODUTOS, fundoFonte, fundoValues,
@@ -4229,6 +4276,19 @@ const Ficha = (() => {
     return [[`Capex (${e.data_base || '—'})`, e.capex, 'bi', 'capex'], [`Opex (${e.data_base || '—'})`, e.opex, 'bi', 'opex']];
   }
 
+  // Pista pelo SNV (ConcModel.pistaSNV): km e % de cada categoria do recorte curado; sem recorte, só o aviso.
+  function pistaBlock(e, idx) {
+    if (!snv) return '';
+    const p = ConcModel.pistaSNV(conc, snv, idx);
+    if (p.semRecorte) return '<p class="ftext" data-pista="sem">Sem recorte no SNV: a pista desta concessão não pôde ser calculada.<\/p>';
+    const pct = v => `${fmt1.format(v * 100)}%`;
+    const linhas = ConcModel.pistaPartes(p).map(c =>
+      `<dt>${esc(c.label)}<\/dt><dd data-pista="${c.key}">${esc(F.km(c.km))} (${esc(pct(c.pct))})<\/dd>`).join('');
+    return `<dl class="fgrid">${linhas}<dt>Total do recorte<\/dt><dd data-pista="km">${esc(F.km(p.km))}<\/dd><\/dl>
+      <p class="ftext fpad">Pelo recorte curado; aproximado quando o recorte é aproximado${e.qualidade === 'aproximado' ? ' (é o caso desta concessão)' : ''}. ` +
+      `Cada trecho físico do SNV conta uma vez, pela situação dele. "Sem pavimento ou planejada" reúne leito natural, implantada, travessia, planejada e obras de pavimentação ou implantação.<\/p>`;
+  }
+
   function render(e, idx) {
     const f = e.ficha || {};
     const fis = conc.entFis[idx] || [];
@@ -4284,6 +4344,7 @@ const Ficha = (() => {
     const relHtml = rel.length ? `<ul class="timeline">${rel.map(r => `<li><a href="#ficha/${esc(r.id)}">${esc(r.nome)}<\/a> · ${esc(estadoLabel(r.estado))}<\/li>`).join('')}<\/ul>` : '';
     const qual = { ok: 'Conferido: a extensão no mapa difere no máximo 5% (ou 10 km) da extensão informada no RoadShow', aproximado: 'Recorte aproximado', nao_mapeado: 'Trecho não mapeado no SNV', falha: 'Recorte com falha' }[e.qualidade] || '';
     const trecho = dl(rows(e, [['Recorte no mapa', qual, 'txt'], ['km no SNV', e.km_mapeado || null, 'km'], ['Nota', e.nota_trecho, 'txt']]));
+    const pista = pistaBlock(e, idx);
     const pages = [...new Set(Object.values(e.fontes || {}).flat())].filter(isNum).sort((a, b) => a - b);
 
     $('#ficha').innerHTML = `
@@ -4314,6 +4375,7 @@ const Ficha = (() => {
         ${block('Participantes do leilão', part, true)}
         ${block('Notas da verificação', notasVerif(e), true)}
         ${block('Itens relacionados', relHtml)}
+        ${block('Pista no SNV', pista)}
         ${block('Trecho no mapa', trecho)}
         ${block('Outras informações da ficha', extras, true)}
         ${anttBlocks(e.id)}
@@ -6689,7 +6751,8 @@ const UI = (() => {
       const e = conc.entidades[i];
       const chave = ConcModel.dataChave(e);
       return `<div class="conc-item"><span class="conc-item__name">${concStyleSwatch(e.estado, 24)} ${esc(e.nome)}
-        <span class="conc-item__sub">${esc(concLabel(e.estado))}${chave ? ` · ${e.estado === 'vigente' ? 'assinatura' : 'leilão'} ${esc(ConcModel.fmtData(chave))}` : ''}<\/span><\/span>
+        <span class="conc-item__sub">${esc(concLabel(e.estado))}${chave ? ` · ${e.estado === 'vigente' ? 'assinatura' : 'leilão'} ${esc(ConcModel.fmtData(chave))}` : ''}<\/span>
+        <span class="conc-item__sub" data-pista-resumo="${esc(e.id)}">Pista da concessão: ${esc(ConcModel.pistaLinha(ConcModel.pistaSNV(conc, snv, i)))}<\/span><\/span>
         <a class="btn" href="#ficha/${esc(e.id)}">Ver ficha<\/a><\/div>`;
     }).join('') : `<div class="conc-item"><span class="conc-item__name">${concStyleSwatch(st, 24)} ${esc(concLabel(st))}<\/span><\/div>`;
     return `<div class="card__conc"><h3 class="section-title">Concessão<\/h3>${body}<\/div>`;

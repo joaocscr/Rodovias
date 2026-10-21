@@ -71,6 +71,19 @@ const Ficha = (() => {
     return [[`Capex (${e.data_base || '—'})`, e.capex, 'bi', 'capex'], [`Opex (${e.data_base || '—'})`, e.opex, 'bi', 'opex']];
   }
 
+  // Pista pelo SNV (ConcModel.pistaSNV): km e % de cada categoria do recorte curado; sem recorte, só o aviso.
+  function pistaBlock(e, idx) {
+    if (!snv) return '';
+    const p = ConcModel.pistaSNV(conc, snv, idx);
+    if (p.semRecorte) return '<p class="ftext" data-pista="sem">Sem recorte no SNV: a pista desta concessão não pôde ser calculada.</p>';
+    const pct = v => `${fmt1.format(v * 100)}%`;
+    const linhas = ConcModel.pistaPartes(p).map(c =>
+      `<dt>${esc(c.label)}</dt><dd data-pista="${c.key}">${esc(F.km(c.km))} (${esc(pct(c.pct))})</dd>`).join('');
+    return `<dl class="fgrid">${linhas}<dt>Total do recorte</dt><dd data-pista="km">${esc(F.km(p.km))}</dd></dl>
+      <p class="ftext fpad">Pelo recorte curado; aproximado quando o recorte é aproximado${e.qualidade === 'aproximado' ? ' (é o caso desta concessão)' : ''}. ` +
+      `Cada trecho físico do SNV conta uma vez, pela situação dele. "Sem pavimento ou planejada" reúne leito natural, implantada, travessia, planejada e obras de pavimentação ou implantação.</p>`;
+  }
+
   function render(e, idx) {
     const f = e.ficha || {};
     const fis = conc.entFis[idx] || [];
@@ -126,6 +139,7 @@ const Ficha = (() => {
     const relHtml = rel.length ? `<ul class="timeline">${rel.map(r => `<li><a href="#ficha/${esc(r.id)}">${esc(r.nome)}</a> · ${esc(estadoLabel(r.estado))}</li>`).join('')}</ul>` : '';
     const qual = { ok: 'Conferido: a extensão no mapa difere no máximo 5% (ou 10 km) da extensão informada no RoadShow', aproximado: 'Recorte aproximado', nao_mapeado: 'Trecho não mapeado no SNV', falha: 'Recorte com falha' }[e.qualidade] || '';
     const trecho = dl(rows(e, [['Recorte no mapa', qual, 'txt'], ['km no SNV', e.km_mapeado || null, 'km'], ['Nota', e.nota_trecho, 'txt']]));
+    const pista = pistaBlock(e, idx);
     const pages = [...new Set(Object.values(e.fontes || {}).flat())].filter(isNum).sort((a, b) => a - b);
 
     $('#ficha').innerHTML = `
@@ -156,6 +170,7 @@ const Ficha = (() => {
         ${block('Participantes do leilão', part, true)}
         ${block('Notas da verificação', notasVerif(e), true)}
         ${block('Itens relacionados', relHtml)}
+        ${block('Pista no SNV', pista)}
         ${block('Trecho no mapa', trecho)}
         ${block('Outras informações da ficha', extras, true)}
         ${anttBlocks(e.id)}
