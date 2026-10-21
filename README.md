@@ -1,25 +1,32 @@
 # Rodovias do Brasil · Centro de Inteligência
 
-Mapa interativo dos trechos do **SNV (Sistema Nacional de Viação, DNIT)**, versão 202607A, sobre o mapa das UFs do Brasil, com os dados de mercado do **RoadShow 2026-2027** do Ministério dos Transportes (v40, 14/10/2026) para estudar as concessões rodoviárias federais. Na v3, o painel ganha camadas e abas de tráfego, praças de pedágio, carga, agro, multimodal, rodovias estaduais e a carteira de projetos, cada uma com a fonte e o rótulo modelado × medido. A v3.1 acrescenta as Rotas de Integração Sul-Americana, uma paleta de cores de dados e o VMDa 2025 do DNIT nas rodovias federais e estaduais (veja [Novidades da v3.1](#novidades-da-v31)). Feito para análise interna, no design system Galapagos.
+Mapa interativo dos trechos do **SNV (Sistema Nacional de Viação, DNIT)**, versão 202607A, sobre o mapa das UFs do Brasil, com os dados de mercado do **RoadShow 2026-2027** do Ministério dos Transportes (v40, 14/10/2026) para estudar as concessões rodoviárias federais. Na v3, o painel ganha camadas e abas de tráfego, praças de pedágio, carga, agro, multimodal, rodovias estaduais e a carteira de projetos, cada uma com a fonte e o rótulo modelado × medido. A v3.1 acrescenta as Rotas de Integração Sul-Americana, uma paleta de cores de dados e o VMDa 2025 do DNIT nas rodovias federais e estaduais (veja [Novidades da v3.1](#novidades-da-v31)). A v4 confere os leilões em fonte oficial, mostra a origem de cada dado de leilão, acrescenta a série de deságio 2007–2026, o ranking de grupos econômicos e a exportação CSV (veja [Novidades da v4](#novidades-da-v4)). Feito para análise interna, no design system Galapagos.
 
-**Abrir:** dê duplo clique em [`mapa-rodovias.html`](mapa-rodovias.html). É um arquivo único (até 15 MB, hoje cerca de 10,3 MB) que roda offline: dados, código, estilos e fontes estão embutidos.
+**Abrir:** dê duplo clique em [`mapa-rodovias.html`](mapa-rodovias.html). É um arquivo único (até 15 MB, hoje cerca de 11,6 MB) que roda offline: dados, código, estilos e fontes estão embutidos.
 
 ## Abas
 
 - **Mapa:** a malha federal. No modo **Concessões** (padrão), cada trecho tem o estado da concessão: leilão agendado 2026, projeto 2027, contrato do programa 2023–26, contrato vigente anterior, concessão no SNV fora do RoadShow, estudo pós-2027 ou sem concessão. Quando um trecho tem mais de um estado, a cor segue essa ordem de prioridade. No modo **Situação física**, valem as cores da v1. Há também os modos de cor **Tráfego** (VMDa 2025 do DNIT, modelado), **Pesados** (VMDa 2023 da Infra S.A., modelado), **Carga agrícola** (PNL 2035, modelado) e **Acidentes** (PRF, medido). Há filtros por estado, projeto e ano, e a busca também encontra nomes de projeto. O cartão do trecho lista as concessões dele, com "Ver ficha". Camadas opcionais: rodovias estaduais (com as concessões estaduais), praças de pedágio, SATs, obras da ANTT, ferrovias em operação, portos e terminais, fluxos ferroviários de grãos, as Rotas de Integração Sul-Americana (com os países vizinhos) e, como fundo por município, a produção de soja, milho, cana, algodão, café e trigo e a capacidade de armazenagem.
-- **Ficha do projeto:** todos os campos do RoadShow: capex e opex (nominal e VPL), WACC, tarifa, obras, praças, indicadores, garantias, CAPEX anual do ciclo de obras, cronograma e participantes. Um ícone de aviso marca as divergências entre páginas do PDF, mostrando os valores alternativos e as páginas. Na v3, a ficha federal acrescenta as obras acompanhadas pela ANTT, as séries realizadas e o pipeline; as concessões estaduais têm ficha própria.
+- **Ficha do projeto:** todos os campos do RoadShow: capex e opex (nominal e VPL), WACC, tarifa, obras, praças, indicadores, garantias, CAPEX anual do ciclo de obras, cronograma e participantes. Um ícone de aviso marca as divergências entre fontes, mostrando o valor exibido e os alternativos, inclusive o que o RoadShow imprime. Na v4, cada dado de leilão da ficha (data do leilão, vencedor, deságio, tarifa-teto e vencedora, assinatura, início da operação, prazo) traz um selo de origem com link, e o bloco "Notas da verificação" reúne os fatos novos e os proponentes inabilitados. Na v3, a ficha federal acrescenta as obras acompanhadas pela ANTT, as séries realizadas e o pipeline; as concessões estaduais têm ficha própria.
 - **Projetos:** comparador ordenável dos 39 contratos e dos 15 projetos futuros, com filtros (inclusive por esfera, federal ou estadual), seleção de colunas da ficha e totais; as concessões estaduais também entram no comparador. Abaixo, os 27 estudos pós-2027. A seção Pipeline lista os próximos leilões, consultas e estudos, federais e estaduais.
 - **Tráfego:** praças de pedágio da ANTT (VMD de 2025, contagem medida), tráfego mensal, Índice ABCR de fluxo pedagiado, VMDa modelado e acidentes da PRF.
 - **Cargas:** produção agrícola por UF e município, fluxos ferroviários de grãos (SIADE), exportação por unidade da Receita (Comex Stat), fretes rodoviários (CONAB) e os trechos com maior carga agrícola (PNL 2035).
-- **Mercado:** leilões por ano, concorrentes × deságio, grupos econômicos, gestão direta × concedida, investimentos e participantes de cada leilão de 2007 a 2026.
+- **Mercado:** leilões por ano, série de deságio do vencedor de 2007 a 2026, concorrentes × deságio, grupos econômicos (com o ranking de vitórias e derrotas e a lista de como os nomes foram agrupados), gestão direta × concedida, investimentos e participantes de cada leilão de 2007 a 2026, com data, deságio do vencedor e selo de origem.
 - **Regulatório:** Portaria 995/2023, matriz de riscos, garantias, financiamento, otimizações contratuais (Portaria 848/2023), sustentabilidade e estruturadores.
-- **Fontes:** todas as fontes da v3 (nome, período, data de acesso, licença, tipo e nota), as bases da v1/v2 e as fontes tentadas que não deram dado. Cada cartão das abas também traz a sua linha "Fonte:".
+- **Fontes:** todas as fontes da v3 (nome, período, data de acesso, licença, tipo e nota), as bases da v1/v2, as fontes tentadas que não deram dado e, na v4, a lista dos documentos usados na verificação dos leilões (tipo, órgão ou veículo, título, data, link e acesso). Cada cartão das abas também traz a sua linha "Fonte:". Toda tabela de dados tem o botão **Exportar CSV** (v4).
 
 ### Regras dos dados do RoadShow
 
 - Só as páginas em **português** (ímpares) do PDF. As páginas em inglês convertem para milhas e US$.
 - **Data-base dos preços:** o comparador, os totais e o cartão usam capex e opex das tabelas em **dez/2024** (p. 3–5 e p. 97) sempre que existirem. Quem só tem ficha usa a data-base da ficha, mostrada na coluna "Data-base". A ficha mostra os próprios valores, com a data-base dela, e o valor em dez/2024 ao lado.
 - **Divergências** entre páginas do PDF ficam registradas em `data/roadshow/entidades.json` (`divergencias`) e aparecem na ficha. Uma diferença de preço que só se deve à data-base vira nota (`notas_base`), não divergência.
+- **Leilões: regra de fontes (v4).** Para os campos de leilão (data do leilão, vencedor, deságio do vencedor, tarifa-teto e tarifa vencedora, assinatura, início da operação, prazo), o valor exibido segue a hierarquia **oficial > RoadShow > imprensa**:
+  1. **Oficial:** documento do ato, de órgão público (ata ou resultado da B3, deliberação ou página da ANTT, contrato, diário oficial, TCU, governo estadual e agências). Fica na camada `data/roadshow/verificacao.json`, com tipo, órgão, título, data do documento, URL, data de acesso e trecho.
+  2. **RoadShow:** do Ministério dos Transportes, mas compilação posterior, com erros e divergências internas.
+  3. **Imprensa:** só entra quando não há 1 nem 2, sempre marcada como **"não oficial"**, com veículo, data e link.
+  - O valor do RoadShow que não for o exibido **continua registrado** como divergência, com a página. Fatos novos da imprensa viram nota. Nada entra sem fonte: campo sem fonte achada fica como está (RoadShow) ou "—", com a marca "não localizado em fonte oficial". O `entidades.json` e o `mercado.json` não são reescritos; a camada é aplicada no build.
+  - Os agregados que o RoadShow imprime (deságio médio por número de concorrentes, p. 25; faixas, p. 27) continuam como impressos e rotulados assim. Os cálculos do painel (média, mediana, dispersão, série) usam o valor exibido.
+  - O relatório de cobertura (leilões, campos por tipo de fonte e não localizados) é gerado em [`data/roadshow/verificacao.md`](data/roadshow/verificacao.md). O pytest falha se um valor não tiver fonte, se uma fonte oficial não for de domínio de órgão público ou B3, se uma fonte de imprensa não tiver veículo, data e URL, se uma chave não casar com uma entidade ou linha de participantes, ou se um nome de proponente não tiver grupo em `grupos_alias.json`.
 - **Trechos:** cada contrato ou projeto é ligado aos trechos do SNV por intervalos de km curados à mão (`data/roadshow/trechos.json`). O build confere a soma dos km com a extensão declarada e grava [`data/roadshow/cobertura.md`](data/roadshow/cobertura.md). Lotes com rodovias estaduais (Paraná, Rota da Celulose, Via Liberdade) aparecem como "aproximado", porque só a parte federal está no SNV.
 
 ## Camadas de inteligência (v3)
@@ -48,6 +55,27 @@ Design em [`docs/superpowers/specs/2026-10-20-v3.1-rotas-paleta-vmda2025-design.
 - **Rotas de Integração Sul-Americana** (camada "Rotas e países vizinhos" no painel Camadas). As 5 rotas do MPO: Ilha das Guianas, Amazônica, Quadrante Rondon, Bioceânica de Capricórnio e Bioceânica do Sul. Cada rota tem a sua cor e um rótulo direto "Rota N · Nome". A camada mostra também as hidrovias, a cabotagem, os trechos em pavimentação e em estudos, e o contorno dos países vizinhos. Ao ligar, o mapa enquadra a América do Sul e a malha federal fica esmaecida. Clicar numa rota (ou no rótulo, ou na legenda) abre o cartão com países, UFs, cidades e portos em ordem, rodovias, hidrovias, obras citadas pelo MPO e a fonte. O traçado é **esquemático**: o MPO não publica geodado das rotas. As linhas vêm do mapa vetorial da apresentação de 01/07/2026 (p. 7), georreferenciadas por 70 cidades (erro médio de cerca de 9 km), e o mapa e o cartão dizem isso.
 - **Paleta de cores de dados.** A interface e a malha federal base continuam no Galapagos. As camadas temáticas, as rotas e os modos quantitativos usam uma paleta de dados validada para daltonismo e legibilidade, com cor fixa por entidade e sempre com legenda ou rótulo. Cada modo quantitativo tem um tom, do claro ao escuro: Tráfego azul, Pesados violeta, Carga agrícola laranja e Acidentes vermelho. Os tokens estão em `src/styles-map.js`. A documentação, com as saídas do validador, os pares de cores conferidos e os limites conhecidos, está em [`docs/paleta.md`](docs/paleta.md). O validador `scripts/validate_palette.js` roda no `npm test` (`tests/palette.test.mjs`).
 - **VMDa 2025 (DNIT, modelado), federal e estadual.** O modo Tráfego e o veíc·km passam a usar o VMDa 2025: total e os dois sentidos do SNV por trecho físico. Pesados continua no VMDa 2023 da Infra S.A., porque o 2025 não separa leves e pesados. No cartão, os pesados de 2025 são uma estimativa (total 2025 × % de pesados de 2023), e o rótulo diz isso. Trechos que o modelo marca como não simuláveis (áreas urbanas) aparecem com "uso restrito". Com a camada de rodovias estaduais ligada no modo Tráfego, as estaduais são coloridas pelo VMDa 2025. Elas usam as mesmas classes e cores da malha federal, com traço mais fino; sem dado, ficam em cinza contínuo. A aba Tráfego mostra o veíc·km/dia da malha federal e o das rodovias estaduais, com a cobertura. Em todos os casos, VMDa 0 conta como sem dado.
+
+## Novidades da v4
+
+Design em [`docs/superpowers/specs/2026-10-21-v4-verificacao-leiloes-design.md`](docs/superpowers/specs/2026-10-21-v4-verificacao-leiloes-design.md). Um dashboard do RoadShow montado por um colega serviu só de pista de onde procurar; nenhum número dele entrou sem o documento achado e lido.
+
+- **47 leilões verificados** (25 de 2023–2026 e 22 de 2007–2022), com 297 campos em fonte oficial, nenhum só do RoadShow, nenhum só de imprensa e 2 não localizados (a data de início da operação da Rota da Celulose e o deságio da Ponte São Borja, que não se aplica). São 201 fontes catalogadas (172 oficiais, 25 de imprensa, 4 do RoadShow). A regra está em "Regras dos dados do RoadShow".
+- **Selo de origem** (`oficial`, `RoadShow`, `imprensa — não oficial`, `não localizado em fonte oficial`) com link na ficha, na tabela de participantes, no comparador de Projetos (coluna "Fonte do deságio") e na aba Fontes. O ícone de divergência lista o valor exibido e o que o RoadShow imprime.
+- **O que a verificação confirmou e corrigiu:**
+  - RIP Lotes 1, 2 e 4: as datas de assinatura do RoadShow (30/01/2024 e 06/02/2026) estão certas; o colega errou.
+  - RIP Lote 5: deságio de 23,83% (p. 15), confirmado pela B3; a p. 97 imprime 21,83%.
+  - Rota da Celulose: o Consórcio K&G (9%) foi declarado vencedor na sessão e inabilitado em 04/08/2025; o Consórcio Caminhos da Celulose, com 8% (DOE-MS), foi adjudicado. O RoadShow atribui a ele os 9% do K&G. A assinatura exibida é 06/02/2026 (Agência de Notícias do Governo de MS); o início da operação fica não localizado.
+  - Via Liberdade (PPP estadual, regulada pela Artemig): início da operação em 20/03/2026 e assinatura em 12/01/2026. A natureza estadual entra como nota; a entidade não muda de esfera.
+  - Autopista Fluminense: o vencedor é Arteris S.A. (o RoadShow imprime "Ateris SA (Corretora Itaú)").
+  - Transbrasiliana (2007): o vencedor foi o Consórcio BRVias, com 39,99%, e não a Triunfo.
+  - Ponte binacional São Borja–Santo Tomé: o leilão foi decidido pela maior outorga; os 0,38% que o RoadShow imprime como deságio são ágio sobre a outorga mínima. O deságio fica como não localizado (não se aplica), e o ativo sai das séries e médias.
+  - Leilões de 2007–2022: data, vencedor da época, deságio, tarifa-teto e vencedora (como texto, com unidade e data-base) e prazo, nos 14 contratos vigentes e na tabela de participantes.
+- **Mercado:**
+  - **Série de deságio 2007–2026:** um ponto por leilão (cheio para oficial e RoadShow, anel tracejado para imprensa, anel externo para os deságios limitados pelo edital), linha de 18% a partir de 2023 (Portaria 995/2023) e contagem dos leilões sem deságio.
+  - **Ranking de grupos econômicos:** participações, vitórias, derrotas, taxa de êxito, primeira e última aparição, com filtro de período, ordenação e o aviso de que, onde o PDF não lista proponentes, só o vencedor é contado. Vale o grupo da época do leilão, e vencedor é o adjudicatário (quem foi inabilitado conta como derrota). Os nomes são ligados a grupos por [`data/roadshow/grupos_alias.json`](data/roadshow/grupos_alias.json) (127 nomes em 78 grupos, cada junção com motivo e, quando não óbvia, fonte), listada abaixo do ranking. Aquisição posterior ao leilão não junta.
+- **Exportar CSV** em toda `table.grid`: o que está na tela (filtros e ordenação), separador `;`, UTF-8 com BOM, decimal com vírgula, datas `dd/mm/aaaa`, proteção contra fórmula (prefixo `'`), coluna de fonte e nome de arquivo `<tabela>-<aaaa-mm-dd>.csv`. Funciona offline, sem dependência nova.
+- **Pipeline:** as datas de leilão e assinatura seguem o valor exibido (a Rota dos Sertões passou a "contrato", com a assinatura de 29/09/2026).
 
 ## O que dá para fazer
 
@@ -105,8 +133,8 @@ Para atualizar os contornos das UFs (IBGE), o Leaflet ou as fontes, rode `python
 ## Testes
 
 ```bash
-python -m pytest                     # pipeline SNV, RoadShow e blocos de data/intel/, incluindo a linguagem das notas de fonte (os testes com bruto exigem data/raw/ e são pulados sem ele)
-npm test                             # filtro, soma, busca, concessões, gráficos e paleta de dados (JS)
+python -m pytest                     # pipeline SNV, RoadShow, verificação dos leilões (v4) e blocos de data/intel/, incluindo a linguagem das notas de fonte (os testes com bruto exigem data/raw/ e são pulados sem ele)
+npm test                             # filtro, soma, busca, concessões, gráficos, paleta, leilões e CSV (JS)
 npm run test:e2e                     # navegador: offline, interações, desempenho (requer Playwright)
 ```
 
@@ -119,12 +147,19 @@ npm run test:e2e                     # navegador: offline, interações, desempe
 | `scripts/fetch_assets.py` | baixa as UFs do IBGE, o Leaflet e as fontes |
 | `scripts/roadshow.py` | recorte curado (km → trechos), validação e payload das concessões |
 | `scripts/intel/` | um script por domínio (`trafego`, `antt`, `carga`, `agro`, `multimodal`, `pipeline`, `estaduais` e, na v3.1, `vmda2025` e `rotas`), a junção com o SNV (`snvbase.py`), o download com manifesto (`fontes.py`) e o bloco de fontes (`fontes_bloco.py`) |
+| `scripts/verificacao.py` | camada de verificação dos leilões: valida `verificacao.json` e `grupos_alias.json` e a aplica sobre as concessões (usada pelo `build.py` e por `scripts/intel/pipeline.py`) |
 | `scripts/validate_palette.js` | validador de paleta do método dataviz (daltonismo, luminosidade, contraste), usado por `tests/palette.test.mjs` |
 | `data/base/` | SNV e concessões congelados (`snv.json`, `conc.json`), lidos pelo build |
 | `data/roadshow/` | dados curados do RoadShow e relatório de cobertura |
+| `data/roadshow/verificacao.json` | v4: leilões verificados, com valor, tipo e fontes de cada campo, notas e inabilitados (a hierarquia de fontes está em "Regras dos dados do RoadShow") |
+| `data/roadshow/grupos_alias.json` | v4: nome impresso → grupo econômico, com motivo e fontes, para o ranking |
+| `data/roadshow/verificacao.md` | v4: relatório de cobertura da verificação, gerado pelo `build.py` |
 | `data/intel/` | blocos da v3 (`<bloco>.json`), `pipeline.csv`, `fontes.json` e `manifest.json` |
 | `data/manifest/` | manifesto de download por domínio |
 | `tests/` | testes Python (`test_*.py`) e JS (`*.test.mjs`) |
 | `src/` | template, CSS (tokens Galapagos), tokens de cor de dados (`styles-map.js`) e JS (`model`, `map`, `layers`, `ui` e uma aba por arquivo) |
+| `src/leiloes-model.js` | v4: funções puras do ranking de grupos, da série de deságio e das médias, testadas com `node --test` |
+| `src/csv.js` | v4: exportação CSV compartilhada por todas as tabelas |
+| `src/selo.js` | v4: selo de origem e texto das fontes (ficha, tabela de participantes, aba Fontes) |
 | `docs/paleta.md` | paleta de dados: tokens, atribuição por camada, rampas e saídas do validador |
 | `docs/superpowers/` | design e plano de implementação |
