@@ -14,7 +14,8 @@ const Layers = (() => {
   // Rótulo de país: o dado guarda o polo de inacessibilidade; no mapa, o rótulo vai para o ponto livre mais próximo das linhas
   // das rotas (IntelModel.paisLabelPoint), com a caixa do texto medida no zoom do enquadramento (≈ 11,4 px por grau no zoom 4).
   // Mantida fixa: medir no zoom real de telas menores (3,5, ≈ 8 px/°) aumenta a caixa e empurra Bolívia, Colômbia e Guiana para
-  // cima dos rótulos vizinhos (paisLabelPoint não evita outros rótulos); nessas telas a legenda das rotas começa recolhida (ui.js).
+  // cima dos rótulos de rota; nessas telas a legenda das rotas começa recolhida (ui.js). Entre rótulos de país (ex.: SR e GF),
+  // a caixa vale no zoom mínimo: os já colocados são evitados também em telas menores.
   const PX_GRAU = 11.4, pais_hw = t => (t.length * 4.3 + 6) / PX_GRAU, PAIS_HH = 12 / PX_GRAU;
   const LADO_DIR = { n: ['top', [0, -8]], s: ['bottom', [0, 8]], e: ['right', [8, 0]], w: ['left', [-8, 0]],
     nw: ['left', [-8, -8]], sw: ['left', [-8, 8]], ne: ['right', [8, -8]], se: ['right', [8, 8]] };
@@ -52,7 +53,7 @@ const Layers = (() => {
     { key: 'ferrovias', label: 'Ferrovias em operação', has: () => ferrovias().length > 0, n: () => ferrovias().length,
       fonte: () => fonteMm(/BaseFerro|Ferro/) },
     { key: 'portos', label: 'Portos e ETCs', has: () => !!mm('portos'), n: () => shownPortos().length,
-      fonte: () => `${fonteMm(/ANTAQ/)} · Porto Organizado, Porto público, TUP e ETC` },
+      fonte: () => `${fonteMm(/ANTAQ/)} · ${Object.values(IM.PORTO_TIPOS).join(', ').replace(/, ([^,]*)$/, ' e $1')}` },
     { key: 'siade', label: 'Fluxos ferroviários de grãos', has: () => !!(mm('siade') && mm('siade').length), n: () => mm('siade').length,
       fonte: () => `${fonteMm(/SIADE/)} · origem → destino, espessura ∝ toneladas` },
     { key: 'rotas', label: 'Rotas de Integração Sul-Americana', has: () => !!rotas(), n: () => rotas().rotas.length,
@@ -246,19 +247,30 @@ const Layers = (() => {
   // trechos em pavimentação e em estudos por cima; rótulo direto "Rota N · Nome" (texto na cor de texto, amostra na cor da rota).
   function buildRotas() {
     const R = rotas(), group = L.layerGroup(), ls = IM.rotaLinhas(R), rend = renderer('rotas');
-    const P = ROTAS_PAIS, rp = renderer('paises'), todasLinhas = ls.map(l => l.ll);
+    const P = ROTAS_PAIS, rp = renderer('paises'), todasLinhas = ls.map(l => l.ll), ocupados = [];
+    const escMin = PX_GRAU / (256 * 2 ** map.getMinZoom() / 360);  // px por grau no zoom 4 ÷ no zoom mínimo
+    const comRotulo = [];
     for (const p of R.paises || []) {
       const rings = IM.paisAneis(p);
       if (!rings.length) continue;
       group.addLayer(L.polygon(rings.map(r => [r]), { renderer: rp, interactive: false, color: P.color, weight: P.weight, opacity: P.opacity,
         fillColor: P.fillColor, fillOpacity: P.fillOpacity, smoothFactor: 1 }));
       if (Array.isArray(p.label)) {
-        const t = document.createElement('span');
-        t.textContent = IM.paisLabel(p);
-        const at = IM.paisLabelPoint(p, todasLinhas, { hw: pais_hw(t.textContent), hh: PAIS_HH });
-        group.addLayer(L.tooltip({ permanent: true, direction: 'center', className: 'uf-label pais-label', pane: 'l-paisLabels', interactive: false })
-          .setLatLng(at).setContent(t));
+        const [s, w, n, e] = IM.ringsBBox(rings);
+        comRotulo.push({ p, area: (n - s) * (e - w) });
       }
+    }
+    // Rótulos fora das linhas das rotas e dos rótulos de país já colocados. Os países menores escolhem primeiro (têm menos
+    // lugares livres): nas Guianas, a Guiana Francesa e o Suriname ficam no lugar e a Guiana se afasta. Entre rótulos, a caixa
+    // vale no zoom mínimo do mapa (em graus, maior que a medida no zoom 4).
+    for (const { p } of comRotulo.sort((a, b) => a.area - b.area)) {
+      const t = document.createElement('span');
+      t.textContent = IM.paisLabel(p);
+      const hw = pais_hw(t.textContent), caixa = { hw: hw * escMin, hh: PAIS_HH * escMin };
+      const at = IM.paisLabelPoint(p, todasLinhas, { hw, hh: PAIS_HH, ocupados, caixa });
+      if (at) ocupados.push({ lat: at[0], lng: at[1], hw: caixa.hw, hh: caixa.hh });
+      group.addLayer(L.tooltip({ permanent: true, direction: 'center', className: 'uf-label pais-label', pane: 'l-paisLabels', interactive: false })
+        .setLatLng(at).setContent(t));
     }
     const lines = (tipo, rota) => ls.filter(l => l.tipo === tipo && (rota === undefined || l.rota === rota)).map(l => l.ll);
     const extra = tipo => {

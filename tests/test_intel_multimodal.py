@@ -88,6 +88,18 @@ def test_portos(mm):
     assert len(etc_miri) >= 4
     assert any("Cargill" in p["nome"] for p in etc_miri)
     assert any("Hidrovias do Brasil" in p["nome"] for p in etc_miri)
+    # todo ponto em terra dentro (ou a menos de 200 km, no mar) da UF do registro; o que não estava foi para o município do
+    # cadastro. As bacias sedimentares ("Plataforma Marítima", fora da camada do mapa) ficam no mar, longe da costa.
+    ufs = multimodal._ufs_geo()
+    from shapely.geometry import Point
+    longe = [p["nome"] for p in po if p["tipo"] != "Plataforma Marítima"
+             and ufs[p["uf"]].distance(Point(p["lon"], p["lat"])) * 111 > multimodal.PORTO_MAX_KM_UF]
+    assert longe == []
+    kf = [p for p in po if p["nome"] == "Keppel Fels"]
+    assert len(kf) == 1 and kf[0]["uf"] == "RJ" and kf[0]["aprox"] is True
+    assert -23.0 < kf[0]["lat"] < -22.8 and -43.2 < kf[0]["lon"] < -42.9  # Niterói
+    assert all(p.get("aprox", False) in (True, False) for p in po)
+    assert sum(1 for p in po if p.get("aprox")) == 1
 
 
 def test_siade(mm):
@@ -144,6 +156,38 @@ def test_nome_colado():
     assert multimodal.nome_colado("miritituba", "PA", mun) is False
 
 
+def test_rota_frete_separa_nome_colado_e_corrige_uf_trocada():
+    mun, _ = multimodal._municipios()
+    # Boletim CONAB set/2026, p. 26: "RIBEIRÃO PRETO SANTOS (SP) 410 175,00 200,00 192,50" — a origem (sem "(SP)") veio
+    # colada ao destino; a linha não é de Presidente Prudente (origem do bloco anterior).
+    assert multimodal.rota_frete("PRESIDENTE PRUDENTE (SP)", "RIBEIRÃO PRETO SANTOS (SP)", "aprox", mun) == \
+        ("Ribeirão Preto (SP)", "Santos (SP)", "ok")
+    # p. 9: "RIO VERDE (RO) - PLATAFORMA FERROVIÁRIA" sob a origem RIO VERDE (GO): não há Rio Verde em RO; vale a UF da origem.
+    assert multimodal.rota_frete("RIO VERDE (GO)", "RIO VERDE (RO) - PLATAFORMA FERROVIÁRIA", "ok", mun) == \
+        ("RIO VERDE (GO)", "RIO VERDE (GO) - PLATAFORMA FERROVIÁRIA", "ok")
+    # rotas comuns ficam como estão (inclusive destino de mesmo nome em outra UF que existe lá)
+    for o, d in (("SORRISO (MT)", "SANTOS (SP)"), ("BOM JESUS (PI)", "SÃO LUÍS (MA)"), ("RIO VERDE (GO)", "SANTOS (SP)")):
+        assert multimodal.rota_frete(o, d, "ok", mun) == (o, d, "ok")
+    assert multimodal.rota_frete("X (PI)", "TERESINA (PI)", "aprox", mun) == ("X (PI)", "TERESINA (PI)", "aprox")
+
+
+def test_ponto_porto_fora_da_uf_vai_para_o_municipio_do_cadastro():
+    _, m = multimodal._municipios()
+    ufs, centros = multimodal._ufs_geo(), multimodal._centros(m)
+    # ANTAQ, instalações portuárias 06/05/2025, BRRJ002 "Keppel Fels": sem latitude/longitude em texto e o ponto do shape
+    # em Corumbá (MS); o próprio cadastro diz Rua Barão de Jaceguai, Ponta d'Areia, CEP 24040-000, município 3303302
+    # (Niterói, RJ).
+    assert multimodal.ponto_porto(-57.621397, -18.998937, "RJ", "3303302", ufs, centros) == (*centros["3303302"], True)
+    assert centros["3303302"] == [-43.0547, -22.9151]
+    # ponto na UF, ou no mar perto da costa (plataforma a 73 km), fica como está
+    assert multimodal.ponto_porto(-44.247, -23.0, "RJ", "3300100", ufs, centros) == (-44.247, -23.0, False)
+    assert multimodal.ponto_porto(-40.343, -22.162, "RJ", "3301009", ufs, centros) == (-40.343, -22.162, False)
+    # UF desconhecida: não há com o que comparar
+    assert multimodal.ponto_porto(-57.62, -19.0, None, "3303302", ufs, centros) == (-57.62, -19.0, False)
+    # fora da UF e sem município no cadastro: sem ponto (fica fora do mapa)
+    assert multimodal.ponto_porto(-57.62, -19.0, "RJ", "", ufs, centros) == (None, None, False)
+
+
 def test_qualidade_frete():
     assert multimodal.qualidade_frete("ok", False) == "ok"
     assert multimodal.qualidade_frete("aprox", False) == "aprox"
@@ -164,11 +208,18 @@ def test_fretes(mm):
     # MS: as 17 rotas para os portos (PR, SP, RS) têm km 4 a 5 vezes menor que a distância real na fonte.
     ms = [r for r in fr["linhas"] if r[1] == "MS" and r[3] in ("PR", "SP", "RS")]
     assert len(ms) == 17 and all(r[6] == "km_suspeito" for r in ms)
-    # Rio Verde → Rio Verde (plataforma ferroviária): origem = destino.
+    # Rio Verde → Rio Verde (plataforma ferroviária): origem = destino; a UF trocada do boletim ("(RO)") vira GO.
     rv = [r for r in fr["linhas"] if r[0] == "Rio Verde" and r[2].startswith("Rio Verde")]
-    assert rv and rv[0][6] == "km_suspeito"
-    # Artefato de nome do boletim ("Ribeirão Preto Santos") fica como origem aproximada.
-    assert all(r[6].startswith("aprox") for r in fr["linhas"] if r[2] == "Ribeirão Preto Santos")
+    assert rv and rv[0][6] == "km_suspeito" and rv[0][3] == "GO"
+    # Artefato de nome do boletim ("Ribeirão Preto Santos"): separado em origem Ribeirão Preto e destino Santos.
+    assert not any("Ribeirão Preto Santos" in (r[0], r[2]) for r in fr["linhas"])
+    rp = [r for r in fr["linhas"] if r[0] == "Ribeirão Preto" and r[2] == "Santos"]
+    assert rp == [["Ribeirão Preto", "SP", "Santos", "SP", 410, 192.5, "ok"]]
+    # nenhum nome de origem ou destino é a junção de dois municípios da UF
+    mun, _ = multimodal._municipios()
+    for r in fr["linhas"]:
+        for nome, uf in ((r[0], r[1]), (r[2], r[3])):
+            assert not multimodal.nome_colado(multimodal.norm_nome(nome.split(" - ")[0]), uf, mun), (nome, uf)
     # Só a qualidade muda: km e R$/t continuam os da fonte.
     assert sum(1 for r in fr["linhas"] if "km_suspeito" in r[6]) == 25
 

@@ -121,11 +121,16 @@ const MapView = (() => {
     // pad 0,5: a vista em zoom 4 (≈ 95° de longitude a 1080 px) cabe na caixa; se não coubesse, o Leaflet centraria a vista
     // no centro da caixa e desfaria o deslocamento do enquadramento com as colunas de legenda.
     if (saBounds) maxBounds.extend(saBounds.pad(0.5));
+    // A leste, espaço para a coluna da legenda à direita do Brasil (fitBrasil) até o zoom 4 (largura da coluna em graus + 3°);
+    // sem isso o Leaflet puxaria a vista de volta e o Brasil ficaria sob a legenda.
+    maxBounds.extend([BRASIL[0][0], BRASIL[1][1] + LEGEND_COL * 360 / (256 * 2 ** 4) + 3]);
     map = L.map(el, {
       zoomControl: false, attributionControl: false, preferCanvas: true,
       minZoom: 3.5, maxZoom: 13, zoomSnap: 0.5, zoomDelta: 0.5, wheelPxPerZoomLevel: 120,
       maxBounds, maxBoundsViscosity: 0.8,
     });
+    // Antes de qualquer outro ouvinte de 'zoomend' (o enquadramento pendente de fitSafe já vê a animação encerrada).
+    map.on('zoomanim', () => { animando = true; }).on('zoomend', () => { animando = false; });
     map.createPane('ufs').style.zIndex = 200;
     map.createPane('halo').style.zIndex = 390;
     map.createPane('hl').style.zIndex = 420;
@@ -200,14 +205,18 @@ const MapView = (() => {
     map.fitBounds(boundsOf(vis.length ? vis : ids), { padding: [64, 64], maxZoom: 11 });
   }
 
-  // Durante uma animação de zoom o Leaflet descarta um novo setView/fitBounds, mesmo sem animação (Map._tryAnimatedZoom
-  // retorna cedo enquanto _animatingZoom é true). Ex.: desligar e religar as rotas em seguida. Aqui o último enquadramento
-  // pedido espera o 'zoomend'. Depende do campo interno _animatingZoom do Leaflet 1.9.4 (vendor/leaflet, versão fixada);
-  // rever ao atualizar o Leaflet.
+  // Animação de zoom em curso, acompanhada só pelos eventos públicos do Leaflet: 'zoomanim' marca o início e 'zoomend' o
+  // fim. No Leaflet 1.9.4 (vendor/leaflet) os dois cercam o período em que o Leaflet descarta um novo enquadramento: o
+  // 'zoomanim' sai logo depois de a animação começar e o 'zoomend' logo depois de ela terminar.
+  let animando = false;
+  function zoomAnimando() { return animando; }
+
+  // Durante uma animação de zoom o Leaflet descarta um novo setView/fitBounds, mesmo sem animação. Ex.: desligar e
+  // religar as rotas em seguida. Aqui o último enquadramento pedido espera o 'zoomend'.
   // done (opcional): chamado no 'moveend' do próprio enquadramento (vista final, rótulos já reposicionados).
   let pendingFit = null;
   function fitSafe(bounds, opts, done) {
-    if (!map._animatingZoom) {
+    if (!zoomAnimando()) {
       if (done) map.once('moveend', done);
       map.fitBounds(bounds, opts);
       return;
@@ -218,8 +227,13 @@ const MapView = (() => {
     map.once('zoomend', () => { const f = pendingFit; pendingFit = null; fitSafe(f[0], f[1], f[2]); });
   }
 
+  // Enquadra o Brasil à esquerda da coluna da legenda "Cor das rodovias" (canto inferior direito) quando isso ainda deixa
+  // zoom ≥ 4: sem a reserva, em 1366 × 768 a legenda do Tráfego cobre o Nordeste e o Sudeste. Em telas mais estreitas, o
+  // Brasil inteiro com margem de 16 px.
   function fitBrasil(animate = true) {
-    fitSafe(ufLayer.getBounds(), { padding: [16, 16], animate });
+    const b = ufLayer.getBounds();
+    const reserva = map.getBoundsZoom(b, false, L.point(16 + LEGEND_COL, 32)) >= 4;
+    fitSafe(b, Object.assign({ animate }, reserva ? { paddingTopLeft: [16, 16], paddingBottomRight: [LEGEND_COL, 16] } : { padding: [16, 16] }));
   }
 
   // Enquadra a área das Rotas de Integração (Brasil + linhas das rotas); sem o bloco de rotas, o Brasil.
@@ -254,7 +268,7 @@ const MapView = (() => {
   function entityFis(idx) { return (conc && conc.entFis[idx]) || []; }
 
   return {
-    init, setVisible, highlight, fitTo, fitBrasil, fitAmericaSul, setColorMode, setBaseDim,
+    init, setVisible, highlight, fitTo, fitBrasil, fitAmericaSul, setColorMode, setBaseDim, zoomAnimando,
     baseDimmed() { return baseDim < 1; },
     // Para teste: maior opacidade entre as linhas visíveis (1 sem esmaecer; 0,35 com as rotas ligadas).
     maxLineOpacity() { let m = 0; lines.forEach((l, j) => { if (visible[j]) m = Math.max(m, l.options.opacity); }); return m; },

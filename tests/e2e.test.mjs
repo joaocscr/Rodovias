@@ -231,6 +231,14 @@ test('v2: ficha da Rotas Gerais', async () => {
   assert.ok(await page.locator('#ficha-capex rect.cbar').count() >= 5);
 });
 
+test('ficha: recorte conferido explicado em linguagem simples (sem "≤")', async () => {
+  const id = await page.evaluate(() => window.CONC.entidades.find(e => e.qualidade === 'ok').id);
+  await go('#ficha/' + id);
+  const t = await page.textContent('#ficha');
+  assert.match(t, /difere no máximo 5% \(ou 10 km\) da extensão informada no RoadShow/);
+  assert.doesNotMatch(t, /≤/);
+});
+
 test('v2: ficha da Rota dos Sertões mostra data-base e valor dez/2024', async () => {
   await go('#ficha/rota-dos-sertoes');
   const t = await page.textContent('#ficha');

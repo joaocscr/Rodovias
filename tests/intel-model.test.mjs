@@ -406,11 +406,15 @@ test('lineWeight: espessura ∝ t, mínimo 1 px', () => {
   assert.equal(IntelModel.lineWeight(10, 0), 1);
 });
 
-test('portoTipo: só os 4 tipos, com rótulos curtos', () => {
-  assert.equal(IntelModel.portoTipo('Porto Organizado'), 'Porto Organizado');
-  assert.equal(IntelModel.portoTipo('Terminal de uso privado'), 'TUP');
-  assert.equal(IntelModel.portoTipo('Estação de transbordo de cargas'), 'ETC');
+test('portoTipo: só os 4 tipos, com rótulo em português por extenso (sigla entre parênteses)', () => {
+  assert.equal(IntelModel.portoTipo('Porto Organizado'), 'Porto organizado');
+  assert.equal(IntelModel.portoTipo('Terminal de uso privado'), 'Terminal de uso privado (TUP)');
+  assert.equal(IntelModel.portoTipo('Estação de transbordo de cargas'), 'Estação de transbordo de cargas (ETC)');
   assert.equal(IntelModel.portoTipo('Porto Público'), 'Porto público');
+  // rótulo em minúsculas depois da 1ª palavra, sem a grafia crua da ANTAQ
+  for (const v of Object.values(IntelModel.PORTO_TIPOS)) assert.match(v, /^[A-ZÀ-Ú][a-zà-ú ]+( \([A-Z]+\))?$/, v);
+  assert.deepEqual(Object.keys(IntelModel.PORTO_TIPOS).sort(),
+    ['Estação de transbordo de cargas', 'Porto Organizado', 'Porto Público', 'Terminal de uso privado']);
   for (const t of ['IP4', 'Registro - Terminal de uso privado', 'TNA', 'Plataforma Marítima', null]) assert.equal(IntelModel.portoTipo(t), null, t);
 });
 
@@ -887,6 +891,21 @@ test('fmtPeriodo: AAAA-MM vira mmm/aaaa; anos, intervalos de anos e datas ficam 
   assert.equal(IntelModel.fmtPeriodo(null), '—');
 });
 
+test('fmtPeriodo: datas ISO completas viram dd/mm/aaaa e intervalos ISO ("início/fim") viram "início a fim"', () => {
+  assert.equal(IntelModel.fmtPeriodo('2025-05-06'), '06/05/2025');
+  assert.equal(IntelModel.fmtPeriodo('acesso em 2026-10-20'), 'acesso em 20/10/2026');
+  assert.equal(IntelModel.fmtPeriodo('2024-01-01/2025-12-31'), '01/01/2024 a 31/12/2025');
+  assert.equal(IntelModel.fmtPeriodo('2024-01/2026-08'), 'jan/2024 a ago/2026');
+  assert.equal(IntelModel.fmtPeriodo('2024-01-15/2026-08'), '15/01/2024 a ago/2026');
+  // ano até um mês (como no manifesto do índice ABCR, "1999-2026-09")
+  assert.equal(IntelModel.fmtPeriodo('1999-2026-09'), '1999 a set/2026');
+  assert.equal(IntelModel.fmtPeriodo('2026-01 a 2026-08 (parcial)'), 'jan/2026 a ago/2026 (parcial)');
+  // dia ou mês inválido não vira data; safra "2024/2025" e intervalos de anos ficam como estão
+  assert.equal(IntelModel.fmtPeriodo('2025-02-32'), '2025-02-32');
+  assert.equal(IntelModel.fmtPeriodo('safra 2024/2025'), 'safra 2024/2025');
+  assert.equal(IntelModel.fmtPeriodo('2022-2026'), '2022-2026');
+});
+
 test('fmtMt: t em Mt com 2 casas; abaixo de 0,005 Mt vira "< 0,01"; ausente = —', () => {
   assert.equal(IntelModel.fmtMt(14784148.77), '14,78');
   assert.equal(IntelModel.fmtMt(5000), '0,01');
@@ -984,4 +1003,25 @@ test('paisLabelPoint: fica no polo se livre; senão vai ao ponto livre mais pró
   const p2 = IntelModel.paisLabelPoint(quad, grade, { hw: 2, hh: 2 });
   assert.ok(IntelModel.pointInRings(p2[0], p2[1], IntelModel.paisAneis(quad)), String(p2));
   assert.equal(IntelModel.paisLabelPoint({ nome: 'x' }, []), null);
+});
+
+test('paisLabelPoint: evita os rótulos já colocados (ocupados), como SR e GF lado a lado', () => {
+  const quad = { nome: 'Quadrado', iso: 'QQ', label: [-60, -20], p: [enc([[-66, -26], [-54, -26], [-54, -14], [-66, -14], [-66, -26]])] };
+  // rótulo vizinho centrado 1° a leste do polo: as caixas (meia-largura 2 + 2) se cruzam; o rótulo sai até não tocar
+  const viz = { lat: -20, lng: -59, hw: 2, hh: 0.5 };
+  const pt = IntelModel.paisLabelPoint(quad, [], { hw: 2, hh: 0.5, passo: 0.25, ocupados: [viz] });
+  assert.ok(Math.abs(pt[1] - viz.lng) >= 4 || Math.abs(pt[0] - viz.lat) >= 1, `caixas se cruzam: ${pt}`);
+  assert.ok(IntelModel.pointInRings(pt[0], pt[1], IntelModel.paisAneis(quad)));
+  // o mais perto possível do polo: sobe ou desce 1° (meia-altura 0,5 + 0,5), sem andar na longitude
+  assert.deepEqual([Math.abs(pt[0] + 20), pt[1]], [1, -60]);
+  // ocupado longe: fica no polo; sem `ocupados`, igual a antes
+  assert.deepEqual(IntelModel.paisLabelPoint(quad, [], { hw: 2, hh: 0.5, ocupados: [{ lat: 0, lng: 0, hw: 1, hh: 1 }] }), [-20, -60]);
+  // linha e rótulo vizinho juntos: o ponto não toca nenhum dos dois
+  const linha = [[[-21, -70], [-21, -50]]];
+  const p2 = IntelModel.paisLabelPoint(quad, linha, { hw: 2, hh: 0.5, passo: 0.25, ocupados: [viz] });
+  assert.ok(Math.abs(p2[0] + 21) >= 0.5, String(p2));
+  assert.ok(Math.abs(p2[1] - viz.lng) >= 4 || Math.abs(p2[0] - viz.lat) >= 1, String(p2));
+  // caixa maior entre rótulos (zoom menor): o afastamento usa a caixa, não hw × hh
+  const p3 = IntelModel.paisLabelPoint(quad, [], { hw: 2, hh: 0.5, passo: 0.25, ocupados: [viz], caixa: { hw: 3, hh: 1 } });
+  assert.deepEqual([Math.abs(p3[0] + 20), p3[1]], [1.5, -60]);
 });

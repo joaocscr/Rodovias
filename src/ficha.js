@@ -124,7 +124,7 @@ const Ficha = (() => {
         <td class="num">${esc(F.pct(p.desagio))}${p.verificado && e.verif.desagio ? ' ' + Selo.badge(e.verif.desagio) : ''}${rsTxt(p.roadshow && p.roadshow.desagio != null ? F.pct(p.roadshow.desagio) : null)}</td></tr>`).join('')}</tbody></table>` : '';
     const rel = (e.relaciona || []).map(id => conc.entidades.find(x => x.id === id)).filter(Boolean);
     const relHtml = rel.length ? `<ul class="timeline">${rel.map(r => `<li><a href="#ficha/${esc(r.id)}">${esc(r.nome)}</a> · ${esc(estadoLabel(r.estado))}</li>`).join('')}</ul>` : '';
-    const qual = { ok: 'Recorte conferido (diferença ≤ 5% ou 10 km)', aproximado: 'Recorte aproximado', nao_mapeado: 'Trecho não mapeado no SNV', falha: 'Recorte com falha' }[e.qualidade] || '';
+    const qual = { ok: 'Conferido: a extensão no mapa difere no máximo 5% (ou 10 km) da extensão informada no RoadShow', aproximado: 'Recorte aproximado', nao_mapeado: 'Trecho não mapeado no SNV', falha: 'Recorte com falha' }[e.qualidade] || '';
     const trecho = dl(rows(e, [['Recorte no mapa', qual, 'txt'], ['km no SNV', e.km_mapeado || null, 'km'], ['Nota', e.nota_trecho, 'txt']]));
     const pages = [...new Set(Object.values(e.fontes || {}).flat())].filter(isNum).sort((a, b) => a - b);
 

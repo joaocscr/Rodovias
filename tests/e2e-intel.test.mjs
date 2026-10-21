@@ -243,6 +243,17 @@ test('cartão de trecho planejado (PLA) marca tráfego e acidentes como "trecho 
   await page.waitForSelector('#card:not([hidden])');
   const tags = await page.$$eval('#card .card__intel .card__sub .tag-nv', ts => ts.map(t => t.textContent));
   assert.ok(tags.length >= 1 && tags.every(t => t === 'trecho planejado no SNV'), tags.join());
+  // trecho planejado com valores: uma nota explica de onde vêm os números (estrada existente no traçado)
+  const nota = await page.$$eval('#card .card__intel [data-pla]', ns => ns.map(n => n.textContent));
+  assert.equal(nota.length, 1);
+  assert.match(nota[0], /ainda não foi implantada/);
+  assert.match(nota[0], /estrada que já existe nesse traçado/);
+  await page.click('#card-close');
+  // trecho pavimentado: sem a nota
+  const k = await page.evaluate(() => window.SNV.fis.findIndex((_, j) => IntelModel.fisSup(window.SNV, j) === 'PAV' && window.INTEL.trafego.vmda.l[j] != null));
+  await page.evaluate(k => MapView.pick(k), k);
+  await page.waitForSelector('#card:not([hidden])');
+  assert.equal(await page.locator('#card [data-pla]').count(), 0);
   await page.click('#card-close');
 });
 
@@ -568,18 +579,31 @@ test('(c) Portos e ETCs: só os 4 tipos', async () => {
     return { n: Layers.count('portos'), tipos: [...new Set(shown)].sort(), raw: [...new Set(Layers.items('portos').map(i => rows[i].tipo))].sort() };
   });
   assert.ok(r.n > 300, String(r.n));
-  assert.deepEqual(r.tipos, ['ETC', 'Porto Organizado', 'Porto público', 'TUP']);
-  assert.deepEqual(r.raw, ['Estação de transbordo de cargas', 'Porto Organizado', 'Porto Público', 'Terminal de uso privado']);
+  // rótulos em português do dicionário (IntelModel.PORTO_TIPOS), nunca a grafia crua da ANTAQ
+  const dic = await page.evaluate(() => IntelModel.PORTO_TIPOS);
+  assert.deepEqual(r.tipos, Object.values(dic).sort());
+  assert.deepEqual(r.raw, Object.keys(dic).sort());
   const i = await page.evaluate(() => Layers.items('portos')[0]);
   await page.evaluate(i => Layers.open('portos', i), i);
   assert.match(await page.textContent('#card'), /UF/);
-  // "Porto público" × "Porto Público" (só a caixa muda): o tipo não se repete
-  const pp = await page.evaluate(() => { const rows = Layers.rowsOf('portos'); return Layers.items('portos').find(i => rows[i].tipo === 'Porto Público'); });
-  await page.evaluate(i => Layers.open('portos', i), pp);
-  assert.doesNotMatch(await page.textContent('#card .card__grid'), /Tipo ANTAQ/);
-  const tup = await page.evaluate(() => { const rows = Layers.rowsOf('portos'); return Layers.items('portos').find(i => rows[i].tipoLabel === 'TUP'); });
-  await page.evaluate(i => Layers.open('portos', i), tup);
-  assert.match(await page.textContent('#card .card__grid'), /Tipo ANTAQ/);
+  // cada tipo: o cartão mostra só o rótulo em português (uma linha "Tipo", sem a grafia da ANTAQ)
+  for (const [raw, label] of Object.entries(dic)) {
+    const k = await page.evaluate(raw => { const rows = Layers.rowsOf('portos'); return Layers.items('portos').find(i => rows[i].tipo === raw); }, raw);
+    await page.evaluate(k => Layers.open('portos', k), k);
+    const g = await page.$$eval('#card .card__grid dt', ds => ds.map(d => [d.textContent, d.nextElementSibling.textContent]));
+    assert.deepEqual(g.filter(([dt]) => /Tipo/.test(dt)), [['Tipo', label]], raw);
+    const t = await page.textContent('#card');
+    assert.doesNotMatch(t, /Tipo ANTAQ/);
+    if (!label.includes(raw)) assert.ok(!t.includes(raw), raw);
+  }
+  // ponto corrigido no script (fora da UF na fonte): o cartão diz que a localização é aproximada; os demais não
+  const ap = await page.evaluate(() => { const rows = Layers.rowsOf('portos'); return Layers.items('portos').filter(i => rows[i].aprox); });
+  for (const k of ap) {
+    await page.evaluate(k => Layers.open('portos', k), k);
+    assert.match(await page.textContent('#card .card__grid'), /Localização\s*aproximada/);
+  }
+  await page.evaluate(i => Layers.open('portos', i), i);
+  assert.doesNotMatch(await page.textContent('#card .card__grid'), /aproximada/);
   await page.click('#card-close');
 });
 
@@ -1366,15 +1390,15 @@ const rectOf = (p, sel) => p.$$eval(sel, es => es.map(e => { const r = e.getBoun
 const overlap = (a, b) => a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;
 // Fim do enquadramento: nenhuma animação de zoom em curso e a vista já na área das rotas (sul além de -42°; a do Brasil para em -38°)
 // ou de volta ao Brasil.
-const naAreaDasRotas = (p = page) => p.waitForFunction(() => !MapView.map._animatingZoom && MapView.map.getBounds().getSouth() < -42);
-const noBrasil = (p = page) => p.waitForFunction(() => !MapView.map._animatingZoom && MapView.map.getBounds().getSouth() > -42);
+const naAreaDasRotas = (p = page) => p.waitForFunction(() => !MapView.zoomAnimando() && MapView.map.getBounds().getSouth() < -42);
+const noBrasil = (p = page) => p.waitForFunction(() => !MapView.zoomAnimando() && MapView.map.getBounds().getSouth() > -42);
 const NOTA = /Traçado esquemático · fonte MPO, jul\/2026/;
 
 test('rotas: ligar mostra países, linhas, rótulos diretos e legenda; enquadra a América do Sul; desligar volta ao Brasil', async t => {
   await page.evaluate(() => { location.hash = '#mapa'; });
   await page.waitForFunction(() => Tabs.current().active === 'mapa');
   await page.evaluate(() => MapView.fitBrasil(false));
-  await page.waitForFunction(() => !MapView.map._animatingZoom);
+  await page.waitForFunction(() => !MapView.zoomAnimando());
   const b0 = await page.evaluate(() => MapView.map.getBounds().toBBoxString().split(',').map(Number));
   const R = await page.evaluate(() => window.INTEL.rotas.rotas.map(r => ({ id: r.id, t: `Rota ${r.n} · ${r.nome}`, c: ROTAS[r.id] })));
   assert.equal(R.length, 5);
@@ -1513,6 +1537,53 @@ test('rotas: clique real numa linha da Rota 4 abre o cartão; rótulo e legenda 
   await noBrasil();
   assert.equal(await page.isHidden('#card'), true);
   assert.equal(await page.evaluate(() => Layers.selected()), null);
+  assert.deepEqual(errors, []);
+});
+
+// Clica no checkbox das rotas e, no início da animação de zoom que esse clique dispara, clica de novo `extra` vezes.
+// Devolve se zoomAnimando() já marcava a animação nesse momento.
+const togglesDuranteAnimacao = (extra) => page.evaluate(n => new Promise(res => {
+  const box = document.querySelector('#layers-section input[data-layer="rotas"]');
+  MapView.map.once('zoomanim', () => { const a = MapView.zoomAnimando(); for (let k = 0; k < n; k++) box.click(); res(a); });
+  box.click();
+}), extra);
+// A vista continua a mesma depois de alguns quadros (nenhum enquadramento pendente mudou a vista depois da espera).
+const vistaEstavel = async () => {
+  const b = () => page.evaluate(() => MapView.map.getBounds().toBBoxString());
+  const b1 = await b();
+  await page.waitForTimeout(600);
+  assert.equal(await page.evaluate(() => MapView.zoomAnimando()), false);
+  assert.equal(await b(), b1);
+};
+
+test('enquadramento repetido: o último pedido feito durante a animação de zoom vale (ligar/desligar as rotas em seguida)', async () => {
+  await page.evaluate(() => { location.hash = '#mapa'; });
+  await page.waitForFunction(() => Tabs.current().active === 'mapa');
+  assert.equal(await rotasBox().isChecked(), false);
+  await page.evaluate(() => MapView.fitBrasil(false));
+  await noBrasil();
+  assert.equal(await page.evaluate(() => MapView.zoomAnimando()), false);
+  // ligar e, com a animação em curso, desligar: termina no Brasil (o Leaflet sozinho descartaria o 2º enquadramento)
+  assert.equal(await togglesDuranteAnimacao(1), true);
+  assert.equal(await rotasBox().isChecked(), false);
+  await noBrasil();
+  await vistaEstavel();
+  assert.ok(await page.evaluate(() => MapView.map.getBounds().getSouth()) > -42);
+  // ligar e esperar; depois desligar e, com a animação em curso, religar: termina na área das rotas
+  await rotasBox().check();
+  await naAreaDasRotas();
+  assert.equal(await togglesDuranteAnimacao(1), true);
+  assert.equal(await rotasBox().isChecked(), true);
+  await naAreaDasRotas();
+  await vistaEstavel();
+  assert.equal(await page.evaluate(() => MapView.map.getBounds().contains(IntelModel.rotasBounds(window.INTEL.rotas, true))), true);
+  // desligar e, durante a mesma animação, três pedidos (liga, desliga, liga): vale o último, a área das rotas
+  assert.equal(await togglesDuranteAnimacao(3), true);
+  assert.equal(await rotasBox().isChecked(), true);
+  await naAreaDasRotas();
+  await vistaEstavel();
+  await rotasBox().uncheck();
+  await noBrasil();
   assert.deepEqual(errors, []);
 });
 
@@ -1762,7 +1833,13 @@ test('rotas em 1366 × 768 e 1280 × 720: nenhum rótulo de rota sob as legendas
       for (const b of boxes) assert.ok(!overlap(l, b), `${w}: ${l.text} sob uma legenda`);
       for (const o of lr) if (o !== l) assert.ok(!overlap(l, o), `${w}: ${l.text} × ${o.text}`);
     }
-    for (const l of await rectOf(p, '.leaflet-tooltip.pais-label')) for (const o of lr) assert.ok(!overlap(l, o), `${w}: ${l.text} × ${o.text}`);
+    // rótulos dos países: fora dos rótulos de rota e, com 2 px de folga, uns dos outros (Suriname e Guiana Francesa)
+    const pr = await rectOf(p, '.leaflet-tooltip.pais-label');
+    const folga2 = r => ({ l: r.l - 2, t: r.t - 2, r: r.r + 2, b: r.b + 2 });
+    for (const l of pr) {
+      for (const o of lr) assert.ok(!overlap(l, o), `${w}: ${l.text} × ${o.text}`);
+      for (const o of pr) if (o !== l) assert.ok(!overlap(folga2(l), o), `${w}: ${l.text} × ${o.text}`);
+    }
     // recolhida, mas a legenda continua lá: abre com um clique e mostra as 5 rotas
     assert.equal(await p.isVisible('#rotas-legend summary'), true);
     await p.click('#rotas-legend summary');
@@ -1771,6 +1848,69 @@ test('rotas em 1366 × 768 e 1280 × 720: nenhum rótulo de rota sob as legendas
     assert.deepEqual(ext, []);
     await p.context().close();
   }
+});
+
+test('1366 × 768: a legenda do Tráfego não cobre o Brasil (nenhuma UF sob ela)', async () => {
+  const errs = [], ext = [];
+  const p = await openPage(errs, ext, null, { width: 1366, height: 768 });
+  await p.click('#legend [data-mode="trafego"]');
+  await p.waitForFunction(() => MapView.colorMode() === 'trafego');
+  await p.evaluate(() => MapView.fitBrasil(false));
+  await p.waitForFunction(() => !MapView.zoomAnimando());
+  const leg = (await rectOf(p, '#legend'))[0], map = (await rectOf(p, '#map'))[0];
+  assert.match(await p.textContent('#legend'), /Tráfego/);
+  // caixa de cada UF na tela (dos polígonos do arquivo): à esquerda da legenda e dentro do mapa
+  const ufs = await p.evaluate(() => {
+    const r = MapView.map.getContainer().getBoundingClientRect();
+    return window.SNV.ufs.features.map(f => {
+      const b = L.geoJSON(f).getBounds(), nw = MapView.map.latLngToContainerPoint(b.getNorthWest()), se = MapView.map.latLngToContainerPoint(b.getSouthEast());
+      return { text: f.properties.sigla, l: r.left + nw.x, t: r.top + nw.y, r: r.left + se.x, b: r.top + se.y };
+    });
+  });
+  assert.equal(ufs.length, 27);
+  for (const u of ufs) {
+    assert.ok(!overlap(u, leg), `${u.text} sob a legenda: ${JSON.stringify(u)} × ${JSON.stringify(leg)}`);
+    assert.ok(u.l >= map.l && u.r <= map.r && u.t >= map.t && u.b <= map.b, `${u.text} fora do mapa`);
+  }
+  // o Brasil continua grande: zoom ≥ 4
+  assert.ok(await p.evaluate(() => MapView.map.getZoom()) >= 4);
+  assert.deepEqual(errs, []);
+  assert.deepEqual(ext, []);
+  await p.context().close();
+});
+
+test('1366 × 768: a legenda das rotas reavalia o recolhimento quando a janela muda de tamanho; a escolha do leitor fica', async () => {
+  const errs = [], ext = [];
+  const p = await openPage(errs, ext, null, { width: 1366, height: 768 });
+  const aberta = () => p.evaluate(() => document.querySelector('#rotas-legend details').open);
+  const espera = v => p.waitForFunction(v => document.querySelector('#rotas-legend details').open === v, v);
+  await p.locator('#layers-section input[data-layer="rotas"]').check();
+  await naAreaDasRotas(p);
+  await espera(false);
+  // janela maior: os rótulos das rotas saem de baixo da legenda, que reabre; de volta a 1366 × 768, recolhe de novo
+  await p.setViewportSize({ width: 1920, height: 1080 });
+  await espera(true);
+  const lr = await rectOf(p, '.leaflet-tooltip.rota-label'), leg = (await rectOf(p, '#rotas-legend'))[0];
+  for (const l of lr) assert.ok(!overlap(l, leg), `1920: ${l.text} sob a legenda aberta`);
+  await p.setViewportSize({ width: 1366, height: 768 });
+  await espera(false);
+  // o leitor abre a legenda: mudar o tamanho da janela não a recolhe
+  await p.click('#rotas-legend summary');
+  assert.equal(await aberta(), true);
+  await p.setViewportSize({ width: 1360, height: 760 });
+  await p.waitForTimeout(600);
+  assert.equal(await aberta(), true);
+  // religar a camada volta ao comportamento automático
+  await p.locator('#layers-section input[data-layer="rotas"]').uncheck();
+  await noBrasil(p);
+  await p.locator('#layers-section input[data-layer="rotas"]').check();
+  await naAreaDasRotas(p);
+  await espera(false);
+  await p.setViewportSize({ width: 1920, height: 1080 });
+  await espera(true);
+  assert.deepEqual(errs, []);
+  assert.deepEqual(ext, []);
+  await p.context().close();
 });
 
 test('nenhuma requisição externa', () => assert.deepEqual(external, []));

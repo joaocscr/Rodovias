@@ -8,7 +8,7 @@
   "sha256": "6ca0fdb3a5c91e2824af8dbc4bdf3c01232bc4c33b698339215d39b1a4385373",
   "periodo": "abr/2024",
   "licenca": "Dados abertos do governo federal (Decreto 8.777/2016); citar a fonte",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-21"
  },
  {
   "dominio": "multimodal",
@@ -19,7 +19,7 @@
   "sha256": "79e28332bdd031388a6f2305e4f1e2e741c057a64a63724ea4278f78a040fb63",
   "periodo": "06/05/2025",
   "licenca": "Dados abertos do governo federal (Decreto 8.777/2016); citar a fonte",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-21"
  },
  {
   "dominio": "multimodal",
@@ -30,7 +30,7 @@
   "sha256": "265a40f1759fcb6af5a83d28b687d3621d8cf50054ae777f80e7cb0d9e863114",
   "periodo": "jan–dez/2025",
   "licenca": "Dados abertos do governo federal (Decreto 8.777/2016); citar a fonte",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-21"
  },
  {
   "dominio": "multimodal",
@@ -41,7 +41,7 @@
   "sha256": "614ee2d1536cb52da8eeae6bbb5a22ad2f4a59a4dd918624b0700a3d8564b62d",
   "periodo": "2024",
   "licenca": "Dados abertos do governo federal (Decreto 8.777/2016); citar a fonte",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-21"
  },
  {
   "dominio": "multimodal",
@@ -52,7 +52,7 @@
   "sha256": "34571d3fb125db0423f4a0785e7b40c26c815a90ccfa9783e457a1c34a96b96c",
   "periodo": "jan–dez/2025",
   "licenca": "Dados abertos do governo federal (Decreto 8.777/2016); citar a fonte",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-21"
  },
  {
   "dominio": "multimodal",
@@ -63,7 +63,7 @@
   "sha256": "1a20764b160cb8d75a659ae49aa69aedc1476c72b3f639dec1c4fa55accfc2bb",
   "periodo": "",
   "licenca": "Dados abertos do governo federal (Decreto 8.777/2016); citar a fonte",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-21"
  },
  {
   "dominio": "multimodal",
@@ -74,7 +74,7 @@
   "sha256": "e8ab4418e369cefc80facd21f27e0bb9c6184974b01b36a85fa463a1affa7698",
   "periodo": "",
   "licenca": "Dados abertos do governo federal (Decreto 8.777/2016); citar a fonte",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-21"
  },
  {
   "dominio": "multimodal",
@@ -85,7 +85,7 @@
   "sha256": "566ba9c1f046518befdf8cfff7caa9b0c5e0641b30818325bdf279f89109bf8c",
   "periodo": "ago/2026",
   "licenca": "Dados abertos do governo federal (Decreto 8.777/2016); citar a fonte",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-21"
  },
  {
   "dominio": "multimodal",
@@ -96,6 +96,6 @@
   "sha256": "c0b02999b77cd482b950f424aff438f6cae4e4120c326cd5807e73e4140980da",
   "periodo": "ago/2026",
   "licenca": "Dados abertos do governo federal (Decreto 8.777/2016); citar a fonte",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-21"
  }
 ]

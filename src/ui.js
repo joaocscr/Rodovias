@@ -371,7 +371,8 @@ const UI = (() => {
   //   "uso restrito (área urbana)" quando o modelo marca o trecho como não simulável.
   // - VMDa 2023 (leves/pesados): leves, pesados, total e % pesados; o veíc·km fica aqui só sem o bloco 2025.
   // - Acidentes (PRF): por ano, por km e por 10⁶ veíc·km (taxa sobre o VMDa 2023). Carga: modelo PNL.
-  // Trecho planejado (superfície PLA): os grupos VMDa 2025, VMDa 2023 e Acidentes vêm marcados "trecho planejado no SNV".
+  // Trecho planejado (superfície PLA): os grupos VMDa 2025, VMDa 2023 e Acidentes vêm marcados "trecho planejado no SNV" e,
+  // se algum deles tem valor, uma nota no fim explica de onde vêm os números.
   function intelBlock(j) {
     const vm = vmdaOf(), v25 = IM.v25Of(intel), ac = acidOf(), ca = cargaOf(), f = IM.fisIntel(intel, snv, j);
     const pla = IM.fisSup(snv, j) === 'PLA' ? '<span class="tag-nv">trecho planejado no SNV</span>' : '';
@@ -413,7 +414,12 @@ const UI = (() => {
       ]);
     }
     if (!groups.length) return '';
-    return `<div class="card__intel"><h3 class="section-title">Tráfego e segurança</h3><dl class="card__grid">${groups.join('')}</dl></div>`;
+    // VMDa e PRF associam o código e o km da BR planejada à estrada que já existe no traçado (scripts/intel/trafego.py, vmda2025.py)
+    const plaNota = pla && [f.t25, f.tot, f.acidAno].some(v => v != null)
+      ? '<dd class="card__flag" data-pla="1">Trecho planejado: a rodovia federal ainda não foi implantada aqui. Os números de tráfego ' +
+        'e de acidentes são da estrada que já existe nesse traçado (em geral estadual), que o modelo de tráfego e a PRF associam a esta BR.</dd>'
+      : '';
+    return `<div class="card__intel"><h3 class="section-title">Tráfego e segurança</h3><dl class="card__grid">${groups.join('')}${plaNota}</dl></div>`;
   }
 
   // ---------- Camadas de sobreposição (v3, Task 10) ----------
@@ -494,20 +500,33 @@ const UI = (() => {
 
   // Ao fim do enquadramento das rotas: se um rótulo direto de rota caiu sob a legenda das rotas (mapa estreito, p. ex.
   // 1366 × 768, onde o zoom mínimo deixa a Rota 4 na altura da legenda), a legenda começa recolhida; o leitor pode abri-la.
-  function fitRotasLegend() {
+  // reavaliar (mudança do tamanho da janela): mede de novo com a legenda aberta e abre ou recolhe; se o leitor já abriu ou
+  // recolheu a legenda com a mão, a escolha dele fica.
+  function fitRotasLegend(reavaliar = false) {
     const el = document.getElementById('rotas-legend'), det = el && el.querySelector('details');
-    if (!det || el.hidden || !det.open || !Layers.isOn('rotas')) return;
+    if (!det || el.hidden || !Layers.isOn('rotas') || !el.getClientRects().length) return;
+    if (reavaliar ? el.dataset.manual === '1' : !det.open) return;
+    det.open = true;  // a medida vale para a legenda aberta (troca síncrona: não chega a ser desenhada)
     const b = el.getBoundingClientRect();
     const sob = [...document.querySelectorAll('.leaflet-tooltip.rota-label')].some(l => {
       const r = l.getBoundingClientRect();
       return r.left < b.right && b.left < r.right && r.top < b.bottom && b.top < r.bottom;
     });
-    if (sob) det.open = false;
+    det.open = !sob;
+  }
+
+  // Mudança do tamanho da janela: reavalia o recolhimento da legenda das rotas quando o redimensionamento para (200 ms).
+  let resizeTimer = 0;
+  function onResize() {
+    clearTimeout(resizeTimer);
+    // espera também o quadro em que o Leaflet reposiciona os rótulos no novo tamanho do mapa
+    resizeTimer = setTimeout(() => requestAnimationFrame(() => fitRotasLegend(true)), 200);
   }
 
   function renderRotasLegend() {
     const el = leftLegend('rotas-legend', 'rotas-legend'), R = IM.rotasOf(intel);
     el.hidden = !(R && Layers.isOn('rotas'));
+    delete el.dataset.manual;
     if (el.hidden) { el.innerHTML = ''; return; }
     const rows = R.rotas.map((r, i) => `<button type="button" class="legend__row legend__btn" data-rota="${i}" title="Abrir o cartão da ${esc(IM.rotaTitulo(r))}">` +
       `${rotaSwatch(r.id)}<span>${esc(IM.rotaTitulo(r))}</span></button>`).join('');
@@ -520,6 +539,8 @@ const UI = (() => {
       <div class="legend__body">${rows}${extras ? `<div class="legend__sep"></div>${extras}` : ''}
       <p class="legend__note" title="Fonte: ${esc(fonte)}">${esc(IM.rotasNota(R))}</p></div></details>`;
     el.querySelectorAll('[data-rota]').forEach(b => b.addEventListener('click', () => Layers.open('rotas', Number(b.dataset.rota))));
+    // clique (ou Enter/Espaço) no título: escolha do leitor, que a mudança de tamanho da janela não desfaz
+    el.querySelector('summary').addEventListener('click', () => { el.dataset.manual = '1'; });
   }
 
   function renderFundoLegend() {
@@ -627,7 +648,8 @@ const UI = (() => {
       openRota(r);
     } else if (key === 'portos') {
       showCard(r.nome, `${r.tipoLabel || r.tipo} · ${r.uf || '—'}`,
-        `${grid([['Tipo', r.tipoLabel || r.tipo], ['Tipo ANTAQ', r.tipoLabel && Model.normalize(r.tipoLabel) !== Model.normalize(r.tipo) ? r.tipo : null], ['UF', r.uf]])}
+        `${grid([['Tipo', r.tipoLabel || r.tipo], ['UF', r.uf],
+          ['Localização', r.aprox ? 'aproximada (centro do município do cadastro; o ponto da ANTAQ estava fora da UF)' : null]])}
         <p class="card__src card__pad">ANTAQ, instalações portuárias</p>`, null);
     }
   }
@@ -902,6 +924,7 @@ const UI = (() => {
       if (key === 'estaduais' && QUANT_MODES.includes(MapView.colorMode())) renderLegend();
     });
     syncEstTrafego();
+    window.addEventListener('resize', onResize);
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape' && !$('#card').hidden) closeCard();
     });

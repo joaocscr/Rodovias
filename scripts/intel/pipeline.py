@@ -65,9 +65,9 @@ COLUNAS = ["id", "nome", "esfera", "uf", "rodovias", "km", "status", "data_previ
            "fonte_url", "fonte_data", "obs"]
 
 FONTE = [
-    {"nome": "Carteira de Concessões Rodoviárias 2023-2027 (Ministério dos Transportes, v40)",
+    {"nome": "Carteira de Concessões Rodoviárias 2023-2027 (Ministério dos Transportes)",
      "url": "https://www.gov.br/transportes/pt-br/assuntos/concessoes/concessoes-rodoviarias-2027",
-     "periodo": "carteira de 14/10/2026", "acesso": ACESSO, "licenca": "Informação pública (LAI, Lei 12.527/2011)",
+     "periodo": "versão de 14/10/2026", "acesso": ACESSO, "licenca": "Informação pública (LAI, Lei 12.527/2011)",
      "nota": "O PDF da carteira é só imagem e foi transcrito à mão (slide 12, otimizações; slide 24, cronograma de 2027; slide 26, estudos)."},
     {"nome": "ANTT: Novos projetos em rodovias e Reestruturação de contratos de concessão",
      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias",
@@ -105,7 +105,7 @@ BRUTOS = [
     ("mt_carteira_2023_2027.pdf",
      "https://www.gov.br/transportes/pt-br/assuntos/concessoes/conteudos-rodovias-2026/"
      "carteira_de_concessoes_2023_2027_sem_gestao_publica_privada.pdf/@@display-file/file",
-     "MT: carteira de concessões 2023-2027 (v40, só imagem)", "14/10/2026"),
+     "MT: carteira de concessões 2023-2027 (versão de 14/10/2026, só imagem)", "14/10/2026"),
 ]
 
 

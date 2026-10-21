@@ -150,7 +150,17 @@ def test_carteira_por_extenso(blk):
     for i in blk["itens"]:
         for k in ("fonte_data", "obs", "nome"):
             assert not re.search(r"\b(carteira|Cronograma) MT\b|MT v40", i[k]), (i["id"], k, i[k])
-    assert any("carteira do Ministério dos Transportes" in i["fonte_data"] for i in blk["itens"])
+    assert any("carteira do Ministério dos Transportes" in i["fonte_data"] or
+               "carteira de concessões do Ministério dos Transportes" in i["fonte_data"] for i in blk["itens"])
+
+
+def test_carteira_sem_jargao_de_versao(blk):
+    """A versão da carteira aparece como texto claro ("versão de 14/10/2026"), nunca como "v40" nem "no MT"."""
+    textos = [(i["id"], k, i[k]) for i in blk["itens"] for k in ("fonte_data", "obs", "nome")]
+    textos += [("fonte", "nome", f["nome"]) for f in blk["fonte"]] + [("fonte", "nota", f.get("nota", "")) for f in blk["fonte"]]
+    for t in textos:
+        assert not re.search(r"\bv\d{2}\b|\b(no|do) MT\b", t[2]), t
+    assert any("versão de 14/10/2026" in i["fonte_data"] for i in blk["itens"])
 
 
 def test_obs_sem_linguagem_de_processo(blk):

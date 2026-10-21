@@ -172,8 +172,8 @@ const LAYER_STYLES = {
 // Fundo municipal: Deep Blue com opacidade por classe; sem dado / zero sem preenchimento.
 const FUNDO_OPACITY = [0.12, 0.25, 0.4, 0.55, 0.7];
 const FUNDO_BORDER = { color: COLORS.lightGrey, weight: 0.3, opacity: 0.3 };
-// Portos organizados e públicos em quadrado; TUP e ETC em círculo.
-const PORTO_QUADRADO = new Set(['Porto Organizado', 'Porto público']);
+// Portos organizados e públicos em quadrado; TUP e ETC em círculo (rótulos de IntelModel.PORTO_TIPOS).
+const PORTO_QUADRADO = new Set(['Porto organizado', 'Porto público']);
 
 // Amostra SVG de cada camada (painel "Camadas").
 function layerSwatch(key, size = 24) {

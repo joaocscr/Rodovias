@@ -327,10 +327,11 @@ const IntelModel = (() => {
     return Math.min(wmax, Math.max(wmin, wmax * v / vmax));
   }
 
-  // Tipos ANTAQ mostrados na camada "Portos e ETCs" (os demais ficam de fora).
+  // Tipos ANTAQ mostrados na camada "Portos e ETCs" (os demais ficam de fora), com o rótulo em português da interface:
+  // por extenso, sigla entre parênteses quando o setor a usa.
   const PORTO_TIPOS = {
-    'Porto Organizado': 'Porto Organizado', 'Terminal de uso privado': 'TUP',
-    'Estação de transbordo de cargas': 'ETC', 'Porto Público': 'Porto público',
+    'Porto Organizado': 'Porto organizado', 'Porto Público': 'Porto público',
+    'Terminal de uso privado': 'Terminal de uso privado (TUP)', 'Estação de transbordo de cargas': 'Estação de transbordo de cargas (ETC)',
   };
   const portoTipo = t => (t != null && Object.prototype.hasOwnProperty.call(PORTO_TIPOS, t) ? PORTO_TIPOS[t] : null);
 
@@ -491,10 +492,12 @@ const IntelModel = (() => {
     return best ? [best[0], best[1]] : null;
   }
 
-  // Posição do rótulo de um país fora das linhas das rotas. O rótulo é uma caixa de meia-largura hw e meia-altura hh (graus);
-  // se a caixa no polo de inacessibilidade (p.label) já não toca nenhuma linha, fica ali; senão, procura numa grade de passo
-  // `passo` dentro do país o ponto livre mais próximo do original; sem ponto livre, o de maior folga. [lat, lng] ou null.
-  function paisLabelPoint(p, lines, { hw = 3, hh = 0.9, passo = 0.25 } = {}) {
+  // Posição do rótulo de um país fora das linhas das rotas e dos rótulos já colocados. O rótulo é uma caixa de meia-largura hw e
+  // meia-altura hh (graus); `ocupados` são as caixas dos rótulos vizinhos já colocados ({lat, lng, hw, hh}; ex.: SR antes de GF),
+  // comparadas com `caixa` ({hw, hh}; padrão, a mesma hw × hh), que pode ser maior para valer também em zoom menor.
+  // Se a caixa no polo de inacessibilidade (p.label) não toca nenhuma linha nem rótulo, fica ali; senão, procura numa grade de
+  // passo `passo` dentro do país o ponto livre mais próximo do original; sem ponto livre, o de maior folga. [lat, lng] ou null.
+  function paisLabelPoint(p, lines, { hw = 3, hh = 0.9, passo = 0.25, ocupados = [], caixa = { hw, hh } } = {}) {
     if (!p || !Array.isArray(p.label)) return null;
     const rings = paisAneis(p), orig = [p.label[1], p.label[0]];
     const [s, w, n, e] = ringsBBox(rings);
@@ -508,8 +511,11 @@ const IntelModel = (() => {
         segs.push([ax / hw, ay / hh, bx / hw, by / hh]);
       }
     }
+    // folga (>= 1 = caixa livre): a menor entre a das linhas e a dos rótulos já colocados; a de um rótulo é a separação no eixo
+    // mais afastado, em unidades da soma das meias-caixas (contínua, para que, sem ponto livre, o escolhido fique o mais longe possível)
     const folga = (lat, lng) => {
       let m = Infinity;
+      for (const o of ocupados) m = Math.min(m, Math.max(Math.abs(lng - o.lng) / (caixa.hw + o.hw), Math.abs(lat - o.lat) / (caixa.hh + o.hh)));
       const x = lng / hw, y = lat / hh;
       for (const g of segs) { const d = distToSegment(x, y, g[0], g[1], g[2], g[3]); if (d < m) m = d; }
       return m;
@@ -677,10 +683,18 @@ const IntelModel = (() => {
     return `${f.nome}${f.periodo ? ` · ${fmtPeriodo(f.periodo)}` : ''}${tipo ? ` · ${tipo}` : ''}`;
   }
 
-  // Período de fonte em pt-BR: cada "AAAA-MM" (mês válido, isolado) vira "mmm/aaaa"; "2010-2025" e datas ficam como estão.
+  // Período de fonte em pt-BR. Intervalo ISO "início/fim" (cada lado AAAA-MM ou AAAA-MM-DD) vira "início a fim"; "AAAA-AAAA-MM"
+  // (ano até um mês) vira "AAAA a mmm/aaaa"; "AAAA-MM-DD" vira dd/mm/aaaa; "AAAA-MM" (mês válido, isolado) vira "mmm/aaaa".
+  // Anos ("2010-2025"), safras ("2024/2025") e datas já em dd/mm/aaaa ficam como estão.
+  const ISO_MES = '\\d{4}-(?:0[1-9]|1[0-2])', ISO_DIA = `${ISO_MES}-(?:0[1-9]|[12]\\d|3[01])`;
+  const RE_INTERVALO = new RegExp(`\\b(${ISO_DIA}|${ISO_MES})/(${ISO_DIA}|${ISO_MES})\\b`, 'g');
   function fmtPeriodo(p) {
     if (p == null || p === '') return DASH;
-    return String(p).replace(/\b(\d{4})-(0[1-9]|1[0-2])\b/g, (_, y, m) => monthLabel(`${y}-${m}`));
+    return String(p)
+      .replace(RE_INTERVALO, '$1 a $2')
+      .replace(new RegExp(`\\b(\\d{4})-(${ISO_MES})\\b(?!-)`, 'g'), '$1 a $2')
+      .replace(/\b(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])\b(?!-)/g, (_, y, m, d) => `${d}/${m}/${y}`)
+      .replace(/\b(\d{4})-(0[1-9]|1[0-2])\b(?!-)/g, (_, y, m) => monthLabel(`${y}-${m}`));
   }
 
   // t -> Mt com 2 casas; valor positivo que arredondaria para 0,00 vira "< 0,01".
