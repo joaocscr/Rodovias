@@ -81,3 +81,50 @@ test('hstackSvg: barras horizontais empilhadas, linhas clicáveis com data-k, t�
   assert.match(plain, /^<svg[^>]*role="img"/);
   assert.match(Charts.hstackSvg([]), /Sem dados/);
 });
+test('dotsSvg: marca por tipo, referência só depois de refFromX, só cores da paleta, sem NaN', () => {
+  const data = [
+    { x: 2007.78, y: 39.99, label: 'Transbrasiliana', tipo: 'oficial' },
+    { x: 2013.5, y: 12, label: 'Rota B', tipo: 'roadshow' },
+    { x: 2021.5, y: 8.1, label: 'Rota C', tipo: 'imprensa' },
+    { x: 2025.62, y: 19.6, label: 'Rota D', tipo: 'oficial' },
+  ];
+  const svg = Charts.dotsSvg(data, { refY: 20, refFromX: 2020, formatY: v => `${v}%` });
+  assert.equal((svg.match(/<circle/g) || []).length, 4);
+  assert.match(svg, /<circle[^>]*data-tipo="oficial"[^>]*fill="#183C80"/);
+  assert.match(svg, /<circle[^>]*data-tipo="roadshow"[^>]*fill="#0071BB"/);
+  assert.match(svg, /<circle[^>]*data-tipo="imprensa"[^>]*fill="none"[^>]*stroke="#525254"[^>]*stroke-dasharray/);
+  assert.match(svg, /<title>Rota D[^<]*19.6%/);
+  // eixo x começa no primeiro ano dos dados (2007), não em 0
+  assert.match(svg, /text-anchor="middle"[^>]*>2007</);
+  assert.match(svg, /text-anchor="middle"[^>]*>2010</);
+  assert.doesNotMatch(svg, /text-anchor="middle"[^>]*>(0|1|2|1990)</);
+  // referência: uma linha horizontal que não começa na margem esquerda, mas em 2020
+  const ref = svg.match(/<line class="ref"[^>]*>/);
+  assert.ok(ref, 'linha de referência');
+  const x1 = +ref[0].match(/x1="([\d.]+)"/)[1], x2 = +ref[0].match(/x2="([\d.]+)"/)[1];
+  const left = +svg.match(/<line class="grid"[^>]*x1="([\d.]+)"/)[1];
+  assert.ok(x1 > left + 100 && x2 > x1, `${x1} ${x2} ${left}`);
+  assert.equal((Charts.dotsSvg(data, { refY: 20 }).match(/<line class="ref"/g) || []).length, 1);
+  assert.equal((Charts.dotsSvg(data, {}).match(/<line class="ref"/g) || []).length, 0);
+  assert.equal((Charts.dotsSvg(data, { refY: 20, refFromX: 2030 }).match(/<line class="ref"/g) || []).length, 0);
+  for (const c of svg.match(/#[0-9A-Fa-f]{6}/g) || []) assert.ok(['#183C80', '#0071BB', '#231F20', '#525254', '#F7F7F8'].includes(c.toUpperCase()), c);
+  assert.ok(!/NaN|undefined/.test(svg));
+});
+test('dotsSvg: ponto limitado pelo edital leva a observação no título', () => {
+  const svg = Charts.dotsSvg([
+    { x: 2021.83, y: 15.31, label: 'BR-101/116', tipo: 'oficial', limitado: true },
+    { x: 2022.5, y: 10, label: 'Outro', tipo: 'oficial' },
+  ], {});
+  assert.match(svg, /<title>BR-101\/116[^<]* · limitado pelo edital \(desempate por outorga\)<\/title>/);
+  assert.equal((svg.match(/limitado pelo edital/g) || []).length, 1);
+});
+test('dotsSvg: um ponto só, rótulos escapados e valores inválidos ignorados', () => {
+  const svg = Charts.dotsSvg([{ x: 2020.5, y: 5, label: 'A & <B>', tipo: 'oficial' }, { x: NaN, y: 3, label: 'x' }, { x: 2021, y: null, label: 'y' }], {});
+  assert.equal((svg.match(/<circle/g) || []).length, 1);
+  assert.match(svg, /A &amp; &lt;B&gt;/);
+  assert.ok(!/NaN/.test(svg));
+});
+test('dotsSvg vazio não quebra', () => {
+  assert.match(Charts.dotsSvg([], {}), /Sem dados/);
+  assert.match(Charts.dotsSvg(undefined, {}), /Sem dados/);
+});

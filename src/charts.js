@@ -87,6 +87,37 @@ const Charts = (() => {
     return frame(w, h, body, o.title);
   }
 
+  // Pontos no tempo (deságio por leilão): x = ano decimal (eixo de min a max, não de 0), y a partir de 0.
+  // Marca pela fonte (item.tipo): oficial = cheio Deep Blue; roadshow = cheio Bright Blue; imprensa = vazado cinza tracejado.
+  // o.refY: linha horizontal de referência, desenhada só de o.refFromX em diante. item.limitado acrescenta nota à dica.
+  function dotsSvg(data, o = {}) {
+    const w = o.width || 640, h = o.height || 300;
+    const pts = (data || []).filter(d => num(d.x) && num(d.y));
+    if (!pts.length) return empty(w, h);
+    const fy = o.formatY || (v => nf1.format(v) + '%');
+    const L = 56, R = 16, T = 16, B = 40, pw = w - L - R, ph = h - T - B;
+    const xs = pts.map(p => p.x), x0 = Math.floor(Math.min(...xs)), x1 = Math.max(Math.ceil(Math.max(...xs)), x0 + 1);
+    const ty = ticks(Math.max(...pts.map(p => p.y), num(o.refY) ? o.refY : 0)), my = ty[ty.length - 1] || 1;
+    const xOf = v => L + ((v - x0) / (x1 - x0)) * pw, yOf = v => T + ph - (v / my) * ph;
+    const FONTE = { oficial: 'fonte oficial', roadshow: 'RoadShow', imprensa: 'imprensa' };
+    let body = yAxis(ty, L, w - R, yOf, fy).replace(/<line /g, '<line class="grid" ');
+    const step = Math.max(1, Math.ceil((x1 - x0) / 8));
+    for (let x = x0; x <= x1; x += step) body += `<text x="${xOf(x).toFixed(1)}" y="${h - B + 24}" text-anchor="middle" fill="${C.grey}">${x}</text>`;
+    if (num(o.refY) && !(num(o.refFromX) && o.refFromX > x1)) {
+      const rx = xOf(Math.max(num(o.refFromX) ? o.refFromX : x0, x0));
+      body += `<line class="ref" x1="${rx.toFixed(1)}" x2="${(w - R).toFixed(1)}" y1="${yOf(o.refY).toFixed(1)}" y2="${yOf(o.refY).toFixed(1)}" stroke="${C.spacial}" stroke-width="1.5" stroke-dasharray="6 4"/>`;
+    }
+    pts.forEach(p => {
+      const tipo = FONTE[p.tipo] ? p.tipo : 'roadshow', cx = xOf(p.x).toFixed(1), cy = yOf(p.y).toFixed(1);
+      const mark = tipo === 'imprensa'
+        ? `fill="none" pointer-events="all" stroke="${C.grey}" stroke-width="2" stroke-dasharray="2 2"`
+        : `fill="${tipo === 'oficial' ? C.deep : C.bright}" fill-opacity="0.85"`;
+      body += `<circle class="dot" data-tipo="${tipo}" cx="${cx}" cy="${cy}" r="5.5" ${mark}>` +
+        `<title>${esc(p.label || '')}: ${esc(fy(p.y))} · ${FONTE[tipo]}${p.limitado ? ' · limitado pelo edital (desempate por outorga)' : ''}</title></circle>`;
+    });
+    return frame(w, h, body, o.title);
+  }
+
   function linesSvg(series, o = {}) {
     const w = o.width || 640, h = o.height || 280;
     const all = series.flatMap(s => s.points.filter(p => num(p.x) && num(p.y)));
@@ -175,8 +206,8 @@ const Charts = (() => {
 
   const into = fn => (el, data, o = {}) => { el.innerHTML = fn(data, Object.assign({ width: Math.max(320, el.clientWidth || 640) }, o)); };
 
-  return { C, barsSvg, hbarsSvg, hstackSvg, scatterSvg, linesSvg, stackedSvg, legendHtml,
-    bars: into(barsSvg), hbars: into(hbarsSvg), scatter: into(scatterSvg), lines: into(linesSvg), stacked: into(stackedSvg) };
+  return { C, barsSvg, hbarsSvg, hstackSvg, scatterSvg, linesSvg, stackedSvg, dotsSvg, legendHtml,
+    bars: into(barsSvg), hbars: into(hbarsSvg), scatter: into(scatterSvg), lines: into(linesSvg), stacked: into(stackedSvg), dots: into(dotsSvg) };
 })();
 
 if (typeof module !== 'undefined') module.exports = Charts;
