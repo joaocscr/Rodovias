@@ -6,7 +6,7 @@ Gerado por `scripts/build.py` a partir de `data/roadshow/verificacao.json`. Hier
 
 | Leilões | Campos oficial | Campos RoadShow | Campos imprensa | Não localizados |
 |---:|---:|---:|---:|---:|
-| 25 | 143 | 0 | 0 | 1 |
+| 36 | 220 | 0 | 0 | 1 |
 
 ## Campos verificados
 
@@ -156,6 +156,83 @@ Gerado por `scripts/build.py` a partir de `data/roadshow/verificacao.json`. Hier
 | regis-bittencourt-otimizacao | desagio | 22,53% | oficial | — | antt-delib-276-2026, b3-2026-07-23-regis-bittencourt, rs-p97 |
 | regis-bittencourt-otimizacao | assinatura | 14/02/2008 | oficial | 14/08/2008 | antt-concessao-autopista-regis-bittencourt, antt-minuta-termo-aditivo-regis-bittencourt, antt-noticia-2008-02-14-2a-etapa |
 | regis-bittencourt-otimizacao | prazo_anos | 15 | oficial | — | antt-minuta-termo-aditivo-regis-bittencourt, antt-projeto-regis-bittencourt |
+| transbrasiliana-2007 | leilao | 09/10/2007 | oficial | — | antt-nt-5091-2023-transbrasiliana |
+| transbrasiliana-2007 | grupo_vencedor | Consórcio BRVias | oficial | TPI – Triunfo Participações e Investimentos S. A. (Antigo Consórcio BRVIAS) | antt-res-2479-2007, antt-nt-5091-2023-transbrasiliana, antt-noticia-2008-02-14-2a-etapa |
+| transbrasiliana-2007 | desagio | 39,99% | oficial | — | antt-nt-5091-2023-transbrasiliana |
+| transbrasiliana-2007 | tarifa_teto | R$ 4,083 por praça (jul/2007) | oficial | — | antt-nt-5091-2023-transbrasiliana |
+| transbrasiliana-2007 | tarifa_vencedora | R$ 2,450 por praça (jul/2007) | oficial | — | antt-res-2479-2007, antt-nt-5091-2023-transbrasiliana |
+| transbrasiliana-2007 | assinatura | 14/02/2008 | oficial | — | antt-nt-5091-2023-transbrasiliana, antt-concessao-transbrasiliana, antt-noticia-2008-02-14-2a-etapa, rs-p3 |
+| transbrasiliana-2007 | prazo_anos | 25 | oficial | — | antt-nt-5091-2023-transbrasiliana, antt-concessao-transbrasiliana |
+| regis-bittencourt-2007 | leilao | 09/10/2007 | oficial | — | antt-nt-6695-2023-regis-bittencourt |
+| regis-bittencourt-2007 | grupo_vencedor | Obrascon Huarte Lain Brasil S.A. (OHL Brasil) | oficial | Arteris (antiga OHL) | antt-res-2475-2007, antt-nt-6695-2023-regis-bittencourt |
+| regis-bittencourt-2007 | desagio | 49,19% | oficial | — | antt-nt-6695-2023-regis-bittencourt |
+| regis-bittencourt-2007 | tarifa_teto | R$ 2,68 por praça (jul/2007) | oficial | — | antt-nt-6695-2023-regis-bittencourt |
+| regis-bittencourt-2007 | tarifa_vencedora | R$ 1,364 por praça (jul/2007) | oficial | — | antt-res-2475-2007, antt-nt-6695-2023-regis-bittencourt |
+| regis-bittencourt-2007 | assinatura | 14/02/2008 | oficial | — | antt-nt-6695-2023-regis-bittencourt, antt-concessao-autopista-regis-bittencourt, antt-noticia-2008-02-14-2a-etapa |
+| regis-bittencourt-2007 | prazo_anos | 25 | oficial | — | antt-nt-6695-2023-regis-bittencourt, antt-concessao-autopista-regis-bittencourt |
+| autopista-fluminense-2007 | leilao | 09/10/2007 | oficial | — | antt-nt-1819-2022-autopista-fluminense |
+| autopista-fluminense-2007 | grupo_vencedor | Obrascon Huarte Lain Brasil S.A. (OHL Brasil) | oficial | Arteris (antiga OHL) | antt-res-2478-2007, antt-nt-1819-2022-autopista-fluminense |
+| autopista-fluminense-2007 | desagio | 40,95% | oficial | — | antt-nt-1819-2022-autopista-fluminense |
+| autopista-fluminense-2007 | tarifa_teto | R$ 3,824 por praça (jul/2007) | oficial | — | antt-nt-1819-2022-autopista-fluminense |
+| autopista-fluminense-2007 | tarifa_vencedora | R$ 2,258 por praça (jul/2007) | oficial | — | antt-res-2478-2007, antt-nt-1819-2022-autopista-fluminense |
+| autopista-fluminense-2007 | assinatura | 14/02/2008 | oficial | — | antt-nt-1819-2022-autopista-fluminense, antt-noticia-2008-02-14-2a-etapa |
+| autopista-fluminense-2007 | prazo_anos | 25 | oficial | — | antt-nt-1819-2022-autopista-fluminense |
+| autopista-litoral-sul-2007 | leilao | 09/10/2007 | oficial | — | antt-nt-7872-2023-autopista-litoral-sul |
+| autopista-litoral-sul-2007 | grupo_vencedor | Obrascon Huarte Lain Brasil S.A. (OHL Brasil) | oficial | Arteris (Antiga OHL) | antt-res-2477-2007, antt-nt-7872-2023-autopista-litoral-sul |
+| autopista-litoral-sul-2007 | desagio | 62,67% | oficial | — | antt-nt-7872-2023-autopista-litoral-sul |
+| autopista-litoral-sul-2007 | tarifa_teto | R$ 2,754 por praça (jul/2007) | oficial | — | antt-nt-7872-2023-autopista-litoral-sul |
+| autopista-litoral-sul-2007 | tarifa_vencedora | R$ 1,028 por praça (jul/2007) | oficial | — | antt-res-2477-2007, antt-nt-7872-2023-autopista-litoral-sul |
+| autopista-litoral-sul-2007 | assinatura | 14/02/2008 | oficial | — | antt-nt-7872-2023-autopista-litoral-sul, antt-concessao-autopista-litoral-sul, antt-noticia-2008-02-14-2a-etapa, rs-p3 |
+| autopista-litoral-sul-2007 | prazo_anos | 25 | oficial | — | antt-nt-7872-2023-autopista-litoral-sul, antt-concessao-autopista-litoral-sul |
+| autopista-planalto-sul-2007 | leilao | 09/10/2007 | oficial | — | antt-nt-10182-2024-autopista-planalto-sul |
+| autopista-planalto-sul-2007 | grupo_vencedor | Obrascon Huarte Lain Brasil S.A. (OHL Brasil) | oficial | Arteris (Antiga OHL) | antt-res-2480-2007, antt-nt-10182-2024-autopista-planalto-sul |
+| autopista-planalto-sul-2007 | desagio | 39,35% | oficial | — | antt-nt-10182-2024-autopista-planalto-sul |
+| autopista-planalto-sul-2007 | tarifa_teto | R$ 4,188 por praça (jul/2007) | oficial | — | antt-nt-10182-2024-autopista-planalto-sul |
+| autopista-planalto-sul-2007 | tarifa_vencedora | R$ 2,540 por praça (jul/2007) | oficial | — | antt-res-2480-2007, antt-nt-10182-2024-autopista-planalto-sul |
+| autopista-planalto-sul-2007 | assinatura | 14/02/2008 | oficial | — | antt-nt-10182-2024-autopista-planalto-sul, antt-concessao-autopista-planalto-sul, antt-noticia-2008-02-14-2a-etapa, rs-p3 |
+| autopista-planalto-sul-2007 | prazo_anos | 25 | oficial | — | antt-nt-10182-2024-autopista-planalto-sul |
+| fernao-dias-2007 | leilao | 09/10/2007 | oficial | — | antt-nt-6805-2023-fernao-dias |
+| fernao-dias-2007 | grupo_vencedor | Obrascon Huarte Lain Brasil S.A. (OHL Brasil) | oficial | Arteris (antiga OHL) | antt-res-2476-2007, antt-nt-6805-2023-fernao-dias |
+| fernao-dias-2007 | desagio | 65,42% | oficial | — | antt-nt-6805-2023-fernao-dias |
+| fernao-dias-2007 | tarifa_teto | R$ 2,884 por praça (jul/2007) | oficial | — | antt-nt-6805-2023-fernao-dias |
+| fernao-dias-2007 | tarifa_vencedora | R$ 0,997 por praça (jul/2007) | oficial | — | antt-res-2476-2007, antt-nt-6805-2023-fernao-dias |
+| fernao-dias-2007 | assinatura | 14/02/2008 | oficial | — | antt-nt-6805-2023-fernao-dias, antt-noticia-2008-02-14-2a-etapa |
+| fernao-dias-2007 | prazo_anos | 25 | oficial | — | antt-nt-6805-2023-fernao-dias |
+| rodovia-do-aco-2007 | leilao | 09/10/2007 | oficial | — | antt-nt-2069-2022-rodovia-do-aco |
+| rodovia-do-aco-2007 | grupo_vencedor | Consórcio Acciona | oficial | K-Infra (antigo Consórcio Acciona) | antt-res-2522-2008, antt-nt-2069-2022-rodovia-do-aco |
+| rodovia-do-aco-2007 | desagio | 27,17% | oficial | — | antt-nt-2069-2022-rodovia-do-aco |
+| rodovia-do-aco-2007 | tarifa_teto | R$ 4,037 por praça (jul/2007) | oficial | — | antt-nt-2069-2022-rodovia-do-aco |
+| rodovia-do-aco-2007 | tarifa_vencedora | R$ 2,940 por praça (jul/2007) | oficial | — | antt-res-2522-2008, antt-nt-2069-2022-rodovia-do-aco |
+| rodovia-do-aco-2007 | assinatura | 26/03/2008 | oficial | — | antt-nt-2069-2022-rodovia-do-aco, antt-concessao-rodovia-do-aco |
+| rodovia-do-aco-2007 | prazo_anos | 25 | oficial | — | antt-nt-2069-2022-rodovia-do-aco, antt-concessao-rodovia-do-aco |
+| via-bahia-2009 | leilao | 21/01/2009 | oficial | — | antt-nt-5937-2023-viabahia |
+| via-bahia-2009 | grupo_vencedor | Consórcio RodoBahia | oficial | — | antt-nt-5937-2023-viabahia, antt-res-3085-2009 |
+| via-bahia-2009 | desagio | 21,00% | oficial | — | antt-nt-5937-2023-viabahia |
+| via-bahia-2009 | tarifa_teto | R$ 2,80 por praça (dez/2005) | oficial | — | antt-nt-5937-2023-viabahia |
+| via-bahia-2009 | tarifa_vencedora | R$ 2,212 por praça (dez/2005) | oficial | — | antt-res-3085-2009, antt-nt-5937-2023-viabahia |
+| via-bahia-2009 | assinatura | 03/09/2009 | oficial | — | antt-nt-5937-2023-viabahia, antt-concessao-via-bahia |
+| via-bahia-2009 | prazo_anos | 25 | oficial | — | antt-nt-5937-2023-viabahia, antt-concessao-via-bahia |
+| eco101-2012 | leilao | 18/01/2012 | oficial | — | antt-nt-7038-2022-eco101 |
+| eco101-2012 | grupo_vencedor | Consórcio Rodovia da Vitória | oficial | Ecorodovias e SBS Engenharia e Construções | antt-res-3814-2012, antt-nt-7038-2022-eco101 |
+| eco101-2012 | desagio | 45,63% | oficial | — | antt-nt-7038-2022-eco101 |
+| eco101-2012 | tarifa_teto | R$ 0,06237 por km (jan/2009) | oficial | — | antt-nt-7038-2022-eco101 |
+| eco101-2012 | tarifa_vencedora | R$ 0,03391 por km (jan/2009) | oficial | — | antt-res-3814-2012, antt-nt-7038-2022-eco101 |
+| eco101-2012 | assinatura | 17/04/2013 | oficial | — | antt-nt-7038-2022-eco101, rs-p5 |
+| eco101-2012 | prazo_anos | 25 | oficial | — | antt-nt-7038-2022-eco101 |
+| eco050-2013 | leilao | 18/09/2013 | oficial | — | antt-nt-5476-2024-eco050 |
+| eco050-2013 | grupo_vencedor | Consórcio Planalto | oficial | Ecorodovias | antt-nt-5476-2024-eco050, antt-res-4205-2013 |
+| eco050-2013 | desagio | 42,38% | oficial | — | antt-nt-5476-2024-eco050 |
+| eco050-2013 | tarifa_teto | R$ 0,07870 por km (mai/2012) | oficial | — | antt-nt-5476-2024-eco050 |
+| eco050-2013 | tarifa_vencedora | R$ 0,04534 por km (mai/2012) | oficial | — | antt-nt-5476-2024-eco050 |
+| eco050-2013 | assinatura | 05/12/2013 | oficial | — | antt-nt-5476-2024-eco050, antt-concessao-eco050, rs-p3 |
+| eco050-2013 | prazo_anos | 30 | oficial | — | antt-nt-5476-2024-eco050, antt-concessao-eco050 |
+| concebra-2013 | leilao | 04/12/2013 | oficial | — | antt-nt-1861-2021-concebra |
+| concebra-2013 | grupo_vencedor | Triunfo Participações e Investimentos S.A. | oficial | Triunfo Participações e Investimentos - TPI | antt-nt-1861-2021-concebra |
+| concebra-2013 | desagio | 52,00% | oficial | — | antt-nt-1861-2021-concebra |
+| concebra-2013 | tarifa_teto | R$ 0,05940 por km (mai/2012) | oficial | — | antt-nt-1861-2021-concebra |
+| concebra-2013 | tarifa_vencedora | R$ 0,02851 por km (mai/2012) | oficial | — | antt-nt-1861-2021-concebra |
+| concebra-2013 | assinatura | 31/01/2014 | oficial | — | antt-nt-1861-2021-concebra, antt-concessao-concebra, rs-p3 |
+| concebra-2013 | prazo_anos | 30 | oficial | — | antt-nt-1861-2021-concebra, antt-concessao-concebra |
 
 ## Notas
 
@@ -193,6 +270,20 @@ Gerado por `scripts/build.py` a partir de `data/roadshow/verificacao.json`. Hier
 - **rota-dos-sertoes**: O contrato foi assinado em 29/09/2026; o RoadShow imprime a previsão de 11/09/2026. A página da concessão na ANTT deixa o início da concessão em branco; não foi localizada fonte oficial para o início de operação previsto (11/10/2026) no RoadShow.
 - **regis-bittencourt-otimizacao**: Processo competitivo de alienação de 100% das ações da Autopista Régis Bittencourt S.A. (controlada pela Arteris). Entregaram propostas três proponentes: Motiva Infraestrutura de Mobilidade S.A., EPR Participações S.A. e Arteris S.A. A p. 15 do RoadShow lista também o "Consórcio Via dos Sertões" com 13,10%, que é um proponente do leilão da Rota dos Sertões. A homologação (Deliberação ANTT nº 276, de 10/09/2026) adjudicou o objeto à EPR e deu anuência prévia à transferência de controle, condicionada às exigências do edital.
 - **regis-bittencourt-otimizacao**: O contrato original foi firmado em 14/02/2008 (o RoadShow imprime 14/08/2008). O prazo de 15 anos conta da vigência do termo aditivo, conforme a minuta do edital e a página do projeto; a nota da B3 fala em 25 anos. Não foi localizado o termo aditivo assinado: a assinatura do aditivo (21/12/2026) e o início de operação (21/01/2027) do RoadShow seguem como previsões.
+- **transbrasiliana-2007**: O leilão foi vencido pelo Consórcio BRVias (Splice do Brasil, WTorre e Comporte Participações), com 39,99%; a homologação foi feita ao consórcio. A TPI – Triunfo Participações e Investimentos ofereceu 5,68% (9º lugar) e é hoje a controladora indicada pela ANTT: assumiu o controle da concessionária depois do leilão (aquisição, não troca de nome), por isso o RoadShow imprime "TPI – Triunfo (antigo Consórcio BRVias)".
+- **transbrasiliana-2007**: Pelo quadro de lances da ANTT, o 10º lance é do Consórcio Flora Brasil Torc, com 5,33% (o RoadShow imprime "Consórcio Flora Brasil" com 5,92%).
+- **regis-bittencourt-2007**: A homologação foi feita à Obrascon Huarte Lain Brasil S.A. (OHL Brasil), que depois passou a se chamar Arteris S.A. (mesma empresa, troca de nome); por isso o RoadShow imprime "Arteris (antiga OHL)".
+- **regis-bittencourt-2007**: A nota técnica da ANTT imprime a tarifa-teto com duas casas (R$ 2,68) e o quadro de lances arredonda o lance da OHL para R$ 1,36; o deságio de 49,19% é o do quadro (com R$ 1,364 sobre R$ 2,68 daria 49,10%).
+- **autopista-fluminense-2007**: A homologação foi feita à Obrascon Huarte Lain Brasil S.A. (OHL Brasil), que depois passou a se chamar Arteris S.A. (mesma empresa, troca de nome); por isso o RoadShow imprime "Arteris (antiga OHL)". O prazo de 25 anos é o do contrato original; o termo aditivo de 2026 fixou 22 anos a contar da sua vigência.
+- **autopista-litoral-sul-2007**: A homologação foi feita à Obrascon Huarte Lain Brasil S.A. (OHL Brasil), que depois passou a se chamar Arteris S.A. (mesma empresa, troca de nome); por isso o RoadShow imprime "Arteris (antiga OHL)".
+- **autopista-planalto-sul-2007**: A homologação foi feita à Obrascon Huarte Lain Brasil S.A. (OHL Brasil), que depois passou a se chamar Arteris S.A. (mesma empresa, troca de nome); por isso o RoadShow imprime "Arteris (antiga OHL)".
+- **autopista-planalto-sul-2007**: Pelo quadro de lances da ANTT, a TPI Triunfo Participações ofereceu 10,43% neste lote; o RoadShow lista a TPI duas vezes (29,15% e 10,43%), e 29,15% é o lance da TPI no lote da Autopista Litoral Sul.
+- **fernao-dias-2007**: A homologação foi feita à Obrascon Huarte Lain Brasil S.A. (OHL Brasil), que depois passou a se chamar Arteris S.A. (mesma empresa, troca de nome); por isso o RoadShow imprime "Arteris (antiga OHL)". O prazo de 25 anos é o do contrato original; o termo aditivo de 2026 fixou 15 anos a contar da sua vigência.
+- **rodovia-do-aco-2007**: O lote foi vencido pelo Consórcio Acciona, com 27,17%. A homologação (Resolução ANTT nº 2.522, de 23/01/2008) saiu depois da dos demais lotes da 2ª etapa, condicionada ao mandado de segurança que incluiu o consórcio no leilão. A K-Infra, que o RoadShow imprime como vencedora, é a controladora posterior indicada pela ANTT (aquisição, não troca de nome); a página da concessão na ANTT a registra como "Caducidade Declarada".
+- **rodovia-do-aco-2007**: Pelo quadro de lances da ANTT, a TPI Triunfo Participações ofereceu 4,60% e o Consórcio Bertin Equipav 2,00%; o RoadShow inverte os dois percentuais.
+- **via-bahia-2009**: Dois proponentes: Consórcio RodoBahia, 21,00% (vencedor), e Consórcio Cia Brasileira de Rodovias, 10,10% (o RoadShow imprime 2,52%). A resolução de homologação grafa "Rodobahia". A página da concessão na ANTT a registra como "Contrato Encerrado" e indica como controladoras empresas Roadis (controle posterior ao leilão).
+- **eco101-2012**: O vencedor foi o Consórcio Rodovia da Vitória, com 45,63%; a SPE que assinou o contrato é a ECO 101 Concessionária de Rodovias S/A. A assinatura ficou suspensa por decisão judicial de julho de 2012 até 17/04/2013. Pelo quadro de lances da ANTT, o Consórcio Via Espírito Santo BR-101 ofereceu 32,03% (o RoadShow não imprime percentual). O prazo de 25 anos é o do contrato original.
+- **eco050-2013**: O leilão foi vencido pelo Consórcio Planalto, com 42,38%; a SPE MGO Rodovias S.A. assinou o contrato. A Ecorodovias, que o RoadShow imprime como vencedora, recebeu o controle da MGO em dezembro de 2018 (Deliberação ANTT nº 989/2018; aquisição, não troca de nome), e a SPE passou a se chamar ECO050.
 
 ## Inabilitados
 

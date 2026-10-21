@@ -99,6 +99,41 @@
       "nome": "EPR Participações S.A.",
       "grupo": "EPR",
       "motivo": "razão social do grupo"
+    },
+    {
+      "nome": "Consórcio BRVias",
+      "grupo": "Consórcio BRVias",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Obrascon Huarte Lain Brasil S.A. (OHL Brasil)",
+      "grupo": "Arteris",
+      "motivo": "troca de nome"
+    },
+    {
+      "nome": "Consórcio Acciona",
+      "grupo": "Acciona",
+      "motivo": "consórcio liderado por"
+    },
+    {
+      "nome": "Consórcio RodoBahia",
+      "grupo": "Consórcio RodoBahia",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Consórcio Rodovia da Vitória",
+      "grupo": "Ecorodovias",
+      "motivo": "consórcio liderado por"
+    },
+    {
+      "nome": "Consórcio Planalto",
+      "grupo": "Consórcio Planalto",
+      "motivo": "mesmo nome"
+    },
+    {
+      "nome": "Triunfo Participações e Investimentos S.A.",
+      "grupo": "Triunfo",
+      "motivo": "razão social do grupo"
     }
   ]
 }

@@ -1105,6 +1105,264 @@
       "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/autopista-regis-bittencourt",
       "acesso": "2026-10-21",
       "trecho": "Empresas Controladoras: ARTERIS S/A · Data da Assinatura: 14/02/2008 · Início da Concessão: 18/02/2008 · Prazo da Concessão: 25 anos · Edital: 001/2007"
+    },
+    "rs-p3": {
+      "tipo": "roadshow",
+      "pagina": 3
+    },
+    "antt-nt-5091-2023-transbrasiliana": {
+      "tipo": "oficial",
+      "orgao": "ANTT — SUROD/GEGEF",
+      "titulo": "Nota Técnica SEI nº 5091/2023/CGEFI/GEGEF/SUROD/DIR/ANTT — 15ª Revisão Ordinária da Transbrasiliana (histórico do leilão)",
+      "data": "2023-08-30",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/Transbrasiliana/revisoes-e-reajustes-da-tarifa-de-pedagio/2023/sei_antt-18167007-nota-tecnica-gegef-preliminar.pdf",
+      "acesso": "2026-10-21",
+      "trecho": "Em 9 de outubro de 2007, a ANTT realizou Leilão […] Tarifa Básica de Pedágio Teto […] referenciada a julho de 2007 […] foi de R$ 4,083 […] 1 Santander Brasil S.A. CTVM Consórcio BRVias R$ 2,450 39,99% […] 9 Credit Suisse Brasil S.A. CTVM TPI Triunfo Participações R$ 3,851 5,68% […] Em 14 de fevereiro de 2008, a Transbrasiliana Concessionária de Rodovia S/A firmou […] Contrato de Concessão […] O prazo de vigência da concessão é de 25 anos"
+    },
+    "antt-res-2479-2007": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Diretoria Colegiada",
+      "titulo": "Resolução nº 2.479, de 12 de dezembro de 2007 — homologa o Lote 01 (BR-153/SP)",
+      "data": "2007-12-12",
+      "url": "https://anttlegis.antt.gov.br/action/ActionDatalegis.php?acao=abrirTextoAto&link=S&tipo=RES&numeroAto=00002479&seqAto=000&valorAno=2007&orgao=DG%2FANTT%2FMT&cod_modulo=161&cod_menu=7796",
+      "acesso": "2026-10-21",
+      "trecho": "Homologar o resultado do Leilão […] Lote 01 - Rodovia BR-153/SP […] para o proponente vencedor Consórcio BRVias, a ser constituído pelas empresas Splice do Brasil Telecomunicações e Eletrônica S.A., WTorre S.A. e Comporte Participações S.A., que apresentou o Valor da Tarifa Básica de Pedágio de R$ 2,450 […] para cada uma das 04 (quatro) praças (ato do DOU reproduzido no ANTTlegis; o DOU não responde deste ambiente)"
+    },
+    "antt-concessao-transbrasiliana": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Lista de concessões — Transbrasiliana",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/Transbrasiliana",
+      "acesso": "2026-10-21",
+      "trecho": "Empresas Controladoras: TPI – Triunfo Participações e Investimentos S. A. […] Data da Assinatura: 14/02/2008 · Início da Concessão: 18/02/2008 · Prazo da Concessão: 25 anos · Edital: 005/2007"
+    },
+    "antt-nt-6695-2023-regis-bittencourt": {
+      "tipo": "oficial",
+      "orgao": "ANTT — SUROD/GEGEF",
+      "titulo": "Nota Técnica SEI nº 6695/2023/CGEFI/GEGEF/SUROD/DIR/ANTT — 15ª Revisão Ordinária da Autopista Régis Bittencourt (histórico do leilão)",
+      "data": "2023-10-17",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/autopista-regis-bittencourt/revisoes-e-reajustes/2023/sei_antt-19219273-nota-tecnica-gegef-15a-ro-preliminar-antt.pdf",
+      "acesso": "2026-10-21",
+      "trecho": "Em 09/10/2007, a ANTT realizou Leilão […] Tarifa Básica de Pedágio Teto […] referenciada a julho de 2007 e oferecida para esse Edital, foi de R$ 2,68 […] Quadro 2 (imagem): OHL 1,36 49,19 […] a Proponente vencedora foi a OBRASCON HUARTE LAIN BRASIL S.A (OHL) […] com lance de R$ 1,364 […] Em 14 de fevereiro de 2008, a Concessionária Autopista Régis Bittencourt S. A. firmou […] Contrato de Concessão […] pelo prazo de vigência de 25 anos"
+    },
+    "antt-res-2475-2007": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Diretoria Colegiada",
+      "titulo": "Resolução nº 2.475, de 12 de dezembro de 2007 — homologa o Lote 06 (BR-116/SP/PR)",
+      "data": "2007-12-12",
+      "url": "https://anttlegis.antt.gov.br/action/ActionDatalegis.php?acao=abrirTextoAto&link=S&tipo=RES&numeroAto=00002475&seqAto=000&valorAno=2007&orgao=DG%2FANTT%2FMT&cod_modulo=161&cod_menu=7796",
+      "acesso": "2026-10-21",
+      "trecho": "Homologar o resultado do Leilão […] Lote 06 - Rodovia BR-116/SP/PR, trecho São Paulo-Curitiba […] para a empresa vencedora OBRASCON HUARTE LAIN BRASIL S.A. (OHL Brasil) que apresentou o Valor da Tarifa Básica de Pedágio de R$ 1,364 […] para cada uma das 06 (seis) praças (ato do DOU reproduzido no ANTTlegis; o DOU não responde deste ambiente)"
+    },
+    "antt-nt-1819-2022-autopista-fluminense": {
+      "tipo": "oficial",
+      "orgao": "ANTT — SUROD/GEGEF",
+      "titulo": "Nota Técnica SEI nº 1819/2022/GEGEF/SUROD/DIR — 14ª Revisão Ordinária da Autopista Fluminense (histórico do leilão)",
+      "data": "2022-04-08",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/autopista-fluminense/revisoes-e-reajustes/2022/sei_antt-10526483-nota-tecnica-antt-gegef-1819.pdf",
+      "acesso": "2026-10-21",
+      "trecho": "Em 9 de outubro de 2007, a ANTT realizou leilão […] A Tarifa Básica de Pedágio teto […] referenciada a preços de julho de 2007 e oferecida para esse Edital, foi de R$ 3,824 […] 1 Agora Senior CTVM S. A. OHL R$ 2,258 40,95 % […] Em 14 de fevereiro de 2008, a Autopista Fluminense S. A. firmou […] o Contrato de Concessão […] pelo prazo de vigência de 25 anos"
+    },
+    "antt-res-2478-2007": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Diretoria Colegiada",
+      "titulo": "Resolução nº 2.478, de 12 de dezembro de 2007 — homologa o Lote 04 (BR-101/RJ)",
+      "data": "2007-12-12",
+      "url": "https://anttlegis.antt.gov.br/action/ActionDatalegis.php?acao=abrirTextoAto&link=S&tipo=RES&numeroAto=00002478&seqAto=000&valorAno=2007&orgao=DG%2FANTT%2FMT&cod_modulo=161&cod_menu=7796",
+      "acesso": "2026-10-21",
+      "trecho": "Homologar o resultado do Leilão […] Lote 04 - Rodovia BR-101/RJ […] para a empresa vencedora OBRASCON HUARTE LAIN BRASIL S.A. (OHL Brasil) que apresentou o Valor da Tarifa Básica de Pedágio de R$ 2,258 […] para cada uma das 05 (cinco) praças (ato do DOU reproduzido no ANTTlegis; o DOU não responde deste ambiente)"
+    },
+    "antt-nt-7872-2023-autopista-litoral-sul": {
+      "tipo": "oficial",
+      "orgao": "ANTT — SUROD/GEGEF",
+      "titulo": "Nota Técnica SEI nº 7872/2023/CGEFI/GEGEF/SUROD/DIR/ANTT — 16ª Revisão Ordinária da Autopista Litoral Sul (histórico do leilão)",
+      "data": "2023-12-12",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/autopista-litoral-sul/revisoes-e-reajustes/2024/sei_20158142_nota_tecnica___antt_7872.pdf",
+      "acesso": "2026-10-21",
+      "trecho": "Em 09/10/2007, a ANTT realizou Leilão […] Tarifa Básica de Pedágio Teto […] referenciada a julho de 2007 e apresentada no edital, foi de R$ 2,754 […] 1 Agora Senior CTVM S.A. OHL 1,028 62,67 […] Em 14/02/2008, a Autopista Litoral Sul S.A. firmou […] Contrato de Concessão […] O prazo de vigência da concessão é de 25 (vinte e cinco) anos"
+    },
+    "antt-res-2477-2007": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Diretoria Colegiada",
+      "titulo": "Resolução nº 2.477, de 12 de dezembro de 2007 — homologa o Lote 07 (BR-116/376/PR e BR-101/SC)",
+      "data": "2007-12-12",
+      "url": "https://anttlegis.antt.gov.br/action/ActionDatalegis.php?acao=abrirTextoAto&link=S&tipo=RES&numeroAto=00002477&seqAto=000&valorAno=2007&orgao=DG%2FANTT%2FMT&cod_modulo=161&cod_menu=7796",
+      "acesso": "2026-10-21",
+      "trecho": "Homologar o resultado do Leilão […] Lote 07 - Rodovia BR-116/376/PR - BR/101/SC - trecho Curitiba - Florianópolis […] para a empresa vencedora OBRASCON HUARTE LAIN BRASIL S.A. (OHL Brasil) que apresentou o Valor da Tarifa Básica de Pedágio de R$ 1,028 […] para cada uma das 05 (cinco) praças (ato do DOU reproduzido no ANTTlegis; o DOU não responde deste ambiente)"
+    },
+    "antt-concessao-autopista-litoral-sul": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Lista de concessões — Autopista Litoral Sul",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/autopista-litoral-sul",
+      "acesso": "2026-10-21",
+      "trecho": "Empresas Controladoras: ARTERIS S/A […] Data da Assinatura: 14/02/2008 · Início da Concessão: 18/02/2008 · Prazo da Concessão: 25 anos · Edital: 003/2007"
+    },
+    "antt-nt-10182-2024-autopista-planalto-sul": {
+      "tipo": "oficial",
+      "orgao": "ANTT — SUROD/GEGEF",
+      "titulo": "Nota Técnica SEI nº 10182/2024/CGEFI/GEGEF/SUROD/DIR/ANTT — 17ª Revisão Ordinária da Autopista Planalto Sul (histórico do leilão)",
+      "data": "2024-12-02",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/autopista-planalto-sul/revisao-e-reajuste-da-tarifa-de-pedagio-autopista-planalto-sul/2024/sei_26710846_nota_tecnica___antt_10182-1.pdf",
+      "acesso": "2026-10-21",
+      "trecho": "Em 09/10/2007, a ANTT realizou Leilão […] Tarifa Básica de Pedágio Teto […] referenciada a julho de 2007 e oferecida para esse Edital, foi de R$ 4,188 […] 1 Agora Sênior CTVM S.A. OHL 2,540 39,35 […] Em 14/02/2008, a Concessionária Autopista Planalto Sul S.A. firmou […] Contrato de Concessão […] O prazo de vigência da concessão é de 25 anos"
+    },
+    "antt-res-2480-2007": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Diretoria Colegiada",
+      "titulo": "Resolução nº 2.480, de 12 de dezembro de 2007 — homologa o Lote 02 (BR-116/PR/SC)",
+      "data": "2007-12-12",
+      "url": "https://anttlegis.antt.gov.br/action/ActionDatalegis.php?acao=abrirTextoAto&link=S&tipo=RES&numeroAto=00002480&seqAto=000&valorAno=2007&orgao=DG%2FANTT%2FMT&cod_modulo=161&cod_menu=7796",
+      "acesso": "2026-10-21",
+      "trecho": "Homologar o resultado do Leilão […] Lote 02 - Rodovia BR-116/PR/SC - trecho Curitiba - Divisa SC/RS […] para a empresa vencedora OBRASCON HUARTE LAIN BRASIL S.A. (OHL Brasil) que apresentou o Valor da Tarifa Básica de Pedágio de R$ 2,540 […] para cada uma das 05 (cinco) praças (ato do DOU reproduzido no ANTTlegis; o DOU não responde deste ambiente)"
+    },
+    "antt-concessao-autopista-planalto-sul": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Lista de concessões — Autopista Planalto Sul",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/autopista-planalto-sul",
+      "acesso": "2026-10-21",
+      "trecho": "Empresas Controladoras: ARTERIS S/A […] Data da Assinatura: 14/02/2008 · Início da Concessão: 18/02/2008 · Edital: 006/2007"
+    },
+    "antt-nt-6805-2023-fernao-dias": {
+      "tipo": "oficial",
+      "orgao": "ANTT — SUROD/GEGEF",
+      "titulo": "Nota Técnica SEI nº 6805/2023/CGEFI/GEGEF/SUROD/DIR/ANTT — 16ª Revisão Ordinária da Autopista Fernão Dias (histórico do leilão)",
+      "data": "2023-10-19",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/motiva-minas-sp/revisoes-e-reajustes/2023/sei_antt_-_19305905_-_nota_tecnica_-gegef-preliminar-_antt-1.pdf",
+      "acesso": "2026-10-21",
+      "trecho": "Em 9 de outubro de 2007, a ANTT realizou Leilão […] Tarifa Básica de Pedágio Teto […] referenciada a julho de 2007 e oferecida para o Edital 02, foi de R$ 2,884 […] 1 OHL 0,997 65,42 […] Em 14 de fevereiro de 2008, a Concessionária Autopista Fernão Dias S/A firmou […] Contrato de Concessão […] O prazo de vigência da concessão é de 25 anos"
+    },
+    "antt-res-2476-2007": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Diretoria Colegiada",
+      "titulo": "Resolução nº 2.476, de 12 de dezembro de 2007 — homologa o Lote 05 (BR-381/MG/SP)",
+      "data": "2007-12-12",
+      "url": "https://anttlegis.antt.gov.br/action/ActionDatalegis.php?acao=abrirTextoAto&link=S&tipo=RES&numeroAto=00002476&seqAto=000&valorAno=2007&orgao=DG%2FANTT%2FMT&cod_modulo=161&cod_menu=7796",
+      "acesso": "2026-10-21",
+      "trecho": "Homologar o resultado do Leilão […] Lote 05 - Rodovia BR-381/MG/SP trecho Belo Horizonte - São Paulo […] para a empresa vencedora OBRASCON HUARTE LAIN BRASIL S.A. (OHL Brasil) que apresentou o Valor da Tarifa Básica de Pedágio de R$ 0,997 […] para cada uma das 08 (oito) praças (ato do DOU reproduzido no ANTTlegis; o DOU não responde deste ambiente)"
+    },
+    "antt-nt-2069-2022-rodovia-do-aco": {
+      "tipo": "oficial",
+      "orgao": "ANTT — SUROD/GEGEF",
+      "titulo": "Nota Técnica SEI nº 2069/2022/GEGEF/SUROD/DIR — 13ª Revisão Ordinária da K-Infra Rodovia do Aço (histórico do leilão)",
+      "data": "2022-05-05",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/rodovia-do-aco-caducidade-declarada/revisoes-e-reajustes/2022/nota-tecnica-sei-no-2069-2022-gegef-surod-dir.pdf",
+      "acesso": "2026-10-21",
+      "trecho": "Em 09 de outubro de 2007, a ANTT realizou Leilão […] Tarifa Básica de Pedágio Teto […] referenciada a julho de 2007 e oferecida para esse Edital, foi de R$ 4,037 […] 1 Indusval S.A. CTVM Consórcio Acciona R$ 2,940 27,17% 2 Credit Suisse Brasil S.A. CTVM TPI Triunfo Participações R$3,851 4,60% 3 Votorantim CTVM Ltda. Consórcio Bertin Equipav R$3,956 2,00% […] Em 26 de março de 2008, a Concessionária Rodovia do Aço S/A firmou […] Contrato de Concessão […] no prazo de 25 anos"
+    },
+    "antt-res-2522-2008": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Diretoria Colegiada",
+      "titulo": "Resolução nº 2.522, de 23 de janeiro de 2008 — homologa o Lote 03 (BR-393/RJ)",
+      "data": "2008-01-23",
+      "url": "https://anttlegis.antt.gov.br/action/ActionDatalegis.php?acao=abrirTextoAto&link=S&tipo=RES&numeroAto=00002522&seqAto=000&valorAno=2008&orgao=DG%2FANTT%2FMT&cod_modulo=161&cod_menu=7796",
+      "acesso": "2026-10-21",
+      "trecho": "Homologar o resultado do Leilão […] Lote 03 - Rodovia BR-393/RJ […] para o vencedor Consórcio Acciona que apresentou o Valor da Tarifa Básica de Pedágio de R$ 2,940 […] para cada uma das 3 (três) praças (ato do DOU reproduzido no ANTTlegis; o DOU não responde deste ambiente)"
+    },
+    "antt-concessao-rodovia-do-aco": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Lista de concessões — Rodovia do Aço (Caducidade Declarada)",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/rodovia-do-aco-caducidade-declarada",
+      "acesso": "2026-10-21",
+      "trecho": "Rodovia do Aço (Caducidade Declarada) […] Empresas Controladoras: K-INFRA […] Data da Assinatura: 26/03/2008 · Início da Concessão: 28/03/2008 · Prazo da Concessão: 25 anos"
+    },
+    "antt-nt-5937-2023-viabahia": {
+      "tipo": "oficial",
+      "orgao": "ANTT — SUROD/GEGEF",
+      "titulo": "Nota Técnica SEI nº 5937/2023/CGEFI/GEGEF/SUROD/DIR/ANTT — 13ª Revisão Ordinária da ViaBahia (histórico do leilão)",
+      "data": "2023-10-26",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/via-bahia/revisoes-e-reajustes/2023/sei_antt_-_18702428_-_nota_tecnica_-gegef_-_preliminar_-_antt-1.pdf",
+      "acesso": "2026-10-21",
+      "trecho": "Em 21.01.2009, a ANTT realizou Leilão na Bolsa de Valores de São Paulo (Bovespa) […] Edital nº 001/2008 […] Tarifa Básica de Pedágio Teto […] referenciada a dezembro de 2005 […] foi de R$ 2,80 […] 1 Theca CCTVM Ltda. Consórcio RodoBahia R$ 2,212 21,00 % 2 Brascan S. A. CTV Consórcio Cia Brasileira de Rodovias R$ 2,517 10,10 % […] Em 03/09/2009, a ViaBahia Concessionária de Rodovias S.A. firmou […] Contrato de Concessão […] O prazo de vigência da concessão é de 25 anos"
+    },
+    "antt-res-3085-2009": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Diretoria Colegiada",
+      "titulo": "Resolução nº 3.085, de 1º de abril de 2009 — homologa o leilão do Edital nº 001/2008 (BR-116/324/BA)",
+      "data": "2009-04-01",
+      "url": "https://anttlegis.antt.gov.br/action/ActionDatalegis.php?acao=abrirTextoAto&link=S&tipo=RES&numeroAto=00003085&seqAto=000&valorAno=2009&orgao=DG%2FANTT%2FMT&cod_modulo=161&cod_menu=7796",
+      "acesso": "2026-10-21",
+      "trecho": "Homologar o resultado do Leilão […] à proponente sagrada vencedora - Consórcio Rodobahia, que apresentou valor de Tarifa Básica de Pedágio de R$ 2,212 para cada praça de pedágio (ato do DOU reproduzido no ANTTlegis; o DOU não responde deste ambiente)"
+    },
+    "antt-concessao-via-bahia": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Lista de concessões — Via Bahia (Contrato Encerrado)",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/via-bahia",
+      "acesso": "2026-10-21",
+      "trecho": "Via Bahia (Contrato Encerrado) […] Empresas Controladoras: Roadis Participações na Viabahia Ltda. e Roadis Brasil Participações de Infraestrutura Ltda. […] Data da Assinatura: 03/09/2009 · Início da Concessão: 20/10/2009 · Prazo da Concessão: 25 anos"
+    },
+    "antt-nt-7038-2022-eco101": {
+      "tipo": "oficial",
+      "orgao": "ANTT — SUROD/GEGEF",
+      "titulo": "Nota Técnica SEI nº 7038/2022/GEGEF/SUROD/DIR/ANTT — Revisão e reajuste da ECO101 (histórico do leilão)",
+      "data": "2022-12-12",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/ecovias-capixaba/revisoes-e-reajustes/2022/nota-tecnica-sei-no-7038-2022-gegef-surod-dir-antt.pdf",
+      "acesso": "2026-10-21",
+      "trecho": "Em 18/01/2012, a ANTT realizou Leilão […] Edital 001/2011 […] A Tarifa Básica de Pedágio considerada nos Estudos de Viabilidade […] tarifa quilométrica relativa ao veículo de rodagem simples e de dois eixos, referenciada a janeiro de 2009, foi de R$ 0,06237 […] 1 CITIGROUP GMB CCTVM S.A. Consórcio Rodovia da Vitória R$ 0,03391 45,63 % […] em 17/04/2013, a ECO 101 Concessionária de Rodovias S/A firmou […] Contrato de Concessão […] o prazo de vigência da concessão é de 25 anos"
+    },
+    "antt-res-3814-2012": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Diretoria Colegiada",
+      "titulo": "Resolução nº 3.814, de 16 de maio de 2012 — homologa o leilão do Edital nº 001/2011 (BR-101/ES/BA)",
+      "data": "2012-05-16",
+      "url": "https://anttlegis.antt.gov.br/action/ActionDatalegis.php?acao=abrirTextoAto&link=S&tipo=RES&numeroAto=00003814&seqAto=000&valorAno=2012&orgao=DG%2FANTT%2FMT&cod_modulo=161&cod_menu=7796",
+      "acesso": "2026-10-21",
+      "trecho": "Homologar o resultado do Leilão […] BR-101/ES/BA […] à proponente consagrada vencedora - Consórcio Rodovia da Vitória, que apresentou valor de Tarifa Básica de Pedágio Proposta de R$ 0,03391 (ato do DOU reproduzido no ANTTlegis; o DOU não responde deste ambiente)"
+    },
+    "antt-nt-5476-2024-eco050": {
+      "tipo": "oficial",
+      "orgao": "ANTT — SUROD/GEGEF",
+      "titulo": "Nota Técnica SEI nº 5476/2024/CGEFI/GEGEF/SUROD/DIR/ANTT — 9ª Revisão Ordinária da ECO050 (histórico do leilão)",
+      "data": "2024-07-23",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/eco050/revisao-e-reajuste-da-tarifa-de-pedagio/2024/nota-tecnica-5476-gegef.pdf",
+      "acesso": "2026-10-21",
+      "trecho": "Em 18/09/2013, a ANTT realizou leilão […] BR-050/GO/MG […] tarifa quilométrica de pedágio teto […] referenciada a maio de 2012 […] foi de R$ 0,07870 […] 1 Consórcio Planalto R$ 0,04534 42,38% […] Em 05/12/2013, a Concessionária MGO RODOVIAS S.A. firmou […] o Contrato de Concessão […] O prazo de vigência da concessão é de 30 anos […] Em 07/12/2018, foi aprovada a transferência de controle societário da MGO […] para a ECORODOVIAS Concessões e Serviços S.A., conforme a Deliberação ANTT nº 989, de 04/12/2018"
+    },
+    "antt-res-4205-2013": {
+      "tipo": "oficial",
+      "orgao": "ANTT — Diretoria Colegiada",
+      "titulo": "Resolução nº 4.205, de 3 de dezembro de 2013 — ato de outorga da BR-050/GO/MG",
+      "data": "2013-12-03",
+      "url": "https://anttlegis.antt.gov.br/action/ActionDatalegis.php?acao=abrirTextoAto&link=S&tipo=RES&numeroAto=00004205&seqAto=000&valorAno=2013&orgao=DG%2FANTT%2FMT&cod_modulo=161&cod_menu=7796",
+      "acesso": "2026-10-21",
+      "trecho": "Emite, em favor do Consórcio Planalto, o Ato de Outorga da BR-050/GO/MG […] Edital nº 001/2013 (ato do DOU reproduzido no ANTTlegis; o DOU não responde deste ambiente)"
+    },
+    "antt-concessao-eco050": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Lista de concessões — ECO050",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/eco050",
+      "acesso": "2026-10-21",
+      "trecho": "Empresas Controladoras: Ecorodovias Infraestrutura e Logística S.A. […] Data da Assinatura: 05/12/2013 · Início da Concessão: 08/01/2014 · Prazo da Concessão: 30 anos · Edital: 001/2013"
+    },
+    "antt-nt-1861-2021-concebra": {
+      "tipo": "oficial",
+      "orgao": "ANTT — SUROD/GEGEF",
+      "titulo": "Nota Técnica SEI nº 1861/2021/GEGEF/SUROD/DIR — 5ª e 6ª Revisões Ordinárias da Concebra (histórico do leilão)",
+      "data": "2021-04-16",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/concebra/revisoes-e-reajustes/2021/sei_antt-5870962-nota-tecnica-1681-gegef.pdf",
+      "acesso": "2026-10-21",
+      "trecho": "Em 04/12/2013, a ANTT realizou, na BM&FBOVESPA, leilão do Edital de Concessão nº 004/2013 […] A TBP considerada nos Estudos de Viabilidade […] referenciada a maio de 2012, foi de R$ 0,05940 […] 1 Triunfo Participações e Investimentos S.A. R$ 0,02851 52,00% […] em 31/01/2014, firmou com a União […] Contrato de Concessão […] o prazo de vigência da concessão é de 30 anos"
+    },
+    "antt-concessao-concebra": {
+      "tipo": "oficial",
+      "orgao": "ANTT",
+      "titulo": "Lista de concessões — Concebra",
+      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/concessionarias/lista-de-concessoes/concebra",
+      "acesso": "2026-10-21",
+      "trecho": "Empresas Controladoras: TPI – Triunfo Participações e Investimentos S. A. […] Data da Assinatura: 31/01/2014 · Início da Concessão: 05/03/2014 · Prazo da Concessão: 30 anos · Edital: 004/2013"
+    },
+    "mercadoeconsumo-2022-07-21-arteris": {
+      "tipo": "imprensa",
+      "orgao": "Mercado&Consumo (com apuração do Estadão)",
+      "titulo": "Arteris, que administra a Régis Bittencourt, é colocada à venda",
+      "data": "2022-07-21",
+      "url": "https://mercadoeconsumo.com.br/21/07/2022/economia/arteris-que-administra-a-regis-bittencourt-e-colocada-a-venda/",
+      "acesso": "2026-10-21",
+      "trecho": "A Arteris foi criada em 1997, ainda como OHL Brasil, do grupo espanhol de mesmo nome […] Já em 2012 a empresa foi vendida para a Participes en Brasil, da Abertis e da Brookfield."
     }
   },
   "leiloes": [
@@ -2784,6 +3042,738 @@
           ]
         }
       ]
+    },
+    {
+      "chave": "transbrasiliana-2007",
+      "ent": "transbrasiliana",
+      "participantes": {
+        "ano": 2007,
+        "lote": "Transbrasiliana"
+      },
+      "campos": {
+        "leilao": {
+          "valor": "2007-10-09",
+          "fontes": [
+            "antt-nt-5091-2023-transbrasiliana"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Consórcio BRVias",
+          "fontes": [
+            "antt-res-2479-2007",
+            "antt-nt-5091-2023-transbrasiliana",
+            "antt-noticia-2008-02-14-2a-etapa"
+          ]
+        },
+        "desagio": {
+          "valor": 39.99,
+          "fontes": [
+            "antt-nt-5091-2023-transbrasiliana"
+          ]
+        },
+        "tarifa_teto": {
+          "valor": "R$ 4,083 por praça (jul/2007)",
+          "fontes": [
+            "antt-nt-5091-2023-transbrasiliana"
+          ]
+        },
+        "tarifa_vencedora": {
+          "valor": "R$ 2,450 por praça (jul/2007)",
+          "fontes": [
+            "antt-res-2479-2007",
+            "antt-nt-5091-2023-transbrasiliana"
+          ]
+        },
+        "assinatura": {
+          "valor": "2008-02-14",
+          "fontes": [
+            "antt-nt-5091-2023-transbrasiliana",
+            "antt-concessao-transbrasiliana",
+            "antt-noticia-2008-02-14-2a-etapa",
+            "rs-p3"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 25,
+          "fontes": [
+            "antt-nt-5091-2023-transbrasiliana",
+            "antt-concessao-transbrasiliana"
+          ]
+        }
+      },
+      "notas": [
+        {
+          "texto": "O leilão foi vencido pelo Consórcio BRVias (Splice do Brasil, WTorre e Comporte Participações), com 39,99%; a homologação foi feita ao consórcio. A TPI – Triunfo Participações e Investimentos ofereceu 5,68% (9º lugar) e é hoje a controladora indicada pela ANTT: assumiu o controle da concessionária depois do leilão (aquisição, não troca de nome), por isso o RoadShow imprime \"TPI – Triunfo (antigo Consórcio BRVias)\".",
+          "fontes": [
+            "antt-res-2479-2007",
+            "antt-nt-5091-2023-transbrasiliana",
+            "antt-concessao-transbrasiliana"
+          ]
+        },
+        {
+          "texto": "Pelo quadro de lances da ANTT, o 10º lance é do Consórcio Flora Brasil Torc, com 5,33% (o RoadShow imprime \"Consórcio Flora Brasil\" com 5,92%).",
+          "fontes": [
+            "antt-nt-5091-2023-transbrasiliana"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "regis-bittencourt-2007",
+      "participantes": {
+        "ano": 2007,
+        "lote": "Autopista Régis Bittencourt"
+      },
+      "campos": {
+        "leilao": {
+          "valor": "2007-10-09",
+          "fontes": [
+            "antt-nt-6695-2023-regis-bittencourt"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Obrascon Huarte Lain Brasil S.A. (OHL Brasil)",
+          "fontes": [
+            "antt-res-2475-2007",
+            "antt-nt-6695-2023-regis-bittencourt"
+          ]
+        },
+        "desagio": {
+          "valor": 49.19,
+          "fontes": [
+            "antt-nt-6695-2023-regis-bittencourt"
+          ]
+        },
+        "tarifa_teto": {
+          "valor": "R$ 2,68 por praça (jul/2007)",
+          "fontes": [
+            "antt-nt-6695-2023-regis-bittencourt"
+          ]
+        },
+        "tarifa_vencedora": {
+          "valor": "R$ 1,364 por praça (jul/2007)",
+          "fontes": [
+            "antt-res-2475-2007",
+            "antt-nt-6695-2023-regis-bittencourt"
+          ]
+        },
+        "assinatura": {
+          "valor": "2008-02-14",
+          "fontes": [
+            "antt-nt-6695-2023-regis-bittencourt",
+            "antt-concessao-autopista-regis-bittencourt",
+            "antt-noticia-2008-02-14-2a-etapa"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 25,
+          "fontes": [
+            "antt-nt-6695-2023-regis-bittencourt",
+            "antt-concessao-autopista-regis-bittencourt"
+          ]
+        }
+      },
+      "notas": [
+        {
+          "texto": "A homologação foi feita à Obrascon Huarte Lain Brasil S.A. (OHL Brasil), que depois passou a se chamar Arteris S.A. (mesma empresa, troca de nome); por isso o RoadShow imprime \"Arteris (antiga OHL)\".",
+          "fontes": [
+            "antt-res-2475-2007",
+            "mercadoeconsumo-2022-07-21-arteris"
+          ]
+        },
+        {
+          "texto": "A nota técnica da ANTT imprime a tarifa-teto com duas casas (R$ 2,68) e o quadro de lances arredonda o lance da OHL para R$ 1,36; o deságio de 49,19% é o do quadro (com R$ 1,364 sobre R$ 2,68 daria 49,10%).",
+          "fontes": [
+            "antt-nt-6695-2023-regis-bittencourt"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "autopista-fluminense-2007",
+      "participantes": {
+        "ano": 2007,
+        "lote": "Autopista Fluminense"
+      },
+      "campos": {
+        "leilao": {
+          "valor": "2007-10-09",
+          "fontes": [
+            "antt-nt-1819-2022-autopista-fluminense"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Obrascon Huarte Lain Brasil S.A. (OHL Brasil)",
+          "fontes": [
+            "antt-res-2478-2007",
+            "antt-nt-1819-2022-autopista-fluminense"
+          ]
+        },
+        "desagio": {
+          "valor": 40.95,
+          "fontes": [
+            "antt-nt-1819-2022-autopista-fluminense"
+          ]
+        },
+        "tarifa_teto": {
+          "valor": "R$ 3,824 por praça (jul/2007)",
+          "fontes": [
+            "antt-nt-1819-2022-autopista-fluminense"
+          ]
+        },
+        "tarifa_vencedora": {
+          "valor": "R$ 2,258 por praça (jul/2007)",
+          "fontes": [
+            "antt-res-2478-2007",
+            "antt-nt-1819-2022-autopista-fluminense"
+          ]
+        },
+        "assinatura": {
+          "valor": "2008-02-14",
+          "fontes": [
+            "antt-nt-1819-2022-autopista-fluminense",
+            "antt-noticia-2008-02-14-2a-etapa"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 25,
+          "fontes": [
+            "antt-nt-1819-2022-autopista-fluminense"
+          ]
+        }
+      },
+      "notas": [
+        {
+          "texto": "A homologação foi feita à Obrascon Huarte Lain Brasil S.A. (OHL Brasil), que depois passou a se chamar Arteris S.A. (mesma empresa, troca de nome); por isso o RoadShow imprime \"Arteris (antiga OHL)\". O prazo de 25 anos é o do contrato original; o termo aditivo de 2026 fixou 22 anos a contar da sua vigência.",
+          "fontes": [
+            "antt-res-2478-2007",
+            "antt-nt-1819-2022-autopista-fluminense",
+            "mercadoeconsumo-2022-07-21-arteris"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "autopista-litoral-sul-2007",
+      "ent": "autopista-litoral-do-sul",
+      "participantes": {
+        "ano": 2007,
+        "lote": "Autopista Litoral Sul"
+      },
+      "campos": {
+        "leilao": {
+          "valor": "2007-10-09",
+          "fontes": [
+            "antt-nt-7872-2023-autopista-litoral-sul"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Obrascon Huarte Lain Brasil S.A. (OHL Brasil)",
+          "fontes": [
+            "antt-res-2477-2007",
+            "antt-nt-7872-2023-autopista-litoral-sul"
+          ]
+        },
+        "desagio": {
+          "valor": 62.67,
+          "fontes": [
+            "antt-nt-7872-2023-autopista-litoral-sul"
+          ]
+        },
+        "tarifa_teto": {
+          "valor": "R$ 2,754 por praça (jul/2007)",
+          "fontes": [
+            "antt-nt-7872-2023-autopista-litoral-sul"
+          ]
+        },
+        "tarifa_vencedora": {
+          "valor": "R$ 1,028 por praça (jul/2007)",
+          "fontes": [
+            "antt-res-2477-2007",
+            "antt-nt-7872-2023-autopista-litoral-sul"
+          ]
+        },
+        "assinatura": {
+          "valor": "2008-02-14",
+          "fontes": [
+            "antt-nt-7872-2023-autopista-litoral-sul",
+            "antt-concessao-autopista-litoral-sul",
+            "antt-noticia-2008-02-14-2a-etapa",
+            "rs-p3"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 25,
+          "fontes": [
+            "antt-nt-7872-2023-autopista-litoral-sul",
+            "antt-concessao-autopista-litoral-sul"
+          ]
+        }
+      },
+      "notas": [
+        {
+          "texto": "A homologação foi feita à Obrascon Huarte Lain Brasil S.A. (OHL Brasil), que depois passou a se chamar Arteris S.A. (mesma empresa, troca de nome); por isso o RoadShow imprime \"Arteris (antiga OHL)\".",
+          "fontes": [
+            "antt-res-2477-2007",
+            "mercadoeconsumo-2022-07-21-arteris"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "autopista-planalto-sul-2007",
+      "ent": "autopista-planalto-sul",
+      "participantes": {
+        "ano": 2007,
+        "lote": "Autopista Planalto Sul"
+      },
+      "campos": {
+        "leilao": {
+          "valor": "2007-10-09",
+          "fontes": [
+            "antt-nt-10182-2024-autopista-planalto-sul"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Obrascon Huarte Lain Brasil S.A. (OHL Brasil)",
+          "fontes": [
+            "antt-res-2480-2007",
+            "antt-nt-10182-2024-autopista-planalto-sul"
+          ]
+        },
+        "desagio": {
+          "valor": 39.35,
+          "fontes": [
+            "antt-nt-10182-2024-autopista-planalto-sul"
+          ]
+        },
+        "tarifa_teto": {
+          "valor": "R$ 4,188 por praça (jul/2007)",
+          "fontes": [
+            "antt-nt-10182-2024-autopista-planalto-sul"
+          ]
+        },
+        "tarifa_vencedora": {
+          "valor": "R$ 2,540 por praça (jul/2007)",
+          "fontes": [
+            "antt-res-2480-2007",
+            "antt-nt-10182-2024-autopista-planalto-sul"
+          ]
+        },
+        "assinatura": {
+          "valor": "2008-02-14",
+          "fontes": [
+            "antt-nt-10182-2024-autopista-planalto-sul",
+            "antt-concessao-autopista-planalto-sul",
+            "antt-noticia-2008-02-14-2a-etapa",
+            "rs-p3"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 25,
+          "fontes": [
+            "antt-nt-10182-2024-autopista-planalto-sul"
+          ]
+        }
+      },
+      "notas": [
+        {
+          "texto": "A homologação foi feita à Obrascon Huarte Lain Brasil S.A. (OHL Brasil), que depois passou a se chamar Arteris S.A. (mesma empresa, troca de nome); por isso o RoadShow imprime \"Arteris (antiga OHL)\".",
+          "fontes": [
+            "antt-res-2480-2007",
+            "mercadoeconsumo-2022-07-21-arteris"
+          ]
+        },
+        {
+          "texto": "Pelo quadro de lances da ANTT, a TPI Triunfo Participações ofereceu 10,43% neste lote; o RoadShow lista a TPI duas vezes (29,15% e 10,43%), e 29,15% é o lance da TPI no lote da Autopista Litoral Sul.",
+          "fontes": [
+            "antt-nt-10182-2024-autopista-planalto-sul",
+            "antt-nt-7872-2023-autopista-litoral-sul"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "fernao-dias-2007",
+      "participantes": {
+        "ano": 2007,
+        "lote": "Autopista Fernão Dias"
+      },
+      "campos": {
+        "leilao": {
+          "valor": "2007-10-09",
+          "fontes": [
+            "antt-nt-6805-2023-fernao-dias"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Obrascon Huarte Lain Brasil S.A. (OHL Brasil)",
+          "fontes": [
+            "antt-res-2476-2007",
+            "antt-nt-6805-2023-fernao-dias"
+          ]
+        },
+        "desagio": {
+          "valor": 65.42,
+          "fontes": [
+            "antt-nt-6805-2023-fernao-dias"
+          ]
+        },
+        "tarifa_teto": {
+          "valor": "R$ 2,884 por praça (jul/2007)",
+          "fontes": [
+            "antt-nt-6805-2023-fernao-dias"
+          ]
+        },
+        "tarifa_vencedora": {
+          "valor": "R$ 0,997 por praça (jul/2007)",
+          "fontes": [
+            "antt-res-2476-2007",
+            "antt-nt-6805-2023-fernao-dias"
+          ]
+        },
+        "assinatura": {
+          "valor": "2008-02-14",
+          "fontes": [
+            "antt-nt-6805-2023-fernao-dias",
+            "antt-noticia-2008-02-14-2a-etapa"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 25,
+          "fontes": [
+            "antt-nt-6805-2023-fernao-dias"
+          ]
+        }
+      },
+      "notas": [
+        {
+          "texto": "A homologação foi feita à Obrascon Huarte Lain Brasil S.A. (OHL Brasil), que depois passou a se chamar Arteris S.A. (mesma empresa, troca de nome); por isso o RoadShow imprime \"Arteris (antiga OHL)\". O prazo de 25 anos é o do contrato original; o termo aditivo de 2026 fixou 15 anos a contar da sua vigência.",
+          "fontes": [
+            "antt-res-2476-2007",
+            "antt-nt-6805-2023-fernao-dias",
+            "mercadoeconsumo-2022-07-21-arteris"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "rodovia-do-aco-2007",
+      "participantes": {
+        "ano": 2007,
+        "lote": "Rodovia do Aço"
+      },
+      "campos": {
+        "leilao": {
+          "valor": "2007-10-09",
+          "fontes": [
+            "antt-nt-2069-2022-rodovia-do-aco"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Consórcio Acciona",
+          "fontes": [
+            "antt-res-2522-2008",
+            "antt-nt-2069-2022-rodovia-do-aco"
+          ]
+        },
+        "desagio": {
+          "valor": 27.17,
+          "fontes": [
+            "antt-nt-2069-2022-rodovia-do-aco"
+          ]
+        },
+        "tarifa_teto": {
+          "valor": "R$ 4,037 por praça (jul/2007)",
+          "fontes": [
+            "antt-nt-2069-2022-rodovia-do-aco"
+          ]
+        },
+        "tarifa_vencedora": {
+          "valor": "R$ 2,940 por praça (jul/2007)",
+          "fontes": [
+            "antt-res-2522-2008",
+            "antt-nt-2069-2022-rodovia-do-aco"
+          ]
+        },
+        "assinatura": {
+          "valor": "2008-03-26",
+          "fontes": [
+            "antt-nt-2069-2022-rodovia-do-aco",
+            "antt-concessao-rodovia-do-aco"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 25,
+          "fontes": [
+            "antt-nt-2069-2022-rodovia-do-aco",
+            "antt-concessao-rodovia-do-aco"
+          ]
+        }
+      },
+      "notas": [
+        {
+          "texto": "O lote foi vencido pelo Consórcio Acciona, com 27,17%. A homologação (Resolução ANTT nº 2.522, de 23/01/2008) saiu depois da dos demais lotes da 2ª etapa, condicionada ao mandado de segurança que incluiu o consórcio no leilão. A K-Infra, que o RoadShow imprime como vencedora, é a controladora posterior indicada pela ANTT (aquisição, não troca de nome); a página da concessão na ANTT a registra como \"Caducidade Declarada\".",
+          "fontes": [
+            "antt-res-2522-2008",
+            "antt-nt-2069-2022-rodovia-do-aco",
+            "antt-concessao-rodovia-do-aco"
+          ]
+        },
+        {
+          "texto": "Pelo quadro de lances da ANTT, a TPI Triunfo Participações ofereceu 4,60% e o Consórcio Bertin Equipav 2,00%; o RoadShow inverte os dois percentuais.",
+          "fontes": [
+            "antt-nt-2069-2022-rodovia-do-aco"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "via-bahia-2009",
+      "participantes": {
+        "ano": 2009,
+        "lote": "Via Bahia"
+      },
+      "campos": {
+        "leilao": {
+          "valor": "2009-01-21",
+          "fontes": [
+            "antt-nt-5937-2023-viabahia"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Consórcio RodoBahia",
+          "fontes": [
+            "antt-nt-5937-2023-viabahia",
+            "antt-res-3085-2009"
+          ]
+        },
+        "desagio": {
+          "valor": 21.0,
+          "fontes": [
+            "antt-nt-5937-2023-viabahia"
+          ]
+        },
+        "tarifa_teto": {
+          "valor": "R$ 2,80 por praça (dez/2005)",
+          "fontes": [
+            "antt-nt-5937-2023-viabahia"
+          ]
+        },
+        "tarifa_vencedora": {
+          "valor": "R$ 2,212 por praça (dez/2005)",
+          "fontes": [
+            "antt-res-3085-2009",
+            "antt-nt-5937-2023-viabahia"
+          ]
+        },
+        "assinatura": {
+          "valor": "2009-09-03",
+          "fontes": [
+            "antt-nt-5937-2023-viabahia",
+            "antt-concessao-via-bahia"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 25,
+          "fontes": [
+            "antt-nt-5937-2023-viabahia",
+            "antt-concessao-via-bahia"
+          ]
+        }
+      },
+      "notas": [
+        {
+          "texto": "Dois proponentes: Consórcio RodoBahia, 21,00% (vencedor), e Consórcio Cia Brasileira de Rodovias, 10,10% (o RoadShow imprime 2,52%). A resolução de homologação grafa \"Rodobahia\". A página da concessão na ANTT a registra como \"Contrato Encerrado\" e indica como controladoras empresas Roadis (controle posterior ao leilão).",
+          "fontes": [
+            "antt-nt-5937-2023-viabahia",
+            "antt-res-3085-2009",
+            "antt-concessao-via-bahia"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "eco101-2012",
+      "participantes": {
+        "ano": 2012,
+        "lote": "ECO101"
+      },
+      "campos": {
+        "leilao": {
+          "valor": "2012-01-18",
+          "fontes": [
+            "antt-nt-7038-2022-eco101"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Consórcio Rodovia da Vitória",
+          "fontes": [
+            "antt-res-3814-2012",
+            "antt-nt-7038-2022-eco101"
+          ]
+        },
+        "desagio": {
+          "valor": 45.63,
+          "fontes": [
+            "antt-nt-7038-2022-eco101"
+          ]
+        },
+        "tarifa_teto": {
+          "valor": "R$ 0,06237 por km (jan/2009)",
+          "fontes": [
+            "antt-nt-7038-2022-eco101"
+          ]
+        },
+        "tarifa_vencedora": {
+          "valor": "R$ 0,03391 por km (jan/2009)",
+          "fontes": [
+            "antt-res-3814-2012",
+            "antt-nt-7038-2022-eco101"
+          ]
+        },
+        "assinatura": {
+          "valor": "2013-04-17",
+          "fontes": [
+            "antt-nt-7038-2022-eco101",
+            "rs-p5"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 25,
+          "fontes": [
+            "antt-nt-7038-2022-eco101"
+          ]
+        }
+      },
+      "notas": [
+        {
+          "texto": "O vencedor foi o Consórcio Rodovia da Vitória, com 45,63%; a SPE que assinou o contrato é a ECO 101 Concessionária de Rodovias S/A. A assinatura ficou suspensa por decisão judicial de julho de 2012 até 17/04/2013. Pelo quadro de lances da ANTT, o Consórcio Via Espírito Santo BR-101 ofereceu 32,03% (o RoadShow não imprime percentual). O prazo de 25 anos é o do contrato original.",
+          "fontes": [
+            "antt-nt-7038-2022-eco101"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "eco050-2013",
+      "ent": "ecovias-minas-goias",
+      "participantes": {
+        "ano": 2013,
+        "lote": "ECO050"
+      },
+      "campos": {
+        "leilao": {
+          "valor": "2013-09-18",
+          "fontes": [
+            "antt-nt-5476-2024-eco050"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Consórcio Planalto",
+          "fontes": [
+            "antt-nt-5476-2024-eco050",
+            "antt-res-4205-2013"
+          ]
+        },
+        "desagio": {
+          "valor": 42.38,
+          "fontes": [
+            "antt-nt-5476-2024-eco050"
+          ]
+        },
+        "tarifa_teto": {
+          "valor": "R$ 0,07870 por km (mai/2012)",
+          "fontes": [
+            "antt-nt-5476-2024-eco050"
+          ]
+        },
+        "tarifa_vencedora": {
+          "valor": "R$ 0,04534 por km (mai/2012)",
+          "fontes": [
+            "antt-nt-5476-2024-eco050"
+          ]
+        },
+        "assinatura": {
+          "valor": "2013-12-05",
+          "fontes": [
+            "antt-nt-5476-2024-eco050",
+            "antt-concessao-eco050",
+            "rs-p3"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 30,
+          "fontes": [
+            "antt-nt-5476-2024-eco050",
+            "antt-concessao-eco050"
+          ]
+        }
+      },
+      "notas": [
+        {
+          "texto": "O leilão foi vencido pelo Consórcio Planalto, com 42,38%; a SPE MGO Rodovias S.A. assinou o contrato. A Ecorodovias, que o RoadShow imprime como vencedora, recebeu o controle da MGO em dezembro de 2018 (Deliberação ANTT nº 989/2018; aquisição, não troca de nome), e a SPE passou a se chamar ECO050.",
+          "fontes": [
+            "antt-nt-5476-2024-eco050",
+            "antt-res-4205-2013"
+          ]
+        }
+      ]
+    },
+    {
+      "chave": "concebra-2013",
+      "ent": "concebra",
+      "participantes": {
+        "ano": 2013,
+        "lote": "CONCEBRA"
+      },
+      "campos": {
+        "leilao": {
+          "valor": "2013-12-04",
+          "fontes": [
+            "antt-nt-1861-2021-concebra"
+          ]
+        },
+        "grupo_vencedor": {
+          "valor": "Triunfo Participações e Investimentos S.A.",
+          "fontes": [
+            "antt-nt-1861-2021-concebra"
+          ]
+        },
+        "desagio": {
+          "valor": 52.0,
+          "fontes": [
+            "antt-nt-1861-2021-concebra"
+          ]
+        },
+        "tarifa_teto": {
+          "valor": "R$ 0,05940 por km (mai/2012)",
+          "fontes": [
+            "antt-nt-1861-2021-concebra"
+          ]
+        },
+        "tarifa_vencedora": {
+          "valor": "R$ 0,02851 por km (mai/2012)",
+          "fontes": [
+            "antt-nt-1861-2021-concebra"
+          ]
+        },
+        "assinatura": {
+          "valor": "2014-01-31",
+          "fontes": [
+            "antt-nt-1861-2021-concebra",
+            "antt-concessao-concebra",
+            "rs-p3"
+          ]
+        },
+        "prazo_anos": {
+          "valor": 30,
+          "fontes": [
+            "antt-nt-1861-2021-concebra",
+            "antt-concessao-concebra"
+          ]
+        }
+      }
     }
   ]
 }
