@@ -117,6 +117,18 @@ test('serieDesagio usa data e exclui nulos', () => {
   assert.equal(s[1].tipo, 'roadshow');
 });
 
+test('serieDesagio: data impossível cai no meio do ano; rótulo sem vencedor usa "—"', () => {
+  const x = (data) => LeiloesModel.serieDesagio([row({ ano: 2025, data, desagio_vencedor: 5 })])[0].x;
+  assert.ok(Math.abs(x('2025-08-14') - 2025.62) < 0.01);
+  assert.ok(Math.abs(x('2024-02-29') - 2024.16) < 0.01, 'bissexto vale');
+  for (const ruim of ['2025-13-01', '2025-00-10', '2025-02-30', '2025-02-29', '2025-04-31', '2025-01-00', '2025-01-32']) {
+    assert.equal(x(ruim), 2025.5, ruim);
+  }
+  const s = LeiloesModel.serieDesagio([row({ lote: 'Lote 7', vencedor: null, desagio_vencedor: 5 }),
+    row({ lote: 'Lote 8', vencedor: undefined, desagio_vencedor: 6 })]);
+  assert.deepEqual(s.map(p => p.label), ['Lote 7 · —', 'Lote 8 · —']);
+});
+
 test('serieDesagio traz limitado do edital (padrão false)', () => {
   const s = LeiloesModel.serieDesagio([
     row({ data: '2021-10-29', desagio_vencedor: 15.31, verif: { desagio: { tipo: 'oficial', limitado_pelo_edital: true } } }),

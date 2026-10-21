@@ -99,7 +99,11 @@ test('dotsSvg: marca por tipo, referência só depois de refFromX, só cores da 
   // eixo x começa no primeiro ano dos dados (2007), não em 0
   assert.match(svg, /text-anchor="middle"[^>]*>2007</);
   assert.match(svg, /text-anchor="middle"[^>]*>2010</);
-  assert.doesNotMatch(svg, /text-anchor="middle"[^>]*>(0|1|2|1990)</);
+  // todos os rótulos do eixo x são anos entre o primeiro e o fim do eixo (nada de 0, 1, 2 nem anos antes de 2007)
+  const anos = [...svg.matchAll(/text-anchor="middle"[^>]*>([^<]*)</g)].map(m => m[1]);
+  assert.ok(anos.length >= 4, anos.join());
+  for (const a of anos) assert.ok(/^\d{4}$/.test(a) && +a >= 2007 && +a <= 2026, a);
+  assert.equal(new Set(anos).size, anos.length, 'sem rótulo repetido');
   // referência: uma linha horizontal que não começa na margem esquerda, mas em 2020
   const ref = svg.match(/<line class="ref"[^>]*>/);
   assert.ok(ref, 'linha de referência');
@@ -111,6 +115,23 @@ test('dotsSvg: marca por tipo, referência só depois de refFromX, só cores da 
   assert.equal((Charts.dotsSvg(data, { refY: 20, refFromX: 2030 }).match(/<line class="ref"/g) || []).length, 0);
   for (const c of svg.match(/#[0-9A-Fa-f]{6}/g) || []) assert.ok(['#183C80', '#0071BB', '#231F20', '#525254', '#F7F7F8'].includes(c.toUpperCase()), c);
   assert.ok(!/NaN|undefined/.test(svg));
+});
+test('dotsSvg: o eixo x sempre rotula o último ano, sem rótulos colados', () => {
+  const rotulos = (data) => [...Charts.dotsSvg(data, {}).matchAll(/<text x="([\d.]+)"[^>]*text-anchor="middle"[^>]*>(\d{4})</g)]
+    .map(m => [+m[1], +m[2]]);
+  // 2007–2026: o passo (3) pararia em 2025; o fim do eixo (2026) toma o lugar do rótulo colado
+  const a = rotulos([{ x: 2007.78, y: 5 }, { x: 2025.62, y: 7 }]);
+  assert.equal(a[0][1], 2007);
+  assert.equal(a[a.length - 1][1], 2026);
+  assert.ok(!a.some(r => r[1] === 2025));
+  // 2007–2025: o passo já termina no último ano
+  const b = rotulos([{ x: 2007.2, y: 5 }, { x: 2024.5, y: 7 }]);
+  assert.equal(b[b.length - 1][1], 2025);
+  // 2020–2027 (passo 1): todos os anos, inclusive o último
+  const c = rotulos([{ x: 2020.5, y: 5 }, { x: 2026.5, y: 7 }]);
+  assert.deepEqual(c.map(r => r[1]), [2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027]);
+  // rótulos nunca se sobrepõem (pelo menos 44 px entre eles)
+  for (const l of [a, b, c]) l.slice(1).forEach((r, i) => assert.ok(r[0] - l[i][0] >= 44, `${l[i]} ${r}`));
 });
 test('dotsSvg: ponto limitado pelo edital leva a observação no título', () => {
   const svg = Charts.dotsSvg([

@@ -76,13 +76,26 @@ def _data_iso(v):
     return True
 
 
+def _url_http(url):
+    """URL http(s) com host: `http:` e `https://` sem endereço não levam a lugar nenhum."""
+    try:
+        u = urlparse(url)
+        return u.scheme.lower() in ("http", "https") and bool(u.hostname)
+    except (ValueError, AttributeError):
+        return False
+
+
+def _inteiro(v):
+    return isinstance(v, int) and not isinstance(v, bool)
+
+
 def _erros_fonte(fid, f):
     tipo = f.get("tipo") if isinstance(f, dict) else None
     if tipo not in TIPOS:
         return [f"fonte {fid}: tipo {tipo!r} fora de {TIPOS}"]
     erros = [f"fonte {fid} ({tipo}): falta {k}" for k in EXIGIDOS[tipo] if f.get(k) in (None, "")]
-    if f.get("url") and not (isinstance(f["url"], str) and urlparse(f["url"]).scheme.lower() in ("http", "https")):
-        erros.append(f"fonte {fid} ({tipo}): URL {f['url']!r} precisa ser http ou https")
+    if f.get("url") and not (isinstance(f["url"], str) and _url_http(f["url"])):
+        erros.append(f"fonte {fid} ({tipo}): URL {f['url']!r} precisa ser http ou https, com endereço")
     elif tipo == "oficial" and f.get("url") and not _dominio_oficial(f["url"]):
         erros.append(f"fonte {fid} (oficial): URL {f['url']} fora dos domínios oficiais {DOMINIOS_OFICIAIS}")
     if tipo == "roadshow" and f.get("pagina") is not None and not (
@@ -190,28 +203,48 @@ def validar(verif, conc, aliases=None):
 
         if not any(k in l for k in ("ent", "participantes", "concorrentes")):
             erros.append(f"{chave}: sem ligação (ent, participantes ou concorrentes)")
-        if "ent" in l and l["ent"] not in ents:
+        # ligação malformada vira erro e sai de `lv`: as conferências abaixo supõem tipos certos (e hasheáveis)
+        lv = dict(l)
+        if "ent" in l and not isinstance(l["ent"], str):
+            erros.append(f"{chave}: ent deve ser o id (texto) de uma entidade, veio {l['ent']!r}")
+            del lv["ent"]
+        elif "ent" in l and l["ent"] not in ents:
             erros.append(f"{chave}: entidade {l['ent']!r} não existe em conc.json")
         if "participantes" in l:
-            p = l["participantes"] or {}
-            n = sum(1 for r in part if r.get("ano") == p.get("ano") and r.get("lote") == p.get("lote"))
-            if n != 1:
-                erros.append(f"{chave}: participantes {p!r} casa {n} linhas (esperada exatamente 1)")
+            p = l["participantes"]
+            if not (isinstance(p, dict) and _inteiro(p.get("ano")) and isinstance(p.get("lote"), str)):
+                erros.append(f"{chave}: participantes deve ser {{ano (número), lote (texto)}}, veio {p!r}")
+                del lv["participantes"]
+            else:
+                n = sum(1 for r in part if r.get("ano") == p["ano"] and r.get("lote") == p["lote"])
+                if n != 1:
+                    erros.append(f"{chave}: participantes {p!r} casa {n} linhas (esperada exatamente 1)")
         if "concorrentes" in l:
-            n = sum(1 for r in concs if r.get("leilao") == l["concorrentes"])
-            if n != 1:
-                erros.append(f"{chave}: concorrentes {l['concorrentes']!r} casa {n} linhas (esperada exatamente 1)")
+            if not isinstance(l["concorrentes"], str):
+                erros.append(f"{chave}: concorrentes deve ser o nome (texto) do leilão, veio {l['concorrentes']!r}")
+                del lv["concorrentes"]
+            else:
+                n = sum(1 for r in concs if r.get("leilao") == l["concorrentes"])
+                if n != 1:
+                    erros.append(f"{chave}: concorrentes {l['concorrentes']!r} casa {n} linhas (esperada exatamente 1)")
         # um alvo por leilão: um segundo leilão leria o valor já trocado como original do RoadShow
-        ligacoes = _ligacoes(l)
+        ligacoes = _ligacoes(lv)
         for alvo, _ in ligacoes:
             if alvo in donos:
                 erros.append(f"{chave}: {alvo[0]} {alvo[1:]!r} já ligado ao leilão {donos[alvo]!r}")
             else:
                 donos[alvo] = chave
 
-        for campo, c in (l.get("campos") or {}).items():
+        campos = l.get("campos") or {}
+        if not isinstance(campos, dict):
+            erros.append(f"{chave}: campos deve ser dicionário campo → valor, veio {campos!r}")
+            campos = {}
+        for campo, c in campos.items():
             if campo not in CAMPOS:
                 erros.append(f"{chave}: campo {campo!r} fora dos campos de leilão {CAMPOS}")
+                continue
+            if not isinstance(c, dict):
+                erros.append(f"{chave}.{campo}: deve ser {{valor, fontes}}, veio {c!r}")
                 continue
             if ligacoes and not any(campo in mapa for _, mapa in ligacoes):
                 erros.append(f"{chave}: campo {campo!r} não tem onde ser aplicado nas ligações "
@@ -247,11 +280,18 @@ def validar(verif, conc, aliases=None):
                     and c["valor"] and c["valor"] not in nomes_alias):
                 erros.append(f"{chave}: vencedor {c['valor']!r} sem grupo em grupos_alias.json")
 
-        for i, nota in enumerate(l.get("notas") or []):
+        notas, inabs = l.get("notas") or [], l.get("inabilitados") or []
+        if not isinstance(notas, list) or not all(isinstance(n, dict) for n in notas):
+            erros.append(f"{chave}: notas deve ser lista de {{texto, fontes}}, veio {notas!r}")
+            notas = []
+        if not isinstance(inabs, list) or not all(isinstance(i, dict) for i in inabs):
+            erros.append(f"{chave}: inabilitados deve ser lista de {{grupo, desagio, data, fontes}}, veio {inabs!r}")
+            inabs = []
+        for i, nota in enumerate(notas):
             if not nota.get("texto"):
                 erros.append(f"{chave}: nota #{i} sem texto")
             erros += _erros_refs(chave, f"nota #{i}", nota.get("fontes"), fontes)
-        for i, inab in enumerate(l.get("inabilitados") or []):
+        for i, inab in enumerate(inabs):
             if not inab.get("grupo"):
                 erros.append(f"{chave}: inabilitado #{i} sem grupo")
             if inab.get("data") is not None and not _data_iso(inab["data"]):
@@ -286,6 +326,8 @@ def _fmt(campo, v):
         a, m, d = v.split("-")
         return f"{d}/{m}/{a}"
     if isinstance(v, (int, float)) and not isinstance(v, bool):
+        if campo not in CAMPOS_NUM:  # tarifa e texto não se arredondam nem levam unidade: o valor como veio
+            return str(v).replace(".", ",")
         s = f"{v:.2f}".replace(".", ",") if isinstance(v, float) else str(v)
         return s + {"desagio": "%", "prazo_anos": " anos"}.get(campo, "")
     return str(v)

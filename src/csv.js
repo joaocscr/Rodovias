@@ -32,7 +32,8 @@ const Csv = (() => {
     // Fora da tela (leitor de tela, <details> recolhido com observação) não vai para o arquivo.
     clone.querySelectorAll('.visually-hidden, details, summary').forEach(n => n.remove());
     let txt = norm(clone.textContent);
-    const hrefs = [...el.querySelectorAll('a[href]')].map(a => a.href).filter(h => /^(https?:|mailto:)/i.test(h));
+    // links do clone: o que saiu do arquivo (<details>, texto só para leitor de tela) não vaza pelo href
+    const hrefs = [...clone.querySelectorAll('a[href]')].map(a => a.href).filter(h => /^(https?:|mailto:)/i.test(h));
     for (const h of [...new Set(hrefs)]) txt += ` (${h})`;
     return txt;
   }
@@ -98,12 +99,8 @@ const Csv = (() => {
 
   function init() {
     enhance();
-    let pend = false;
-    new MutationObserver(() => {
-      if (pend) return;
-      pend = true;
-      queueMicrotask(() => { pend = false; enhance(); });
-    }).observe(document.body, { childList: true, subtree: true });
+    // o MutationObserver já agrupa as mudanças e entrega em microtarefa; o botão inserido só o dispara de novo uma vez
+    new MutationObserver(() => enhance()).observe(document.body, { childList: true, subtree: true });
   }
 
   return { cell, build, fromTable, filename, baseName, enhance, init };

@@ -23,8 +23,9 @@ const Charts = (() => {
     return out;
   }
 
-  function yAxis(tk, x0, x1, yOf, fmt) {
-    return tk.map(t => `<line x1="${x0}" x2="${x1}" y1="${yOf(t)}" y2="${yOf(t)}" stroke="${C.grey}" stroke-opacity="0.15"/>` +
+  // cls: classe opcional das linhas de grade (o `dotsSvg` as marca como "grid")
+  function yAxis(tk, x0, x1, yOf, fmt, cls = '') {
+    return tk.map(t => `<line${cls ? ` class="${cls}"` : ''} x1="${x0}" x2="${x1}" y1="${yOf(t)}" y2="${yOf(t)}" stroke="${C.grey}" stroke-opacity="0.15"/>` +
       `<text x="${x0 - 8}" y="${yOf(t) + 5}" text-anchor="end" fill="${C.grey}">${esc(fmt(t))}</text>`).join('');
   }
 
@@ -100,9 +101,16 @@ const Charts = (() => {
     const ty = ticks(Math.max(...pts.map(p => p.y), num(o.refY) ? o.refY : 0)), my = ty[ty.length - 1] || 1;
     const xOf = v => L + ((v - x0) / (x1 - x0)) * pw, yOf = v => T + ph - (v / my) * ph;
     const FONTE = { oficial: 'fonte oficial', roadshow: 'RoadShow', imprensa: 'imprensa — não oficial' };
-    let body = yAxis(ty, L, w - R, yOf, fy).replace(/<line /g, '<line class="grid" ');
+    let body = yAxis(ty, L, w - R, yOf, fy, 'grid');
     const step = Math.max(1, Math.ceil((x1 - x0) / 8));
-    for (let x = x0; x <= x1; x += step) body += `<text x="${xOf(x).toFixed(1)}" y="${h - B + 24}" text-anchor="middle" fill="${C.grey}">${x}</text>`;
+    const anos = [];
+    for (let x = x0; x <= x1; x += step) anos.push(x);
+    // o último ano do eixo sempre é rotulado; se o passo o deixou colado no anterior (rótulos de 4 dígitos), ele toma o lugar
+    if (anos[anos.length - 1] !== x1) {
+      if (xOf(x1) - xOf(anos[anos.length - 1]) < 44) anos.pop();
+      anos.push(x1);
+    }
+    for (const x of anos) body += `<text x="${xOf(x).toFixed(1)}" y="${h - B + 24}" text-anchor="middle" fill="${C.grey}">${x}</text>`;
     if (num(o.refY) && !(num(o.refFromX) && o.refFromX > x1)) {
       const rx = xOf(Math.max(num(o.refFromX) ? o.refFromX : x0, x0));
       body += `<line class="ref" x1="${rx.toFixed(1)}" x2="${(w - R).toFixed(1)}" y1="${yOf(o.refY).toFixed(1)}" y2="${yOf(o.refY).toFixed(1)}" stroke="${C.spacial}" stroke-width="1.5" stroke-dasharray="6 4"/>`;

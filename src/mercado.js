@@ -34,7 +34,7 @@ const Mercado = (() => {
 
   function proponentesTxt(p) {
     const pct = d => (d == null ? '' : ` (${nf2.format(d)}%)`);
-    const inab = (p.inabilitados || []).map(i => `${esc(i.grupo)}${pct(i.desagio)} (inabilitado${i.data ? ` em ${ConcModel.fmtData(i.data)}` : ''})`);
+    const inab = (p.inabilitados || []).map(i => `${esc(i.grupo)}${pct(i.desagio)} (inabilitado${i.data ? ` em ${esc(ConcModel.fmtData(i.data))}` : ''})`);
     return [...inab, ...(p.outros || []).map(o => `${esc(o.grupo)}${pct(o.desagio)}`)].join('; ') || '—';
   }
 
@@ -49,7 +49,7 @@ const Mercado = (() => {
         // nome do RoadShow só quando é de outro grupo; deságio diferente sempre aparece
         const rsG0 = v.grupo_vencedor && v.grupo_vencedor.roadshow, rsD = v.desagio && v.desagio.roadshow;
         const rsG = LeiloesModel.rsDiverge(p.vencedor, rsG0, aliases) ? rsG0 : null;
-        return `<tr><td>${p.ano}</td><td>${p.data ? ConcModel.fmtData(p.data) : '—'}</td><td class="wrap">${esc(p.lote)}</td><td class="wrap">${esc(vencedorTxt(p.vencedor))}${rsTxt(rsG)}</td>
+        return `<tr><td>${p.ano}</td><td>${p.data ? esc(ConcModel.fmtData(p.data)) : '—'}</td><td class="wrap">${esc(p.lote)}</td><td class="wrap">${esc(vencedorTxt(p.vencedor))}${rsTxt(rsG)}</td>
         <td class="num">${p.desagio_vencedor == null ? '—' : nf2.format(p.desagio_vencedor) + '%'}${rsTxt(rsD == null ? null : nf2.format(rsD) + '%')}</td><td>${Selo.badge(v.desagio || v.grupo_vencedor) || '—'}</td>
         <td class="wrap wrap--wide">${proponentesTxt(p)}</td></tr>`;
       }).join('')}</tbody></table></div>`;
@@ -98,6 +98,7 @@ const Mercado = (() => {
     const media = LeiloesModel.mediaDesagio(conc.map(x => x.desagio));
     const semDesagio = m.participantes.filter(p => p.desagio_vencedor == null).length;
     const anoOpts = sel => anos.map(a => `<option${a === sel ? ' selected' : ''}>${a}</option>`).join('');
+    const serie = LeiloesModel.serieDesagio(m.participantes);
     const verificado = 'leilões conferidos em fonte oficial ou imprensa, com selo na tabela de participantes (documentos na aba Fontes)';
     el.innerHTML = `<div class="page__inner">
       <h1 class="page__title">Mercado de concessões rodoviárias federais</h1>
@@ -113,7 +114,7 @@ const Mercado = (() => {
           legend: `<div id="serie-legenda">${Charts.legendHtml([{ label: 'oficial', color: C.deep, shape: 'dot' }, { label: 'RoadShow', color: C.bright, shape: 'dot' },
             { label: 'imprensa — não oficial', color: C.grey, shape: 'ring' },
             { label: 'linha de 18%: aporte de recursos vinculados, Portaria 995/2023, a partir de 2023', color: C.spacial, shape: 'line' }])}${
-            Charts.legendHtml([{ label: SERIE_NOTA, color: C.spacial, shape: 'limite' }])}</div>`,
+            serie.some(p => p.limitado) ? Charts.legendHtml([{ label: SERIE_NOTA, color: C.spacial, shape: 'limite' }]) : ''}</div>`,
           foot: `<p class="src" id="serie-sem">${plural(semDesagio, 'leilão', 'leilões')} sem deságio do vencedor localizado</p>` })}
         ${card('programa', 'Programa 2023–2027 por ano', 'Extensão e investimento (capex + opex) dos leilões', { key: 'programa_por_ano',
           legend: Charts.legendHtml([['Capex', Charts.C.deep], ['Opex', Charts.C.bright]]) })}
@@ -146,7 +147,7 @@ const Mercado = (() => {
     Charts.bars(box('leiloes'), m.leiloes_por_ano.map(x => ({ label: String(x.ano), value: x.n, alt: x.previsto })), { unit: 'leilões', format: v => nf0.format(v), title: 'Leilões por ano' });
     Charts.stacked(box('programa'), m.programa_por_ano.map(x => ({ label: `${x.ano}${x.previsto ? '*' : ''} · ${nf0.format(x.km)} km`, parts: [x.capex, x.opex] })),
       { names: ['Capex', 'Opex'], unit: 'R$ bi', format: v => nf1.format(v), title: 'Programa por ano' });
-    Charts.dots(box('serie'), LeiloesModel.serieDesagio(m.participantes), { refY: 18, refFromX: 2023, formatY: v => nfPct.format(v) + '%', title: 'Deságio do vencedor, 2007–2026' });
+    Charts.dots(box('serie'), serie, { refY: 18, refFromX: 2023, formatY: v => nfPct.format(v) + '%', title: 'Deságio do vencedor, 2007–2026' });
     Charts.scatter(box('desagio'), conc.map(x => ({ x: x.n, y: x.desagio, label: `${x.leilao} (${x.ano})` })),
       { xLabel: 'concorrentes', formatX: v => nf0.format(v), formatY: v => nf1.format(v) + '%', title: 'Concorrentes × deságio' });
     Charts.hbars(box('faixas'), m.faixas_desagio.map(x => ({ label: x.faixa, value: x.n })), { unit: 'leilões', format: v => nf0.format(v) });
@@ -168,7 +169,13 @@ const Mercado = (() => {
       box('ranking').innerHTML = rankingTable();
       document.getElementById('ranking-aviso').textContent = rankingAviso();
     };
-    ['de', 'ate'].forEach(k => document.getElementById('rank-' + k).addEventListener('change', ev => { rank[k] = Number(ev.target.value); renderRanking(); }));
+    ['de', 'ate'].forEach(k => document.getElementById('rank-' + k).addEventListener('change', ev => {
+      rank[k] = Number(ev.target.value);
+      if (rank.de > rank.ate) { [rank.de, rank.ate] = [rank.ate, rank.de]; } // de > até: os seletores trocam de lugar
+      document.getElementById('rank-de').value = String(rank.de);
+      document.getElementById('rank-ate').value = String(rank.ate);
+      renderRanking();
+    }));
     box('ranking').addEventListener('click', ev => {
       const b = ev.target.closest('[data-sort]');
       if (!b) return;

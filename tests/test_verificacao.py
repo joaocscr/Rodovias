@@ -13,6 +13,7 @@ from verificacao import (  # noqa: E402
     CAMPOS, MOTIVOS, aplicar, carregar, carregar_aliases, cobertura, nomes_do_ranking, relatorio_markdown,
     tipo_campo, validar,
 )
+import verificacao  # noqa: E402
 
 RS15 = {"tipo": "roadshow", "pagina": 15}
 OFICIAL = {"tipo": "oficial", "orgao": "ANTT", "titulo": "Contrato", "data": "2024-01-31",
@@ -111,6 +112,50 @@ def test_validar_url_so_http_em_todo_tipo(conc):
         assert len(validar(com({**RS15, "url": url}), conc)) == 1, url
     assert validar(com({**IMPRENSA, "url": "HTTP://agenciainfra.com/x"}), conc) == []
     assert validar(com({**RS15, "url": "https://www.gov.br/transportes/roadshow.pdf"}), conc) == []
+
+
+def test_validar_url_http_sem_host(conc):
+    def com(fonte):
+        return verif([leilao({"assinatura": {"valor": "2026-03-16", "fontes": ["f"]}})], fontes={"f": fonte})
+    for url in ("http:", "https:", "http:///x", "https://", "http://:80/x"):
+        for base in (IMPRENSA, RS15, OFICIAL):
+            erros = validar(com({**base, "url": url}), conc)
+            assert len(erros) == 1 and "http" in erros[0], (url, base["tipo"], erros)
+
+
+def test_fmt_nao_arredonda_texto_nem_tarifa():
+    # tarifa e texto não levam sufixo nem arredondamento (valor numérico ilegítimo não é truncado em silêncio)
+    assert verificacao._fmt("tarifa_teto", 4.083) == "4,083"
+    assert verificacao._fmt("tarifa_vencedora", 2.4525) == "2,4525"
+    assert verificacao._fmt("grupo_vencedor", "Rune Rodovias") == "Rune Rodovias"
+    assert verificacao._fmt("tarifa_teto", "R$ 4,083 por praça (jul/2007)") == "R$ 4,083 por praça (jul/2007)"
+    # numéricos de verdade seguem como antes
+    assert verificacao._fmt("desagio", 21.83) == "21,83%"
+    assert verificacao._fmt("desagio", 21.8) == "21,80%"
+    assert verificacao._fmt("prazo_anos", 30) == "30 anos"
+    assert verificacao._fmt("assinatura", "2026-03-16") == "16/03/2026"
+
+
+def test_validar_estruturas_malformadas_dao_erro_legivel(conc):
+    ok = {"desagio": {"valor": 23.83, "fontes": ["rs-p15"]}}
+    casos = {
+        "campos-lista": {"chave": "m1", "ent": "lote-5", "campos": [1, 2]},
+        "campos-texto": {"chave": "m2", "ent": "lote-5", "campos": "desagio"},
+        "campo-nao-dict": {"chave": "m3", "ent": "lote-5", "campos": {"desagio": 23.83}},
+        "notas-dict": {"chave": "m4", "ent": "lote-5", "campos": ok, "notas": {"texto": "x"}},
+        "nota-nao-dict": {"chave": "m5", "ent": "lote-5", "campos": ok, "notas": ["x"]},
+        "inabilitados-dict": {"chave": "m6", "ent": "lote-5", "campos": ok, "inabilitados": {"grupo": "K&G"}},
+        "inabilitado-nao-dict": {"chave": "m7", "ent": "lote-5", "campos": ok, "inabilitados": ["K&G"]},
+        "ano-lista": {"chave": "m8", "participantes": {"ano": [2025], "lote": "Lote 5"}, "campos": ok},
+        "lote-dict": {"chave": "m9", "participantes": {"ano": 2025, "lote": {"x": 1}}, "campos": ok},
+        "participantes-lista": {"chave": "m10", "participantes": [2025, "Lote 5"], "campos": ok},
+        "concorrentes-lista": {"chave": "m11", "concorrentes": ["a"], "campos": ok},
+        "concorrentes-dict": {"chave": "m12", "concorrentes": {"a": 1}, "campos": ok},
+    }
+    for nome, caso in casos.items():
+        erros = validar(verif([caso]), conc)  # não levanta
+        assert erros and all(isinstance(e, str) for e in erros), nome
+        assert any(caso["chave"] in e for e in erros), (nome, erros)
 
 
 def test_validar_imprensa_completa(conc):

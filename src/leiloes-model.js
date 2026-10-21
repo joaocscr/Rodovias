@@ -69,6 +69,9 @@ const LeiloesModel = (() => {
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(data || '');
     if (!m) return null;
     const [y, mo, d] = [+m[1], +m[2], +m[3]];
+    // mês 1–12 e dia dentro do mês (Date.UTC "rola" 2025-02-30 para março: a ida e volta denuncia)
+    const u = new Date(Date.UTC(y, mo - 1, d));
+    if (mo < 1 || mo > 12 || u.getUTCMonth() !== mo - 1 || u.getUTCDate() !== d) return null;
     const ini = Date.UTC(y, 0, 1), dia = (Date.UTC(y, mo - 1, d) - ini) / 864e5, total = (Date.UTC(y + 1, 0, 1) - ini) / 864e5;
     return y + dia / total;
   }
@@ -78,7 +81,7 @@ const LeiloesModel = (() => {
   function serieDesagio(participantes) {
     return (participantes || []).filter(p => num(p.desagio_vencedor)).map(p => {
       const d = (p.verif || {}).desagio || {};
-      return { x: anoDecimal(p.data) ?? p.ano + 0.5, y: p.desagio_vencedor, label: `${p.lote} · ${p.vencedor}`,
+      return { x: anoDecimal(p.data) ?? p.ano + 0.5, y: p.desagio_vencedor, label: `${p.lote} · ${p.vencedor || '—'}`,
         tipo: d.tipo || 'roadshow', limitado: d.limitado_pelo_edital === true };
     });
   }

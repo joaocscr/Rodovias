@@ -148,6 +148,23 @@ test('participantesExibidos: um só vencedor, o verificado', () => {
   const mesmoLance = ConcModel.participantesExibidos(ent({ grupo_vencedor: 'Infra Brasil Holding', desagio: 18.25,
     participantes_lista: [{ grupo: 'Holding XXI (Patria)', desagio: 18.25, vencedor: true }], verif: { grupo_vencedor: V } }));
   assert.deepEqual(mesmoLance.map(p => [p.grupo, p.vencedor]), [['Infra Brasil Holding', true]]);
+  // negativo do desempate por deságio: sem nome em comum, só o MESMO deságio (tolerância de 0,005) liga a linha ao vencedor
+  const semLigacao = (desagioExibido, desagioLinha) => ConcModel.participantesExibidos(ent({ grupo_vencedor: 'Infra Brasil Holding', desagio: desagioExibido,
+    participantes_lista: [{ grupo: 'Holding XXI (Patria)', desagio: desagioLinha, vencedor: true }, { grupo: 'Outro', desagio: 3, vencedor: false }],
+    verif: { grupo_vencedor: V, desagio: V } }));
+  for (const [exibido, linha] of [[18.25, 18.26], [18.25, 17], [18.25, null], [null, 18.25], [null, null]]) {
+    const r = semLigacao(exibido, linha);
+    // o verificado entra no topo e a linha do RoadShow não vira o vencedor (com lance próprio fica sem a marca; sem lance sai)
+    assert.deepEqual(r[0].grupo, 'Infra Brasil Holding', `${exibido}/${linha}`);
+    assert.equal(r.filter(p => p.vencedor).length, 1, `${exibido}/${linha}`);
+    assert.ok(!r.some(p => p.grupo === 'Holding XXI (Patria)' && p.vencedor), `${exibido}/${linha}`);
+    assert.equal(r[0].roadshow && r[0].roadshow.desagio, linha == null ? null : undefined, `${exibido}/${linha}`);
+  }
+  assert.ok(semLigacao(18.25, 18.26).some(p => p.grupo === 'Holding XXI (Patria)' && p.desagio === 18.26), 'o lance do RoadShow continua listado');
+  // o nome em comum vale mesmo com deságio diferente; o desempate por deságio só entra sem nome em comum
+  assert.deepEqual(ConcModel.participantesExibidos(ent({ grupo_vencedor: 'Consórcio Caminhos', desagio: 8, verif: { grupo_vencedor: V, desagio: V },
+    participantes_lista: [{ grupo: 'Outro', desagio: 8, vencedor: true }, { grupo: 'Consórcio Caminhos (Fundo XP)', desagio: 9, vencedor: false }] }))
+    .map(p => [p.grupo, p.vencedor]), [['Outro', false], ['Consórcio Caminhos', true]]);
   // sem verificação do vencedor: lista como veio
   assert.deepEqual(ConcModel.participantesExibidos(ent({ grupo_vencedor: 'Consórcio X', participantes_lista: lista })), lista);
   assert.deepEqual(ConcModel.participantesExibidos(ent({})), []);

@@ -466,6 +466,57 @@ test('v4: CSV protege células que começam como fórmula', async () => {
   }
 });
 
+// lê o CSV baixado ao clicar no botão da tabela (seletor da tabela)
+async function exportaCsv(sel) {
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.locator(`.csv-btn:has(+ .table-wrap ${sel})`).click(),
+  ]);
+  return (await import('node:fs')).readFileSync(await download.path(), 'utf8').split('\r\n');
+}
+
+test('fechamento: CSV deixa de fora a linha escondida (display:none) da tabela visível', async () => {
+  await go('#mercado');
+  await page.selectOption('#rank-de', '2007');
+  await page.selectOption('#rank-ate', '2026');
+  const grupos = await page.$$eval('#ranking-grupos tbody tr', trs => trs.map(tr => tr.firstElementChild.textContent.trim()));
+  assert.ok(grupos.length >= 3 && new Set(grupos).size === grupos.length, 'nomes de grupo únicos');
+  const linhaDe = g => `"${g.replace(/"/g, '""')}";`;
+  const todas = await exportaCsv('#ranking-grupos');
+  assert.equal(todas.length, grupos.length + 1);
+  const alvo = grupos[1];
+  assert.ok(todas.some(l => l.startsWith(linhaDe(alvo))), 'controle: sem esconder, a linha sai');
+  await page.evaluate(() => { document.querySelectorAll('#ranking-grupos tbody tr')[1].style.display = 'none'; });
+  try {
+    const parcial = await exportaCsv('#ranking-grupos');
+    assert.equal(parcial.length, grupos.length, 'uma linha a menos');
+    assert.ok(!parcial.some(l => l.startsWith(linhaDe(alvo))), `linha escondida (${alvo}) não pode sair no CSV`);
+    for (const g of grupos.filter(x => x !== alvo)) assert.ok(parcial.some(l => l.startsWith(linhaDe(g))), `${g} segue no CSV`);
+  } finally {
+    await page.evaluate(() => { document.querySelectorAll('#ranking-grupos tbody tr')[1].style.display = ''; });
+  }
+});
+
+test('fechamento: CSV coleta links só do que sai no arquivo (nada de <details> nem texto só de leitor de tela)', async () => {
+  await go('#fontes');
+  const orig = await page.evaluate(() => {
+    const td = document.querySelector('#fontes-verificacao-table tbody tr:first-child td:first-child');
+    const o = td.innerHTML;
+    td.innerHTML = 'Texto <a href="https://visivel.example/a">ver</a>' +
+      '<details><summary>mais</summary><a href="https://dentro-de-details.example/b">oculto</a></details>' +
+      '<span class="visually-hidden"><a href="https://so-leitor.example/c">leitor</a></span>';
+    return o;
+  });
+  try {
+    const l1 = (await exportaCsv('#fontes-verificacao-table'))[1];
+    assert.ok(l1.includes('(https://visivel.example/a)'), l1);
+    assert.ok(!l1.includes('dentro-de-details'), l1);
+    assert.ok(!l1.includes('so-leitor'), l1);
+  } finally {
+    await page.evaluate(o => { document.querySelector('#fontes-verificacao-table tbody tr:first-child td:first-child').innerHTML = o; }, orig);
+  }
+});
+
 // v4: linha da ficha (dd) pelo rótulo (dt)
 const fichaDd = rotulo => page.evaluate(r => {
   const dt = [...document.querySelectorAll('#ficha dt')].find(x => x.textContent === r);
@@ -612,6 +663,18 @@ test('v4: Mercado mostra ranking com taxa de êxito e filtro de período altera 
   assert.equal(await li.count(), 1);
   assert.match(await li.locator('a').getAttribute('href'), /^https:\/\/[^/]*gov\.br\//);
   assert.equal(await page.locator('#ranking-aliases li').count(), await page.evaluate(() => window.CONC.grupos_alias.length));
+  await rankPeriodo(2007, 2026);
+});
+
+test('fechamento: seletores de período trocam de lugar quando de > até', async () => {
+  await go('#mercado');
+  await rankPeriodo(2007, 2026);
+  await page.selectOption('#rank-ate', '2015');
+  await page.selectOption('#rank-de', '2023'); // de passa de até: os dois trocam e a tabela segue o período 2015–2023
+  assert.equal(await page.inputValue('#rank-de'), '2015');
+  assert.equal(await page.inputValue('#rank-ate'), '2023');
+  const esperado = await page.evaluate(() => LeiloesModel.rankingGrupos(window.CONC.mercado.participantes, window.CONC.grupos_alias, { de: 2015, ate: 2023 }).length);
+  assert.equal((await rankRows()).length, esperado);
   await rankPeriodo(2007, 2026);
 });
 
