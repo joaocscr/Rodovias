@@ -680,7 +680,8 @@ const IntelModel = (() => {
       const leilao = tlData(e && e.leilao) || marco('Leilão') || (TL_STATUS_ASSINATURA.has(i.status) ? null : tlData(i.data_prevista));
       if (!leilao) { semData++; continue; }
       if (tlAno(leilao) < desde) continue;
-      out.push({ nome: i.nome, id: i.id, ent: i.ent || null, edital: tlData(e && e.edital) || marco('Edital'), leilao, status: i.status });
+      out.push({ nome: i.nome, id: i.id, ent: i.ent || null, edital: tlData(e && e.edital) || marco('Edital'), leilao, status: i.status,
+        verificado: i.verificado !== false }); // false: item só de imprensa (não oficial)
     }
     out.sort((a, b) => (tlChave(a.leilao) < tlChave(b.leilao) ? -1 : tlChave(a.leilao) > tlChave(b.leilao) ? 1
       : String(a.nome).localeCompare(String(b.nome), 'pt-BR')));

@@ -230,7 +230,9 @@ const Charts = (() => {
     const d0 = Date.UTC(de, 0, 1) / 864e5, d1 = Date.UTC(ate + 1, 0, 1) / 864e5;
     const xOf = s => L + Math.min(1, Math.max(0, (diaN(s) - d0) / (d1 - d0))) * pw;
     const h = T + rows.length * rh + 8, maxCh = Math.max(8, Math.floor((L - 16) / 7.5));
-    const cut = t => (t.length > maxCh ? `${t.slice(0, maxCh - 1)}…` : t);
+    const cut = (t, n = maxCh) => (t.length > n ? `${t.slice(0, Math.max(1, n - 1))}…` : t);
+    // item só de imprensa (verificado === false): marca no rótulo, sempre visível (o nome é que encurta), e nas dicas
+    const NV = ' (não verificado)', NV_FONTE = 'fonte: imprensa — não oficial';
     const mes = d => (d.length === 7 ? ' (mês)' : '');
     let body = '';
     for (let y = de; y <= ate; y++) {
@@ -242,7 +244,8 @@ const Charts = (() => {
     body += `<line class="tl-grid" x1="${(L + pw).toFixed(1)}" x2="${(L + pw).toFixed(1)}" y1="${T - 6}" y2="${h - 8}" stroke="${C.grey}" stroke-opacity="0.3"/>`;
     const st = k => (o.statusLabel && o.statusLabel(k)) || '';
     body += rows.map((r, i) => {
-      const y = T + i * rh, cy = y + rh / 2, c = col(r.status), nome = String(r.nome);
+      const y = T + i * rh, cy = y + rh / 2, c = col(r.status), nome = String(r.nome), nv = r.verificado === false;
+      const fonte = nv ? ` · ${NV_FONTE}` : '';
       const lx = xOf(r.leilao), ex = r.edital ? xOf(r.edital) : null;
       const click = o.clickable && r.k != null;
       const attrs = click ? ` data-k="${esc(r.k)}" role="button" tabindex="0" aria-label="${esc(`${nome}: leilão ${fmt(r.leilao)}${mes(r.leilao)} (abrir ficha)`)}"` : '';
@@ -250,12 +253,13 @@ const Charts = (() => {
       if (ex != null) {
         const a = Math.min(ex, lx), b = Math.max(ex, lx), trim = b - a > 14;
         marks += `<line class="tl-span" x1="${(trim ? a + 5 : a).toFixed(1)}" x2="${(trim ? b - 7 : b).toFixed(1)}" y1="${cy}" y2="${cy}" stroke="${c}" stroke-width="2.5"/>` +
-          `<circle class="tl-edital" data-id="${esc(r.id)}" cx="${ex.toFixed(1)}" cy="${cy}" r="5" fill="none" stroke="${c}" stroke-width="2.5"><title>${esc(nome)} · edital: ${esc(fmt(r.edital))}${mes(r.edital)}</title></circle>`;
+          `<circle class="tl-edital" data-id="${esc(r.id)}" cx="${ex.toFixed(1)}" cy="${cy}" r="5" fill="none" stroke="${c}" stroke-width="2.5"><title>${esc(nome)} · edital: ${esc(fmt(r.edital))}${mes(r.edital)}${fonte}</title></circle>`;
       }
       marks += `<path class="tl-leilao" data-id="${esc(r.id)}" data-leilao-x="${lx.toFixed(1)}" d="M${lx.toFixed(1)},${cy - 8} L${(lx + 8).toFixed(1)},${cy} L${lx.toFixed(1)},${cy + 8} L${(lx - 8).toFixed(1)},${cy} Z" fill="${c}" stroke="${C.snow}" stroke-width="1">` +
-        `<title>${esc(nome)} · leilão: ${esc(fmt(r.leilao))}${mes(r.leilao)}${st(r.status) ? ` · ${esc(st(r.status))}` : ''}</title></path>`;
+        `<title>${esc(nome)} · leilão: ${esc(fmt(r.leilao))}${mes(r.leilao)}${st(r.status) ? ` · ${esc(st(r.status))}` : ''}${fonte}</title></path>`;
       return `<g class="hrow tl-row"${attrs}><rect class="hrow__bg" x="0" y="${y}" width="${w}" height="${rh}" fill="${C.bright}" fill-opacity="0"/>` +
-        `<text x="${L - 8}" y="${cy + 5}" text-anchor="end" fill="${C.spacial}">${nome.length > maxCh ? `<title>${esc(nome)}</title>` : ''}${esc(cut(nome))}</text>` +
+        `<text x="${L - 8}" y="${cy + 5}" text-anchor="end" fill="${C.spacial}">${nv ? `<title>${esc(nome)} (não verificado; ${NV_FONTE})</title>${esc(cut(nome, maxCh - NV.length))}${NV}`
+          : `${nome.length > maxCh ? `<title>${esc(nome)}</title>` : ''}${esc(cut(nome))}`}</text>` +
         `${marks}<text x="${L + pw + 16}" y="${cy + 5}" fill="${C.grey}">${esc(fmt(r.leilao))}${mes(r.leilao)}</text></g>`;
     }).join('');
     return frame(w, h, body, o.title, o.clickable ? 'group' : 'img');

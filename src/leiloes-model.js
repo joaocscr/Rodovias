@@ -206,7 +206,10 @@ const LeiloesModel = (() => {
   const FORA_DO_CALENDARIO = new Set(['cancelado', 'suspenso']);
   const AGENDADO = 'leilao_agendado';
   const ESFERA = { federal: ['federal', 'federais'], estadual: ['estadual', 'estaduais'] };
+  // Norma do aporte de recursos vinculados (referência legal, não dado do RoadShow): vale para os leilões desde o ano dela.
+  const PORTARIA_APORTE = { nome: 'Portaria MT nº 995/2023', ano: 2023 };
   // Limite do aporte e as redações do RoadShow (conc.regulatorio, diagrama do fluxo do projeto: [{texto, pagina}]).
+  // Usado no achado do Resumo e na linha de referência da série de deságio do Mercado.
   function regraAporte(conc) {
     const red = arr(conc && conc.regulatorio && conc.regulatorio.diagramas).flatMap(d => arr(d && d.redacoes))
       .filter(r => r && typeof r.texto === 'string' && /\d+(?:,\d+)?\s*%/.test(r.texto));
@@ -247,7 +250,7 @@ const LeiloesModel = (() => {
         formula: `Contagem dos leilões com deságio do vencedor maior que ${Lt}, sobre os leilões com deságio de tarifa. ` +
           (regra.aPartir ? `A p. ${regra.aPartir} diz "a partir de ${Lt}"; ` : '') +
           (igual ? `${qtd(igual, 'leilão tem', 'leilões têm')} deságio de exatamente ${Lt} e ${igual === 1 ? 'entraria' : 'entrariam'} por essa redação.` : `nenhum leilão tem deságio de exatamente ${Lt}, então as redações dão a mesma contagem.`),
-        fonte: `${fonteCampo(cd, 'desagio', m, 'concorrentes_desagio')}; regra do aporte: Portaria MT nº 995/2023, ${RS}${regra.paginas.length ? `, ${ppTxt(regra.paginas)}` : ''} (aba Regulatório)` });
+        fonte: `${fonteCampo(cd, 'desagio', m, 'concorrentes_desagio')}; regra do aporte: ${PORTARIA_APORTE.nome}, ${RS}${regra.paginas.length ? `, ${ppTxt(regra.paginas)}` : ''} (aba Regulatório)` });
     }
 
     // 3. Deságios da primeira rodada × programa
@@ -341,7 +344,8 @@ const LeiloesModel = (() => {
     return out;
   }
 
-  return { grupoDe, rsDiverge, rankingGrupos, leiloesSemLista, serieDesagio, mediaDesagio, resumoKpis, resumoAchados };
+  return { grupoDe, rsDiverge, rankingGrupos, leiloesSemLista, serieDesagio, mediaDesagio, resumoKpis, resumoAchados,
+    regraAporte, PORTARIA_APORTE };
 })();
 
 if (typeof module !== 'undefined') module.exports = LeiloesModel;

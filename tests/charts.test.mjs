@@ -247,6 +247,17 @@ test('timelineSvg: sem linhas, "Sem dados"; linha sem leilão é ignorada; títu
   assert.match(svg, /<title>Rota A · leilão: 11\/12\/2026 · Leilão agendado<\/title>/);
 });
 
+test('timelineSvg: linha não verificada leva "(não verificado)" no rótulo e "fonte: imprensa — não oficial" nas dicas', () => {
+  const nv = [{ nome: 'MG Lote 10 - Noroeste com nome bem comprido demais', id: 'nv', k: null, edital: null, leilao: '2026-03-20', status: 'edital', verificado: false }].concat(tlRows);
+  const svg = Charts.timelineSvg(nv, Object.assign({ width: 640 }, tlOpts));
+  const rot = [...svg.matchAll(/<text x="[\d.]+" y="[\d.]+" text-anchor="end"[^>]*>(.*?)<\/text>/g)].map(m => m[1].replace(/<title>.*?<\/title>/, ''));
+  assert.match(rot[0], / \(não verificado\)$/); // o nome é encurtado, a marca fica visível
+  assert.ok(rot.slice(1).every(t => !t.includes('não verificado')), rot.join('|'));
+  assert.match(svg, /<title>MG Lote 10 - Noroeste com nome bem comprido demais · leilão: 20\/03\/2026[^<]* · fonte: imprensa — não oficial<\/title>/);
+  assert.match(svg, /<title>MG Lote 10 - Noroeste com nome bem comprido demais \(não verificado; fonte: imprensa — não oficial\)<\/title>/);
+  assert.equal((svg.match(/não oficial/g) || []).length, 2);
+});
+
 test('legendHtml: formas do cronograma (círculo vazado e losango cheio) na cor dada', () => {
   const html = Charts.legendHtml([{ label: 'Edital', color: Charts.C.spacial, shape: 'circle' }, { label: 'Leilão', color: Charts.C.spacial, shape: 'diamondFill' }]);
   assert.match(html, /<circle[^>]*fill="none"[^>]*stroke="#231F20"[^>]*\/><\/svg>Edital/);

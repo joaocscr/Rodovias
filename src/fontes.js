@@ -26,7 +26,7 @@ const Fontes = (() => {
     const rs = f => f.tipo === 'roadshow';
     return `<h2 class="fontes-h2" id="fontes-verificacao">Verificação dos leilões <span class="page__src">(${IM.fmtInt(v.fontes.length)} documentos)</span></h2>
       <p class="page__src" id="fontes-verif-cobertura">Nos campos de leilão (data, vencedor, deságio, tarifas, prazo, assinatura e início da operação), o valor exibido vem de documento de órgão público quando existe; senão, do RoadShow; por último, de imprensa, marcada como não oficial.
-        ${n('leiloes')} leilões conferidos; campos por origem: ${n('oficial')} oficial, ${n('roadshow')} RoadShow, ${n('imprensa')} imprensa — não oficial e ${n('nao_localizado')} não localizado em fonte oficial${c.nao_se_aplica ? `; ${n('nao_se_aplica')} não se aplica (deságio de leilão por outorga)` : ''}.</p>
+        ${n('leiloes')} leilões conferidos${c.so_edital ? ` e ${n('so_edital')} ${c.so_edital === 1 ? 'entrada' : 'entradas'} só com a data do edital` : ''}; campos por origem: ${n('oficial')} oficial, ${n('roadshow')} RoadShow, ${n('imprensa')} imprensa — não oficial e ${n('nao_localizado')} não localizado em fonte oficial${c.nao_se_aplica ? `; ${n('nao_se_aplica')} não se aplica (deságio de leilão por outorga)` : ''}.</p>
       ${tabela('fontes-verificacao-table', v.fontes, [
         ['Tipo', r => Selo.badge({ tipo: r.tipo, fontes: [] })], ['Órgão/veículo', r => txt(r.orgao || (rs(r) ? 'Ministério dos Transportes' : null)), 'wrap'],
         ['Título', r => txt(r.titulo || (rs(r) ? Selo.fonteTexto(r) : null)), 'wrap fontes-nome'], ['Data', r => txt(r.data ? ConcModel.fmtData(r.data) : null)],

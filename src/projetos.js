@@ -178,7 +178,7 @@ const Projetos = (() => {
       ? `${nf0.format(res.semData)} ${res.semData === 1 ? 'item do pipeline sem data de leilão não aparece' : 'itens do pipeline sem data de leilão não aparecem'} aqui.` : '';
     card.hidden = false;
     card.innerHTML = `<h3>Linha do tempo: editais e leilões ${anos}</h3>
-      <p class="sub">Um projeto por linha, em ordem de leilão. A linha liga o edital ao leilão; sem data de edital, só o leilão aparece. Data só com o mês fica no meio do mês e leva “(mês)”. Clique no nome para abrir a ficha.</p>
+      <p class="sub">Um projeto por linha, em ordem de leilão. A linha liga o edital ao leilão; sem data de edital, só o leilão aparece. Data só com o mês fica no meio do mês e leva “(mês)”. Clique no nome para abrir a ficha.${res.rows.some(r => r.verificado === false) ? ' “(não verificado)”: data só de imprensa, não oficial.' : ''}</p>
       ${Charts.legendHtml(usados.map(k => ({ label: IM.statusLabel(intel, k), color: cor(k), shape: 'diamondFill' })))}
       ${Charts.legendHtml([{ label: 'Edital', color: Charts.C.spacial, shape: 'circle' }, { label: 'Leilão', color: Charts.C.spacial, shape: 'diamondFill' }])}
       <div class="chart-box" id="pipe-timeline-chart"></div>

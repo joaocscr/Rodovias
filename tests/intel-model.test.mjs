@@ -1104,6 +1104,14 @@ test('linhaDoTempo: pipeline como lista, sem conc nem itens e item com ent desco
   assert.deepEqual([vazio.rows.length, vazio.semData, vazio.de, vazio.ate, vazio.anos], [0, 0, null, null, null]);
 });
 
+test('linhaDoTempo: a linha leva verificado do item (false só quando o item é de imprensa)', () => {
+  const pipe = { itens: [tlItem('nv', { esfera: 'estadual', status: 'edital', data_prevista: '2026-03-20', verificado: false }),
+    tlItem('ok', { esfera: 'estadual', status: 'edital', data_prevista: '2026-04-20', verificado: true }),
+    tlItem('sem', { esfera: 'estadual', status: 'edital', data_prevista: '2026-05-20' })] };
+  const by = Object.fromEntries(IntelModel.linhaDoTempo(null, pipe, 2026).map(x => [x.id, x.verificado]));
+  assert.deepEqual(by, { nv: false, ok: true, sem: true });
+});
+
 test('linhaDoTempo: datas inválidas (mês 13, texto) contam como sem data', () => {
   const res = IntelModel.linhaDoTempoResumo({ entidades: [{ id: 'w', leilao: '2026-13', edital: 'breve', cronograma: [] }] }, { itens: [tlItem('w', { ent: 'w' })] }, 2026);
   assert.equal(res.rows.length, 0); assert.equal(res.semData, 1);

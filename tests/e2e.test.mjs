@@ -382,6 +382,8 @@ for (const qualidade of ['ok', 'aproximado']) {
     assert.ok(Math.abs(tot - p.km) <= 0.05);
     assert.ok(Math.abs(soma - tot) <= 0.3, 'categorias somam o total (tolerância de arredondamento)');
     assert.match(await bloco.textContent(), /Pelo recorte curado; aproximado quando o recorte é aproximado/);
+    // a explicação "Sem pavimento ou planejada" só aparece quando a categoria aparece
+    assert.equal(/reúne leito natural/.test(await bloco.textContent()), p.naoPav > 0, `naoPav = ${p.naoPav}`);
     assert.doesNotMatch(await bloco.textContent(), /undefined|null|NaN/);
   });
 }
@@ -846,8 +848,12 @@ test('v4: comparador tem a fonte do deságio e Fontes lista a verificação', as
   assert.ok(!vals.includes('RoadShow'), vals.join());
   await go('#fontes');
   const cob = await page.textContent('#fontes-verif-cobertura');
-  assert.match(cob, /\d+ leilões conferidos; campos por origem: \d+ oficial/);
-  const nsa = await page.evaluate(() => window.CONC.verificacao.cobertura.nao_se_aplica);
+  // leilões com resultado e, à parte, as entradas só com a data do edital (números do modelo)
+  const cobM = await page.evaluate(() => window.CONC.verificacao.cobertura);
+  const fmtN = v => v.toLocaleString('pt-BR');
+  const soEd = cobM.so_edital ? ` e ${fmtN(cobM.so_edital)} ${cobM.so_edital === 1 ? 'entrada' : 'entradas'} só com a data do edital` : '';
+  assert.ok(cob.includes(`${fmtN(cobM.leiloes)} leilões conferidos${soEd}; campos por origem: ${fmtN(cobM.oficial)} oficial`), cob);
+  const nsa = cobM.nao_se_aplica;
   assert.ok(nsa > 0);
   assert.ok(cob.includes(`${nsa} não se aplica (deságio de leilão por outorga).`), cob);
   const n = await page.locator('#fontes-verificacao-table tbody tr').count();
@@ -949,7 +955,10 @@ test('v4: série de deságio desenha um ponto por leilão com deságio, com lege
   assert.ok(await page.locator('#chart-serie circle.dot-limite').count() >= 1);
   const leg = page.locator('#serie-legenda');
   const txt = await leg.textContent();
-  for (const s of ['oficial', 'RoadShow', 'imprensa — não oficial', 'aporte de recursos vinculados, Portaria 995/2023, a partir de 2023'])
+  // linha de referência: o limite do aporte vem de regulatorio.json (o mesmo do Resumo), não de número no código
+  const ref = await page.evaluate(() => ({ r: LeiloesModel.regraAporte(window.CONC), p: LeiloesModel.PORTARIA_APORTE }));
+  const refTxt = `linha de ${ref.r.limite.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%: aporte de recursos vinculados, ${ref.p.nome}, a partir de ${ref.p.ano}`;
+  for (const s of ['oficial', 'RoadShow', 'imprensa — não oficial', refTxt])
     assert.ok(txt.includes(s), s);
   assert.equal(await leg.locator('circle[fill="none"][stroke-dasharray]').count(), 1, 'imprensa: anel vazado tracejado');
   assert.equal(await leg.locator('line[stroke-dasharray]').count(), 1, 'linha de 18%');
@@ -1107,7 +1116,9 @@ test('fechamento: Mercado tem ABDIB, debêntures, comparativos e pavimento com a
     assert.equal(await card.count(), 1, id);
     const txt = await card.textContent();
     assert.ok(!/NaN|undefined|null/.test(txt), `${id}: ${txt.slice(0, 200)}`);
-    assert.ok(txt.includes(`Fonte: RoadShow 2026-2027, p. ${[].concat(m.fontes[id]).join(', ')}`), id);
+    const pgs = [].concat(m.fontes[id]).map(String);
+    const ref = pgs.length > 1 ? `pp. ${pgs.slice(0, -1).join(', ')} e ${pgs[pgs.length - 1]}` : `p. ${pgs[0]}`;
+    assert.ok(txt.includes(`Fonte: RoadShow 2026-2027, ${ref}`), `${id}: ${ref}`);
     assert.equal(await card.locator('svg.chart').count(), 1, id);
     assert.ok(await card.locator('.chart-legend').count() >= 1, `${id}: legenda`);
     const titles = await card.locator('svg.chart title').allTextContents();
@@ -1150,7 +1161,11 @@ test('fechamento: Regulatório desenha os dois diagramas com título, descriçã
     const rod = await fig.locator('.diagrama__fonte').textContent();
     assert.equal(rod, await page.evaluate(x => Regulatorio.rodape(x), d));
     assert.ok(!rod.startsWith('Fonte:'), rod);
-    if (d.origem === 'esquema') assert.ok(rod.startsWith('Esquema elaborado com o texto do RoadShow 2026-2027, p. ') && rod.endsWith(d.paginas.join(', ')), rod);
+    if (d.origem === 'esquema') {
+      const pg = d.paginas.map(String);
+      const ref = pg.length > 1 ? `pp. ${pg.slice(0, -1).join(', ')} e ${pg[pg.length - 1]}` : `p. ${pg[0]}`;
+      assert.equal(rod, `Esquema elaborado com o texto do RoadShow 2026-2027, ${ref}`);
+    }
     if (d.origem === 'adaptado') assert.ok(rod.startsWith(`Baseado na figura da p. ${d.pagina_figura} `), rod);
     assert.ok((await fig.locator('.diagrama__nota').textContent()).includes(d.nota), `${d.id}: nota`);
     const box = await svg.boundingBox();

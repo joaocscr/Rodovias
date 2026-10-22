@@ -77,11 +77,14 @@ const Ficha = (() => {
     const p = ConcModel.pistaSNV(conc, snv, idx);
     if (p.semRecorte) return '<p class="ftext" data-pista="sem">Sem recorte no SNV: a pista desta concessão não pôde ser calculada.</p>';
     const pct = v => `${fmt1.format(v * 100)}%`;
-    const linhas = ConcModel.pistaPartes(p).map(c =>
+    const partes = ConcModel.pistaPartes(p);
+    const linhas = partes.map(c =>
       `<dt>${esc(c.label)}</dt><dd data-pista="${c.key}">${esc(F.km(c.km))} (${esc(pct(c.pct))})</dd>`).join('');
+    // a explicação da categoria sem pavimento só quando ela aparece no bloco
+    const naoPav = partes.find(c => c.key === 'naoPav');
     return `<dl class="fgrid">${linhas}<dt>Total do recorte</dt><dd data-pista="km">${esc(F.km(p.km))}</dd></dl>
       <p class="ftext fpad">Pelo recorte curado; aproximado quando o recorte é aproximado${e.qualidade === 'aproximado' ? ' (é o caso desta concessão)' : ''}. ` +
-      `Cada trecho físico do SNV conta uma vez, pela situação dele. "Sem pavimento ou planejada" reúne leito natural, implantada, travessia, planejada e obras de pavimentação ou implantação.</p>`;
+      `Cada trecho físico do SNV conta uma vez, pela situação dele.${naoPav ? ` "${esc(naoPav.label)}" reúne leito natural, implantada, travessia, planejada e obras de pavimentação ou implantação.` : ''}</p>`;
   }
 
   function render(e, idx) {
@@ -174,7 +177,7 @@ const Ficha = (() => {
         ${block('Trecho no mapa', trecho)}
         ${block('Outras informações da ficha', extras, true)}
         ${anttBlocks(e.id)}
-        <p class="ficha__foot">Fonte: RoadShow 2026-2027 (${esc(conc.versaoRoadshow)}), Ministério dos Transportes${pages.length ? `, p. ${pages.join(', ')}` : ''}${
+        <p class="ficha__foot">Fonte: RoadShow 2026-2027 (${esc(conc.versaoRoadshow)}), Ministério dos Transportes${pages.length ? `, ${pages.length > 1 ? 'pp.' : 'p.'} ${pages.length > 1 ? `${pages.slice(0, -1).join(', ')} e ${pages[pages.length - 1]}` : pages[0]}` : ''}${
   intel && (IM.anttCapa(intel, e.id) || IM.anttAnteriores(intel, e.id).length) ? '; ANTT (dados abertos e páginas das concessões)' : ''}${
   e.verif && Object.keys(e.verif).length ? '; campos de leilão conferidos na verificação dos leilões (selo de origem em cada campo)' : ''}.</p>
       </div>`;

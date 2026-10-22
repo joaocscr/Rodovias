@@ -7,11 +7,15 @@ const Mercado = (() => {
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   // deságio com até 2 casas (valores oficiais têm 2): "23,83%", "15,3%", eixo "10%"
   const nfPct = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });
-  const pages = p => (Array.isArray(p) ? p : [p]).filter(x => x != null).join(', ');
+  // páginas do RoadShow: "p. 37" ou "pp. 41 e 45" / "pp. 73, 75 e 77"
+  const pages = p => {
+    const l = (Array.isArray(p) ? p : [p]).filter(x => x != null).map(String);
+    return `${l.length > 1 ? 'pp.' : 'p.'} ${l.length > 1 ? `${l.slice(0, -1).join(', ')} e ${l[l.length - 1]}` : l[0]}`;
+  };
   const plural = (n, um, varios) => `${nf0.format(n)} ${n === 1 ? um : varios}`;
   const SERIE_NOTA = 'Pontos marcados como limitados pelo edital: desconto máximo permitido, desempate por outorga (2021)';
 
-  let m, aliases = [], built = false;
+  let m, aliases = [], regra = null, built = false;
   const rank = { de: null, ate: null, key: null, dir: 'desc' };
 
   // opts.src substitui o texto da fonte (padrão: páginas do RoadShow da chave); opts.foot entra abaixo do gráfico.
@@ -22,7 +26,9 @@ const Mercado = (() => {
       ${opts.legend || ''}<div class="chart-box" id="chart-${id}">${opts.html || ''}</div>${opts.foot || ''}
       <p class="src">Fonte: ${esc(opts.src || roadshow(opts.key || id))}</p>${note}</article>`;
   }
-  const roadshow = key => `RoadShow 2026-2027, p. ${pages(m.fontes[key])}`;
+  // linha de referência da série de deságio: limite do aporte (regulatorio.json) e ano da portaria
+  const refLabel = () => `linha de ${nfPct.format(regra.limite)}%: aporte de recursos vinculados, ${LeiloesModel.PORTARIA_APORTE.nome}, a partir de ${LeiloesModel.PORTARIA_APORTE.ano}`;
+  const roadshow = key => `RoadShow 2026-2027, ${pages(m.fontes[key])}`;
 
   // Vencedor exibido (verificado); quando o grupo econômico tem outro nome, "nome (grupo)" — sem repetir o grupo que
   // o nome já traz entre parênteses ("… S.A. (OHL Brasil)").
@@ -134,10 +140,10 @@ const Mercado = (() => {
         ${card('leiloes', 'Leilões por ano', comPeriodo('Número de leilões de concessões rodoviárias federais', periodoSerie(m.leiloes_por_ano)), { key: 'leiloes_por_ano', wide: true,
           legend: Charts.legendHtml([['Realizados', Charts.C.deep], ['Previstos', Charts.C.bright, 0.45]]) })}
         ${card('serie', comPeriodo('Deságio do vencedor', pPart), 'Desconto sobre a tarifa-teto oferecido pelo vencedor de cada leilão, na data do leilão', { wide: true,
-          src: `${verificado}; RoadShow 2026-2027, p. ${pages(m.fontes.participantes)}, onde não há verificação`,
+          src: `${verificado}; RoadShow 2026-2027, ${pages(m.fontes.participantes)}, onde não há verificação`,
           legend: `<div id="serie-legenda">${Charts.legendHtml([{ label: 'oficial', color: C.deep, shape: 'dot' }, { label: 'RoadShow', color: C.bright, shape: 'dot' },
             { label: 'imprensa — não oficial', color: C.grey, shape: 'ring' },
-            { label: 'linha de 18%: aporte de recursos vinculados, Portaria 995/2023, a partir de 2023', color: C.spacial, shape: 'line' }])}${
+            ...(regra ? [{ label: refLabel(), color: C.spacial, shape: 'line' }] : [])])}${
             serie.some(p => p.limitado) ? Charts.legendHtml([{ label: SERIE_NOTA, color: C.spacial, shape: 'limite' }]) : ''}</div>`,
           foot: `<p class="src" id="serie-sem">${plural(semDesagio, 'leilão', 'leilões')} sem deságio do vencedor localizado</p>` })}
         ${card('programa', `${comPeriodo('Programa', periodoSerie(m.programa_por_ano), ' ')} por ano`, 'Extensão e investimento (capex + opex) dos leilões', { key: 'programa_por_ano',
@@ -179,7 +185,7 @@ const Mercado = (() => {
     Charts.bars(box('leiloes'), m.leiloes_por_ano.map(x => ({ label: String(x.ano), value: x.n, alt: x.previsto })), { unit: 'leilões', format: v => nf0.format(v), title: 'Leilões por ano' });
     Charts.stacked(box('programa'), m.programa_por_ano.map(x => ({ label: `${x.ano}${x.previsto ? '*' : ''} · ${nf0.format(x.km)} km`, parts: [x.capex, x.opex] })),
       { names: ['Capex', 'Opex'], unit: 'R$ bi', format: v => nf1.format(v), title: 'Programa por ano' });
-    Charts.dots(box('serie'), serie, { refY: 18, refFromX: 2023, formatY: v => nfPct.format(v) + '%', title: comPeriodo('Deságio do vencedor', pPart) });
+    Charts.dots(box('serie'), serie, { refY: regra ? regra.limite : null, refFromX: LeiloesModel.PORTARIA_APORTE.ano, formatY: v => nfPct.format(v) + '%', title: comPeriodo('Deságio do vencedor', pPart) });
     Charts.scatter(box('desagio'), conc.map(x => ({ x: x.n, y: x.desagio, label: `${x.leilao} (${x.ano})` })),
       { xLabel: 'concorrentes', formatX: v => nf0.format(v), formatY: v => nf1.format(v) + '%', title: 'Concorrentes × deságio' });
     Charts.hbars(box('faixas'), m.faixas_desagio.map(x => ({ label: x.faixa, value: x.n })), { unit: 'leilões', format: v => nf0.format(v) });
@@ -237,6 +243,7 @@ const Mercado = (() => {
   function init(conc) {
     m = conc.mercado;
     aliases = conc.grupos_alias || [];
+    regra = LeiloesModel.regraAporte(conc);  // limite do aporte: o mesmo do Resumo, de regulatorio.json
     if (built) return;
     built = true;
     render();

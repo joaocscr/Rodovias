@@ -254,6 +254,16 @@ test('resumoAchados: achados calculados com fórmula e fonte', () => {
   }
 });
 
+test('regraAporte: limite e páginas do regulatorio (a mesma regra da linha de referência do Mercado); sem redação, null', () => {
+  assert.deepEqual(LeiloesModel.regraAporte(concFix()), { limite: 18, paginas: [61, 65, 73], aPartir: 61 });
+  const c20 = concFix();
+  c20.regulatorio.diagramas[0].redacoes = [{ texto: 'acima de 20,5% de deságio', pagina: 73 }];
+  assert.deepEqual(LeiloesModel.regraAporte(c20), { limite: 20.5, paginas: [73], aPartir: null });
+  assert.equal(LeiloesModel.regraAporte({}), null);
+  assert.equal(LeiloesModel.regraAporte(null), null);
+  assert.ok(/995\/2023/.test(LeiloesModel.PORTARIA_APORTE.nome) && LeiloesModel.PORTARIA_APORTE.ano === 2023);
+});
+
 test('resumoAchados sem dados não quebra', () => {
   for (const [c, i] of [[undefined, undefined], [null, null], [{}, {}], [{ mercado: {} }, { pipeline: {} }],
     [{ mercado: { programa_por_ano: [], participantes: [], concorrentes_desagio: [] } }, { pipeline: { itens: [] } }]]) {

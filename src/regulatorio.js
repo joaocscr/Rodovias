@@ -138,16 +138,18 @@ const Regulatorio = (() => {
 
   // Rodapé pela origem do diagrama (JSON): "esquema" = montado por nós com o texto das páginas; "adaptado" = figura
   // de uma página (pagina_figura) com acréscimos tirados do texto das demais; sem origem = figura do RoadShow.
+  // "a, b e c"; páginas: "p. 61" ou "pp. 73, 75 e 77"
+  const emLista = l => (l.length > 1 ? `${l.slice(0, -1).join(', ')} e ${l[l.length - 1]}` : l[0]);
+  const ppTxt = l => `${l.length > 1 ? 'pp.' : 'p.'} ${emLista(l)}`;
   function rodape(d) {
     const pgs = (d.paginas || []).map(String);
     const rs = 'RoadShow 2026-2027';
-    if (d.origem === 'esquema') return `Esquema elaborado com o texto do ${rs}, p. ${pgs.join(', ')}`;
+    if (d.origem === 'esquema') return `Esquema elaborado com o texto do ${rs}, ${ppTxt(pgs)}`;
     if (d.origem === 'adaptado') {
       const txt = pgs.filter(p => p !== String(d.pagina_figura));
-      const lista = txt.length > 1 ? `${txt.slice(0, -1).join(', ')} e ${txt[txt.length - 1]}` : txt[0];
-      return `Baseado na figura da p. ${d.pagina_figura}${txt.length ? ` e ${txt.length > 1 ? 'nos textos das pp.' : 'no texto da p.'} ${lista}` : ''} do ${rs}`;
+      return `Baseado na figura da p. ${d.pagina_figura}${txt.length ? ` e ${txt.length > 1 ? 'nos textos das' : 'no texto da'} ${ppTxt(txt)}` : ''} do ${rs}`;
     }
-    return `Fonte: ${rs}, p. ${pgs.join(', ')}`;
+    return `Fonte: ${rs}, ${ppTxt(pgs)}`;
   }
 
   // Figura com legenda (rótulos do JSON), o SVG, a nota (redação e o que é leitura nossa) e o rodapé de origem.
@@ -199,7 +201,7 @@ const Regulatorio = (() => {
       <div class="reg">
         <nav class="reg__toc" aria-label="Seções do regulatório">${r.secoes.map(s => `<a href="#regulatorio" data-sec="${esc(s.id)}">${esc(s.titulo)}</a>`).join('')}</nav>
         <div>${r.secoes.map(s => `<section class="reg__sec" id="reg-${esc(s.id)}">
-          <h2>${esc(s.titulo)}</h2><p class="page__src">RoadShow, p. ${esc((s.paginas || [s.pagina]).join(', '))}</p>
+          <h2>${esc(s.titulo)}</h2><p class="page__src">RoadShow, ${esc(ppTxt((s.paginas || [s.pagina]).map(String)))}</p>
           ${s.blocos.map(blocoHtml).join('')}
           ${(r.diagramas || []).filter(d => d.secao === s.id).map(figuraHtml).join('')}
           ${s.id === 'otimizacoes' ? otimizacoesTable(r.otimizacoes) : ''}

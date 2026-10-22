@@ -1072,7 +1072,14 @@ test('Pipeline: linha do tempo de editais e leilões bate com o modelo (linhas, 
       lbl: Object.fromEntries(window.INTEL.pipeline.status.map(x => [x.key, x.label])) };
   });
   const { res } = m;
-  assert.ok(res.rows.length >= 15, String(res.rows.length));
+  // o recorte começa no ano corrente: o número de linhas muda com o relógio e com os dados; a tela segue o modelo
+  if (!res.rows.length) { assert.equal(await page.isHidden('#pipe-timeline'), true); await go('#mapa'); return; }
+  // linhas de item só de imprensa (verificado = false no pipeline) levam "(não verificado)" no rótulo e "não oficial" na dica
+  const nvModelo = await page.evaluate(ids => ids.filter(id => window.INTEL.pipeline.itens.find(i => i.id === id).verificado === false), res.rows.map(r => r.id));
+  const marcados = await page.$$eval('#pipe-timeline svg.chart .tl-row', gs => gs.filter(g => / \(não verificado\)$/.test(g.querySelector('text[text-anchor="end"]').textContent))
+    .map(g => g.querySelector('.tl-leilao').dataset.id));
+  assert.deepEqual(marcados, nvModelo);
+  for (const id of nvModelo) assert.match(await page.$eval(`#pipe-timeline .tl-leilao[data-id="${id}"] title`, t => t.textContent), /fonte: imprensa — não oficial$/, id);
   // cartão dentro do Pipeline, antes da tabela; título com os anos dos leilões
   const pos = await page.evaluate(() => {
     const c = document.getElementById('pipe-timeline'), t = document.getElementById('pipe-table');
@@ -1130,15 +1137,16 @@ test('Pipeline: linha do tempo de editais e leilões bate com o modelo (linhas, 
   const ks = await page.$$eval(`${sel} .tl-row`, gs => gs.map(g => g.dataset.k || null));
   assert.deepEqual(ks, res.rows.map((r, i) => (m.ficha[i] ? r.ent : null)));
   const i0 = ks.findIndex(Boolean);
-  assert.ok(i0 >= 0);
-  await page.locator(`${sel} .tl-row`).nth(i0).locator(':scope > text').first().click();
-  await routed(page, '#ficha/' + ks[i0]);
-  await escFicha();
-  // teclado: Enter na linha abre a ficha
-  await page.locator(`${sel} .tl-row[data-k]`).first().focus();
-  await page.keyboard.press('Enter');
-  await routed(page, '#ficha/' + ks[i0]);
-  await escFicha();
+  if (i0 >= 0) { // depende dos dados: alguma linha com ficha no recorte
+    await page.locator(`${sel} .tl-row`).nth(i0).locator(':scope > text').first().click();
+    await routed(page, '#ficha/' + ks[i0]);
+    await escFicha();
+    // teclado: Enter na linha abre a ficha
+    await page.locator(`${sel} .tl-row[data-k]`).first().focus();
+    await page.keyboard.press('Enter');
+    await routed(page, '#ficha/' + ks[i0]);
+    await escFicha();
+  }
   // linha sem ficha não navega
   const semFicha = ks.findIndex(k => !k);
   if (semFicha >= 0) {

@@ -49,7 +49,9 @@ test('colunasSvg: um nó por item, uma seta por aresta, garantia tracejada', () 
 });
 
 test('rodapé diz o que é do RoadShow e o que é nosso, a partir de origem e páginas do JSON', () => {
-  assert.equal(Regulatorio.rodape(diag('fluxo-financiamento')), 'Esquema elaborado com o texto do RoadShow 2026-2027, p. 73, 75, 77');
+  assert.equal(Regulatorio.rodape(diag('fluxo-financiamento')), 'Esquema elaborado com o texto do RoadShow 2026-2027, pp. 73, 75 e 77');
+  assert.equal(Regulatorio.rodape({ origem: 'esquema', paginas: [41, 45] }), 'Esquema elaborado com o texto do RoadShow 2026-2027, pp. 41 e 45');
+  assert.equal(Regulatorio.rodape({ paginas: [61, 65] }), 'Fonte: RoadShow 2026-2027, pp. 61 e 65');
   assert.equal(Regulatorio.rodape(diag('fluxo-projeto')), 'Baseado na figura da p. 61 e nos textos das pp. 65 e 73 do RoadShow 2026-2027');
   assert.equal(Regulatorio.rodape({ origem: 'adaptado', pagina_figura: 61, paginas: [61, 65] }), 'Baseado na figura da p. 61 e no texto da p. 65 do RoadShow 2026-2027');
   assert.equal(Regulatorio.rodape({ paginas: [61] }), 'Fonte: RoadShow 2026-2027, p. 61');

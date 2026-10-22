@@ -119,7 +119,8 @@ def test_mercado_series():
         assert k in m["fontes"], k
     anos = [x["ano"] for x in m["leiloes_por_ano"]]
     assert len(anos) == len(set(anos)) and min(anos) <= 1993 and max(anos) >= 2030
-    assert len(m["concorrentes_desagio"]) == 25
+    # 25 leilões da p. 97; linha acrescentada antes do próximo RoadShow (README, roteiro 3) fica de fora
+    assert len([x for x in m["concorrentes_desagio"] if not x.get("fora_do_roadshow")]) == 25
     ind = {x["rotulo"]: x["valor"] for x in m["indicadores_40"]}
     for rot, val in [("Duplicação", 4374), ("Faixa adicional", 3702), ("Contornos", 442), ("Marginais", 959)]:
         assert any(rot.lower() in k.lower() and v == val for k, v in ind.items()), rot
@@ -407,3 +408,24 @@ def test_diagramas_contra_o_pdf():
             assert e["responsavel"] in t61, e
     with pymupdf.open(PDF) as doc:
         assert [p for p, _ in roadshow_v5.trechos_18(doc, [61, 65, 73])] == [61, 65, 73]
+
+
+def _chaves(v):
+    """Todas as chaves de dicionário de um JSON, em qualquer nível."""
+    if isinstance(v, dict):
+        return set(v) | {c for x in v.values() for c in _chaves(x)}
+    if isinstance(v, list):
+        return {c for x in v for c in _chaves(x)}
+    return set()
+
+
+def test_notas_do_mercado_em_portugues_sem_nomes_de_campo():
+    # as notas aparecem na aba Mercado: nada de chave do JSON ('publico', desagio_vencedor) nem "null"
+    import re
+    m = load_json("mercado.json")
+    chaves = _chaves({k: v for k, v in m.items() if k not in ("notas", "fontes")})
+    for k, nota in m["notas"].items():
+        assert not re.search(r"\bnull\b", nota), k
+        assert not re.findall(r"\b[a-z]+(?:_[a-z0-9]+)+\b", nota), (k, re.findall(r"\b[a-z]+(?:_[a-z0-9]+)+\b", nota))
+        citadas = [c for c in chaves if f"'{c}'" in nota]
+        assert not citadas, (k, citadas)
