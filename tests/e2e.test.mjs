@@ -1260,47 +1260,44 @@ test('mercado: a dica do investimento por grupo mostra capex e opex, na barra e 
   assert.ok(!(await page.$$eval('#chart-gruposInv title', ts => ts.some(t => /undefined|NaN/.test(t.textContent)))));
 });
 
-test('mercado: o diagnóstico traz os anos do modelo, cada valor com a fonte, e nenhum ano sem publicação', async () => {
+test('mercado: o diagnóstico traz os anos do modelo; anos sem impressão só com a extensão (p. 37) e "—" no resto', async () => {
   await go('#mercado');
   const d = await page.evaluate(() => {
     const c = window.CONC, rows = MercadoModel.diagnosticoPorAno(c, window.INTEL);
-    return { rows, imp: c.mercado.diagnostico.map(x => x.ano), gestao: c.mercado.gestao, ents: c.entidades, nota: MercadoModel.diagnosticoNota(rows),
-      series: window.INTEL.antt.series };
+    return { rows, imp: c.mercado.diagnostico, gestao: c.mercado.gestao, nota: MercadoModel.diagnosticoNota(rows), pag: c.mercado.fontes };
   });
   const anosTela = await page.$$eval('#diagnostico tbody tr', trs => trs.map(tr => +tr.dataset.ano));
   assert.deepEqual(anosTela, d.rows.map(r => r.ano));
-  // os anos impressos aparecem todos; os derivados são anos com extensão concedida; nada fora disso
-  for (const a of d.imp) assert.ok(anosTela.includes(a), `ano impresso ${a}`);
+  const imp = d.imp.map(x => x.ano);
+  for (const a of imp) assert.ok(anosTela.includes(a), `ano impresso ${a}`);
   const lacunas = [];
   for (let a = Math.min(...anosTela); a <= Math.max(...anosTela); a++) if (!anosTela.includes(a)) lacunas.push(a);
-  assert.ok(lacunas.length > 0 && lacunas.every(a => !d.gestao.some(g => g.ano === a) && !d.imp.includes(a)), `lacunas ${lacunas}`);
+  assert.ok(lacunas.length > 0 && lacunas.every(a => !d.gestao.some(g => g.ano === a) && !imp.includes(a)), `lacunas ${lacunas}`);
   assert.ok(!anosTela.includes(2028) && !anosTela.includes(2029));
+  // uma nota só: o que os anos calculados trazem e os anos sem fonte
+  assert.equal(await page.locator('#diagnostico-nota').count(), 1);
   const nota = await page.textContent('#diagnostico-nota');
-  assert.ok(nota.includes(d.nota) && nota.includes('nenhuma fonte publica') && /só os vigentes hoje/.test(nota), nota);
-  for (const a of lacunas) assert.ok(nota.includes(String(a)), `nota cita ${a}`);
-  // anos derivados, conferidos contra os dados crus (cálculo independente do modelo)
-  const derivados = anosTela.filter(a => !d.imp.includes(a));
+  assert.ok(nota.includes(d.nota) && /só publica a extensão concedida \(p\. 37\)/.test(nota) && /2028 e 2029: nenhuma fonte publica esses anos/.test(nota), nota);
+  // anos sem impressão: extensão = série de gestão (cálculo cru), o resto "—" com "não publicado" na dica; nada reconstruído
+  const derivados = anosTela.filter(a => !imp.includes(a));
   assert.ok(derivados.length >= 3, `anos derivados: ${derivados}`);
-  const ultimoImp = Math.max(...d.imp.filter(a => a < derivados[0]));
-  const base = d.rows.find(r => r.ano === ultimoImp).invest_executado_acum;
   for (const a of derivados) {
     const tr = page.locator(`#diagnostico tbody tr[data-ano="${a}"]`);
     const cel = await tr.locator('td').allTextContents();
-    const contratos = d.ents.filter(e => ['vigente', 'programa'].includes(e.estado) && e.assinatura && e.assinatura <= `${a}-12-31`).length;
-    const km = d.gestao.find(g => g.ano === a).privada_km;
-    assert.equal(cel[1], contratos.toLocaleString('pt-BR'), `${a}: contratos`);
-    assert.equal(cel[2], km.toLocaleString('pt-BR'), `${a}: km`);
-    assert.equal(cel[3], '—', `${a}: valor não publicado`);
-    let inv = base;
-    for (let y = ultimoImp + 1; y <= a; y++) inv += Object.values(d.series).reduce((t, s) => t + (s.investimento[s.anos.indexOf(y)] || 0), 0) / 1e9;
-    assert.equal(cel[4], inv.toLocaleString('pt-BR', { maximumFractionDigits: 1 }), `${a}: investimento executado acumulado`);
+    assert.equal(cel[2], d.gestao.find(g => g.ano === a).privada_km.toLocaleString('pt-BR'), `${a}: km`);
+    assert.deepEqual([cel[1], cel[3], cel[4]], ['—', '—', '—'], `${a}: sem contratos, valor nem investimento`);
+    assert.deepEqual(await tr.locator('td.num').evaluateAll(tds => tds.map(td => td.title)),
+      ['não publicado', `RoadShow, p. ${d.pag.gestao}`, 'não publicado', 'não publicado'], `${a}: dicas`);
+    assert.equal(cel[5], `km concedidos: RoadShow, p. ${d.pag.gestao}`, `${a}: fonte da linha, uma vez só`);
   }
-  // fonte em todas as células de valor e na coluna de fontes
+  // anos impressos: valores como no RoadShow e a fonte uma vez por linha
+  for (const x of d.imp) {
+    const cel = await page.locator(`#diagnostico tbody tr[data-ano="${x.ano}"] td`).allTextContents();
+    assert.equal(cel[1], x.contratos.toLocaleString('pt-BR'));
+    assert.equal(cel[5], `RoadShow, p. ${d.pag.diagnostico}`, `${x.ano}: fonte`);
+  }
   const semFonte = await page.$$eval('#diagnostico tbody td.num', tds => tds.filter(td => !td.title).length);
   assert.equal(semFonte, 0);
-  const fontes = await page.$$eval('#diagnostico tbody tr', trs => trs.map(tr => tr.lastElementChild.textContent));
-  assert.ok(fontes.every(f => /Contratos: .*km concedidos: .*Valor dos contratos: .*Investimento executado acumulado: /.test(f)), fontes.join('|'));
-  assert.ok(fontes.some(f => /ANTT/.test(f)) && fontes.some(f => /não publicado/.test(f)));
   assert.ok(!/NaN|undefined|null/.test(await page.textContent('#card-diag')));
 });
 

@@ -121,11 +121,19 @@ const Mercado = (() => {
     return `<div class="table-wrap" style="max-height:none"><table class="grid" id="diagnostico" data-csv-name="mercado-diagnostico"><thead><tr><th>Ano</th>${
       DIAG_COLS.map(c => `<th class="num">${esc(c[1])}</th>`).join('')}<th>Fonte de cada valor</th></tr></thead><tbody>${
       diagLinhas.map(d => `<tr data-ano="${d.ano}"><td>${d.ano}${d.previsto ? '*' : ''}</td>${DIAG_COLS.map(c => diagCelula(d, c)).join('')}
-        <td class="wrap wrap--wide">${DIAG_COLS.map(([k, l]) => `${esc(l.replace(/ \(R\$ bi\)/, ''))}: ${esc(d.fontes[k])}`).join('; ')}</td></tr>`).join('')}</tbody></table></div>`;
+        <td class="wrap wrap--wide">${esc(diagFontes(d))}</td></tr>`).join('')}</tbody></table></div>`;
+  }
+  // Fonte da linha: uma vez só quando todos os valores preenchidos a compartilham (com os nomes das colunas quando
+  // algum ficou vazio); fontes diferentes, uma por coluna. Valor vazio é "não publicado" (dica da célula).
+  function diagFontes(d) {
+    const nome = ([, l]) => l.replace(/ \(R\$ bi\)/, '');
+    const cheias = DIAG_COLS.filter(([k]) => d[k] != null), fontes = [...new Set(cheias.map(([k]) => d.fontes[k]))];
+    if (fontes.length === 1) return cheias.length === DIAG_COLS.length ? fontes[0] : `${cheias.map(nome).join(', ')}: ${fontes[0]}`;
+    return cheias.map(c => `${nome(c)}: ${d.fontes[c[0]]}`).join('; ') || '—';
   }
   function diagNotaHtml() {
-    const notas = [MercadoModel.diagnosticoNota(diagLinhas), MercadoModel.diagnosticoNotaDerivados(diagLinhas)].filter(Boolean);
-    return notas.length ? `<p class="src" id="diagnostico-nota">Nota: ${esc(notas.join(' '))}</p>` : '';
+    const nota = MercadoModel.diagnosticoNota(diagLinhas);
+    return nota ? `<p class="src" id="diagnostico-nota">Nota: ${esc(nota)}</p>` : '';
   }
 
   function render() {

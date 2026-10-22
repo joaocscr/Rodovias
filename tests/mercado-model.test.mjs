@@ -75,42 +75,36 @@ test('diagnosticoPorAno: anos da apresentação ficam como impressos, com a pág
   assert.equal(por(rows, 2030).previsto, true);
 });
 
-test('diagnosticoPorAno: contratos = contratos vigentes assinados até 31/12 do ano; km da série de gestão', () => {
+test('diagnosticoPorAno: em 2023–2025 só a extensão (série de gestão, p. 37) é publicada; o resto é nulo, "não publicado"', () => {
   const rows = MercadoModel.diagnosticoPorAno(conc(), intel());
-  // 2023: a (2008) e b (31/12/2022); 2024: + c; 2025: + d. "e" sem data, "f"/"g" não são contrato.
-  assert.deepEqual([2023, 2024, 2025].map(a => por(rows, a).contratos), [2, 3, 4]);
   assert.deepEqual([2023, 2024, 2025].map(a => por(rows, a).km), [12000, 13000, 14000]);
-  assert.match(por(rows, 2024).fontes.km, /RoadShow, p\. 37/);
-  assert.match(por(rows, 2024).fontes.contratos, /31\/12\/2024/);
-  assert.equal(por(rows, 2024).previsto, false);
+  for (const a of [2023, 2024, 2025]) {
+    const r = por(rows, a);
+    assert.deepEqual([r.contratos, r.valor, r.invest_executado_acum], [null, null, null], `${a}: nada reconstruído`);
+    for (const k of ['contratos', 'valor', 'invest_executado_acum']) assert.equal(r.fontes[k], 'não publicado', `${a}: ${k}`);
+    assert.equal(r.fontes.km, 'RoadShow, p. 37');
+    assert.equal(r.derivado, true);
+    assert.equal(r.previsto, false);
+  }
 });
 
-test('diagnosticoPorAno: investimento executado acumulado = último acumulado impresso + série da ANTT dos anos seguintes (R$ bi)', () => {
-  const rows = MercadoModel.diagnosticoPorAno(conc(), intel());
-  // 129 (2022) + 3 (2023) = 132; + 4 + 1 (2024) = 137; + 5 + 2 (2025) = 144
-  assert.deepEqual([2023, 2024, 2025].map(a => por(rows, a).invest_executado_acum), [132, 137, 144]);
-  assert.match(por(rows, 2025).fontes.invest_executado_acum, /RoadShow, p\. 29/);
-  assert.match(por(rows, 2025).fontes.invest_executado_acum, /ANTT/);
-  assert.match(por(rows, 2025).fontes.invest_executado_acum, /2023 a 2025/);
-  assert.match(por(rows, 2023).fontes.invest_executado_acum, /investimento de 2023 nas séries/, 'um ano só: "de 2023", não "de 2023 a 2023"');
-});
-
-test('diagnosticoPorAno: valor dos contratos não publicado em 2023–2025 fica nulo com a fonte "não publicado"', () => {
-  const r = por(MercadoModel.diagnosticoPorAno(conc(), intel()), 2024);
-  assert.equal(r.valor, null);
-  assert.equal(r.fontes.valor, 'não publicado');
-});
-
-test('diagnosticoPorAno: sem série da ANTT para o ano, o investimento fica nulo ("não publicado"), nunca inventado', () => {
-  const sem = { antt: { series: { x: { anos: [2021, 2022, 2023], investimento: [1e9, 2e9, 3e9] } } } };
-  const rows = MercadoModel.diagnosticoPorAno(conc(), sem);
-  assert.equal(por(rows, 2023).invest_executado_acum, 132);
-  assert.equal(por(rows, 2024).invest_executado_acum, null);
-  assert.equal(por(rows, 2025).invest_executado_acum, null);
-  assert.equal(por(rows, 2025).fontes.invest_executado_acum, 'não publicado');
+test('diagnosticoPorAno: o resultado não depende das fichas nem da série de investimento da ANTT (só o "previsto" olha a série)', () => {
+  const c = conc();
+  c.entidades = [];
+  const a = MercadoModel.diagnosticoPorAno(c, intel());
+  const b = MercadoModel.diagnosticoPorAno(conc(), { antt: { series: { x: { anos: [2021, 2022, 2023, 2024, 2025], investimento: [9e9, 9e9, 9e9, 9e9, 9e9] } } } });
+  assert.deepEqual(a, b);
   const nada = MercadoModel.diagnosticoPorAno(conc(), null);
-  assert.deepEqual([2023, 2024, 2025].map(a => por(nada, a).invest_executado_acum), [null, null, null]);
+  assert.deepEqual(nada.map(r => [r.ano, r.km, r.contratos]), a.map(r => [r.ano, r.km, r.contratos]));
   assert.deepEqual(nada.map(r => r.ano), [2022, 2023, 2024, 2025, 2026, 2027, 2030]);
+});
+
+test('diagnosticoPorAno: ano que uma edição nova passe a imprimir vence a linha derivada', () => {
+  const c = conc();
+  c.mercado.diagnostico.splice(1, 0, { ano: 2024, contratos: 30, km: 15900, valor: 300, invest_executado_acum: 150 });
+  const r = por(MercadoModel.diagnosticoPorAno(c, intel()), 2024);
+  assert.deepEqual([r.contratos, r.km, r.valor, r.invest_executado_acum, r.derivado], [30, 15900, 300, 150, false]);
+  assert.equal(r.fontes.contratos, 'RoadShow, p. 29');
 });
 
 test('diagnosticoPorAno: sem série de gestão para o ano, o ano não aparece (nada interpolado)', () => {
@@ -119,21 +113,24 @@ test('diagnosticoPorAno: sem série de gestão para o ano, o ano não aparece (n
   assert.deepEqual(MercadoModel.diagnosticoPorAno(c, intel()).map(r => r.ano), [2022, 2023, 2025, 2026, 2027, 2030]);
 });
 
-test('diagnosticoNota: lista os anos sem publicação dentro do intervalo', () => {
+test('faixasDeAnos: sequências viram "a", pares "e", soltos listados', () => {
+  assert.equal(MercadoModel.faixasDeAnos([2023, 2024, 2025]), '2023 a 2025');
+  assert.equal(MercadoModel.faixasDeAnos([2028, 2029]), '2028 e 2029');
+  assert.equal(MercadoModel.faixasDeAnos([2027]), '2027');
+  assert.equal(MercadoModel.faixasDeAnos([2023, 2027]), '2023 e 2027');
+});
+
+test('diagnosticoNota: uma nota só, com o que os anos calculados trazem e os anos que nenhuma fonte publica', () => {
   const rows = MercadoModel.diagnosticoPorAno(conc(), intel());
-  assert.equal(MercadoModel.diagnosticoNota(rows), '2028 e 2029: nenhuma fonte publica esses anos; ficam fora da tabela, sem interpolação.');
+  assert.equal(MercadoModel.diagnosticoNota(rows),
+    '2023 a 2025: o RoadShow só publica a extensão concedida (p. 37); o número de contratos vigentes, o valor e o investimento acumulado desses anos não são publicados. 2028 e 2029: nenhuma fonte publica esses anos.');
   assert.equal(MercadoModel.diagnosticoNota([{ ano: 2022 }, { ano: 2023 }]), '');
-  assert.equal(MercadoModel.diagnosticoNota([{ ano: 2026 }, { ano: 2028 }]), '2027: nenhuma fonte publica esse ano; fica fora da tabela, sem interpolação.');
+  assert.equal(MercadoModel.diagnosticoNota([{ ano: 2026 }, { ano: 2028 }]), '2027: nenhuma fonte publica esse ano.');
+  assert.match(MercadoModel.diagnosticoNota([{ ano: 2022 }, { ano: 2023, derivado: true, pagina: 'p. 37' }]), /^2023: o RoadShow só publica a extensão concedida \(p\. 37\); .* desse ano não são publicados\.$/);
 });
 
-test('diagnosticoPorAno: números com erro de dado não geram NaN', () => {
+test('diagnosticoPorAno: dados com defeito não geram NaN', () => {
   const c = conc();
-  c.entidades.push({ id: 'z', estado: 'vigente', assinatura: 'lixo' });
-  const rows = MercadoModel.diagnosticoPorAno(c, intel());
-  assert.ok(!/NaN|undefined/.test(JSON.stringify(rows)));
-});
-
-test('diagnosticoNotaDerivados: só aparece quando há ano calculado pelo painel', () => {
-  assert.match(MercadoModel.diagnosticoNotaDerivados(MercadoModel.diagnosticoPorAno(conc(), intel())), /só os vigentes hoje/);
-  assert.equal(MercadoModel.diagnosticoNotaDerivados([{ ano: 2022, derivado: false }]), '');
+  c.mercado.gestao.push({ ano: 2024, privada_km: 'lixo' });
+  assert.ok(!/NaN|undefined/.test(JSON.stringify(MercadoModel.diagnosticoPorAno(c, intel()))));
 });
