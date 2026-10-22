@@ -1,5 +1,5 @@
 // Aba Projetos: comparador ordenável de contratos e projetos do RoadShow, com totais e estudos pós-2027.
-// v3: concessões estaduais no comparador (coluna e filtro Esfera) e seção Pipeline (INTEL.pipeline).
+// Concessões estaduais no comparador (coluna e filtro Esfera) e seção Pipeline (INTEL.pipeline).
 const Projetos = (() => {
   const nf1 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const nf2 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

@@ -1,4 +1,4 @@
-/* Design system Galapagos Capital: tokens obrigatórios */
+/* Tokens da paleta base da interface */
 :root {
   --color-deep-blue: #183C80;
   --color-bright-blue: #0071BB;
@@ -264,7 +264,7 @@ button, input { font: inherit; color: inherit; }
   * { animation: none !important; transition: none !important; }
 }
 
-/* ---------- v2: abas, páginas, ficha, comparador, gráficos ---------- */
+/* ---------- Abas, páginas, ficha, comparador, gráficos ---------- */
 [hidden] { display: none !important; }
 .topbar { gap: 24px; }
 .tabs { display: flex; gap: 8px; height: 100%; align-items: stretch; margin-left: auto; }
@@ -375,7 +375,7 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 .conc-item + .conc-item { border-top: 1px solid var(--line); }
 .conc-item__name { font-size: 14px; font-weight: 600; color: var(--color-deep-blue); }
 .conc-item__sub { display: block; font-size: 14px; color: var(--color-light-grey); font-weight: 400; }
-/* Seletor "Cor das rodovias" (v3): 6 rádios em duas colunas */
+/* Seletor "Cor das rodovias": 6 rádios em duas colunas */
 .mode-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
 .mode-switch button {
   height: 32px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--radius-md);
@@ -409,7 +409,7 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-/* ---------- v3: modos quantitativos, números e cartão de inteligência ---------- */
+/* ---------- Modos quantitativos, números e cartão de inteligência ---------- */
 .legend { width: 320px; max-height: calc(100% - 32px); overflow-y: auto; }
 .legend__title { margin-bottom: 8px; font-size: 16px; font-weight: 600; line-height: 24px; color: var(--color-deep-blue); }
 .legend__title span { font-size: 14px; font-weight: 400; color: var(--color-light-grey); }
@@ -426,12 +426,12 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 .card__intel .card__grid { border-top: 0; padding: 0; }
 .card__grid dt.card__sub { grid-column: 1 / -1; margin-top: 8px; font-weight: 600; color: var(--color-deep-blue); }
 .card__grid dt.card__sub:first-child { margin-top: 0; }
-/* v3.1: nota de linha inteira no cartão (pesados estimados, uso restrito do VMDa 2025) */
+/* Nota de linha inteira no cartão (pesados estimados, uso restrito do VMDa 2025) */
 .card__intel .card__grid dd { white-space: nowrap; }
 .card__grid dd.card__flag { grid-column: 1 / -1; text-align: left; line-height: 24px; color: var(--color-light-grey); font-variant-numeric: normal; white-space: normal; }
 .card__grid dd.card__flag .tag-nv { margin: 0 8px 0 0; }
 
-/* ---------- v3: camadas de sobreposição, fundo municipal e cartões de ponto ---------- */
+/* ---------- Camadas de sobreposição, fundo municipal e cartões de ponto ---------- */
 .layers > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
 .layers > summary::-webkit-details-marker { display: none; }
 .layers > summary .section-title { margin: 0; }
@@ -473,7 +473,7 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 .layer-sub span { display: inline-flex; align-items: center; gap: 8px; }
 .card__src a.link-btn { padding: 0; }
 
-/* v3 (Task 11): ficha com ANTT, ficha estadual, pipeline */
+/* Ficha com ANTT, ficha estadual, pipeline */
 .fpad { margin-top: 8px; }
 .ftext a.link-btn, .flist a.link-btn, .fgrid a.link-btn, .ficha__foot a.link-btn { padding: 0; height: auto; }
 .flist { list-style: none; margin: 8px 0 0; padding: 0; font-size: 14px; }
@@ -516,7 +516,7 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 #frete-table td.num .tag-nv { margin-left: 8px; }
 .card__sub .tag-nv { margin-left: 8px; text-transform: none; letter-spacing: 0; }
 
-/* v3 (Task 12): abas Tráfego, Cargas e Fontes */
+/* Abas Tráfego, Cargas e Fontes */
 .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 .duo > div { min-width: 0; }
 .duo__title { margin: 0 0 8px; font-size: 14px; font-weight: 600; color: var(--color-spacial-grey); }
@@ -542,7 +542,7 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 .fontes-table td.fontes-nota-col { min-width: 320px; color: var(--color-light-grey); }
 .fontes-table a.link-btn { padding: 0; text-align: left; }
 .page__inner > .table-wrap + .fontes-h2 { margin-top: 40px; }
-/* 7 abas: o subtítulo encolhe com reticências (só some na regra da v2, ≤ 900 px); abas mais justas abaixo de 1600 px */
+/* 7 abas: o subtítulo encolhe com reticências (só some na regra de largura ≤ 900 px); abas mais justas abaixo de 1600 px */
 .topbar__titles { flex: 1 1 auto; overflow: hidden; }
 .topbar__title { flex: none; }
 .topbar__sub { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
@@ -552,7 +552,7 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 @media (max-width: 1180px) { .tabs { gap: 0; } }
 @media (max-width: 900px) { .duo { grid-template-columns: 1fr; } }
 
-/* ---------- v3.1: Rotas de Integração Sul-Americana ---------- */
+/* ---------- Rotas de Integração Sul-Americana ---------- */
 /* Legendas de camada (fundo municipal, rotas) empilhadas no canto inferior esquerdo, abaixo dos botões do mapa. */
 .legend-stack {
   position: absolute; z-index: 800; left: 16px; bottom: 16px; width: 320px; max-height: calc(100% - 176px);
@@ -594,7 +594,7 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
   opacity: 1 !important;
 }
 
-/* v4 (Task 7): selo de origem dos campos de leilão (ficha, popover de divergência, aba Fontes) */
+/* Selo de origem dos campos de leilão (ficha, popover de divergência, aba Fontes) */
 .selo {
   display: inline-flex; align-items: center; height: 20px; padding: 0 8px; margin-left: 8px; border-radius: 10px; white-space: nowrap;
   vertical-align: middle; font-size: 12px; font-weight: 600; line-height: 1; border: 1px solid transparent;
@@ -614,7 +614,7 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 .notas-verif a.link-btn { display: inline; padding: 0; height: auto; white-space: normal; }
 .part-rs { display: block; font-size: 12px; color: var(--color-light-grey); white-space: normal; }
 
-/* v4: aba Mercado — série de deságio e ranking de grupos */
+/* Aba Mercado — série de deságio e ranking de grupos */
 #serie-legenda .chart-legend + .chart-legend { color: var(--color-light-grey); }
 .ranking-aliases ul { margin: 8px 0 0; padding-left: 20px; max-height: 320px; overflow: auto; font-size: 14px; line-height: 24px; }
 .chart-legend svg { flex: none; }

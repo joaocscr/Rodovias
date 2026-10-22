@@ -1,4 +1,4 @@
-// Aba Mercado: séries do RoadShow em gráficos SVG próprios; v4: participantes verificados, série de deságio do
+// Aba Mercado: séries do RoadShow em gráficos SVG próprios; participantes verificados, série de deságio do
 // vencedor e ranking de grupos econômicos (LeiloesModel). Períodos e constantes impressas vêm de mercado.json.
 const Mercado = (() => {
   const nf0 = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
@@ -43,7 +43,7 @@ const Mercado = (() => {
     return [...inab, ...(p.outros || []).map(o => `${esc(o.grupo)}${pct(o.desagio)}`)].join('; ') || '—';
   }
 
-  // v4: o valor do RoadShow que deixou de ser exibido fica abaixo do verificado, como na ficha
+  // O valor do RoadShow que deixou de ser exibido fica abaixo do verificado, como na ficha
   const rsTxt = t => (t != null && t !== '' ? ` <span class="part-rs">RoadShow: ${esc(t)}</span>` : '');
 
   function participantesTable(anoSel) {
@@ -98,7 +98,7 @@ const Mercado = (() => {
     return anos.length ? `${Math.min(...anos)}–${Math.max(...anos)}` : '';
   };
   const comPeriodo = (txt, p, sep = ', ') => (p ? `${txt}${sep}${p}` : txt);
-  // média dos deságios impressa no RoadShow, com as páginas (pp. 25 e 27 na versão atual)
+  // média dos deságios impressa no RoadShow, com as páginas (pp. 25 e 27 na edição atual)
   function mediaImpressa() {
     if (m.desagio_medio_impresso == null) return '';
     const pp = [].concat(m.fontes.desagio_medio_impresso || []);

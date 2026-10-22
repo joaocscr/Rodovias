@@ -1,4 +1,4 @@
-// Estilo de linha por situação (spec §4.2). Interface e malha federal base: paleta Galapagos (COLORS).
+// Estilo de linha por situação (spec §4.2). Interface e malha federal base: paleta base (COLORS).
 const COLORS = {
   deepBlue: '#183C80',
   brightBlue: '#0071BB',
@@ -7,7 +7,7 @@ const COLORS = {
   snowWhite: '#F7F7F8',
 };
 
-// ---------- Paleta de dados (v3.1, spec §4; valores e saídas do validador em docs/paleta.md) ----------
+// ---------- Paleta de dados (spec §4; valores e saídas do validador em docs/paleta.md) ----------
 // Cores de dado só daqui. Toda cor de dado tem legenda ou rótulo; texto nunca na cor da série.
 // 8 slots categóricos na ordem validada (scripts/validate_palette.js, adjacente, superfície #F7F7F8).
 const DATA = {
@@ -42,7 +42,7 @@ const ROTAS_EXTRA = {
 };
 // Linha de cada rota: 3 px na cor de ROTAS, sobre um contorno Snow White (+3 px) que a separa da malha federal embaixo.
 const ROTA_LINHA = { weight: 3, casing: COLORS.snowWhite, casingExtra: 3, casingOpacity: 0.9 };
-// Países vizinhos na camada de rotas: preenchimento Snow White e borda Light Grey (interface Galapagos, não é cor de dado).
+// Países vizinhos na camada de rotas: preenchimento Snow White e borda Light Grey (interface, paleta base; não é cor de dado).
 const ROTAS_PAIS = { fillColor: COLORS.snowWhite, fillOpacity: 1, color: COLORS.lightGrey, weight: 1, opacity: 0.6 };
 // Status do pipeline: etapas em rampa ordinal verde-água de 7 passos (avança = mais escuro); suspenso e cancelado com
 // as cores de status fixas (alerta / crítico), que não reaproveitam slots categóricos. Sempre com o texto do status.
@@ -98,7 +98,7 @@ function haloSwatch(width = 32) {
     `<line x1="1" y1="5" x2="${width - 1}" y2="5" stroke="${COLORS.deepBlue}" stroke-width="3" stroke-linecap="round"/></svg>`;
 }
 
-// Modo "Concessões" (spec v2 §5.1): estilo por estado, na ordem de prioridade.
+// Modo "Concessões" (spec §5.1): estilo por estado, na ordem de prioridade.
 const CONC_STYLES = {
   agendado2026: { label: 'Leilão agendado 2026', color: COLORS.brightBlue, weight: 4, dash: null, opacity: 1, z: 7, halo: { color: COLORS.brightBlue, opacity: 0.3, extra: 5 } },
   projeto2027: { label: 'Projeto 2027', color: COLORS.brightBlue, weight: 3, dash: '6 4', opacity: 1, z: 6 },
@@ -117,7 +117,7 @@ function concStyleSwatch(key, width = 32) {
     `<line x1="1" y1="5" x2="${width - 1}" y2="5" stroke="${s.color}" stroke-width="${Math.min(s.weight, 4)}" stroke-opacity="${s.opacity}" stroke-linecap="round"${dash}/></svg>`;
 }
 
-// Modos quantitativos: 5 classes por quantil, espessura 1,5 → 6 px e cor sólida da rampa do modo (v3.1); classe maior por cima.
+// Modos quantitativos: 5 classes por quantil, espessura 1,5 → 6 px e cor sólida da rampa do modo; classe maior por cima.
 const QUANT_MODES = ['trafego', 'pesados', 'carga', 'acidentes'];
 const QUANT_STYLES = [
   { weight: 1.5, dash: null, opacity: 1, z: 1 },
@@ -223,7 +223,7 @@ function fundoSwatch(c, width = 32) {
     `<rect x="0.5" y="0.5" width="${width - 1}" height="15" rx="2" fill="${COLORS.deepBlue}" fill-opacity="${op}" stroke="${COLORS.lightGrey}" stroke-opacity="0.4"/></svg>`;
 }
 
-// Todas as cores permitidas em marcas do mapa (interface Galapagos + tokens de dado), em maiúsculas.
+// Todas as cores permitidas em marcas do mapa (paleta base da interface + tokens de dado), em maiúsculas.
 const DATA_TOKENS = [...new Set([
   ...Object.values(COLORS), ...DATA_SLOTS, ...Object.values(ROTAS), ...Object.values(RAMPS).flat(),
   ...Object.values(ROTAS_EXTRA).map(x => x.color), ...Object.values(PIPE_STATUS),

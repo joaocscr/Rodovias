@@ -1,4 +1,4 @@
-// v4: selo de origem dos campos de leilão (oficial / RoadShow / imprensa — não oficial / não localizado / não se aplica),
+// Selo de origem dos campos de leilão (oficial / RoadShow / imprensa — não oficial / não localizado / não se aplica),
 // com link para a fonte e a lista de fontes no title. Só gera HTML (sem DOM): usado pela ficha e pela aba Fontes.
 const Selo = (() => {
   const CM = typeof ConcModel !== 'undefined' ? ConcModel : require('./conc-model.js');

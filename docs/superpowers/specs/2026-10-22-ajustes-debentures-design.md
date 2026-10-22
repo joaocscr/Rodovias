@@ -1,6 +1,6 @@
 # Ajustes de leitura, base de consórcios, glossário e página de debêntures — Design
 
-Data: 2026-10-22 · Base: branch `claude/confident-brown-k72wi2` (PR joaocscr/Rodovias#4 aberto) · Pedido do usuário em 13 itens (22/10/2026); decisões do usuário em chat: debêntures só de rodovias e infraestrutura de transporte; aba XP = intenções; só agregados; Galapagos mantida só onde for registro público; histórico do Git não é reescrito.
+Data: 2026-10-22 · Base: branch `claude/confident-brown-k72wi2` (PR joaocscr/Rodovias#4 aberto) · Pedido do usuário em 13 itens (22/10/2026); decisões do usuário em chat: debêntures só de rodovias e infraestrutura de transporte; aba XP = intenções; só agregados; o nome da empresa do autor mantido só onde for registro público; histórico do Git não é reescrito.
 
 ## 1. Intenção
 
@@ -58,7 +58,7 @@ Conteúdo:
 - **Fontes:** a página e a aba Fontes dizem que os dados de mercado secundário vêm de telas e negócios de corretoras (XP e BTG) fornecidos pelo usuário, com o período.
 
 ### 3.8 Remover menções à empresa do usuário
-Nenhuma menção a "Galapagos"/"Galápagos" nos arquivos atuais do repositório nem no HTML — README, docs (specs, planos, HANDOFF, paleta), código (nomes de tokens e comentários), testes — **exceto onde for registro público de leilão** (decisão do usuário: o nome aparece como integrante de consórcio em documentos oficiais, ex.: "Consórcio 116 Sertões (Galapagos)", "K&G Rota da Celulose (K-Infra e Galapagos)"). Tokens de cor passam a ter nomes neutros (ex.: "paleta base"). O histórico do Git **não** é reescrito (decisão do usuário): a `main` fica sem menções quando este trabalho entrar nela.
+Nenhuma menção ao nome da empresa do autor (com ou sem acento) nos arquivos atuais do repositório nem no HTML — README, docs (specs, planos, HANDOFF, paleta), código (nomes de tokens e comentários), testes — **exceto onde for registro público de leilão** (decisão do usuário: o nome aparece como integrante de consórcio em documentos oficiais, ex.: "Consórcio 116 Sertões", "K&G Rota da Celulose", cujos nomes completos estão em `data/roadshow/`). Tokens de cor passam a ter nomes neutros (ex.: "paleta base"). O histórico do Git **não** é reescrito (decisão do usuário): a `main` fica sem menções quando este trabalho entrar nela.
 
 ### 3.9 Documento para o TI (fora do projeto)
 Documento simples, só para o usuário, fora do repositório: o que é o projeto, arquitetura em uma página, como rodar e atualizar, dependências e fontes, o que a migração precisa (hospedagem do HTML ou de um serviço, agendamento do `atualizar.py`, acesso às fontes, substituição das planilhas pela API interna, segredos), riscos e um roteiro de demonstração de 15 minutos.
@@ -69,6 +69,6 @@ Documento simples, só para o usuário, fora do repositório: o que é o projeto
 - Tempo real: o HTML continua uma fotografia gerada pelo comando de atualização.
 
 ## 5. Critérios de aceite
-- Itens 3.1–3.8 feitos, com teste quando há código; nenhuma ocorrência de "galapagos" (sem acento ou com) em `git grep -i` nem no HTML, salvo nos registros públicos de leilão (dados curados de consórcios e verificação), com um teste que só permite ali; nenhuma menção a versão do projeto no HTML.
+- Itens 3.1–3.8 feitos, com teste quando há código; nenhuma ocorrência do nome da empresa (sem acento ou com) em `git grep -i` nem no HTML, salvo nos registros públicos de leilão (dados curados de consórcios e verificação), com um teste que só permite ali; nenhuma menção a versão do projeto no HTML.
 - Página de debêntures gerada pelo comando de atualização a partir das planilhas e das séries públicas; spreads e volumes conferidos contra a planilha num teste.
 - Três suítes verdes; HTML ≤ 15 MB; documento do TI entregue ao usuário.

@@ -90,7 +90,7 @@ const ConcModel = (() => {
     });
   }
 
-  // v4: origem do valor exibido de um campo de leilão (camada de verificação, `e.verif`), em texto puro.
+  // Origem do valor exibido de um campo de leilão (camada de verificação, `e.verif`), em texto puro.
   const ORIGEM = { oficial: 'oficial', roadshow: 'RoadShow', imprensa: 'imprensa — não oficial' };
   const NAO_LOCALIZADO = 'não localizado em fonte oficial';
   const NAO_SE_APLICA = 'não se aplica (leilão por outorga)';

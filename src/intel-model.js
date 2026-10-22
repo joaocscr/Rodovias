@@ -1,4 +1,4 @@
-// Camadas de inteligência (v3): métricas por físico, classes de cor, agregados, geometria municipal e formatos. Puro: sem DOM.
+// Camadas de inteligência: métricas por físico, classes de cor, agregados, geometria municipal e formatos. Puro: sem DOM.
 const IntelModel = (() => {
   const DASH = '—';
   const NF = {};
@@ -17,7 +17,7 @@ const IntelModel = (() => {
   const acidOf = intel => (intel && intel.trafego && intel.trafego.acidentes) || null;
   // Carga só conta como presente com o array GSA (é ele que vira métrica, agregado e cartão).
   const cargaOf = intel => (intel && intel.carga && intel.carga.gsa ? intel.carga : null);
-  // VMDa 2025 (v3.1, DNIT, modelado): total e sentidos por físico, total por linha da malha estadual; sem leves/pesados.
+  // VMDa 2025 (DNIT, modelado): total e sentidos por físico, total por linha da malha estadual; sem leves/pesados.
   // Só conta como presente com o array fis.t. Sem ele, Tráfego e veíc·km voltam ao VMDa 2023 (leves + pesados).
   const v25Of = intel => (intel && intel.vmda2025 && intel.vmda2025.fis && Array.isArray(intel.vmda2025.fis.t) ? intel.vmda2025 : null);
   // Total do VMDa 2025 (federal e estadual, mesma regra): 0 = sem dado, como no build do bloco (volume zero fica sem valor).
@@ -456,7 +456,7 @@ const IntelModel = (() => {
     return f ? `${f.nome}${f.periodo ? ` · ${f.periodo}` : ''}` : DASH;
   }
 
-  // ---------- Rotas de Integração Sul-Americana (v3.1, MPO; traçado esquemático) ----------
+  // ---------- Rotas de Integração Sul-Americana (MPO; traçado esquemático) ----------
   const ROTA_TIPOS = ['rota', 'hidrovia', 'cabotagem', 'pavimentacao', 'estudo'];
   const rotasOf = intel => (intel && intel.rotas && Array.isArray(intel.rotas.rotas) && intel.rotas.rotas.length
     && Array.isArray(intel.rotas.linhas) ? intel.rotas : null);

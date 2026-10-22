@@ -183,7 +183,7 @@ test('legendHtml: formas de diagrama (seta cheia e losango) só com a cor dada',
 
 // ---------- timelineSvg: linha do tempo de editais e leilões ----------
 const S_MAP = createRequire(import.meta.url)('../src/styles-map.js');
-const GALAPAGOS = ['#183C80', '#0071BB', '#231F20', '#525254', '#F7F7F8'];
+const PALETA_BASE = ['#183C80', '#0071BB', '#231F20', '#525254', '#F7F7F8'];
 const tlRows = [
   { nome: 'Rota A', id: 'a', k: 'a', edital: '2026-09-02', leilao: '2026-12-11', status: 'leilao_agendado' },
   { nome: 'Rota B só leilão', id: 'b', k: null, edital: null, leilao: '2027-06', status: 'tcu' },
@@ -230,13 +230,13 @@ test('timelineSvg: eixo pelos anos recebidos (e, sem eles, pelos dados); nome es
   assert.equal((svg.match(/data-k=/g) || []).length, 0);
 });
 
-test('timelineSvg: só a paleta Galapagos mais os tokens de status; nunca cor de série em texto', () => {
+test('timelineSvg: só a paleta base mais os tokens de status; nunca cor de série em texto', () => {
   const svg = Charts.timelineSvg(tlRows, tlOpts);
-  const ok = new Set([...GALAPAGOS, ...S_MAP.DATA_TOKENS]);
+  const ok = new Set([...PALETA_BASE, ...S_MAP.DATA_TOKENS]);
   for (const c of svg.match(/#[0-9A-Fa-f]{6}/g) || []) assert.ok(ok.has(c.toUpperCase()), c);
   for (const t of svg.match(/<text[^>]*>/g) || []) assert.ok(!Object.values(S_MAP.PIPE_STATUS).some(c => t.includes(c)), t);
-  // sem cores de status, usa só Galapagos
-  for (const c of Charts.timelineSvg(tlRows, {}).match(/#[0-9A-Fa-f]{6}/g) || []) assert.ok(GALAPAGOS.includes(c.toUpperCase()), c);
+  // sem cores de status, usa só a paleta base
+  for (const c of Charts.timelineSvg(tlRows, {}).match(/#[0-9A-Fa-f]{6}/g) || []) assert.ok(PALETA_BASE.includes(c.toUpperCase()), c);
 });
 
 test('timelineSvg: sem linhas, "Sem dados"; linha sem leilão é ignorada; título de cada marca traz a data completa', () => {

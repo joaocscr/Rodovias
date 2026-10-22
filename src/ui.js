@@ -332,7 +332,7 @@ const UI = (() => {
     if (t) t.addEventListener('click', () => { showAllUf = !showAllUf; renderStats(a); });
   }
 
-  // ---------- Camadas de inteligência (v3) ----------
+  // ---------- Camadas de inteligência ----------
   const vmdaOf = () => IM.vmdaOf(intel), acidOf = () => IM.acidOf(intel), cargaOf = () => IM.cargaOf(intel);
   const prfRef = () => { const a = acidOf(); const y = a && IM.anosLabel(a.anos); return y ? `PRF ${y}` : 'PRF'; };
   const pnlRef = () => { const c = cargaOf(); return c ? `${c.cenario || 'PNL 2035'} ${c.ano_base}` : 'PNL 2035'; };
@@ -421,7 +421,7 @@ const UI = (() => {
     return `<div class="card__intel"><h3 class="section-title">Tráfego e segurança</h3><dl class="card__grid">${groups.join('')}${plaNota}</dl></div>`;
   }
 
-  // ---------- Camadas de sobreposição (v3, Task 10) ----------
+  // ---------- Camadas de sobreposição ----------
   const LAYERS_NOTE = 'Medido: praças, SATs (ANTT), PAM, Estoques. Modelado: VMDa, carga PNL.';
   const PROD_LABEL = { soja: 'Soja', milho1: 'Milho 1ª safra', milho2: 'Milho 2ª safra', cana: 'Cana-de-açúcar', algodao: 'Algodão', trigo: 'Trigo', cafe: 'Café' };
 
@@ -441,7 +441,7 @@ const UI = (() => {
     const check = (d, sw, label, n) => `<label class="check" title="${esc(d.title)}"><input type="checkbox" data-layer="${d.key}" aria-describedby="layer-src-${d.key}">${sw}` +
       `<span>${esc(label)}</span><span class="muted">${esc(n)}</span></label><span class="visually-hidden" id="layer-src-${d.key}">Fonte: ${esc(d.title)}</span>`;
     const checks = avail.map(d => check(d, layerSwatch(d.key), d.label, fmtInt.format(d.n)) + sub(d)).join('');
-    // Rotas de Integração (v3.1): grupo próprio; ligar enquadra a América do Sul e mostra a legenda da camada.
+    // Rotas de Integração: grupo próprio; ligar enquadra a América do Sul e mostra a legenda da camada.
     const rotas = rot ? `<fieldset class="fundo rotas-group"><legend class="fundo__title">${esc(rot.label)}</legend>
         ${check(rot, rotasSwatch(), 'Rotas e países vizinhos', fmtInt.format(rot.n))}
         <p class="note layers__note">${esc(IM.rotasNota(IM.rotasOf(intel)))}</p></fieldset>` : '';
@@ -860,7 +860,7 @@ const UI = (() => {
         ? conc.estados.map(x => `<div class="legend__row">${concStyleSwatch(x.key)}<span>${esc(x.label)}</span></div>`).join('')
         : LEGEND_ITEMS.map(([sit, label]) => `<div class="legend__row">${styleSwatch(sit)}<span>${label}</span></div>`).join('') +
           `<div class="legend__sep"></div><div class="legend__row">${haloSwatch()}<span>Concessão federal</span></div>`;
-      items += `<div class="legend__src">Fonte: DNIT · SNV ${esc(snv.versao)}${mode === 'concessoes' ? ` · RoadShow ${esc(conc.versaoRoadshow)}` : ''}</div>`;
+      items += `<div class="legend__src">Fonte: DNIT · SNV ${esc(snv.versao)}${mode === 'concessoes' ? ` · RoadShow 2026-2027 (${esc(conc.edicaoRoadshow)})` : ''}</div>`;
     }
     $('#legend').innerHTML = `<h2 class="section-title">Cor das rodovias</h2>
       <div class="mode-switch" role="radiogroup" aria-label="Cor das rodovias">${MODE_LIST.map(([k, label]) =>

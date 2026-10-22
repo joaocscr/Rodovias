@@ -14,7 +14,7 @@ Referência visual dada pelo usuário: UFs em cinza claro com bordas finas e sig
 - Desenhar os 7.673 trechos do SNV 202607A sobre os contornos das 27 UFs.
 - Filtros combináveis, busca e painel de números que reage aos filtros.
 - Cartão de detalhe ao clicar num trecho.
-- Seguir estritamente o design system Galapagos (skill `galapagos-brand`).
+- Seguir estritamente a paleta base institucional.
 - Arquivo único, autocontido, abrindo com duplo clique (`file://`), sem nenhuma requisição de rede.
 
 **Não-metas (v1)**
@@ -139,7 +139,7 @@ Popup ou painel fixo com: BR-xxx/UF, código, tipo de trecho, localidade início
 - **Renderização:** Leaflet 1.9.x com `preferCanvas` (ou canvas próprio), código da biblioteca **embutido** no HTML. Sem tiles. As UFs são uma camada vetorial. Alternativa aceitável: MapLibre GL com estilo local, se o builder preferir por performance, desde que o arquivo continue único e offline.
 - **Fontes:** Inter embutida como woff2 base64 (subset latino). Gadugi via `font-family: 'Gadugi', 'Hind', 'Inter', sans-serif` (fonte de sistema Windows); Hind embutida como fallback se o tamanho permitir. Nada de Google Fonts em runtime.
 - **Ícones:** Material Symbols Outlined, só os poucos usados, embutidos como SVG inline.
-- **Design system:** tokens CSS no `:root` exatamente como a skill Galapagos especifica; grid 8 px; texto ≥ 14 px; animações 150–300 ms ease-in-out; estados hover/foco/ativo visíveis.
+- **Design system:** tokens CSS no `:root` exatamente como a paleta base institucional especifica; grid 8 px; texto ≥ 14 px; animações 150–300 ms ease-in-out; estados hover/foco/ativo visíveis.
 - **Sem tema escuro** (não pedido; a marca é baseada em Snow White).
 
 ## 6. Entregáveis
@@ -153,7 +153,7 @@ Popup ou painel fixo com: BR-xxx/UF, código, tipo de trecho, localidade início
 - Filtrar "UF = PR" + "Situação = Duplicada" + "Administração = Concessão Federal" mostra só esses trechos e o painel soma exatamente seus km.
 - Busca "116" realça toda a BR-116; busca "sobradinho" encontra os trechos de Sobradinho (DF).
 - Acentos corretos em todo lugar.
-- Checklist da marca Galapagos (seção 10 do brand guide) cumprido.
+- Checklist da paleta base institucional cumprido.
 
 ## 8. Deixado ao builder
 Tolerância exata de simplificação; formato interno dos dados (GeoJSON, arrays compactos, TopoJSON); estrutura do código JS; detalhes de microinteração; ordem de desenho das camadas (sugestão: planejadas embaixo, duplicadas em cima).

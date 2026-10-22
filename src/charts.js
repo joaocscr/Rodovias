@@ -1,4 +1,4 @@
-// Gráficos em SVG próprio (sem biblioteca), só com a paleta Galapagos.
+// Gráficos em SVG próprio (sem biblioteca), só com a paleta base (interface).
 // As funções *Svg devolvem string (testáveis em Node); as demais escrevem num elemento.
 const Charts = (() => {
   const C = { deep: '#183C80', bright: '#0071BB', spacial: '#231F20', grey: '#525254', snow: '#F7F7F8' };

@@ -1,5 +1,5 @@
-// Aba Fontes: de onde vem cada número (INTEL.fontes), as bases congeladas da v1/v2 e o que não foi possível obter neste ambiente.
-// v4: documentos da verificação dos leilões (CONC.verificacao), com a cobertura por tipo de fonte.
+// Aba Fontes: de onde vem cada número (INTEL.fontes), as bases do painel (congeladas no arquivo) e o que não foi possível obter neste ambiente.
+// Documentos da verificação dos leilões (CONC.verificacao), com a cobertura por tipo de fonte.
 const Fontes = (() => {
   const IM = IntelModel;
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -17,7 +17,7 @@ const Fontes = (() => {
       <tbody>${rows.map(r => `<tr>${cols.map(c => `<td${c[2] ? ` class="${c[2]}"` : ''}>${c[1](r)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
   }
 
-  // v4: verificação dos leilões — cobertura (campos por tipo da fonte mais forte) e a lista de documentos usados.
+  // Verificação dos leilões — cobertura (campos por tipo da fonte mais forte) e a lista de documentos usados.
   function verificacao(conc) {
     const v = conc && conc.verificacao;
     if (!v || !(v.fontes || []).length) return '';
@@ -55,15 +55,15 @@ const Fontes = (() => {
       ['Bloco', r => txt(BLOCO[r.bloco] || r.bloco)], ['Fonte', r => link(r.url, r.nome), 'wrap fontes-nome'], ['Período', r => esc(IM.fmtPeriodo(r.periodo)), 'wrap'],
       ['Acesso', r => esc(IM.fmtDia(r.acesso))], ['Licença', r => txt(r.licenca), 'wrap'], ['Tipo', r => txt(TIPO[r.tipo] || null)], ['Nota', r => txt(r.nota), 'wrap fontes-nota-col'],
     ]);
-    const base = d.base.length ? `<h2 class="fontes-h2" id="fontes-base">Bases da v1/v2</h2>
-      <p class="page__src">Malha federal (SNV) e programa de concessões (RoadShow), congelados no arquivo desde as primeiras versões.</p>
+    const base = d.base.length ? `<h2 class="fontes-h2" id="fontes-base">Bases do painel</h2>
+      <p class="page__src">Malha federal (SNV) e programa de concessões (RoadShow), congelados no arquivo.</p>
       ${tabela('fontes-base-table', d.base, [['Fonte', r => link(r.url, r.nome), 'wrap fontes-nome'], ['Período', r => esc(IM.fmtPeriodo(r.periodo)), 'wrap'],
         ['Acesso', r => esc(IM.fmtDia(r.acesso))], ['Licença', r => txt(r.licenca), 'wrap'], ['Nota', r => txt(r.nota), 'wrap fontes-nota-col']])}` : '';
     const indisp = d.indisponiveis.length ? `<h2 class="fontes-h2" id="fontes-indisp">Não disponíveis neste ambiente</h2>
       <p class="page__src">Fontes procuradas que não responderam ou não têm arquivo aberto; o que foi usado no lugar está no motivo.</p>
       ${tabela('fontes-indisp-table', d.indisponiveis, [['Fonte', r => link(r.url, r.nome), 'wrap fontes-nome'], ['Motivo', r => txt(r.motivo), 'wrap fontes-nota-col']])}` : '';
     el.innerHTML = `<div class="page__inner">${head}
-      <h2 class="fontes-h2" id="fontes-lista">Fontes da v3 <span class="page__src">(${IM.fmtInt(d.fontes.length)})</span></h2>${fontes}
+      <h2 class="fontes-h2" id="fontes-lista">Fontes de dados <span class="page__src">(${IM.fmtInt(d.fontes.length)})</span></h2>${fontes}
       <p class="page__src fontes-legenda" id="fontes-legenda">Tipo: <b>Medido</b>, contagem ou registro observado; <b>Modelado</b>, estimativa de modelo; <b>Cadastro</b>, registro de infraestrutura ou de contratos, sem número medido nem modelado; "—": fonte de apoio (carteira ou notícia), sem número próprio.</p>${verificacao(conc)}${base}${indisp}</div>`;
   }
 

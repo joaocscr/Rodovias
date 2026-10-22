@@ -4,7 +4,7 @@ Spec: `docs/superpowers/specs/2026-10-20-v3.1-rotas-paleta-vmda2025-design.md` �
 
 ## Regras
 
-- **Interface Galapagos.** Fundo, texto, botões, painéis, malha federal base (modos Concessões e Situação física), praças de pedágio, fundo municipal e realce de seleção continuam com `COLORS` (`#183C80`, `#0071BB`, `#231F20`, `#525254`, `#F7F7F8`).
+- **Interface (paleta base).** Fundo, texto, botões, painéis, malha federal base (modos Concessões e Situação física), praças de pedágio, fundo municipal e realce de seleção continuam com `COLORS` (`#183C80`, `#0071BB`, `#231F20`, `#525254`, `#F7F7F8`).
 - **Cores de dado só dos tokens** `DATA`, `ROTAS`, `RAMPS`, `ROTAS_EXTRA` e `PIPE_STATUS` de `src/styles-map.js` (lista completa em `DATA_TOKENS`); os estilos de "sem dado" (`QUANT_NONE`, `EST_NONE`) usam o Light Grey da interface. O e2e confere que as linhas do mapa em cada modo e as feições de cada camada ligada só usam esses tokens (`MapView.lineColors()`, `Layers.colorsUsed()`).
 - **Cor fixa por entidade**, nunca por posição. Toda cor de dado tem legenda ou rótulo; o texto fica na cor de texto, nunca na cor da série.
 - **Superfície de validação:** fundo do mapa `#F7F7F8` (`--surface "#F7F7F8"`, modo claro; o app não tem tema escuro).
@@ -46,7 +46,7 @@ Elementos da camada de rotas além das 5 linhas (`ROTAS_EXTRA`), desenhados por 
 | Hidrovia | slot azul `#2a78d6` | 2,5 px, traço-ponto `12 4 2 4` |
 | Cabotagem | slot azul `#2a78d6` | 2 px, pontilhado `1 5` (pontas redondas) |
 | Trecho em pavimentação | marrom = passo 4 da rampa laranja `#8a2e00` | 2,5 px, contínuo |
-| Trecho em estudos | Spacial Grey (Galapagos) `#231F20` | 2,5 px, traço longo `8 3` |
+| Trecho em estudos | Spacial Grey (paleta base) `#231F20` | 2,5 px, traço longo `8 3` |
 
 A hidrovia não repete o estilo "Em obra" da malha federal (Bright Blue `#0071BB`, 2,5 px, tracejado `6 4`): as duas são azuis (ΔE normal 4,9 entre o slot azul e o Bright Blue), então o que as distingue é o traço — traço-ponto na hidrovia, tracejado simples na obra — e o rótulo "Hidrovia" na legenda da camada.
 
@@ -103,8 +103,8 @@ Com a camada de rodovias estaduais ligada no modo Tráfego, cada linha estadual 
 | Portos e ETCs | violeta (slot 7) | `#6250d6` | quadrado (organizado/público) ou círculo (TUP/ETC), borda `#F7F7F8` |
 | Obras ANTT | laranja (slot 2) | `#eb6834` | ponto 3 px, opacidade 0,9 |
 | SATs | verde-água (slot 3) | `#1baf7a` | círculo vazado, traço 2 px |
-| Praças de pedágio | Bright Blue (Galapagos) | `#0071BB` | círculo ∝ √VMD, borda `#F7F7F8` (sem mudança) |
-| Fundo municipal | Deep Blue (Galapagos) | `#183C80` | opacidade por classe (sem mudança) |
+| Praças de pedágio | Bright Blue (paleta base) | `#0071BB` | círculo ∝ √VMD, borda `#F7F7F8` (sem mudança) |
+| Fundo municipal | Deep Blue (paleta base) | `#183C80` | opacidade por classe (sem mudança) |
 
 O slot 1 (azul) fica fora das camadas: é quase igual ao Bright Blue da malha federal (ΔE normal 4,9) e vai para hidrovias e cabotagem na camada de rotas.
 

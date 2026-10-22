@@ -18,7 +18,7 @@
 - Nada entra sem fonte; o valor do RoadShow nunca é apagado (vira divergência com a página). Nenhum número copiado do dashboard do colega sem documento achado e lido.
 - Ranking: crédito ao **grupo da época do leilão**; aquisição posterior **não** junta nomes. Vencedor = **adjudicatário que assinou**; melhor lance inabilitado = participação com derrota + nota; deságio do adjudicatário não localizado → `—`, fora de médias, medianas e série.
 - Agregados impressos pelo RoadShow (p. 25 deságio por nº de concorrentes; p. 27 faixas) ficam como impressos.
-- Cores: só os tokens existentes (`Charts.C` Galapagos; `src/styles-map.js`); texto nunca na cor da série; toda marca com legenda.
+- Cores: só os tokens existentes (`Charts.C`, paleta base; `src/styles-map.js`); texto nunca na cor da série; toda marca com legenda.
 - Linguagem da interface em português claro, sem nomes de campo; datas `dd/mm/aaaa`; números pt-BR.
 - Desenvolvimento no branch `claude/confident-brown-k72wi2`; commit ao fim de cada tarefa.
 

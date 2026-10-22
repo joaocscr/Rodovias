@@ -14,7 +14,7 @@ ESTADOS = [
 CONTRATO = {"vigente", "programa"}
 CONCESSAO_SNV = "Concessão Federal"
 TOL_OK_PCT, TOL_OK_KM, TOL_APROX_PCT = 0.05, 10.0, 0.20
-VERSAO = "v40 · 14/10/2026"
+EDICAO = "edição de 14/10/2026"
 
 
 def _load(data_dir, name, default=None):
@@ -123,7 +123,7 @@ def build_conc(records, groups, data_dir):
         "fisEnt": fis_ent,
         "snvOnly": snv_only(records, groups, covered),
         "estudos": estudos_out,
-        "versaoRoadshow": VERSAO,
+        "edicaoRoadshow": EDICAO,
     }
     return curados(conc, data_dir), report
 
@@ -185,7 +185,7 @@ def atualiza_entidades(conc, data_dir, payload):
                          "build.py --shp")
     estudos = [dict(s, fis=b["fis"]) for s, b in zip(est, conc.get("estudos", []))]
     out = dict(conc, estados=[{"key": k, "label": label} for k, label in ESTADOS], entidades=entidades,
-               estudos=estudos, versaoRoadshow=VERSAO)
+               estudos=estudos, edicaoRoadshow=EDICAO)
     out["snvOnly"] = snv_only_payload(payload, cobertos(entidades, conc["entFis"]))
     return out
 

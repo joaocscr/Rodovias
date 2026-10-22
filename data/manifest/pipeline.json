@@ -45,7 +45,7 @@
  },
  {
   "dominio": "pipeline",
-  "descricao": "MT: carteira de concessões 2023-2027 (v40, só imagem)",
+  "descricao": "MT: carteira de concessões 2023-2027 (versão de 14/10/2026, só imagem)",
   "url": "https://www.gov.br/transportes/pt-br/assuntos/concessoes/conteudos-rodovias-2026/carteira_de_concessoes_2023_2027_sem_gestao_publica_privada.pdf/@@display-file/file",
   "arquivo": "data/raw/pipeline/mt_carteira_2023_2027.pdf",
   "bytes": 4369994,

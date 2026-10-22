@@ -1,5 +1,5 @@
-// Camadas de sobreposição do mapa (v3): estaduais, praças, SATs, obras, ferrovias, portos/ETCs, fluxos SIADE, fundo municipal
-// e (v3.1) Rotas de Integração Sul-Americana (países vizinhos, linhas das 5 rotas com rótulo direto, hidrovias, cabotagem).
+// Camadas de sobreposição do mapa: estaduais, praças, SATs, obras, ferrovias, portos/ETCs, fluxos SIADE, fundo municipal
+// e Rotas de Integração Sul-Americana (países vizinhos, linhas das 5 rotas com rótulo direto, hidrovias, cabotagem).
 // Cada camada tem pane e renderer canvas próprios e só é construída quando ligada pela 1ª vez. Os panes não recebem eventos:
 // o clique em ponto e em concessão estadual é resolvido aqui por distância em pixels (antes de chegar ao canvas das rodovias)
 // e o clique em município pelo evento de clique do mapa quando nenhuma rodovia foi atingida.
@@ -21,7 +21,7 @@ const Layers = (() => {
     nw: ['left', [-8, -8]], sw: ['left', [-8, 8]], ne: ['right', [8, -8]], se: ['right', [8, 8]] };
   const POINT_KEYS = ['pracas', 'portos', 'sats', 'obras']; // de cima para baixo (prioridade do clique)
   const HIT_PAD = 3, LINE_TOL = 5;
-  // Malha estadual no modo Tráfego (v3.1): linhas com VMDa 2025 na rampa e nas classes do modo (quebras da malha federal),
+  // Malha estadual no modo Tráfego: linhas com VMDa 2025 na rampa e nas classes do modo (quebras da malha federal),
   // com espessura × EST_TRAF.weightFactor (0,55) da federal na mesma classe; sem dado em EST_NONE, cinza fino contínuo (o
   // "sem dado" federal é tracejado). Os dois estilos ficam em styles-map.js (docs/paleta.md).
   let map = null, intel = null, trafBreaks = null;

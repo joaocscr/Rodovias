@@ -68,7 +68,7 @@ TIPO_POR_KIND = {"rota": "rota", "hidrovia_overlay": "hidrovia", "cabotagem": "c
                  "trecho_brown": "pavimentacao", "trecho_gray": "estudo"}
 TOL = 0.005  # Douglas-Peucker, graus
 CABOTAGEM_R1 = 0.5  # arco de cabotagem com uma ponta a até 0,5° de uma linha da Rota 1 pertence a ela
-AS = (-82.0, -56.0, -34.0, 13.0)  # caixa da América do Sul: descarta Galápagos, Ilha de Páscoa etc.
+AS = (-82.0, -56.0, -34.0, 13.0)  # caixa da América do Sul: descarta as ilhas do Pacífico (Ilha de Páscoa etc.)
 AREA_MIN = 0.02  # graus²: descarta ilhotas
 PAISES = {"AR": "Argentina", "BO": "Bolívia", "CL": "Chile", "CO": "Colômbia", "EC": "Equador", "GY": "Guiana",
           "GF": "Guiana Francesa", "PY": "Paraguai", "PE": "Peru", "SR": "Suriname", "UY": "Uruguai",

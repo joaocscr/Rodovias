@@ -1,5 +1,5 @@
 // Ficha do projeto/contrato: todos os campos do RoadShow, avisos de divergência, capex anual e cronograma.
-// v3: blocos ANTT (capa, séries realizadas, praças, obras) e pipeline na ficha federal; ficha de concessão estadual.
+// Blocos ANTT (capa, séries realizadas, praças, obras) e pipeline na ficha federal; ficha de concessão estadual.
 const Ficha = (() => {
   const fmt1 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const fmt2 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -32,14 +32,14 @@ const Ficha = (() => {
   }
 
   // Linha da ficha: [rótulo, valor, formato, campo (selo de origem e divergência), html extra]
-  // v4: campo verificado (`e.verif[campo]`) aparece mesmo sem valor ("—", não localizado em fonte oficial).
+  // Campo verificado (`e.verif[campo]`) aparece mesmo sem valor ("—", não localizado em fonte oficial).
   function rows(e, list) {
     const verif = e.verif || {};
     return list.filter(([, v, , campo]) => has(v) || (campo && verif[campo])).map(([label, v, f, campo, extra]) =>
       `<dt>${esc(label)}</dt><dd>${has(v) ? esc((F[f] || F.txt)(v)) : '—'}${campo ? Selo.badge(verif[campo]) + flag(e, campo) : ''}${extra || ''}</dd>`).join('');
   }
 
-  // v4: notas da verificação dos leilões e proponentes inabilitados, cada um com as fontes (selo do tipo + link).
+  // Notas da verificação dos leilões e proponentes inabilitados, cada um com as fontes (selo do tipo + link).
   function notasVerif(e) {
     const fontes = fs => (fs && fs.length ? `<ul class="nota-fontes">${fs.map(f => `<li>${Selo.fonte(f)}</li>`).join('')}</ul>` : '');
     const inab = i => `${i.grupo}: ${[has(i.desagio) ? F.pct(i.desagio) : null, `inabilitado${i.data ? ` em ${F.data(i.data)}` : ''}`].filter(Boolean).join(', ')}`;
@@ -130,7 +130,7 @@ const Ficha = (() => {
     const extras = has(f.extras) ? dl(f.extras.map(x => `<dt>${esc(x.rotulo)}</dt><dd>${esc(x.valor)}</dd>`).join('')) : '';
     const capexChart = has(f.capex_anual) ? `<div class="chart-box" id="ficha-capex"></div><p class="page__src">R$ mi por ano de concessão, ciclo de obras${f.data_base ? ` · data-base ${esc(f.data_base)}` : ''}.</p>` : '';
     const crono = has(e.cronograma) ? `<ul class="timeline">${e.cronograma.map(c => `<li><b>${esc(c.marco)}</b>${esc(F.data(c.data))}</li>`).join('')}</ul>` : '';
-    // v4: um só vencedor, o verificado; o que o RoadShow imprime na linha dele fica abaixo, quando difere
+    // Um só vencedor, o verificado; o que o RoadShow imprime na linha dele fica abaixo, quando difere
     const plist = ConcModel.participantesExibidos(e, conc.grupos_alias);
     const rsTxt = v => (v != null ? ` <span class="part-rs">RoadShow: ${esc(v)}</span>` : '');
     // nome do RoadShow só quando é de outro grupo econômico; deságio diferente sempre aparece
@@ -177,7 +177,7 @@ const Ficha = (() => {
         ${block('Trecho no mapa', trecho)}
         ${block('Outras informações da ficha', extras, true)}
         ${anttBlocks(e.id)}
-        <p class="ficha__foot">Fonte: RoadShow 2026-2027 (${esc(conc.versaoRoadshow)}), Ministério dos Transportes${pages.length ? `, ${pages.length > 1 ? 'pp.' : 'p.'} ${pages.length > 1 ? `${pages.slice(0, -1).join(', ')} e ${pages[pages.length - 1]}` : pages[0]}` : ''}${
+        <p class="ficha__foot">Fonte: RoadShow 2026-2027 (${esc(conc.edicaoRoadshow)}), Ministério dos Transportes${pages.length ? `, ${pages.length > 1 ? 'pp.' : 'p.'} ${pages.length > 1 ? `${pages.slice(0, -1).join(', ')} e ${pages[pages.length - 1]}` : pages[0]}` : ''}${
   intel && (IM.anttCapa(intel, e.id) || IM.anttAnteriores(intel, e.id).length) ? '; ANTT (dados abertos e páginas das concessões)' : ''}${
   e.verif && Object.keys(e.verif).length ? '; campos de leilão conferidos na verificação dos leilões (selo de origem em cada campo)' : ''}.</p>
       </div>`;
@@ -192,7 +192,7 @@ const Ficha = (() => {
     }));
   }
 
-  // ---------- v3: blocos ANTT e pipeline na ficha federal ----------
+  // ---------- Blocos ANTT e pipeline na ficha federal ----------
   const link = (url, text) => (url ? `<a class="link-btn" href="${esc(url)}" target="_blank" rel="noopener">${esc(text)}</a>` : esc(text));
   // Prazo vigente (com prorrogações) em caixa baixa: "30 Anos" vira "30 anos".
   const prazoTxt = v => (has(v) ? String(v).replace(/\b(Anos?|Meses|Dias?)\b/g, m => m.toLowerCase()) : null);
@@ -287,7 +287,7 @@ const Ficha = (() => {
       i.fonte_data ? `<span class="base">${esc(i.fonte_data)}</span>` : ''}</dd>`)}${has(i.obs) ? `<p class="ftext fpad">${esc(i.obs)}</p>` : ''}`).join('')}</div>`, true);
   }
 
-  // ---------- v3: ficha de concessão estadual ----------
+  // ---------- Ficha de concessão estadual ----------
   const estEnts = () => (intel && intel.estaduais && Array.isArray(intel.estaduais.entidades) ? intel.estaduais.entidades : []);
   // Linhas da concessão estadual k: o mesmo cache de IntelModel.estConcLines usado pela camada do mapa.
   const estLines = k => ((intel && intel.estaduais ? IM.estConcLines(intel.estaduais, snv) : [])[k] || []);

@@ -47,7 +47,7 @@ Specs e planos de cada versão: `docs/superpowers/specs/` e `docs/superpowers/pl
 - **Front:** Leaflet 1.9.4 vendorizado, renderização em canvas, JS ES2020 sem bundler, concatenado na ordem de `JS_FILES` (`scripts/build.py`). Os módulos puros, testados com `node --test`, são `model`, `conc-model`, `leiloes-model`, `intel-model`, `styles-map` (paleta), `charts`, `selo` e `csv` (a parte que não toca o DOM). Os módulos de UI são `map`, `layers`, `ficha`, `projetos`, `resumo`, `trafego`, `cargas`, `mercado`, `regulatorio`, `fontes`, `ui`, `tabs` e `main`. O e2e usa Playwright com `--test-concurrency=1`, porque em paralelo fica instável.
 - **Cada bloco** tem `fonte` e `tipo` (`modelado`, `medido` ou `cadastro`). A interface rotula modelado × medido e mostra o ano.
 - **Paleta:**
-  - A interface e a malha federal base usam o Galapagos (`#183C80`, `#0071BB`, `#231F20`, `#525254`, `#F7F7F8`).
+  - A interface e a malha federal base usam a paleta base (`#183C80`, `#0071BB`, `#231F20`, `#525254`, `#F7F7F8`).
   - As cores de dados vêm só dos tokens de `src/styles-map.js`:
     - `DATA`: 8 slots categóricos.
     - `ROTAS`: 5 cores.

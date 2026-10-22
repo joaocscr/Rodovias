@@ -1402,7 +1402,7 @@ test('(c) município de soja abre no mapa com o fundo Soja; trecho de carga abre
   await page.evaluate(() => MapView.fitBrasil(false));
 });
 
-test('(d) Fontes: ≥ 30 fontes, ≥ 9 indisponíveis com motivo, bases v1/v2 e explicação medido × modelado', async () => {
+test('(d) Fontes: ≥ 30 fontes, ≥ 9 indisponíveis com motivo, bases do painel e explicação medido × modelado', async () => {
   await goTab(page, '#fontes');
   assert.ok(await page.locator('#fontes-table tbody tr').count() >= 30);
   assert.ok(await page.locator('#fontes-indisp-table tbody tr').count() >= 9);
@@ -1410,7 +1410,7 @@ test('(d) Fontes: ≥ 30 fontes, ≥ 9 indisponíveis com motivo, bases v1/v2 e 
   const t = await page.textContent('#page-fontes');
   assert.match(t, /Medido × modelado/);
   assert.match(t, /Não disponíveis neste ambiente/);
-  assert.match(t, /Bases da v1\/v2/);
+  assert.match(t, /Bases do painel/);
   const acessos = await page.evaluate(() => [...new Set(window.INTEL.fontes.fontes.map(f => f.acesso))]);
   for (const a of acessos) assert.ok(t.includes(a.split('-').reverse().join('/')), `acesso ${a} em dd/mm/aaaa`);
   assert.ok(t.includes(A.perPracas), A.perPracas);

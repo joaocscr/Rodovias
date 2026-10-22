@@ -29,7 +29,7 @@ Registros: itens das coleções principais de cada bloco (valores preenchidos); 
 | antt | 1.938 | 1.938 | 399,2 | 399,2 | não |
 | carga | 4.312 | 4.312 | 141,3 | 141,3 | não |
 | estaduais | 16.238 | 16.238 | 2.949,8 | 2.949,8 | não |
-| fontes | 49 | 49 | 24,5 | 24,5 | não |
+| fontes | 49 | 49 | 24,5 | 24,5 | sim (+20 bytes) |
 | multimodal | 3.188 | 3.188 | 413,9 | 413,9 | não |
 | municipios | 5.571 | 5.571 | 1.687,6 | 1.687,6 | não |
 | pipeline | 64 | 64 | 42,9 | 42,9 | não |

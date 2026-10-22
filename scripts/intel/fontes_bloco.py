@@ -29,7 +29,7 @@ BASE = [
      "url": "https://www.gov.br/dnit/pt-br/assuntos/atlas-e-mapas/pnv-e-snv", "periodo": "versão 202607A (jul/2026)",
      "acesso": ACESSO, "licenca": "não declarada na fonte",
      "nota": "Arquivo 202607A.zip fornecido pelo usuário (Google Drive). O rodapé do site do DNIT declara CC BY-ND 3.0, mas a página não cita a versão 202607A. Base incorporada ao painel."},
-    {"nome": "RoadShow 2026-2027 v40 (Ministério dos Transportes)",
+    {"nome": "RoadShow 2026-2027, Ministério dos Transportes (edição de 14/10/2026)",
      "url": "https://www.gov.br/transportes/pt-br/assuntos/concessoes/concessoes-rodoviarias-2027",
      "periodo": "14/10/2026", "acesso": ACESSO, "licenca": "Informação pública (LAI, Lei 12.527/2011)",
      "nota": "PDF extraído e conferido à mão; base incorporada ao painel como cadastro das concessões."},

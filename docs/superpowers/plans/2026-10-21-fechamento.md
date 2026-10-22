@@ -15,7 +15,7 @@
 - HTML único, **≤ 15 MB**, **zero requisições de rede**; nenhuma dependência nova.
 - Fontes dos campos de leilão: `oficial` > `roadshow` > `imprensa` ("imprensa — não oficial"); nada sem fonte; valor do RoadShow nunca apagado.
 - Ranking pelo grupo da época; aquisição posterior não junta nomes; vencedor = adjudicatário.
-- Cores só dos tokens existentes (`Charts.C` Galapagos, `src/styles-map.js`); toda marca com legenda; texto nunca na cor da série.
+- Cores só dos tokens existentes (`Charts.C`, paleta base, `src/styles-map.js`); toda marca com legenda; texto nunca na cor da série.
 - Português claro na interface, sem nomes de campo; datas dd/mm/aaaa; números pt-BR.
 - Todo número do RoadShow carrega a página de origem (ímpar, páginas em português).
 - PDF do RoadShow em `data/raw/roadshow.pdf` (fora do git; baixar do Drive id `1zStkFuN8kJSMWYRygewJw6ZI70TZMwy9` se faltar).
@@ -73,7 +73,7 @@
 - [ ] Os valores ficam curados em JSON com página (como o resto de `data/roadshow/`); o extrator é um auxiliar para a próxima versão do RoadShow, e o `scripts/extract/README.md` ganha o passo a passo. Testes que conferem contra o PDF são pulados quando o PDF não está em `data/raw/`. Textos dos diagramas também em JSON (nada fixo no SVG além de forma e cor).
 - [ ] Extrair do PDF, com página: ABDIB p. 39 (público e privado, R$ bi, 2010–2024); debêntures incentivadas para rodovias p. 77 (série anual, R$ bi, base fev/2025); estado do pavimento p. 35 (participações %); comparativos pp. 41 e 45 (valores base × comparado, variação). Testes pytest pinam 3 valores de cada série contra o PDF e que somas/variações impressas fecham (tolerância de arredondamento).
 - [ ] Mercado: cartões "Investimento em infraestrutura (ABDIB)", "Debêntures incentivadas para rodovias", "Comparativos público × privado"; Regulatório (ou Mercado): "Estado do pavimento". Cada um com "Fonte: RoadShow 2026-2027, p. N".
-- [ ] Regulatório: dois diagramas SVG (fluxo do estudo ao leilão, p. 61, com a decisão "deságio acima de 18% → aporte de recursos vinculados" e as duas redações da p. 61 × pp. 65/73; fluxo de financiamento pp. 73–77), cores Galapagos, legenda, `role="img"` com título e descrição.
+- [ ] Regulatório: dois diagramas SVG (fluxo do estudo ao leilão, p. 61, com a decisão "deságio acima de 18% → aporte de recursos vinculados" e as duas redações da p. 61 × pp. 65/73; fluxo de financiamento pp. 73–77), cores da paleta base, legenda, `role="img"` com título e descrição.
 - [ ] e2e: cartões e diagramas presentes, sem `NaN`. Suítes verdes; build ≤ 15 MB. Commit.
 
 ### Task 5: Reconciliação do RoadShow como teste
