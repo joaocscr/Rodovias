@@ -1,4 +1,4 @@
-# Atualização dos dados — 21/10/2026
+# Atualização dos dados — 22/10/2026
 
 Gerado por `python scripts/atualizar.py` (sem --baixar). Diferenças em relação à versão de `data/intel/` no último commit do git.
 

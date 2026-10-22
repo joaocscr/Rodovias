@@ -1,6 +1,6 @@
 # Handoff · Rodovias do Brasil · Centro de Inteligência
 
-Documento para retomar o projeto numa conversa nova. Estado em 21/10/2026: `main` em `4d88be8` (v3.1 e este HANDOFF); a v4 está no branch `claude/confident-brown-k72wi2`, aguardando o PR.
+Documento para retomar o projeto numa conversa nova. Estado em 22/10/2026: `main` em `4d88be8` (v3.1 e a primeira versão deste HANDOFF). A v4 — final (verificação dos leilões e fechamento do projeto) está no branch `claude/confident-brown-k72wi2`, no PR [joaocscr/Rodovias#4](https://github.com/joaocscr/Rodovias/pull/4), aberto e ainda sem merge (o merge só sai quando o usuário pede).
 
 **Para começar uma sessão nova:** abra o repositório `joaocscr/Rodovias` em claude.ai/code e mande como primeira mensagem algo como *"Leia `docs/HANDOFF.md` e o `README.md`. Quero continuar com …"*.
 
@@ -12,11 +12,11 @@ Documento para retomar o projeto numa conversa nova. Estado em 21/10/2026: `main
 | v2 | Concessões do RoadShow (federais), abas Projetos, Mercado e Regulatório | — |
 | v3 | Centro de inteligência: tráfego (VMDa 2023, PRF, ABCR), ANTT (praças, SATs, obras), carga agrícola (PNL 2035), municípios e produção (PAM, armazéns), multimodal (ferrovias, portos, SIADE, Comex, fretes CONAB), pipeline de concessões, malha e concessões estaduais, catálogo de fontes | [joaocscr/Rodovias#1](https://github.com/joaocscr/Rodovias/pull/1) |
 | v3.1 | Rotas de Integração Sul-Americana (MPO), paleta de dados estendida, VMDa Modelagem 2025 (federal e estadual, por sentido) | [joaocscr/Rodovias#2](https://github.com/joaocscr/Rodovias/pull/2) |
-| v4 | Verificação dos leilões em fonte oficial (47 leilões), selo de origem, série de deságio 2007–2026, ranking de grupos econômicos, exportação CSV | a abrir (branch `claude/confident-brown-k72wi2`) |
+| v4 — final | Verificação dos leilões em fonte oficial (47 leilões), selo de origem, série de deságio 2007–2026, ranking de grupos econômicos, exportação CSV. Fechamento: aba Resumo como página inicial, linha do tempo de editais e leilões, pista pelo SNV nas concessões, gráficos e diagramas do RoadShow que faltavam, reconciliação dos totais, atualização em um comando com relatório de curadoria | [joaocscr/Rodovias#4](https://github.com/joaocscr/Rodovias/pull/4) (aberto) |
 
 **Regra de versão:** cada entrega que entra na `main` por PR ganha um **número inteiro** (v4, v5…). Não há mais "ponto um" (a v3.1 foi a última).
 
-Entregável: `mapa-rodovias.html` (arquivo único, offline, ~11,6 MB; limite de 15 MB imposto pelo build). Testes verdes no fechamento da v4: pytest 221 passaram e 12 foram pulados, `npm test` 161, e2e 104. (Na v3.1 eram pytest 188 e 3 pulados, `npm test` 133, e2e 91; os 12 pulados de agora são os que exigem `data/raw/`, ausente neste container, então a contagem de passados não se compara com a da v3.1.)
+Entregável: `mapa-rodovias.html` (arquivo único, offline, ~11,7 MB; limite de 15 MB imposto pelo build). Testes verdes no fechamento: pytest 381 passaram, 9 foram pulados e 22 são falhas esperadas (`xfail`, as divergências do próprio RoadShow da reconciliação); `npm test` 200; e2e 124. (No início do fechamento eram pytest 221 e 12 pulados, `npm test` 161 e e2e 104; na v3.1, pytest 188 e 3 pulados, `npm test` 133, e2e 91. Os pulados são os que exigem `data/raw/` ou o PDF do RoadShow; a contagem de passados muda conforme o que existe em `data/raw/`, então compare só no mesmo container.)
 
 Specs e planos de cada versão: `docs/superpowers/specs/` e `docs/superpowers/plans/`. Paleta: `docs/paleta.md`. Uso, camadas e comandos: `README.md`.
 
@@ -24,9 +24,27 @@ Specs e planos de cada versão: `docs/superpowers/specs/` e `docs/superpowers/pl
 
 - **Dados → blocos → HTML.** Cada `scripts/intel/<domínio>.py` tem `fetch` (baixa para `data/raw/<domínio>/` e registra no manifesto), `build` (gera `data/intel/<bloco>.json`) e `all`. O `scripts/build.py` lê a base congelada (`data/base/snv.json`, `conc.json`) e todos os `data/intel/*.json` (menos `manifest.json`), injeta como `window.SNV`, `window.CONC` e `window.INTEL` e concatena o JS na ordem de `JS_FILES`.
 - **Camada de verificação dos leilões (v4).** `data/roadshow/verificacao.json` é uma camada curada, separada: por leilão, a chave de ligação (id da entidade, ou ano + lote de `mercado.participantes`), os campos de leilão com valor e ids de fontes, notas e proponentes inabilitados, e o catálogo de fontes (tipo `oficial`, `roadshow` ou `imprensa`). `scripts/verificacao.py` valida a camada (`validar`) e a aplica (`aplicar`) sobre as concessões lidas de `data/base/conc.json`: o front recebe o valor exibido, a origem (`verif`) e o valor do RoadShow quando difere (`divergencias`). `entidades.json` e `mercado.json` continuam sendo a transcrição do RoadShow. O `build.py` e o `scripts/intel/pipeline.py` aplicam a camada (por isso o pipeline lê datas de leilão e assinatura já verificadas) e o `build.py` gera `data/roadshow/verificacao.md` e imprime a linha de cobertura. `data/roadshow/grupos_alias.json` liga cada nome de proponente a um grupo econômico (motivo, `fontes` opcional) para o ranking. No front: `src/leiloes-model.js` (ranking, série e médias, puro), `src/selo.js` (selo de origem), `src/csv.js` (exportação) e `src/conc-model.js` (`origemCampo`, `participantesExibidos`). Os testes de dados estão em `tests/test_verificacao.py`.
-- **Ordem de regeneração:** `trafego antt carga agro multimodal pipeline estaduais`, depois `vmda2025` (lê a malha estadual), `rotas`, `fontes_bloco.py` e `build.py`. Comandos completos no README, seção "Atualizar os dados".
+- **Camada de verificação, acréscimos do fechamento.**
+  - `nao_se_aplica: true` num campo (hoje só no `desagio`, com `valor: null` e ao menos uma fonte que explique o critério): o front mostra o selo "não se aplica (leilão por outorga)", o campo fica fora das séries e médias, e a cobertura o conta à parte (`cobertura.nao_se_aplica`). Não se combina com `nao_localizado`.
+  - `alternativas: [{valor, fontes}]` num campo: outra fonte oficial dá um valor diferente do exibido. Entra como alternativa da divergência da ficha ("25 (B3, 23/07/2026)"). Só vale em leilão ligado a uma entidade (`ent`), e o valor tem de diferir do exibido.
+  - Campo `edital` (data `AAAA-MM-DD` ou só `AAAA-MM`, só em `ent`): serve para corrigir a data do edital quando o RoadShow se contradiz (Rota Arco Norte e Rota Norte Catarinense, pelo cronograma das pp. 117 e 153; a data da ficha fica como divergência). Depois de aplicada, a camada confere edital ≤ leilão e falha o build se a sequência for impossível.
+  - A camada tem, por isso, 49 entradas: 47 leilões verificados e 2 só com a data do edital.
+  - `rsDiverge` (em `src/leiloes-model.js`) decide se a linha "RoadShow: …" aparece: some quando o nome impresso pertence ao mesmo grupo econômico do nome verificado (compara pelo grupo, ignora acento, caixa, pontuação e "Consórcio"), e fica quando é grupo de outra época (BRVias × TPI).
+- **Campos curados relidos a cada build.** `build_from_base` relê de `data/roadshow/` os blocos `mercado.json` e `regulatorio.json` e, por `id`, os campos das entidades de `entidades.json` (estado, datas, valores, textos). Da base congelada (`data/base/conc.json`) fica só o que depende do SNV: `idx`, `entFis`, `fisEnt`, `km_mapeado`, `nota_trecho` (a `qualidade` é recalculada com o km declarado atual). Entidade nova ou removida em `entidades.json` pára o build com a mensagem "precisa de recorte no SNV: rode build.py --shp". O `scripts/intel/pipeline.py` usa o mesmo caminho (`roadshow.conc_da_base`), então uma data editada em `entidades.json` chega também à aba Projetos.
+- **Atualização em um comando.**
+  - `scripts/atualizar.py` roda, na ordem, o `fetch` (com `--baixar`, só do que falta; com `--renovar [domínios]`, refazendo o download) e o `build` de cada domínio, o bloco de fontes, a validação da camada de verificação e o `build.py`. Passo cujo bruto falta é pulado com aviso (os JSON voltam ao que eram); só a validação ou o HTML com falha dão saída 1.
+  - `scripts/curadoria.py` (funções puras) gera o relatório `data/atualizacao.md`: o que mudou por bloco em relação ao último commit e a lista de curadoria manual, em seis tipos (pipeline atrasado, leilão sem verificação, concessão ainda "a leiloar" com leilão passado, item sem fonte oficial, fonte com mais de 12 meses, nome sem grupo).
+  - A data de acesso de um arquivo só muda quando o SHA-256 muda. Testes: `tests/test_atualizar.py`, `tests/test_curadoria.py`, `tests/test_build_base.py`.
+- **Reconciliação.** `data/roadshow/reconciliacao.json` guarda os totais que o RoadShow imprime (com página e casas decimais) e `tests/test_reconciliacao.py` os recalcula dos dados curados. Divergências conhecidas do próprio RoadShow são `xfail(strict=True)` no dicionário `DIVERGENCIAS`, com o motivo só do que foi verificado; se uma passar a fechar, o teste falha e o motivo precisa de revisão.
+- **Front do fechamento.**
+  - `src/resumo.js` (aba Resumo; o cálculo está em `src/leiloes-model.js`: `resumoKpis` e `resumoAchados`, cada item some se faltar dado).
+  - `IntelModel.linhaDoTempoResumo` e `Charts.timelineSvg` (linha do tempo, na seção Pipeline de `src/projetos.js`).
+  - `ConcModel.pistaSNV` (pista pelo SNV, na ficha e no cartão do mapa) e `IntelModel.fisSit`.
+  - Gráficos novos em `src/mercado.js` e diagramas em `src/regulatorio.js`, com dados de `mercado.json` e `regulatorio.json`.
+  - O módulo `tabs.js` tem o Resumo como `INICIAL`: hash vazio ou inválido abre o Resumo, `#mapa` abre o mapa.
+- **Ordem de regeneração:** `trafego antt carga agro multimodal pipeline estaduais`, depois `vmda2025` (lê a malha estadual), `rotas`, `fontes_bloco.py` e `build.py`. Comandos completos no README, seção "Atualizar os dados"; `python scripts/atualizar.py` faz tudo isso em um comando.
 - **Junção com o SNV:** `scripts/intel/snvbase.py` (`snv()`, `.trechos`, `.fis` com os 6.815 físicos, `find_km`, `fis_of_km`, `snap`, `nearest`, `geom_m` em EPSG:5880, `encode_line`/`decode_line`, `norm_br`). Todo array "por físico" tem 6.815 posições na ordem de `data/base/snv.json`; `null` significa sem dado.
-- **Front:** Leaflet 1.9.4 vendorizado, renderização em canvas, JS ES2020 sem bundler, concatenado na ordem de `JS_FILES` (`scripts/build.py`). Os módulos puros, testados com `node --test`, são `model`, `conc-model`, `leiloes-model`, `intel-model`, `styles-map` (paleta), `charts`, `selo` e `csv` (a parte que não toca o DOM). Os módulos de UI são `map`, `layers`, `ficha`, `projetos`, `trafego`, `cargas`, `mercado`, `regulatorio`, `fontes`, `ui`, `tabs` e `main`. O e2e usa Playwright com `--test-concurrency=1`, porque em paralelo fica instável.
+- **Front:** Leaflet 1.9.4 vendorizado, renderização em canvas, JS ES2020 sem bundler, concatenado na ordem de `JS_FILES` (`scripts/build.py`). Os módulos puros, testados com `node --test`, são `model`, `conc-model`, `leiloes-model`, `intel-model`, `styles-map` (paleta), `charts`, `selo` e `csv` (a parte que não toca o DOM). Os módulos de UI são `map`, `layers`, `ficha`, `projetos`, `resumo`, `trafego`, `cargas`, `mercado`, `regulatorio`, `fontes`, `ui`, `tabs` e `main`. O e2e usa Playwright com `--test-concurrency=1`, porque em paralelo fica instável.
 - **Cada bloco** tem `fonte` e `tipo` (`modelado`, `medido` ou `cadastro`). A interface rotula modelado × medido e mostra o ano.
 - **Paleta:**
   - A interface e a malha federal base usam o Galapagos (`#183C80`, `#0071BB`, `#231F20`, `#525254`, `#F7F7F8`).
@@ -40,11 +58,15 @@ Specs e planos de cada versão: `docs/superpowers/specs/` e `docs/superpowers/pl
 
 ### Como acrescentar um leilão verificado
 
-1. Em `data/roadshow/verificacao.json`, acrescente o leilão em `leiloes`: uma `chave` única, a ligação (`ent` com o id da entidade, `participantes` com `ano` e `lote` da linha de `mercado.participantes`, `concorrentes` com o nome do leilão em `mercado.concorrentes_desagio`; uma ou mais), os `campos` com `valor` e `fontes` (ou `nao_localizado`), e `notas` e `inabilitados` quando houver.
+1. Em `data/roadshow/verificacao.json`, acrescente o leilão em `leiloes`: uma `chave` única, a ligação (`ent` com o id da entidade, `participantes` com `ano` e `lote` da linha de `mercado.participantes`, `concorrentes` com o nome do leilão em `mercado.concorrentes_desagio`; uma ou mais), os `campos` com `valor` e `fontes` (ou `nao_localizado`, ou, no deságio de leilão por outorga, `nao_se_aplica: true` com a fonte que explica), e `notas` e `inabilitados` quando houver. Outra fonte oficial com valor diferente do exibido vai em `alternativas` do campo (só com `ent`); uma data de edital que o RoadShow imprime errada vai no campo `edital` (só com `ent`).
 2. No mesmo arquivo, cadastre em `fontes` cada documento citado: `oficial` (órgão, título, URL http(s) de domínio oficial, data de acesso e trecho), `imprensa` (órgão, data, URL e acesso; só em notas, junções e inabilitações) ou `roadshow` (página).
 3. Em `data/roadshow/grupos_alias.json`, ligue cada nome novo de proponente (vencedor, demais e inabilitados) a um grupo econômico, com o `motivo` e, quando a junção não se lê no nome, `fontes`. O crédito é do grupo da época do leilão: aquisição posterior não junta nomes.
 4. Rode `python -m pytest tests/test_verificacao.py`: a validação acusa fonte faltando, URL fora de http(s), ligação inexistente ou repetida, valor de tipo errado e nome sem grupo.
-5. Rode `python scripts/build.py`: ele valida de novo, regenera `data/roadshow/verificacao.md` (cobertura e divergências) e o `mapa-rodovias.html`.
+5. Rode `python scripts/atualizar.py` (ou `python scripts/build.py`): ele valida de novo, regenera `data/roadshow/verificacao.md` (cobertura e divergências) e o `mapa-rodovias.html`.
+
+### Como atualizar
+
+Os três roteiros (dados públicos em um comando, nova versão do RoadShow, leilão novo) e a tabela das constantes de período de cada domínio estão no [`README.md`](../README.md), seção "Como atualizar", que é a única fonte: não são repetidos aqui. Em resumo: `python scripts/atualizar.py [--baixar | --renovar [domínios]]`, depois ler `data/atualizacao.md` (o que mudou e o que pede curadoria, com o arquivo a editar em cada item), rodar as três suítes e fazer o commit dos JSON, do relatório e do HTML. Regra de ouro: nenhum `data/intel/*.json` se edita à mão; a correção vai no script gerador ou no arquivo curado de origem (`pipeline.csv`, `data/roadshow/*.json`).
 
 ## 3. Restaurar os brutos (`data/raw/`, fora do git, ~4 GB)
 
@@ -120,72 +142,69 @@ Cada uma com o que custa se estiver errada.
 | **v4:** Rota dos Sertões passou de "leiloado" a "contrato" no pipeline, com a assinatura de 29/09/2026 | uma linha do pipeline |
 | **v4:** a nota de `mercado.concorrentes_desagio` foi reescrita (comentário nosso, não transcrição) em `mercado.json`, em `data/base/conc.json` e em `scripts/extract/mercado.py` | o texto diverge da promessa de "intocado" |
 | **v4:** Via Liberdade segue como concessão na lista; a natureza de PPP estadual é só nota | a esfera da entidade fica como no RoadShow |
+| **Fechamento:** `nao_se_aplica` é um marcador próprio da camada (hoje só no deságio), com selo próprio, em vez de "não localizado" | o selo diz "não se aplica" onde alguém acharia que o dado existe e não foi achado |
+| **Fechamento:** Régis Bittencourt mostra 15 anos (minuta do aditivo e página da ANTT) e registra os 25 anos da B3 como divergência declarada (`alternativas`) | se a B3 estiver certa, a ficha mostra 15 e a B3 aparece só no ícone de divergência |
+| **Fechamento:** "RoadShow: …" só aparece quando o nome impresso é de outro grupo econômico; o teste de "mesmo grupo" compara também a grafia normalizada e o início do nome | um rótulo diferente do mesmo grupo (ex.: "Ecorodovias e SBS Engenharia", ECO101 2012) fica escondido |
+| **Fechamento:** "4UM" é um grupo só (RoadShow p. 23, grupo líder dos dois leilões); "Ateris S.A" é grafia da Arteris | o ranking dá 2 vitórias à 4UM; se forem fundos distintos, o número cai |
+| **Fechamento:** correção de dado vai só no script gerador ou no arquivo curado; nunca no JSON gerado (revê a ideia inicial de remendar o JSON quando o bruto falta) | uma correção pode ficar sem aplicar neste HTML se a fonte não responder |
+| **Fechamento:** Keppel Fels fica no centro do município do próprio cadastro (Niterói) por regra genérica (ponto a mais de 200 km da UF vai para o município), e VMD de praça que arredonda a 0 vira "sem dado" (Free Flow Candeias) | a posição do estaleiro erra cerca de 7 km; uma praça com tráfego mínimo real aparece sem dado |
+| **Fechamento:** data de edital que o RoadShow imprime duas vezes vale a do cronograma, pela camada de verificação, e a outra fica como divergência | se a ficha estiver certa, o edital aparece um ano antes do real |
+| **Fechamento:** o gráfico "Estado do pavimento" (p. 35) mostra o aumento do custo do frete por condição do pavimento (CNT), que é o que a página traz, e não participação na malha | — (reflete a página) |
+| **Fechamento:** os dois diagramas do Regulatório são esquemas nossos, feitos do texto do RoadShow (o fluxo de financiamento das pp. 73–77 é uma síntese: essas páginas não têm diagrama), com a página em cada elemento e dito na legenda; duas posições são leitura nossa: o aporte entre o leilão e a assinatura, e o ramo "não → assinatura" da decisão dos 18% | a leitura de um bloco pode diferir da intenção do Ministério |
+| **Fechamento:** o limiar do aporte é "acima de 18%" (pp. 65 e 73; a p. 61 diz "a partir de 18%"), igual no diagrama e no Resumo | um leilão exatamente em 18% seria contado pela redação das pp. 65/73; hoje nenhum leilão está em 18% |
+| **Fechamento:** o texto "aporte … proporcional ao deságio ofertado" do Regulatório fica; a p. 63 do PDF (premissas gerais) diz que os aportes, quando ultrapassado o desconto máximo do projeto, são "proporcionais ao deságio ofertado" | — (conferido na página) |
+| **Fechamento:** reconciliação declarado × recalculado como teste, com a divergência conhecida como `xfail` estrito e motivo só do que foi provado | um `xfail` pode esconder um erro novo no mesmo item (o estrito falha se o item passar a fechar) |
+| **Fechamento:** KPI "km sob concessão" do Resumo = RoadShow p. 37 (o mesmo do Mercado); o SNV vai como segunda linha; o KPI de malha avisa que inclui trechos só planejados | dois números de km sob concessão convivem, com nota |
+| **Fechamento:** pista pelo SNV: Pavimentada = pista simples; Duplicada; Em obra de Duplicação; tudo o mais (planejada, leito natural, obras de pavimentação, travessia) = "sem pavimento ou planejada"; sem recorte mostra "sem recorte no SNV", nunca 0 km | trecho de situação rara cai em "sem pavimento ou planejada" |
+| **Fechamento:** o `--baixar` baixa só o que falta e o `--renovar` refaz o download; a data de acesso só muda se o SHA-256 mudar | fonte que muda de endereço sem mudar o arquivo aparece como "sem dado novo" |
+| **Fechamento:** não descobrir períodos novos automaticamente; as constantes de período ficam documentadas por domínio no README | período novo exige uma edição pequena por domínio |
+| **Fechamento:** `build_from_base` relê da pasta `data/roadshow/` os campos curados das entidades e estudos (e `mercado.json`/`regulatorio.json`); do SNV congelado fica só o recorte; entidade nova ou removida pára o build pedindo `--shp` | um caminho a mais para manter igual ao do `--shp` (há teste) |
+| **Fechamento:** a linha do tempo e o achado de calendário contam a partir do ano e do dia em que o arquivo é aberto | um HTML antigo perde itens sozinho com o passar do tempo |
+| **Fechamento:** a aba Resumo é a página inicial (hash vazio ou inválido abre o Resumo; `#mapa` abre o mapa) | quem tinha o mapa como atalho agora precisa de `#mapa` |
+| **Fechamento:** fichas dos lotes sem ficha no RoadShow ficaram de fora (princípio de atualização fácil) | esses lotes têm ficha só com o que o RoadShow e a verificação trazem |
 
 ## 6. Pendências
 
-### Adiadas pelo usuário ("para um segundo momento")
+### (a) O que depende de você
 
-- **PNCT por posto de contagem** (contagens medidas do DNIT). O portal não é acessível daqui; precisa de download pelo usuário.
-- **Pedidos via LAI:**
-  - Cargas da ANTT: cgdam@antt.gov.br.
-  - PNL 2050 / matrizes OD: observatorio@infrasa.gov.br.
-- **ANTAQ:** Estatístico Aquaviário (movimentação portuária).
-- **Malha estadual de 2024:** a atual é a CIDE 2021 da Infra S.A.
-- **Editais dos lotes estaduais com km inicial e final:** hoje há cortes aproximados.
+Nada disto se resolve daqui; cada item diz o que falta.
 
-### Fora do escopo da v4 (próximos passos, spec §6)
+- **PNCT por posto de contagem** (contagens medidas do DNIT): o portal não é acessível daqui; precisa de download feito por você.
+- **Pedidos via LAI:** cargas da ANTT (cgdam@antt.gov.br) e PNL 2050 / matrizes OD (observatorio@infrasa.gov.br).
+- **ANTAQ, Estatístico Aquaviário** (movimentação portuária): o painel não tem dado aberto utilizável.
+- **Malha estadual de 2024:** não foi publicada; a atual é a CIDE 2021 da Infra S.A.
+- **Editais dos lotes estaduais com km inicial e final:** hoje há cortes aproximados; é pesquisa manual por lote.
+- **Reclassificar entidades por esfera** (ex.: Via Liberdade como PPP estadual): muda o modelo de estados; a nota da Via Liberdade basta por ora.
+- **Curadoria que o relatório achou:** o **MG Lote 10 - Noroeste** está no `data/intel/pipeline.csv` como "Edital publicado" com data prevista de 20/03/2026, já vencida. Procure a fonte oficial (ou a notícia do leilão), atualize status, data e `fonte_url` e rode `python scripts/atualizar.py`. Os outros 13 itens da lista de `data/atualizacao.md` são itens do pipeline com `verificado = false` (só fonte de imprensa): trocar por fonte oficial quando houver.
+- **Fontes oficiais que este ambiente não alcança:** o extrato do contrato da Rota da Celulose no DOE-MS (a assinatura exibida, 06/02/2026, vem da agência de notícias do governo de MS; a imprensa diz 02/02/2026; o início da operação segue não localizado) e as páginas do Ministério dos Transportes sobre o leilão e a assinatura da Ponte São Borja (assinatura de 25/11/2025 só pela imprensa).
 
-- Enriquecer a ficha dos 22 lotes de 2023–2025 sem ficha no RoadShow (edital, tarifa-teto, TIR, praças, duplicação).
-- Aba Resumo ("leitura em 60 segundos").
-- Linha do tempo de editais e leilões 2026–2027.
-- Pista pelo SNV no cartão da concessão (km duplicados, simples, em obra).
-- Gráficos de conteúdo do RoadShow ainda sem gráfico (ABDIB p. 39, debêntures p. 77, pavimento p. 35, comparativos pp. 41 e 45, diagramas pp. 61 e 73–77).
-- Reconciliação declarado × recalculado como teste.
-- Reclassificar entidades por esfera (ex.: Via Liberdade como PPP estadual).
+### (b) Limitações conhecidas e próximos passos
 
-### Pendências da verificação dos leilões (dados)
-
-- **Fontes que não puderam ser lidas daqui:** o extrato do contrato da Rota da Celulose no DOE-MS (a assinatura exibida, 06/02/2026, vem da agência de notícias do governo de MS; a imprensa diz 02/02/2026) e as páginas do Ministério dos Transportes sobre o leilão e a assinatura da Ponte São Borja (assinatura de 25/11/2025 só pela imprensa). O início da operação da Rota da Celulose segue não localizado em fonte oficial.
-- **Régis Bittencourt:** o prazo de 15 anos vem de minuta de aditivo e a B3 dá 25; registrar a B3 como divergência.
-- **Ponte São Borja:** a ficha diz "não localizado em fonte oficial" para o deságio, mas o critério não se aplica (leilão por outorga); um rótulo como "não se aplica (leilão por outorga)" seria mais exato (a nota já explica).
-- **Datas previstas do RoadShow sem fonte** continuam exibidas onde não há fonte melhor (ex.: início previsto da Rota dos Sertões, 11/10/2026).
-- **Rótulos e notas:** Nova 381 tem um trecho de citação emendado com "[…]"; o rótulo "4UM" é inconsistente; quatro leilões usam atas por não terem ato de homologação localizado; a cláusula de derivação do 0,00% das otimizações (tarifa = referência) falta no trecho do edital; a nota do Rota Agro cita imprensa redundante para o deságio; a nota da Rio Minas não diz "outorga" no critério; a tarifa da Via 040 ("por praça") é inferida e deveria usar o texto da nota técnica ("TBP, categoria 1"); a nota da EcoPonte diz "duas" de forma ambígua.
-- **Grupos:** "grafia" no Rota do Cerrado é exagero; "liderado" no Consórcio Infraestrutura GO → EPR segue como julgamento (Reuters: "A EPR…"; o consórcio é EPR + Perfin); o líder do 116 Sertões não consta do documento oficial.
-
-### Menores de código da v4, ainda abertos
-
-- **`scripts/verificacao.py`:**
-  - `_fmt` arredonda números de `tarifa_*` (hoje são texto, então só vale se voltarem a ser números).
-  - `tipo_campo([])` devolve `None` (o front trata como "—").
-  - `campos` que não são dicionário levantam `AttributeError`.
-  - `ano`, `lote` ou `concorrentes` malformados (lista ou dicionário) levantam `TypeError` na validação.
-- **Gráficos (`src/charts.js`, `src/leiloes-model.js`):** `anoDecimal` aceita mês e dia fora do intervalo; o rótulo imprime "null" se o vencedor for nulo; o último rótulo do eixo x pode faltar; uma asserção negativa é fraca; a troca de classe do eixo y é frágil.
-- **CSV (`src/csv.js`):** o filtro que esconde linhas não tem teste; o `queueMicrotask` é redundante; números negativos saem como texto (pela regra da spec); a coleta de links (`csv.js:35`) lê a célula original, o que pode vazar links de dentro de `<details>`.
-- **Mercado e ficha:** `fmtData(i.data)` não passa por `esc` em `proponentesTxt`; os seletores de período (de > até) não sincronizam depois da troca; a nota da série (`SERIE_NOTA`) aparece sempre; falta teste negativo do desempate por deságio na regra de mesmo proponente (`participantesExibidos`).
-
-### Menores, registrados nas revisões
-
+- **Período novo de uma fonte exige uma edição pequena.** Os scripts de `scripts/intel/` baixam endereços fixos, e vários trazem ano ou mês no nome. O `--baixar` e o `--renovar` não descobrem períodos novos sozinhos (cada fonte tem lógica de endereço própria; automatizar seria arriscado). A tabela "Período novo de uma fonte" do README diz, por domínio, quais constantes editar. Descobrir o período novo automaticamente fica como próximo passo, domínio a domínio.
+- **Fichas dos lotes sem ficha no RoadShow** (os 22 lotes de 2023–2025: edital, tarifa-teto, TIR, praças, duplicação): retirado do fechamento pelo princípio de atualização fácil, porque seriam cerca de 100 campos de pesquisa manual sem caminho automático de atualização. Continua sendo uma melhoria opcional.
+- **Datas previstas do RoadShow sem fonte melhor** seguem exibidas (ex.: início previsto da Rota dos Sertões, 11/10/2026). O relatório de curadoria não as pega: revise ao ler o RoadShow novo.
+- **A linha do tempo e o calendário do Resumo dependem do relógio de quem abre o arquivo.** A linha do tempo começa no ano corrente (leilões de 2026 saem dela a partir de 01/01/2027) e o achado de calendário só conta datas futuras. É a regra decidida; um HTML antigo "envelhece" sozinho.
+- **Dois números de km sob concessão convivem:** 20.651 km (RoadShow, p. 37, o do Resumo e do Mercado) e 15.828 km (cadastro do SNV, na segunda linha do KPI e na nota). O SNV 202607A ainda não reflete todos os contratos recentes.
+- **Divergências do próprio RoadShow sem causa identificada** (22 `xfail` em `tests/test_reconciliacao.py`: p. 17 × pp. 3/5, anos 2026 e 2027 da p. 125, faixas e médias por concorrentes das pp. 25/27): ficam registradas com o que foi verificado; nenhuma foi atribuída a erro nosso ou do PDF sem prova.
+- **Julgamentos de grupo econômico que seguem como julgamento:** "liderado" no Consórcio Infraestrutura GO → EPR (Reuters: "A EPR…"; o consórcio é EPR + Perfin); o líder do 116 Sertões não consta do documento oficial; quatro leilões usam atas por não terem ato de homologação localizado.
 - **Mapa e layout:**
-  - O recolhimento da legenda não é reavaliado quando a janela muda de tamanho.
-  - Os rótulos GF e SR se sobrepõem.
-  - A legenda do Tráfego cobre o leste do Brasil em 1366 px.
-  - O layout foi afinado para 1440×900.
-  - O código usa `_animatingZoom`, que é privado do Leaflet.
-- **Formatação:**
-  - `fmtPeriodo` não trata datas ISO completas.
-  - O `tipo` dos portos aparece cru.
-  - Os nomes dos fretes têm artefatos.
-- **Dados:**
-  - A coordenada do estaleiro Keppel Fels está imprecisa.
-  - VMD 0 de praça deveria virar `null`.
-  - `antt.json` está perto do limite de tamanho do teste.
-  - A correlação VMDa 2023 × 2025 é 0,861, com o teste exigindo ≥ 0,85: pouca folga.
-- **Textos:**
-  - Os trechos PLA com valores precisam de texto explicativo.
-  - Revisar o texto "carteira MT v40".
-  - Revisar o "≤ 5%" da ficha.
-  - Na spec v3.1, a linha "relatórios 2023–2025" deveria dizer 2024–2025 (o que foi baixado).
+  - A legenda "Cor das rodovias" ainda cobre parte do litoral do Nordeste em 1366 px com a camada de rotas ligada, e em telas menores que 1366 px os rótulos e legendas mantêm a sobreposição antiga (o layout foi afinado para 1440×900 e 1366×768).
+  - No celular, o cabeçalho rola na horizontal mas não mostra pista de que há mais abas, e o título do site é cortado em 390 px.
+  - Abrir direto um `#ficha/…` deixa nenhuma aba destacada.
+  - As linhas com `role="button"` (linha do tempo, rankings) respondem a Enter e clique, não à tecla Espaço (vale para o projeto todo).
+- **Rótulos:** "Sem pavimento ou planejada" (pista SNV) junta Travessia e obras de pavimentação (a ficha explica na nota); o texto "não se aplica (leilão por outorga)" está duplicado em `scripts/verificacao.py` e `src/conc-model.js`; as sublinhas de lista de integrantes aparecem ou somem conforme a redação do nome.
+- **Gráfico de comparativos público × privado** mistura períodos de base diferentes (2016–22 × 2023–29 etc.); os rótulos e a nota explicam, e a nota registra onde o RoadShow não fecha com a própria série da p. 43.
+- **Testes que podem ser mais firmes:**
+  - falta teste negativo da nota da série (`SERIE_NOTA`);
+  - o auxiliar `rankPeriodo` do e2e depende da ordem das opções;
+  - `periodo()` em `mercado.js` tem min/max redundante depois da troca de de/até;
+  - o piso `>= 15` do e2e da linha do tempo e o seletor da legenda dependem do dado;
+  - o regex `\b0 km` do e2e de pista é frágil;
+  - falta teste de regressão do `km_mapeado` com dado real;
+  - a conferência das contagens pequenas contra o PDF (reconciliação) só prova que o número aparece na página;
+  - a explicação de n = 4 concorrentes não tem teste próprio.
+- **Menores antigos que permanecem:** `tipo_campo([])` devolve `None` (o front trata como "—"); números negativos saem como texto no CSV (regra da spec); `antt.json` (399 KB) está perto do limite de 450 KB do teste (alerta); a correlação VMDa 2023 × 2025 é 0,861 contra o mínimo de 0,85 do teste (propriedade dos dados, não defeito); o `--renovar` não foi exercitado contra a rede inteira (cerca de 1 GB), só com domínios simulados, e o "sem dado novo" é por SHA-256, então uma fonte que muda de endereço sem mudar o arquivo aparece como "renovada sem dado novo" e pede olhar manual; itens do pipeline de concessão estadual ainda tiram a data do CSV (é o ponto de edição curado).
 
 ## 7. Processo usado
 
-Brainstorming e spec, depois plano, depois execução por subagentes: uma tarefa por vez, cada uma com brief, implementação com TDD, revisão de spec e revisão de qualidade. No fim, uma revisão do branch inteiro e uma rodada de correções (na v4, a revisão final corrige parte dos menores acima; confira o histórico do PR para ver quais). Antes de abrir o PR, rodar as três suítes e `python scripts/build.py`, conferindo o tamanho. O desenvolvimento é feito num branch `claude/*` e entra na `main` por PR, com merge só quando o usuário pede.
+Brainstorming e spec, depois plano, depois execução por subagentes: uma tarefa por vez, cada uma com brief, implementação com TDD, revisão de spec e revisão de qualidade. No fim, uma revisão do branch inteiro e uma rodada de correções (no fechamento da v4, cada tarefa teve revisão própria e as correções saíram em rodadas; o histórico do PR mostra quais). Antes de abrir o PR, rodar as três suítes e `python scripts/atualizar.py` (ou `python scripts/build.py`), conferindo o tamanho; o e2e exige o HTML gerado antes. O desenvolvimento é feito num branch `claude/*` e entra na `main` por PR, com merge só quando o usuário pede.
