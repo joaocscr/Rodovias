@@ -1,0 +1,57 @@
+[
+ {
+  "dominio": "debentures",
+  "descricao": "Banco Central, SGS série 432 (Selic meta)",
+  "url": "https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados/ultimos/20?formato=json",
+  "arquivo": "data/raw/debentures/publico/sgs_432.json",
+  "bytes": 761,
+  "sha256": "b0d0d8b8c8c95eb255c4fdd3a44cc9ebcbb1401efa6257e46bfeb65aa1dc58dc",
+  "periodo": "",
+  "licenca": "Dados abertos do Banco Central do Brasil",
+  "acesso": "2026-10-22"
+ },
+ {
+  "dominio": "debentures",
+  "descricao": "Banco Central, SGS série 12 (CDI)",
+  "url": "https://api.bcb.gov.br/dados/serie/bcdata.sgs.12/dados/ultimos/20?formato=json",
+  "arquivo": "data/raw/debentures/publico/sgs_12.json",
+  "bytes": 821,
+  "sha256": "ce52ec7ceb8b1cf229fb92c63fcaca892018468ba26d679058891b7604e7f42e",
+  "periodo": "",
+  "licenca": "Dados abertos do Banco Central do Brasil",
+  "acesso": "2026-10-22"
+ },
+ {
+  "dominio": "debentures",
+  "descricao": "Banco Central, SGS série 13522 (IPCA 12 meses)",
+  "url": "https://api.bcb.gov.br/dados/serie/bcdata.sgs.13522/dados/ultimos/12?formato=json",
+  "arquivo": "data/raw/debentures/publico/sgs_13522.json",
+  "bytes": 445,
+  "sha256": "3c37d2fb6a74994be8f265a804cf9fa0b1dcf1659ccd61ede9d2260e87cd1fbd",
+  "periodo": "",
+  "licenca": "Dados abertos do Banco Central do Brasil",
+  "acesso": "2026-10-22"
+ },
+ {
+  "dominio": "debentures",
+  "descricao": "Banco Central, expectativas de mercado (Focus): IPCA 12 meses",
+  "url": "https://olinda.bcb.gov.br/olinda/servico/Expectativas/versao/v1/odata/ExpectativasMercadoInflacao12Meses?%24top=20&%24filter=Indicador%20eq%20'IPCA'%20and%20Suavizada%20eq%20'S'%20and%20baseCalculo%20eq%200&%24orderby=Data%20desc&%24format=json",
+  "arquivo": "data/raw/debentures/publico/focus_ipca12m.json",
+  "bytes": 3829,
+  "sha256": "b8c0e6ef3410b2dbafdf1f0964eef16517b6bddc71bed0f28708d8ae50fa325d",
+  "periodo": "",
+  "licenca": "Dados abertos do Banco Central do Brasil",
+  "acesso": "2026-10-22"
+ },
+ {
+  "dominio": "debentures",
+  "descricao": "Tesouro Nacional, preço e taxa dos títulos do Tesouro Direto (histórico)",
+  "url": "https://www.tesourotransparente.gov.br/ckan/dataset/df56aa42-484a-4a59-8184-7676580c81e3/resource/796d2059-14e9-44e3-80c9-2d9e30b405c1/download/precotaxatesourodireto.csv",
+  "arquivo": "data/raw/debentures/publico/tesouro_direto.csv",
+  "bytes": 14598768,
+  "sha256": "f4f9b0fb9a1850da4cbca47d5b896464c04b21b302cf591de178726a426e2972",
+  "periodo": "",
+  "licenca": "Licença Aberta para Bases de Dados (ODbL) do Open Data Commons",
+  "acesso": "2026-10-22"
+ }
+]

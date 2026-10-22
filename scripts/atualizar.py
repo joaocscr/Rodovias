@@ -40,8 +40,9 @@ ROADSHOW = ROOT / "data" / "roadshow"
 SAIDA = ROOT / "data" / "atualizacao.md"
 HTML = ROOT / "mapa-rodovias.html"
 PDF_ROADSHOW = ROOT / "data" / "raw" / "roadshow.pdf"
-# vmda2025 lê a malha estadual (estaduais.json); pipeline confere `ent` contra conc.json e estaduais.json
-ORDEM = ("trafego", "antt", "carga", "agro", "multimodal", "pipeline", "estaduais", "vmda2025", "rotas")
+# vmda2025 lê a malha estadual (estaduais.json); pipeline confere `ent` contra conc.json e estaduais.json; debentures lê
+# as planilhas do usuário (data/raw/debentures/*.xlsx) e baixa as séries públicas
+ORDEM = ("trafego", "antt", "carga", "agro", "multimodal", "pipeline", "debentures", "estaduais", "vmda2025", "rotas")
 # o zip do VMDa 2025 vem do Drive do usuário: não há o que baixar de novo
 RENOVAVEIS = tuple(d for d in ORDEM if d != "vmda2025")
 PASSO_HTML = "build.py (HTML)"
@@ -122,6 +123,9 @@ def passos_dominios(dominios, baixar, importar=importlib.import_module, renovar=
                                 "\"Atualizar os dados\"); vmda2025.json ficou como estava")
                 if baixar:
                     m.registrar()
+            elif d == "debentures" and not m.planilhas():
+                raise Pular(f"faltam as planilhas de telas e negócios em {_rel(m.PASTA)}/ (arquivos do usuário; ver "
+                            "README, \"Debêntures\"); debentures.json ficou como estava")
             elif d in renovar:
                 renova(d, m)
                 return

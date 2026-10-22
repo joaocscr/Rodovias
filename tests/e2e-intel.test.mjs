@@ -1509,27 +1509,27 @@ test('Fontes: lista exatamente as fontes dos blocos embutidos (dados, bases, doc
   assert.doesNotMatch(t, /neste ambiente|Centro de Inteligência|novidades/i);  // sem histórico do projeto (versões: test_sem_mencoes.py)
 });
 
-test('Fontes: bloco novo com fonte (ex.: debêntures) e fonte nova no glossário entram sozinhos', async () => {
+test('Fontes: bloco novo com fonte (bloco fictício) e fonte nova no glossário entram sozinhos', async () => {
   const errs = [], ext = [];
   const inject = html => {
     const i = html.indexOf('</script>', html.indexOf('window.INTEL='));
     return `${html.slice(0, i)};(() => { const I = window.INTEL;
       const f = { nome: 'Corretora X — negócios de exemplo', url: 'https://exemplo.invalid/', periodo: '2026-10-01/2026-10-21', acesso: '2026-10-22', licenca: 'uso restrito', tipo: 'medido' };
-      I.debentures = { fonte: [f] };
-      I.fontes.fontes.push(Object.assign({ bloco: 'debentures', nota: '' }, f));
-      if (!window.FONTES_DESCRICAO.debentures) window.FONTES_DESCRICAO.debentures = { nome: 'Debêntures (exemplo)', oQue: 'Exemplo.' };
+      I.bloco_exemplo = { fonte: [f] };
+      I.fontes.fontes.push(Object.assign({ bloco: 'bloco_exemplo', nota: '' }, f));
+      window.FONTES_DESCRICAO.bloco_exemplo = { nome: 'Bloco de exemplo', oQue: 'Exemplo.' };
       window.GLOSSARIO.push({ id: 'termo-exemplo', termo: 'Termo de exemplo', definicao: 'Exemplo.', fonte: { nome: 'Norma de exemplo nº 1/2026' }, categorias: ['Finanças'] });
     })();${html.slice(i)}`;
   };
   const p = await openPage(errs, ext, inject);
   await goTab(p, '#fontes');
   const l = await fontesListadas(p), e = await fontesEmbutidas(p);
-  assert.ok(l.dados.includes('debentures|Corretora X — negócios de exemplo'), l.dados.join('\n'));
+  assert.ok(l.dados.includes('bloco_exemplo|Corretora X — negócios de exemplo'), l.dados.join('\n'));
   assert.deepEqual(l.dados, e.dados);
-  assert.equal(l.rotulos.debentures, await p.evaluate(() => window.FONTES_DESCRICAO.debentures.nome));
+  assert.equal(l.rotulos.bloco_exemplo, 'Bloco de exemplo');
   assert.ok(l.glossario.includes('Norma de exemplo nº 1/2026'));
   assert.deepEqual(l.glossario, e.glossario);
-  assert.match(await p.textContent('#fontes-table tr[data-bloco="debentures"]'), /01\/10\/2026 a 21\/10\/2026/);
+  assert.match(await p.textContent('#fontes-table tr[data-bloco="bloco_exemplo"]'), /01\/10\/2026 a 21\/10\/2026/);
   assert.deepEqual(errs, []);
   assert.deepEqual(ext, []);
   await p.context().close();

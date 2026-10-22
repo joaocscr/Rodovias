@@ -21,6 +21,10 @@ TIPOS = {
     "nome_sem_grupo": "Nomes de proponentes sem grupo econômico",
     "consorcio_sem_composicao": "Consórcios vencedores sem composição na base de consórcios",
     "consorcio_fora_da_ata": "Consórcios que a ata do leilão não lista",
+    "emissor_sem_classificacao": "Emissores de debêntures sem classificação",
+    "debentures_sem_serie": "Debêntures sem série pública ou sem curva das NTN-B (indicador ou spread \"—\")",
+    "taxa_fora_do_intervalo": "Taxas de debêntures fora do intervalo plausível (fora das médias)",
+    "linha_sem_data": "Linhas das planilhas de debêntures sem data legível (fora dos totais)",
 }
 # status do pipeline cuja data ainda é uma previsão (leilão; no "leiloado", a assinatura prevista)
 PREVISTOS = ("estudo", "consulta_publica", "tcu", "edital", "leilao_agendado", "leiloado")
@@ -44,6 +48,7 @@ REGISTROS = {
     "agro": ["ids"],
     "antt": ["pracas.linhas", "sats.linhas", "capas", "series", "obras.linhas"],
     "carga": ["gsa"],
+    "debentures": ["emissoes", "secundario.ultimo_por_ticker"],
     "estaduais": ["malha.linhas", "entidades"],
     "fontes": ["fontes", "indisponiveis", "base"],
     "multimodal": ["ferrovias", "portos", "siade", "exportacao.linhas", "fretes.linhas"],
@@ -209,6 +214,39 @@ def _consorcios(conc):
     return out
 
 
+def _debentures(bloco):
+    """Pendências do bloco de debêntures (scripts/intel/debentures.py): emissor das planilhas sem classificação (fica
+    fora da página), série pública ausente e dias de negócio ou intenção IPCA+ sem curva das NTN-B do Tesouro."""
+    pend = (bloco or {}).get("pendencias") or {}
+    refazer = "depois rode `python scripts/atualizar.py --dominios debentures`"
+    out = [("emissor_sem_classificacao", p["nome"],
+            f"aparece em {', '.join(p['origens'])} ({p['papeis']} {'papéis' if p['papeis'] != 1 else 'papel'}) e ficou fora "
+            "da página: classifique-o em data/debentures/emissores.json (subsetor e grupo, numa entrada nova ou como "
+            f"grafia em `nomes` de um emissor que já existe) ou, se não for de transporte, ponha o nome em "
+            f"`fora_do_universo`; {refazer}")
+           for p in pend.get("emissores_sem_classificacao") or []]
+    out += [("debentures_sem_serie", s["serie"],
+             f"sem arquivo em {s['arquivo']} (a fonte não respondeu): o indicador fica \"—\" e, sem o Tesouro, todos os "
+             "spreads também; rode `python scripts/atualizar.py --baixar --dominios debentures` mais tarde")
+            for s in pend.get("series_indisponiveis") or []]
+    dias = pend.get("dias_sem_curva") or []
+    if dias:
+        out.append(("debentures_sem_serie", "Curva das NTN-B (Tesouro Direto)",
+                    f"sem taxas do Tesouro Direto em {', '.join(_fmt(d) for d in dias)} (feriado, ou o arquivo do "
+                    "Tesouro ainda não chegou a esses dias): o spread dos negócios e intenções desses dias fica \"—\"; "
+                    "rode `python scripts/atualizar.py --renovar debentures` quando o Tesouro publicar"))
+    for t in pend.get("taxas_descartadas") or []:
+        taxa = f"{t['taxa']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        out.append(("taxa_fora_do_intervalo", f"{t['ticker']} ({t['origem']})",
+                    f"taxa de {taxa}% ({t['indexador']}) em {t['n']} linha(s) da planilha, provável erro de digitação: "
+                    "ficou fora da taxa média e do spread, mas conta no volume e no número; confira com a corretora e, "
+                    "se for o caso, corrija a planilha em data/raw/debentures/ e rode de novo"))
+    out += [("linha_sem_data", s["origem"],
+             f"{s['n']} linha(s) com data e hora ilegíveis ficaram fora dos totais: confira a coluna de horário da "
+             f"planilha em data/raw/debentures/ e rode de novo") for s in pend.get("linhas_sem_data") or []]
+    return out
+
+
 def itens(conc_aplicado, intel, verif, hoje=None):
     """Lista de curadoria manual `[{tipo, item, motivo}]`, na ordem de `TIPOS` e, dentro do tipo, por item.
     `conc_aplicado`: CONC com a camada de verificação aplicada; `intel`: {bloco: dados} de data/intel/; `verif`:
@@ -221,7 +259,7 @@ def itens(conc_aplicado, intel, verif, hoje=None):
     ents_federais = {e.get("id") for e in conc_aplicado.get("entidades") or []}
     brutos = (_pipeline_atrasado(lista, rotulo, hoje, ents_federais) + _leilao_sem_verificacao(conc_aplicado, lista, verif, hoje)
               + _estado_vencido(conc_aplicado, hoje) + _pipeline_nao_verificado(lista) + _fonte_antiga(intel.get("fontes") or {}, hoje)
-              + _nome_sem_grupo(conc_aplicado, verif) + _consorcios(conc_aplicado))
+              + _nome_sem_grupo(conc_aplicado, verif) + _consorcios(conc_aplicado) + _debentures(intel.get("debentures")))
     ordem = {t: k for k, t in enumerate(TIPOS)}
     brutos.sort(key=lambda x: (ordem[x[0]], x[1]))
     return [{"tipo": t, "item": i, "motivo": m} for t, i, m in brutos]

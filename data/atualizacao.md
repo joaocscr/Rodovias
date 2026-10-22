@@ -12,6 +12,7 @@ Gerado por `python scripts/atualizar.py` (sem --baixar). Diferenças em relaçã
 | agro | pulado | arquivo ausente: data/raw/graos/malha/ibge_municipios.json (baixe com `--baixar`) |
 | multimodal | ok |  |
 | pipeline | ok |  |
+| debentures | ok |  |
 | estaduais | pulado | arquivo ausente: data/raw/estaduais/abcr/api_conc.json (baixe com `--baixar`) |
 | vmda2025 | pulado | falta data/raw/trafego/vmda2025/vgeo_vmda2025.zip (shapefile do Google Drive do usuário; ver README, "Atualizar os dados"); vmda2025.json ficou como estava |
 | rotas | pulado | arquivo ausente: data/raw/rotas/apresentacao_rotas_2026-07-01.pdf (baixe com `--baixar`) |
@@ -28,8 +29,9 @@ Registros: itens das coleções principais de cada bloco (valores preenchidos); 
 | agro | 5.571 | 5.571 | 210,5 | 210,5 | não |
 | antt | 1.938 | 1.938 | 399,2 | 399,2 | não |
 | carga | 4.312 | 4.312 | 141,3 | 141,3 | não |
+| debentures | — | 236 | — | 91,2 | novo |
 | estaduais | 16.238 | 16.238 | 2.949,8 | 2.949,8 | não |
-| fontes | 49 | 49 | 24,5 | 24,5 | não |
+| fontes | 49 | 54 | 24,5 | 28,0 | sim (+3,4 KB) |
 | multimodal | 3.188 | 3.188 | 413,9 | 413,9 | não |
 | municipios | 5.571 | 5.571 | 1.687,6 | 1.687,6 | não |
 | pipeline | 64 | 64 | 42,9 | 42,9 | não |
@@ -39,7 +41,7 @@ Registros: itens das coleções principais de cada bloco (valores preenchidos); 
 
 ## Curadoria manual
 
-16 itens. Cada um diz o arquivo a editar; depois rode de novo o comando.
+20 itens. Cada um diz o arquivo a editar; depois rode de novo o comando.
 
 ### Pipeline com data passada ainda como previsto (1)
 
@@ -68,3 +70,16 @@ Registros: itens das coleções principais de cada bloco (valores preenchidos); 
 ### Consórcios que a ata do leilão não lista (1)
 
 - **Consórcio Via dos Sertões (BR-116/PR/SP - Otimização Régis Bittencourt, 2026)** — o nome está na lista de proponentes do leilão, mas a ata oficial não o traz (provável erro de entrada): confira a fonte e corrija o proponente em data/roadshow/mercado.json, ou tire a marca fora_da_ata de data/roadshow/consorcios.json
+
+### Emissores de debêntures sem classificação (1)
+
+- **APOLLO 17** — aparece em intenções XP, tela XP (1 papel) e ficou fora da página: classifique-o em data/debentures/emissores.json (subsetor e grupo, numa entrada nova ou como grafia em `nomes` de um emissor que já existe) ou, se não for de transporte, ponha o nome em `fora_do_universo`; depois rode `python scripts/atualizar.py --dominios debentures`
+
+### Debêntures sem série pública ou sem curva das NTN-B (indicador ou spread "—") (1)
+
+- **Curva das NTN-B (Tesouro Direto)** — sem taxas do Tesouro Direto em 16/10/2026, 19/10/2026, 20/10/2026, 21/10/2026 (feriado, ou o arquivo do Tesouro ainda não chegou a esses dias): o spread dos negócios e intenções desses dias fica "—"; rode `python scripts/atualizar.py --renovar debentures` quando o Tesouro publicar
+
+### Taxas de debêntures fora do intervalo plausível (fora das médias) (2)
+
+- **COMT11 (negócios BTG)** — taxa de 60,00% (IPCA+) em 2 linha(s) da planilha, provável erro de digitação: ficou fora da taxa média e do spread, mas conta no volume e no número; confira com a corretora e, se for o caso, corrija a planilha em data/raw/debentures/ e rode de novo
+- **VBRR11 (intenções XP)** — taxa de 1.067,00% (IPCA+) em 1 linha(s) da planilha, provável erro de digitação: ficou fora da taxa média e do spread, mas conta no volume e no número; confira com a corretora e, se for o caso, corrija a planilha em data/raw/debentures/ e rode de novo

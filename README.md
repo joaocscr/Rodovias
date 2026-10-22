@@ -48,6 +48,7 @@ Cada bloco fica em `data/intel/<bloco>.json` (versionado) e é embutido no HTML 
 | `estaduais` | Infra S.A. (malha estadual), ARTESP, AGERGS, Ager-MT, ABCR | CIDE 2021 (malha); fichas 2024–2026; imprensa e releases 2019–2026 | cadastro |
 | `pipeline` | Ministério dos Transportes (carteira v40), ANTT, BNDES Hub, portais estaduais, imprensa | out/2025 a out/2026 | sem rótulo (carteira curada) |
 | `rotas` (v3.1) | MPO (apresentação de 01/07/2026, relatórios 2024 e 2025, imagens oficiais das rotas), Natural Earth (países) | 2024 a 2026 | cadastro (traçado esquemático) |
+| `debentures` | telas e negócios de debêntures das corretoras XP e BTG (planilhas do usuário: negócios fechados BTG e intenções de compra e venda XP), Banco Central (Selic, CDI, IPCA 12 meses, Focus) e Tesouro Nacional (NTN-B do Tesouro Direto) | negócios e intenções de 01/10 a 21/10/2026; telas de 22/10/2026 | medido; só agregados por dia, emissor, subsetor e direção, e o último negócio de cada papel |
 | `fontes` | lista de todas as fontes, as da base e as indisponíveis | gerado a partir dos blocos | não se aplica |
 
 O bloco `fontes` relaciona também o que **não** foi possível obter, com o motivo (por exemplo, o portal PNCT do DNIT, o painel de cargas da ANTT, que só existe em Power BI, e o PNL 2050 por link de rodovia).
@@ -118,7 +119,7 @@ Registros do mesmo trecho físico são agrupados por dois critérios: os código
 
 ## Como atualizar
 
-São três roteiros. Todos terminam do mesmo jeito: o `mapa-rodovias.html` gerado de novo e o relatório `data/atualizacao.md`, que diz o que mudou e o que ainda precisa de revisão manual. Nenhum arquivo de `data/intel/*.json` se edita à mão: uma correção vai no script que gera o bloco ou no arquivo curado de origem (`data/intel/pipeline.csv`, `data/roadshow/*.json`). A interface não tem número nem período digitado: títulos como "Programa 2023–2027" e os anos dos filtros saem dos dados.
+São quatro roteiros. Todos terminam do mesmo jeito: o `mapa-rodovias.html` gerado de novo e o relatório `data/atualizacao.md`, que diz o que mudou e o que ainda precisa de revisão manual. Nenhum arquivo de `data/intel/*.json` se edita à mão: uma correção vai no script que gera o bloco ou no arquivo curado de origem (`data/intel/pipeline.csv`, `data/roadshow/*.json`). A interface não tem número nem período digitado: títulos como "Programa 2023–2027" e os anos dos filtros saem dos dados.
 
 ### 1. Dados públicos (um comando)
 
@@ -130,14 +131,14 @@ python scripts/atualizar.py                                  # sem baixar: usa s
 python scripts/atualizar.py --dominios antt,pipeline --sem-html   # só alguns domínios, sem gerar o HTML
 ```
 
-- A ordem é fixa: `trafego`, `antt`, `carga`, `agro`, `multimodal`, `pipeline`, `estaduais`, `vmda2025`, `rotas`; depois o bloco de fontes, a validação da camada de verificação dos leilões e o `build.py`. O comando chama os scripts de `scripts/intel/` (os mesmos da seção "Atualizar os dados", abaixo).
-- Domínio sem o arquivo bruto (sem `--baixar`), ou cujo download falha, é pulado com aviso no relatório, e o bloco dele fica como estava. O VMDa 2025 é pulado se o zip do Google Drive não estiver em `data/raw/trafego/vmda2025/`.
+- A ordem é fixa: `trafego`, `antt`, `carga`, `agro`, `multimodal`, `pipeline`, `debentures`, `estaduais`, `vmda2025`, `rotas`; depois o bloco de fontes, a validação da camada de verificação dos leilões e o `build.py`. O comando chama os scripts de `scripts/intel/` (os mesmos da seção "Atualizar os dados", abaixo).
+- Domínio sem o arquivo bruto (sem `--baixar`), ou cujo download falha, é pulado com aviso no relatório, e o bloco dele fica como estava. O VMDa 2025 é pulado se o zip do Google Drive não estiver em `data/raw/trafego/vmda2025/`, e as debêntures, se não houver planilha em `data/raw/debentures/` (roteiro 4).
 - O comando só termina com erro quando a validação da verificação ou a geração do HTML falham. Se o HTML não puder ser gerado por qualquer motivo, o passo aparece como falha (nunca como pulado).
 - `--baixar` baixa só o que falta: arquivo que já está em `data/raw/` não é baixado de novo. Para trazer a versão mais nova de uma fonte, use `--renovar` (todos os domínios) ou `--renovar antt,agro` (só esses): o download é refeito mesmo que o arquivo exista. O arquivo anterior fica guardado ao lado, como `<arquivo>.anterior`, até o bloco do domínio ser gerado: se o download ou a geração falham, ele volta para o lugar (com o manifesto) e o detalhe do passo no relatório diz "bruto anterior restaurado". Não apague pastas de `data/raw/` à mão: ali também ficam arquivos que só você tem (o zip do VMDa 2025) e brutos usados por mais de um domínio (`data/raw/graos/`).
 - A data de acesso de cada arquivo (manifesto e aba Fontes) só muda quando o conteúdo baixado muda (SHA-256 diferente). Se um domínio renovado vier igual, o relatório lista-o em "Fontes renovadas sem dado novo": a fonte não publicou dado novo ou o endereço mudou (muitas URLs trazem o ano ou o mês no nome; veja a tabela abaixo).
 - Depois, leia `data/atualizacao.md`:
   - **O que mudou por bloco**: registros e tamanho de cada bloco antes e depois, comparados com o último commit.
-  - **Curadoria manual**: cada item diz o arquivo a editar. São oito tipos: item do pipeline com data passada ainda como previsto (status em `pipeline.csv`; num item com concessão federal, a data em `data/roadshow/verificacao.json` ou `entidades.json`); leilão realizado sem resultado na camada de verificação, inclusive quando a entrada da concessão só tem a data do edital (roteiro 3); concessão ainda como "a leiloar" com leilão já passado (roteiro 3); item do pipeline sem fonte oficial; fonte acessada há mais de 12 meses (para fontes baixadas, `--renovar` o domínio; para as curadas, a constante `ACESSO` no script indicado); nome de proponente sem grupo econômico (`data/roadshow/grupos_alias.json`); consórcio vencedor sem composição ou sem ficha, e consórcio que a ata do leilão não lista (`data/roadshow/consorcios.json`).
+  - **Curadoria manual**: cada item diz o arquivo a editar. São doze tipos: item do pipeline com data passada ainda como previsto (status em `pipeline.csv`; num item com concessão federal, a data em `data/roadshow/verificacao.json` ou `entidades.json`); leilão realizado sem resultado na camada de verificação, inclusive quando a entrada da concessão só tem a data do edital (roteiro 3); concessão ainda como "a leiloar" com leilão já passado (roteiro 3); item do pipeline sem fonte oficial; fonte acessada há mais de 12 meses (para fontes baixadas, `--renovar` o domínio; para as curadas, a constante `ACESSO` no script indicado); nome de proponente sem grupo econômico (`data/roadshow/grupos_alias.json`); consórcio vencedor sem composição ou sem ficha, e consórcio que a ata do leilão não lista (`data/roadshow/consorcios.json`); emissor de debêntures das planilhas sem classificação (`data/debentures/emissores.json`); série pública das debêntures que não respondeu ou dia sem curva das NTN-B (spread "—"); taxa de debênture fora do intervalo plausível, tirada das médias, e linha das planilhas sem data legível, fora dos totais (roteiro 4).
 - Rode os testes (seção "Testes"). Os testes de navegador comparam a tela com o que a própria página calcula e passam com dados novos. Os testes que conferem um valor concreto (`tests/test_dados_conferidos.py` e os `tests/test_intel_*.py`) falham com a mensagem "dado mudou: revise …": confira o novo valor na fonte indicada e, se estiver certo, atualize o valor esperado no teste.
 - Faça o commit dos JSON, do relatório e do HTML.
 
@@ -154,6 +155,7 @@ python scripts/atualizar.py --dominios antt,pipeline --sem-html   # só alguns d
 | estaduais | `scripts/intel/estaduais.py` | `INFRA_URL` (camada com CIDE 2021/DNIT 2002; a de ano-base 2024 não respondia), `ARTESP_KMZ` (id de recurso por lote), `AGERGS_XLSX` (caminho com data), os dicionários curados das concessões (`CURADO_SP` e as fichas das demais UFs) e o período "2026" em `fetch` |
 | vmda2025 | `scripts/intel/vmda2025.py` | Arquivo do usuário (Google Drive): `ZIP`, `PASTA`, `SHP`, `"ano": 2025` em `build` e os textos de período; um VMDa de outro ano é, na prática, um bloco novo |
 | rotas | `scripts/intel/rotas.py` | `PDF` (`apresentacao_rotas_2026-07-01.pdf`), `URL_APRESENTACAO`, `URL_RELATORIO` (2024 e 2025), `DOCS`, os textos de `ROTAS` (transcritos), `PAGINA` e os coeficientes `CX`/`CY` (georreferência do mapa do PDF) |
+| debentures | `scripts/intel/debentures.py` | Nada para as séries públicas (as URLs pedem os últimos valores e o histórico inteiro do Tesouro Direto, e o `--baixar` sempre as renova). As planilhas novas entram por `data/raw/debentures/` (roteiro 4) |
 | fontes | `scripts/intel/fontes_bloco.py` | `ACESSO` e `BASE` (versão do SNV e do RoadShow), `INDISPONIVEIS` |
 
 Depois de editar, rode `python scripts/atualizar.py --renovar <domínio>` e confira o relatório e os testes "dado mudou".
@@ -186,6 +188,15 @@ Para contar o leilão nessas abas antes disso:
 4. Na versão seguinte do RoadShow, a nova extração refaz as duas listas e a linha passa a vir dele. Se o nome do lote mudar, a validação acusa "casa 0 linhas" e basta ajustar `participantes.lote` e `concorrentes` na entrada da verificação.
 
 O teste `test_roteiro_3_resultado_antes_do_proximo_roadshow` (`tests/test_verificacao.py`) faz esse caminho numa cópia de `data/roadshow/`. Um leilão federal sem concessão no RoadShow (sem `ent`) fica no pipeline, com fonte e observação, até a próxima versão, e o relatório continua lembrando dele.
+
+### 4. Debêntures (planilhas das corretoras)
+
+1. Coloque as planilhas em `data/raw/debentures/` (qualquer nome terminado em `.xlsx`; a pasta fica fora do git). As abas são reconhecidas pelo cabeçalho: tela BTG (com a coluna "Setor"), tela XP ("Índice", "Rating"), negócios fechados BTG ("transact_time") e intenções de compra e venda XP ("Direção", "Taxa Bruta"). Tire da pasta as planilhas antigas que não devem mais contar: todas as que estiverem lá são somadas.
+2. Rode `python scripts/atualizar.py --baixar` (ou `--baixar --dominios debentures` só para este bloco). Como as séries públicas das debêntures são diárias (Selic, CDI, IPCA, Focus e o histórico do Tesouro Direto, em `data/raw/debentures/publico/`), o `--baixar` sempre as baixa de novo, mesmo que já existam; se uma fonte não responder, fica o arquivo anterior. O site do Tesouro responde "muitas requisições" (429) em rajadas: o download tenta de novo por alguns minutos e, se não vier, o bloco sai sem a curva das NTN-B (spread "—") e o relatório avisa.
+3. Leia a curadoria em `data/atualizacao.md`. Emissor que não casa com `data/debentures/emissores.json` fica fora da página até ser classificado: acrescente a grafia em `nomes` de um emissor existente, crie uma entrada (`nome`, `subsetor` entre rodovias, ferrovias, portos e terminais, aeroportos, hidrovias e mobilidade urbana, e `grupo`, com o nome usado em `data/roadshow/grupos_alias.json` quando for um grupo de rodovias, ou `null` se não confirmado) ou, se não for de transporte, ponha o nome em `fora_do_universo`. O casamento é pelo nome inteiro (sem acento, caixa e o "S.A." do fim), nunca por pedaço. O setor "Transporte" da tela BTG não basta: ela classifica algumas concessionárias de rodovia como "Comércio" ou "Construção Civil".
+4. O bloco `data/intel/debentures.json` traz só agregados (por dia, emissor, subsetor e, nas intenções, direção) e o último negócio e a última intenção de cada papel, nunca as linhas das planilhas. As pendências da curadoria ficam no bloco, mas não vão para o HTML. Intenções ficam à parte dos negócios, no mesmo formato. Spread só para IPCA+: taxa menos a NTN-B do mesmo dia, interpolada pelo vencimento; sem curva no dia ou fora dela, "—".
+
+**Trocar as planilhas pela API interna.** Só `scripts/intel/debentures_planilhas.py` (`planilhas`, `ler_telas`, `ler_negocios`) conhece o formato das planilhas; o início do arquivo descreve o contrato, as listas que essas funções devolvem. Escreva um módulo irmão com as mesmas funções lendo a API e passe-as a `montar`, em `scripts/intel/debentures.py` (`ler_telas=`, `ler_negocios=`); ajuste também as duas primeiras fontes de `_fontes`, que hoje dizem "planilha enviada pelo usuário". Os conversores de texto comuns (nomes, datas, números e taxas) ficam em `scripts/intel/debentures_texto.py`.
 
 ## Atualizar os dados
 
@@ -236,7 +247,7 @@ npm run test:e2e                     # navegador: offline, interações, desempe
 | `scripts/curadoria.py` | funções do relatório: diferença por bloco e lista de curadoria manual |
 | `scripts/fetch_assets.py` | baixa as UFs do IBGE, o Leaflet e as fontes |
 | `scripts/roadshow.py` | recorte curado (km → trechos), validação e payload das concessões |
-| `scripts/intel/` | um script por domínio (`trafego`, `antt`, `carga`, `agro`, `multimodal`, `pipeline`, `estaduais` e, na v3.1, `vmda2025` e `rotas`), a junção com o SNV (`snvbase.py`), o download com manifesto (`fontes.py`) e o bloco de fontes (`fontes_bloco.py`) |
+| `scripts/intel/` | um script por domínio (`trafego`, `antt`, `carga`, `agro`, `multimodal`, `pipeline`, `debentures` (com o leitor das planilhas em `debentures_planilhas.py`), `estaduais` e, na v3.1, `vmda2025` e `rotas`), a junção com o SNV (`snvbase.py`), o download com manifesto (`fontes.py`) e o bloco de fontes (`fontes_bloco.py`) |
 | `scripts/verificacao.py` | camada de verificação dos leilões: valida `verificacao.json`, `grupos_alias.json` e `consorcios.json` e a aplica sobre as concessões (usada pelo `build.py` e por `scripts/intel/pipeline.py`) |
 | `scripts/validate_palette.js` | validador de paleta do método dataviz (daltonismo, luminosidade, contraste), usado por `tests/palette.test.mjs` |
 | `data/base/` | SNV e recorte das concessões congelados (`snv.json`, `conc.json`), lidos pelo build; os campos curados das concessões (estado, datas, valores) são relidos de `data/roadshow/entidades.json` a cada build |
@@ -247,6 +258,7 @@ npm run test:e2e                     # navegador: offline, interações, desempe
 | `data/roadshow/verificacao.md` | v4: relatório de cobertura da verificação, gerado pelo `build.py` |
 | `data/intel/` | blocos da v3 (`<bloco>.json`), `pipeline.csv`, `fontes.json` e `manifest.json` |
 | `data/manifest/` | manifesto de download por domínio |
+| `data/debentures/emissores.json` | classificação curada dos emissores de debêntures (subsetor, grupo e grafias) e nomes fora do universo |
 | `data/atualizacao.md` | relatório da última atualização (gerado por `scripts/atualizar.py`) |
 | `tests/` | testes Python (`test_*.py`) e JS (`*.test.mjs`) |
 | `src/` | template, CSS (tokens da paleta base), tokens de cor de dados (`styles-map.js`) e JS (`model`, `map`, `layers`, `ui` e uma aba por arquivo) |

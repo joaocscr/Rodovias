@@ -56,5 +56,10 @@
   "rotas": {
     "nome": "Rotas de Integração Sul-Americana",
     "oQue": "Apresentação e relatórios do Ministério do Planejamento e Orçamento (MPO) sobre as cinco rotas que ligam o Brasil aos países vizinhos e aos portos do Pacífico e do Caribe, com o traçado esquemático delas; contornos dos países do Natural Earth."
+  },
+  "debentures": {
+    "nome": "Debêntures de infraestrutura de transporte",
+    "oQue": "Telas de debêntures e negócios das corretoras XP e BTG, fornecidos pelo usuário: negócios fechados (BTG) e intenções de compra e venda (XP) no mercado secundário. Também Selic, CDI, IPCA e a expectativa do Boletim Focus, do Banco Central do Brasil, e as taxas das NTN-B do Tesouro Nacional, base do spread.",
+    "termos": [{"id": "debenture", "texto": "debêntures"}, {"id": "mercado-secundario", "texto": "mercado secundário"}, {"id": "selic", "texto": "Selic"}, {"id": "cdi", "texto": "CDI"}, {"id": "ipca", "texto": "IPCA"}, {"id": "focus", "texto": "Boletim Focus"}, {"id": "ntn-b", "texto": "NTN-B"}, {"id": "spread", "texto": "spread"}]
   }
 }

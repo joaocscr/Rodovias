@@ -37,6 +37,8 @@ def _modulos(chamadas, tmp_path, falha=None, sem_bruto=None, zip_existe=True, re
         m = types.SimpleNamespace(build=build, fetch=fetch)
         if d == "vmda2025":
             m = types.SimpleNamespace(build=build, ZIP=zip_, registrar=lambda: chamadas.append("vmda2025.registrar"))
+        if d == "debentures":  # com planilha na pasta de entrada
+            m = types.SimpleNamespace(build=build, fetch=fetch, PASTA=tmp_path, planilhas=lambda: [tmp_path / "a.xlsx"])
         mods[f"intel.{d}"] = m
     return mods.__getitem__
 
@@ -73,6 +75,22 @@ def test_vmda2025_sem_zip_pula_com_aviso(tmp_path):
     assert [r["estado"] for r in res] == ["pulado", "ok"]
     assert "vgeo_vmda2025.zip" in res[0]["detalhe"]
     assert chamadas == ["rotas.fetch", "rotas.build"]
+
+
+def test_debentures_sem_planilhas_pula_sem_baixar_as_series(tmp_path):
+    chamadas = []
+    mods = _modulos(chamadas, tmp_path)
+    deb = types.SimpleNamespace(PASTA=atualizar.ROOT / "data/raw/debentures", planilhas=lambda: [],
+                                fetch=lambda force=False: chamadas.append("debentures.fetch"),
+                                build=lambda: chamadas.append("debentures.build"))
+    importar = lambda nome: deb if nome == "intel.debentures" else mods(nome)  # noqa: E731
+    passos = atualizar.passos_dominios(["debentures", "rotas"], baixar=True, importar=importar)
+    res = _roda(passos, tmp_path)
+    assert [r["passo"] for r in res] == ["debentures", "rotas"]
+    assert [r["estado"] for r in res] == ["pulado", "ok"]
+    assert "data/raw/debentures/" in res[0]["detalhe"] and "planilhas" in res[0]["detalhe"]
+    assert chamadas == ["rotas.fetch", "rotas.build"]
+    assert atualizar.ORDEM.index("debentures") == atualizar.ORDEM.index("pipeline") + 1
 
 
 def test_bruto_ausente_pula_e_falha_nao_derruba_os_outros(tmp_path):

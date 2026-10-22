@@ -1,0 +1,644 @@
+{
+ "nota": "Classificação manual dos emissores de debêntures de infraestrutura de transporte (setor Transporte das telas e emissores de transporte que só aparecem nos negócios ou nas intenções). Cada nome em 'nomes' é uma grafia vista nas fontes; o casamento é pelo nome inteiro, sem acento, caixa ou o 'S.A.' do fim. 'grupo' é o grupo econômico controlador quando confirmado (para rodovias, com o nome usado no ranking de grupos, data/roadshow/grupos_alias.json); null quando não confirmado. 'fora_do_universo': nomes vistos nas planilhas que não são de infraestrutura de transporte (locadoras de veículos e de máquinas e empresas de logística entram aqui), para não voltarem ao relatório de curadoria.",
+ "emissores": [
+  {
+   "nome": "Arteris",
+   "subsetor": "rodovias",
+   "grupo": "Arteris",
+   "nomes": [
+    "ARTERIS S.A."
+   ]
+  },
+  {
+   "nome": "Arteris ViaPaulista",
+   "subsetor": "rodovias",
+   "grupo": "Arteris",
+   "nomes": [
+    "VIAPAULISTA"
+   ]
+  },
+  {
+   "nome": "AutoBAn (Sistema Anhanguera-Bandeirantes)",
+   "subsetor": "rodovias",
+   "grupo": "Motiva",
+   "nomes": [
+    "CONCESSIONARIA DO SISTEMA ANHANGUERA-BANDEIRANTES S/A",
+    "ANHANGUERA-BANDEIRANTES",
+    "CONCESSIONÁRIA DO SISTEMA ANHANGUERA-BANDEIRANTES S.A."
+   ]
+  },
+  {
+   "nome": "Autopista Fernão Dias",
+   "subsetor": "rodovias",
+   "grupo": "Arteris",
+   "nomes": [
+    "AUTOPISTA FERNAO DIAS S/A",
+    "FERNÃO DIAS"
+   ]
+  },
+  {
+   "nome": "Autopista Litoral Sul",
+   "subsetor": "rodovias",
+   "grupo": "Arteris",
+   "nomes": [
+    "LITORAL SUL"
+   ]
+  },
+  {
+   "nome": "Autopista Planalto Sul",
+   "subsetor": "rodovias",
+   "grupo": "Arteris",
+   "nomes": [
+    "AUTOPISTA PLANALTO SUL"
+   ]
+  },
+  {
+   "nome": "Autopista Régis Bittencourt",
+   "subsetor": "rodovias",
+   "grupo": "Arteris",
+   "nomes": [
+    "AUTOPISTA REGIS BITTENCOURT",
+    "REGIS BITTENCOURT"
+   ]
+  },
+  {
+   "nome": "Concessionária Auto Raposo Tavares",
+   "subsetor": "rodovias",
+   "grupo": null,
+   "nomes": [
+    "CONCESSIONARIA AUTO RAPOSO TAVARES S/A",
+    "AUTO RAPOSO TAVARES",
+    "CONC. RODOVIA RAPOSO TAVARES",
+    "RAPOSO TAVARES - CART"
+   ]
+  },
+  {
+   "nome": "Concessionária da Rodovia MG-050",
+   "subsetor": "rodovias",
+   "grupo": null,
+   "nomes": [
+    "CONC. RODOVIA MG-050",
+    "RODOVIA MG 050"
+   ]
+  },
+  {
+   "nome": "Concessionária da Rodovia MS 306",
+   "subsetor": "rodovias",
+   "grupo": null,
+   "nomes": [
+    "CONCESSIONARIA DA RODOVIA MS 306 S.A.",
+    "CONCESSIONARIA DA RODOVIA MS 306"
+   ]
+  },
+  {
+   "nome": "Concessionária de Rodovia Sul-Matogrossense (MSVia)",
+   "subsetor": "rodovias",
+   "grupo": "Motiva",
+   "nomes": [
+    "CONCESSIONARIA DE RODOVIA SUL - MATOGROSSENSE S.A",
+    "CONCESSIONÁRIA DE RODOVIA SUL - MATOGROSSENSE S.A."
+   ]
+  },
+  {
+   "nome": "Concessionária de Rodovias PRVias",
+   "subsetor": "rodovias",
+   "grupo": null,
+   "nomes": [
+    "CONCESSIONARIA DE RODOVIAS PRVIAS S.A.",
+    "PRVIAS"
+   ]
+  },
+  {
+   "nome": "Concessionária do Rodoanel Oeste",
+   "subsetor": "rodovias",
+   "grupo": "Motiva",
+   "nomes": [
+    "CONCESSIONARIA DO RODOANEL OESTE S/A",
+    "CONCESSIONÁRIA DO RODOANEL OESTE S.A."
+   ]
+  },
+  {
+   "nome": "Concessionária Rota das Bandeiras",
+   "subsetor": "rodovias",
+   "grupo": null,
+   "nomes": [
+    "CONC. ROTA DAS BANDEIRAS",
+    "ROTA DAS BANDEIRAS"
+   ]
+  },
+  {
+   "nome": "Concessionária Rota do Atlântico",
+   "subsetor": "rodovias",
+   "grupo": null,
+   "nomes": [
+    "ROTA DO ATLANTICO"
+   ]
+  },
+  {
+   "nome": "Concessionária Rota Sorocabana",
+   "subsetor": "rodovias",
+   "grupo": null,
+   "nomes": [
+    "CONCESSIONARIA ROTA SOROCABANA SA",
+    "CONCESSIONARIA ROTA SOROCABANA"
+   ]
+  },
+  {
+   "nome": "Eco101",
+   "subsetor": "rodovias",
+   "grupo": "Ecorodovias",
+   "nomes": [
+    "ECO101 CONCESSIONARIA DE RODOVIAS S/A.",
+    "ECO101"
+   ]
+  },
+  {
+   "nome": "EcoNoroeste",
+   "subsetor": "rodovias",
+   "grupo": "Ecorodovias",
+   "nomes": [
+    "CONCESSIONARIA DE RODOVIAS NOROESTE PAULISTA S.A.",
+    "CONCESSIONÁRIA DE RODOVIAS NOROESTE PAULISTA S.A."
+   ]
+  },
+  {
+   "nome": "Ecopistas",
+   "subsetor": "rodovias",
+   "grupo": "Ecorodovias",
+   "nomes": [
+    "CONCESSIONARIA DAS RODOVIAS AYRTON SENNA E CARVALHO PINTO S/A - ECOPISTAS",
+    "ECOPISTAS"
+   ]
+  },
+  {
+   "nome": "Ecoponte (Ponte Rio-Niterói)",
+   "subsetor": "rodovias",
+   "grupo": "Ecorodovias",
+   "nomes": [
+    "CONC. PONTE RIO-NITEROI  - ECOPONTE",
+    "ECOPONTE"
+   ]
+  },
+  {
+   "nome": "EcoRioMinas",
+   "subsetor": "rodovias",
+   "grupo": "Ecorodovias",
+   "nomes": [
+    "ECORIOMINAS CONCESSIONARIA DE RODOVIAS S.A.",
+    "ECORIOMINAS"
+   ]
+  },
+  {
+   "nome": "Ecorodovias Concessões e Serviços",
+   "subsetor": "rodovias",
+   "grupo": "Ecorodovias",
+   "nomes": [
+    "ECORODOVIAS CONCESSOES E SERVICOS S/A",
+    "ECORODOVIAS"
+   ]
+  },
+  {
+   "nome": "Ecovias do Cerrado",
+   "subsetor": "rodovias",
+   "grupo": "Ecorodovias",
+   "nomes": [
+    "ECOVIAS DO CERRADO"
+   ]
+  },
+  {
+   "nome": "Ecovias dos Imigrantes",
+   "subsetor": "rodovias",
+   "grupo": "Ecorodovias",
+   "nomes": [
+    "CONCESSIONARIA ECOVIAS DOS IMIGRANTES S.A.",
+    "ECOVIAS"
+   ]
+  },
+  {
+   "nome": "Ecovias Raposo-Castelo",
+   "subsetor": "rodovias",
+   "grupo": "Ecorodovias",
+   "nomes": [
+    "CONCESSIONARIA ECOVIAS RAPOSO-CASTELO S.A",
+    "ECORAPOSO"
+   ]
+  },
+  {
+   "nome": "Entrevias",
+   "subsetor": "rodovias",
+   "grupo": null,
+   "nomes": [
+    "CONC.  RODOVIA ENTREVIAS",
+    "ENTREVIAS"
+   ]
+  },
+  {
+   "nome": "EPR Triângulo",
+   "subsetor": "rodovias",
+   "grupo": "EPR",
+   "nomes": [
+    "EPR TRIANGULO S.A",
+    "EPR TRIANGULO"
+   ]
+  },
+  {
+   "nome": "EPR Vias do Café",
+   "subsetor": "rodovias",
+   "grupo": "EPR",
+   "nomes": [
+    "EPR VIAS DO CAFE S.A",
+    "CONCESSIONÁRIA RODOVIAS DO CAFÉ"
+   ]
+  },
+  {
+   "nome": "Holding do Araguaia (Ecovias do Araguaia)",
+   "subsetor": "rodovias",
+   "grupo": "Ecorodovias",
+   "nomes": [
+    "HOLDING DO ARAGUAIA"
+   ]
+  },
+  {
+   "nome": "Intervias",
+   "subsetor": "rodovias",
+   "grupo": "Arteris",
+   "nomes": [
+    "CONCESSIONARIA DE RODOVIAS DO INTERIOR PAULISTA S/A",
+    "INTERVIAS"
+   ]
+  },
+  {
+   "nome": "Motiva Infraestrutura de Mobilidade",
+   "subsetor": "rodovias",
+   "grupo": "Motiva",
+   "nomes": [
+    "MOTIVA INFRAESTRUTURA DE MOBILIDADE S.A.",
+    "MOTIVA",
+    "CCR"
+   ]
+  },
+  {
+   "nome": "Rodovias das Colinas",
+   "subsetor": "rodovias",
+   "grupo": null,
+   "nomes": [
+    "RODOVIAS DAS COLINAS"
+   ]
+  },
+  {
+   "nome": "Rodovias do Brasil Holding",
+   "subsetor": "rodovias",
+   "grupo": null,
+   "nomes": [
+    "RODOVIAS DO BRASIL HOLDING S.A."
+   ]
+  },
+  {
+   "nome": "Rodovias Integradas do Oeste (SPVias)",
+   "subsetor": "rodovias",
+   "grupo": "Motiva",
+   "nomes": [
+    "RODOVIAS INTEGRADAS DO OESTE S/A",
+    "RODOVIAS INTEGRADAS DO OESTE"
+   ]
+  },
+  {
+   "nome": "Via Brasil BR-163",
+   "subsetor": "rodovias",
+   "grupo": "Consórcio Via Brasil BR-163",
+   "nomes": [
+    "VIA BRASIL BR 163"
+   ]
+  },
+  {
+   "nome": "ViaRondon",
+   "subsetor": "rodovias",
+   "grupo": null,
+   "nomes": [
+    "VIARONDON"
+   ]
+  },
+  {
+   "nome": "MRS Logística",
+   "subsetor": "ferrovias",
+   "grupo": "MRS",
+   "nomes": [
+    "MRS LOGISTICA S/A",
+    "MRS LOGISTICA",
+    "MRS LOGÍSTICA"
+   ]
+  },
+  {
+   "nome": "Rumo",
+   "subsetor": "ferrovias",
+   "grupo": "Rumo",
+   "nomes": [
+    "RUMO LOGISTICA",
+    "RUMO S.A.",
+    "RUMO"
+   ]
+  },
+  {
+   "nome": "Rumo Malha Paulista",
+   "subsetor": "ferrovias",
+   "grupo": "Rumo",
+   "nomes": [
+    "RUMO MALHA PAULISTA",
+    "RUMO MALHA PAULISTA S/A",
+    "RUMO MALHA PAULISTA S.A."
+   ]
+  },
+  {
+   "nome": "VLI",
+   "subsetor": "ferrovias",
+   "grupo": "VLI",
+   "nomes": [
+    "VLI LOGISTICA",
+    "VLI"
+   ]
+  },
+  {
+   "nome": "VLI Multimodal",
+   "subsetor": "ferrovias",
+   "grupo": "VLI",
+   "nomes": [
+    "VLI MULTIMODAL S.A.",
+    "VLI MULTIMODAL"
+   ]
+  },
+  {
+   "nome": "CLI Sul (terminal no porto de Santos)",
+   "subsetor": "portos e terminais",
+   "grupo": null,
+   "nomes": [
+    "CLI SUL S/A",
+    "CLI SUL"
+   ]
+  },
+  {
+   "nome": "Convicon Contêineres de Vila do Conde",
+   "subsetor": "portos e terminais",
+   "grupo": "Santos Brasil",
+   "nomes": [
+    "CONVICON CONTEINERES DE VILA DO CONDE",
+    "CONVICON - CONTEINERES DE"
+   ]
+  },
+  {
+   "nome": "Itapoá Terminais Portuários",
+   "subsetor": "portos e terminais",
+   "grupo": null,
+   "nomes": [
+    "ITAPOA TERMINAIS PORTUARIOS",
+    "ITAPOA TERMINAIS PORTUARIOS S.A.",
+    "ITAPOA",
+    "ITAPOÁ TERMINAIS PORTUÁRIOS"
+   ]
+  },
+  {
+   "nome": "Santos Brasil",
+   "subsetor": "portos e terminais",
+   "grupo": "Santos Brasil",
+   "nomes": [
+    "SANTOS BRASIL PARTICIPACOES S/A",
+    "SANTOS BRASIL"
+   ]
+  },
+  {
+   "nome": "TESC – Terminal Santa Catarina",
+   "subsetor": "portos e terminais",
+   "grupo": null,
+   "nomes": [
+    "TESC - TERMINAL SANTA CATARINA",
+    "TESC - TERMINAL SANTA CATARINA S.A."
+   ]
+  },
+  {
+   "nome": "TVV Terminal de Vila Velha",
+   "subsetor": "portos e terminais",
+   "grupo": null,
+   "nomes": [
+    "TVV TERMINAL DE VILA VELHA",
+    "TERMINAL VILA VELHA"
+   ]
+  },
+  {
+   "nome": "VPorts (porto de Vitória)",
+   "subsetor": "portos e terminais",
+   "grupo": null,
+   "nomes": [
+    "VPORTS"
+   ]
+  },
+  {
+   "nome": "Novo Norte Aeroportos",
+   "subsetor": "aeroportos",
+   "grupo": null,
+   "nomes": [
+    "SPE NOVO NORTE AEROPORTOS"
+   ]
+  },
+  {
+   "nome": "Pax Investimentos em Aeroportos",
+   "subsetor": "aeroportos",
+   "grupo": null,
+   "nomes": [
+    "PAX INVESTIMENTOS EM AEROPORTOS S.A",
+    "PAX"
+   ]
+  },
+  {
+   "nome": "PRS Aeroportos",
+   "subsetor": "aeroportos",
+   "grupo": null,
+   "nomes": [
+    "PRS AEROPORTOS S.A.",
+    "PRS"
+   ]
+  },
+  {
+   "nome": "Hidrovias do Brasil",
+   "subsetor": "hidrovias",
+   "grupo": "Hidrovias do Brasil",
+   "nomes": [
+    "HIDROVIAS DO BRASIL S.A.",
+    "HIDROVIAS"
+   ]
+  },
+  {
+   "nome": "Companhia do Metropolitano de São Paulo (Metrô SP)",
+   "subsetor": "mobilidade urbana",
+   "grupo": null,
+   "nomes": [
+    "COMPANHIA DO METROPOLITANO DE SÃO PAULO"
+   ]
+  },
+  {
+   "nome": "Concessão Metroviária do Rio de Janeiro (MetrôRio)",
+   "subsetor": "mobilidade urbana",
+   "grupo": null,
+   "nomes": [
+    "CONCESSAO METROVIARIA DO RIO DE JANEIRO S/A",
+    "METRORIO"
+   ]
+  },
+  {
+   "nome": "Concessionária das Linhas 8 e 9 de trens metropolitanos de São Paulo",
+   "subsetor": "mobilidade urbana",
+   "grupo": "Motiva",
+   "nomes": [
+    "CONCESSIONARIA DAS LINHAS 8 E 9 DO SISTEMA DE TRENS METROPOLITANOS DE SAO PAULO S.A.",
+    "CONCESSIONÁRIA DAS LINHAS 8 E 9 DO SISTEMA DE TRENS METROPOLITANOS DE SÃO PAULO S.A."
+   ]
+  },
+  {
+   "nome": "Metrô BH",
+   "subsetor": "mobilidade urbana",
+   "grupo": null,
+   "nomes": [
+    "METRÔ BH"
+   ]
+  }
+ ],
+ "fora_do_universo": [
+  "AEGEA",
+  "AEGEA RIO SPE1",
+  "AES TIETE",
+  "AGUAS DO RIO 1 SPE S.A",
+  "ÁGUAS DO SERTÃO",
+  "ALARES INTERNET PARTICIPAÇÕES S.A.",
+  "ALGAR TELECOM",
+  "ALGAR TELECOM S.A.",
+  "ALLOHA",
+  "AMBIENTAL CEARÁ",
+  "ARMAC",
+  "ARMAC LOCAÇÃO, LOGÍSTICA E SERVIÇOS S.A.",
+  "ARTEON Z TRANSMISSAO E PARTICIPAÇÕES",
+  "AUREN ENERGIA",
+  "B3",
+  "BRASIL TECNOLOGIA E PARTICIPACAO S.A.",
+  "BRASIL TECPAR",
+  "BRK AMBIENTAL",
+  "BRK AMBIENTAL PARTICIPACOES S/A",
+  "BRK AMBIENTAL PARTICIPAÇÕES S.A.",
+  "BRK AMBIENTAL - REGIAO METROPOLITANA DE MACEIO S.A.",
+  "BRK MACEIO",
+  "BTG PACTUAL HOLDING",
+  "BTG PACTUAL HOLDING S.A.",
+  "C&A MODAS S.A.",
+  "CEA MODAS",
+  "CEMIG D",
+  "Cemig D",
+  "CEMIG GERACAO E TRANSMISSAO S/A",
+  "CEMIG GT",
+  "CESP",
+  "CHESF",
+  "CICLUS",
+  "COGNA EDUCAÇÃO",
+  "COMGÁS",
+  "COMPANHIA DE ELETRICIDADE DO ESTADO DA BAHIA - COELBA",
+  "COMPANHIA DE SANEAMENTO DE MINAS GERAIS - COPASA MG",
+  "COMPANHIA DE SANEAMENTO DE MINAS GERAIS COPASA MG",
+  "COMPANHIA ENERGÉTICA SINOP S.A.",
+  "COMPANHIA SIDERURGICA NACIONAL",
+  "COMPANHIA SIDERÚRGICA NACIONAL - CSN",
+  "COMPASS",
+  "COMPLEXO MORRINHOS",
+  "COPASA",
+  "COPEL",
+  "COPEL GT",
+  "COSAN",
+  "CSN",
+  "DASA",
+  "ELETROBRAS",
+  "ELETRONORTE",
+  "ELETROPAULO",
+  "ENERGISA MATO GROSSO",
+  "ENERGISA MATO GROSSO DO SUL",
+  "EQUATORIAL",
+  "EQUATORIAL GOIÁS",
+  "EQUATORIAL TRANSMISSORA",
+  "EQUIPAV",
+  "EQUIPAV SANEAMENTO S.A.",
+  "FERRARI AGRO",
+  "FS I INDÚSTRIA DE ETANOL",
+  "HIGHLINE BRASIL II",
+  "IGUA",
+  "IGUA RIO DE JANEIRO S.A.",
+  "IGUA SANEAMENTO",
+  "IGUATEMI",
+  "INTERNATIONAL MEAL",
+  "IOCHPE-MAXION",
+  "ISA ENERGIA",
+  "ISA ENERGIA BRASIL S.A.",
+  "JALLES",
+  "JALLES MACHADO",
+  "KLABIN",
+  "LIGGA TELECOMUNICAÇÕES S.A.",
+  "LIGHT SERVIÇOS",
+  "LOCALIZA",
+  "LOCALIZA FLEET",
+  "LOCALIZA RENT A CAR S/A",
+  "LOCALIZA RENT A CAR",
+  "LOCAMERICA",
+  "MAGAZINE LUIZA",
+  "MARFRIG",
+  "MARITUBA TRANSMISSÃO DE ENERGIA S.A.",
+  "MEZ 5 TRANSMISSORA",
+  "MOVIDA",
+  "MOVIDA LOCAÇÃO DE VEÍCULOS S.A.",
+  "MOVIDA LOCACAO DE VEICULOS",
+  "MOVIDA PARTICIPACOES S/A",
+  "MOVIDA PARTICIPACOES",
+  "MULTIPLAN",
+  "NORTE ENERGIA",
+  "NTS",
+  "ORIGEM ENERGIA",
+  "ORIZON",
+  "ORIZON VALORIZACAO DE RESIDUOS S.A.",
+  "ORIZON VALORIZAÇÃO DE RESÍDUOS S.A.",
+  "OZN HEALTH",
+  "OZN HEALTH SPE S.A",
+  "PARANAGUA SANEAMENTO",
+  "PETRO RIO JAGUAR PETRÓLEO S.A.",
+  "PETRORECONCAVO",
+  "REDE DOR",
+  "RGE SUL",
+  "SABESP",
+  "SENDAS",
+  "SENDAS  DISTRIBUIDORA S/A",
+  "SENDAS DISTRIBUIDORA S.A.",
+  "SIMPAR S.A.",
+  "SIMPAR",
+  "SMARTFIT ESCOLA DE GINASTICA E DANCA S/A",
+  "TIBAGI ENERGIA",
+  "TIBAGI ENERGIA SPE S.A.",
+  "TIGRE S.A. PARTICIPAÇÕES",
+  "TIM BRASIL",
+  "TIM BRASIL SERVICOS E PARTICIPACOES S.A",
+  "TRÊS TENTOS",
+  "UNIÃO QUÍMICA FARMACÊUTICA NACIONAL S.A.",
+  "UNIDAS",
+  "UNIFIQUE TELECOMUNICACOES S.A.",
+  "UNIPAR",
+  "USIMINAS",
+  "USINA CAETÉ",
+  "USINA SANTA FÉ S.A.",
+  "USINAS SIDERÚRGICAS DE MINAS GERAIS S.A. - USIMINAS",
+  "V.TAL",
+  "V.TAL - REDE NEUTRA DE TELECOMUNICACOES S.A.",
+  "VAMOS",
+  "VAMOS LOCACAO",
+  "VAMOS LOCACAO DE CAMINHOES MAQUINAS E EQUIPAMENTOS S.A.",
+  "VENTOS DE SAO JORGE",
+  "VENTOS DE SAO TITO",
+  "VERO S.A.",
+  "VERO",
+  "VIX",
+  "WDC NETWORKS",
+  "WIZ SOLUCOES E CORRETAGEM DE SEGUROS S.A.",
+  "WTE BIOGÁS FRANÇA",
+  "YDUQS",
+  "YDUQS PARTICIPACOES S.A"
+ ]
+}

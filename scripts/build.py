@@ -72,12 +72,20 @@ def assemble(payload, conc, intel, out):
     return Path(out).stat().st_size
 
 
+# partes de um bloco que servem só ao relatório de curadoria (scripts/curadoria.py, que lê data/intel/ direto) e não
+# vão para o HTML
+SO_CURADORIA = {"debentures": ("pendencias",)}
+
+
 def load_intel(intel_dir=INTEL):
-    """Lê data/intel/<bloco>.json (exceto o manifesto) em {bloco: dados}."""
+    """Lê data/intel/<bloco>.json (exceto o manifesto) em {bloco: dados}, sem as partes de SO_CURADORIA."""
     intel = {}
     for p in sorted(Path(intel_dir).glob("*.json")):
         if p.stem != "manifest":
-            intel[p.stem] = json.loads(p.read_text(encoding="utf-8"))
+            dados = json.loads(p.read_text(encoding="utf-8"))
+            for k in SO_CURADORIA.get(p.stem, ()):
+                dados.pop(k, None)
+            intel[p.stem] = dados
     return intel
 
 
