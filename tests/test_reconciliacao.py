@@ -41,7 +41,10 @@ def _json(nome):
 
 DECL = _json("reconciliacao.json")
 ENTIDADES = _json("entidades.json")
-MERCADO = _json("mercado.json")
+# linhas de leilão acrescentadas antes da próxima versão do RoadShow (README, roteiro 3: `fora_do_roadshow`) não
+# entram na reconciliação, que compara a transcrição com os totais impressos
+MERCADO = {k: [x for x in v if not (isinstance(x, dict) and x.get("fora_do_roadshow"))] if isinstance(v, list) else v
+           for k, v in _json("mercado.json").items()}
 ANOS = list(DECL["programa_por_ano"]["anos"])  # anos do programa declarados na p. 125
 EXPL = DECL["explicacoes"]
 NS = list(DECL["desagio"]["por_concorrentes"])  # nº de concorrentes da tabela da p. 25

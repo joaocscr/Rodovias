@@ -1,4 +1,5 @@
 import copy
+import datetime as dt
 import json
 import re
 import sys
@@ -450,7 +451,7 @@ def test_aplicar_resumo_e_aliases(conc):
 
 def test_aplicar_semente_vazia_so_acrescenta_chaves(conc):
     out = aplicar(conc, {"versao": 1, "fontes": {}, "leiloes": []}, {"aliases": []})
-    assert out == {**conc, "verificacao": {"fontes": [], "cobertura": {"leiloes": 0, "oficial": 0, "roadshow": 0,
+    assert out == {**conc, "verificacao": {"fontes": [], "cobertura": {"leiloes": 0, "so_edital": 0, "oficial": 0, "roadshow": 0,
                                                                        "imprensa": 0, "nao_localizado": 0,
                                                                        "nao_se_aplica": 0}},
                    "grupos_alias": []}
@@ -465,8 +466,18 @@ def test_cobertura_conta_por_tipo():
          "campos": {"desagio": {"valor": None, "nao_localizado": True, "fontes": []},
                     "assinatura": {"valor": "2026-02-02", "fontes": ["antt"]}}},
     ])
-    assert cobertura(v) == {"leiloes": 2, "oficial": 2, "roadshow": 1, "imprensa": 1, "nao_localizado": 1,
-                            "nao_se_aplica": 0}
+    assert cobertura(v) == {"leiloes": 2, "so_edital": 0, "oficial": 2, "roadshow": 1, "imprensa": 1,
+                            "nao_localizado": 1, "nao_se_aplica": 0}
+
+
+def test_cobertura_conta_entrada_so_com_edital_a_parte(conc):
+    # a entrada só com a data do edital (cronograma) não é leilão verificado: conta em so_edital
+    v = verif([leilao({"leilao": {"valor": "2025-10-30", "fontes": ["antt"]}}),
+               {"chave": "celulose", "ent": "celulose", "campos": {"edital": {"valor": "2026-07", "fontes": ["rs-p15"]}}}])
+    assert cobertura(v) == {"leiloes": 1, "so_edital": 1, "oficial": 1, "roadshow": 1, "imprensa": 0,
+                            "nao_localizado": 0, "nao_se_aplica": 0}
+    md = relatorio_markdown(v, aplicar(conc, v, {"aliases": []}))
+    assert "| Leilões verificados | Entradas só com edital |" in md and "| 1 | 1 | 1 | 1 | 0 | 0 | 0 |" in md
 
 
 def test_nao_se_aplica_valida_e_aplica(conc):
@@ -499,8 +510,8 @@ def test_cobertura_conta_nao_se_aplica():
     v = verif([leilao({"desagio": {"valor": None, "nao_se_aplica": True, "fontes": ["antt"]},
                        "assinatura": {"valor": None, "nao_localizado": True, "fontes": []},
                        "leilao": {"valor": "2025-10-30", "fontes": ["antt"]}})])
-    assert cobertura(v) == {"leiloes": 1, "oficial": 1, "roadshow": 0, "imprensa": 0, "nao_localizado": 1,
-                            "nao_se_aplica": 1}
+    assert cobertura(v) == {"leiloes": 1, "so_edital": 0, "oficial": 1, "roadshow": 0, "imprensa": 0,
+                            "nao_localizado": 1, "nao_se_aplica": 1}
 
 
 def test_alternativa_declarada_valida_e_aplica(conc):
@@ -598,7 +609,10 @@ def test_sequencia_vale_para_o_valor_exibido_depois_da_camada(conc):
 
 
 def _conc_real():
-    return json.loads((ROOT / "data" / "base" / "conc.json").read_text(encoding="utf-8"))
+    """O CONC do build: base congelada + JSON curados de data/roadshow/ (mercado, entidades…), como em build.py."""
+    from roadshow import conc_da_base
+    ler = lambda nome: json.loads((ROOT / "data" / "base" / nome).read_text(encoding="utf-8"))  # noqa: E731
+    return conc_da_base(ler("conc.json"), ROOT / "data" / "roadshow", ler("snv.json"))
 
 
 def test_dados_reais_validos():
@@ -676,3 +690,44 @@ def test_dados_reais_editais_corrigidos_pela_camada():
         [d] = [x for x in e["divergencias"] if x["campo"] == "edital"]
         assert d["exibido"] == exibido and d["alternativas"] == [{"valor": impresso, "pagina": pg_ficha}], id_
         assert any("ficha" in n["texto"] and str(pg_ficha) in n["texto"] for n in e["notas_verif"]), id_
+
+
+def test_roteiro_3_resultado_antes_do_proximo_roadshow(tmp_path):
+    """README, roteiro 3: para o Mercado e o Resumo contarem um leilão antes do próximo RoadShow, acrescenta-se a linha
+    em mercado.json (participantes e concorrentes_desagio, no mesmo formato) e a entrada em verificacao.json ligada a
+    ela (chaves participantes e concorrentes); `fora_do_roadshow` tira a linha da reconciliação com os totais impressos.
+    Numa cópia de data/roadshow/: a linha entra no CONC aplicado com a fonte."""
+    import shutil
+    from roadshow import conc_da_base
+    from curadoria import itens as curadoria_itens
+    rs = tmp_path / "roadshow"
+    shutil.copytree(ROOT / "data" / "roadshow", rs)
+    base = ROOT / "data" / "base"
+    ler = lambda p: json.loads(Path(p).read_text(encoding="utf-8"))  # noqa: E731
+    m = ler(rs / "mercado.json")
+    lote, nome = "Lote Novo do Teste", "Lote Novo do Teste (leilão)"
+    m["participantes"].append({"ano": 2026, "lote": lote, "vencedor": "EPR", "desagio_vencedor": 10.5,
+                               "outros": [{"grupo": "Arteris S.A.", "desagio": 3.2}], "fora_do_roadshow": True})
+    m["concorrentes_desagio"].append({"leilao": nome, "ano": 2026, "n": 2, "desagio": 10.5, "fora_do_roadshow": True})
+    (rs / "mercado.json").write_text(json.dumps(m, ensure_ascii=False, indent=1), encoding="utf-8")
+    v = ler(rs / "verificacao.json")
+    v["fontes"]["teste-ata"] = {"tipo": "oficial", "orgao": "ANTT", "titulo": "Ata do leilão (teste)", "data": "2026-11-12",
+                                "url": "https://www.gov.br/antt/teste", "acesso": "2026-11-13"}
+    v["leiloes"].append({"chave": "lote-novo-teste", "participantes": {"ano": 2026, "lote": lote}, "concorrentes": nome,
+                         "campos": {"leilao": {"valor": "2026-11-12", "fontes": ["teste-ata"]},
+                                    "grupo_vencedor": {"valor": "EPR Participações S.A.", "fontes": ["teste-ata"]},
+                                    "desagio": {"valor": 10.5, "fontes": ["teste-ata"]}}})
+    (rs / "verificacao.json").write_text(json.dumps(v, ensure_ascii=False, indent=1), encoding="utf-8")
+
+    conc = conc_da_base(ler(base / "conc.json"), rs, ler(base / "snv.json"))
+    verif, aliases = carregar(rs / "verificacao.json"), carregar_aliases(rs / "grupos_alias.json")
+    assert validar(verif, conc, aliases) == []
+    out = aplicar(conc, verif, aliases)
+    [p] = [r for r in out["mercado"]["participantes"] if r["lote"] == lote]
+    assert (p["vencedor"], p["desagio_vencedor"], p["data"]) == ("EPR Participações S.A.", 10.5, "2026-11-12")
+    assert p["verif"]["desagio"]["tipo"] == "oficial" and p["verif"]["grupo_vencedor"]["tipo"] == "oficial"
+    [c] = [r for r in out["mercado"]["concorrentes_desagio"] if r["leilao"] == nome]
+    assert c["desagio"] == 10.5 and c["verif"]["desagio"]["tipo"] == "oficial"
+    assert "EPR Participações S.A." in nomes_do_ranking(out)
+    # verificada, a linha não vai para a curadoria
+    assert not [i for i in curadoria_itens(out, {}, verif, dt.date(2026, 11, 20)) if lote in i["item"]]

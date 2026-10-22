@@ -58,6 +58,14 @@ def test_item_do_pipeline_atrasado():
     assert "09/2026" in next(i["motivo"] for i in itens if i["item"] == "Nome p7 (p7)")
 
 
+def test_pipeline_atrasado_com_ficha_federal_aponta_a_data_na_verificacao():
+    # com ficha federal (ent), a data do pipeline vem da concessão: o status fica no CSV, a data na verificação
+    conc, intel, verif = _em_dia()
+    intel["pipeline"]["itens"].append(_item("p15", "leiloado", "2026-10-01", ent="a"))
+    [m] = [i["motivo"] for i in curadoria.itens(conc, intel, verif, hoje=HOJE) if i["tipo"] == "pipeline_atrasado"]
+    assert ("status em data/intel/pipeline.csv; data em data/roadshow/verificacao.json (ou entidades.json)" in m), m
+
+
 def test_leilao_realizado_sem_entrada_na_verificacao():
     conc, intel, verif = _em_dia()
     conc["entidades"].append({"id": "c", "nome": "Concessão C", "leilao": "2026-09-30"})
@@ -67,6 +75,22 @@ def test_leilao_realizado_sem_entrada_na_verificacao():
     itens = [i for i in curadoria.itens(conc, intel, verif, hoje=HOJE) if i["tipo"] == "leilao_sem_verificacao"]
     assert [i["item"] for i in itens] == ["Concessão C (c)", "Lote C (2026)", "Nome p9 (p9)"]
     assert all("verificacao.json" in i["motivo"] for i in itens)
+
+
+def test_entrada_so_com_edital_nao_conta_como_verificada():
+    # a entrada criada só para a data do edital (cronograma) não traz o resultado: depois do leilão, o relatório pede
+    # a verificação do resultado (data, vencedor, deságio) — na entidade e no item do pipeline ligado a ela
+    conc, intel, verif = _em_dia()
+    conc["entidades"].append({"id": "e", "nome": "Concessão E", "leilao": "2026-10-20"})
+    intel["pipeline"]["itens"].append(_item("p14", "leiloado", "2027-03-01", ent="e"))
+    verif["leiloes"].append({"chave": "e", "ent": "e", "campos": {"edital": {"valor": "2026-07-17", "fontes": []}}})
+    itens = [i for i in curadoria.itens(conc, intel, verif, hoje=HOJE) if i["tipo"] == "leilao_sem_verificacao"]
+    assert [i["item"] for i in itens] == ["Concessão E (e)"]
+    assert "20/10/2026" in itens[0]["motivo"] and "só a data do edital" in itens[0]["motivo"]
+    assert "verificacao.json" in itens[0]["motivo"]
+    # com um campo de resultado, a entrada passa a contar
+    verif["leiloes"][-1]["campos"]["leilao"] = {"valor": "2026-10-20", "fontes": []}
+    assert [i for i in curadoria.itens(conc, intel, verif, hoje=HOJE) if i["tipo"] == "leilao_sem_verificacao"] == []
 
 
 def test_leilao_futuro_ou_estadual_nao_entra():
@@ -169,7 +193,8 @@ def test_estado_vencido_mesmo_com_verificacao():
                           {"id": "pj2", "nome": "Projeto no mês", "estado": "projeto2027", "leilao": "2026-10"},  # mês corrente
                           {"id": "fut", "nome": "Futura", "estado": "agendado2026", "leilao": "2026-12-11"},
                           {"id": "ct", "nome": "Contrato", "estado": "programa", "leilao": "2024-01-01"}]
-    verif["leiloes"] += [{"chave": k, "ent": k} for k in ("ag", "pj", "pj2", "fut", "ct")]
+    verif["leiloes"] += [{"chave": k, "ent": k, "campos": {"leilao": {"valor": "2026-01-01", "fontes": []}}}
+                         for k in ("ag", "pj", "pj2", "fut", "ct")]
     itens = curadoria.itens(conc, intel, verif, hoje=HOJE)
     assert _tipos(itens) == [("estado_vencido", "Agendada (ag)"), ("estado_vencido", "Projeto (pj)")]
     m = itens[0]["motivo"]

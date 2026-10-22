@@ -4,9 +4,9 @@ Gerado por `scripts/build.py` a partir de `data/roadshow/verificacao.json`. Hier
 
 ## Cobertura
 
-| Leilões | Campos oficial | Campos RoadShow | Campos imprensa | Não localizados | Não se aplica |
-|---:|---:|---:|---:|---:|---:|
-| 49 | 297 | 2 | 0 | 1 | 1 |
+| Leilões verificados | Entradas só com edital | Campos oficial | Campos RoadShow | Campos imprensa | Não localizados | Não se aplica |
+|---:|---:|---:|---:|---:|---:|---:|
+| 47 | 2 | 297 | 2 | 0 | 1 | 1 |
 
 ## Campos verificados
 

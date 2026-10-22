@@ -272,3 +272,41 @@ def test_erro_do_html_sai_inteiro_no_log_e_encurtado_no_relatorio(tmp_path):
     assert erro.endswith(" FIM") and len(erro) > 600
     celula = next(x for x in md.splitlines() if x.startswith("| build.py (HTML) | falhou |"))
     assert " FIM" not in celula and "…" in celula
+
+
+def _renova(tmp_path, build_falha):
+    """--renovar antt com fakes: o bruto listado no manifesto é baixado de novo (conteúdo novo) e o build passa ou
+    falha. Devolve (resultado do passo, pasta de brutos, pasta do manifesto)."""
+    md_dir, raw = tmp_path / "manifest", tmp_path / "data" / "raw" / "antt"
+    md_dir.mkdir()
+    raw.mkdir(parents=True)
+    (raw / "x.csv").write_text("velho", encoding="utf-8")
+    (md_dir / "antt.json").write_text(json.dumps([{"arquivo": "data/raw/antt/x.csv", "sha256": "v"}]), encoding="utf-8")
+
+    def baixa_de_novo():  # a fonte devolve 200 com página de erro: o fetch troca o bruto e o manifesto
+        (raw / "x.csv").write_text("<html>erro</html>", encoding="utf-8")
+        (md_dir / "antt.json").write_text(json.dumps([{"arquivo": "data/raw/antt/x.csv", "sha256": "n"}]),
+                                          encoding="utf-8")
+
+    chamadas = []
+    passos = atualizar.passos_dominios(["antt"], baixar=False, renovar={"antt"}, manifest_dir=md_dir, raiz=tmp_path,
+                                       importar=_modulos(chamadas, tmp_path, falha="antt" if build_falha else None,
+                                                         renovam={"antt": baixa_de_novo}))
+    (r,) = atualizar.executar(passos, intel_dir=tmp_path / "intel", baixar={"antt"}, manifest_dir=md_dir)
+    return r, raw, md_dir
+
+
+def test_renovar_com_build_que_falha_devolve_o_bruto_anterior(tmp_path):
+    r, raw, md_dir = _renova(tmp_path, build_falha=True)
+    assert r["estado"] == "falhou"
+    assert (raw / "x.csv").read_text(encoding="utf-8") == "velho"
+    assert json.loads((md_dir / "antt.json").read_text(encoding="utf-8"))[0]["sha256"] == "v"
+    assert sorted(p.name for p in raw.iterdir()) == ["x.csv"]
+    assert "quebrou" in r["detalhe"] and "bruto anterior restaurado: data/raw/antt/x.csv" in r["detalhe"], r["detalhe"]
+
+
+def test_renovar_com_build_ok_fica_com_o_bruto_novo(tmp_path):
+    r, raw, md_dir = _renova(tmp_path, build_falha=False)
+    assert r["estado"] == "ok"
+    assert (raw / "x.csv").read_text(encoding="utf-8") == "<html>erro</html>"
+    assert sorted(p.name for p in raw.iterdir()) == ["x.csv"]  # a cópia .anterior some depois do build

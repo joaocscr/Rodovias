@@ -12,6 +12,8 @@ existente; nada de lógica de dados aqui.
   ficam como estavam antes do passo.
 - O código de saída só é diferente de 0 quando a validação da verificação ou o build do HTML falham (qualquer
   resultado do HTML que não seja ok conta como falha, nunca como passo pulado).
+- Com --renovar, os brutos do manifesto do domínio ficam guardados como `<arquivo>.anterior` até o `build` passar; se o
+  download ou o build falham, voltam para o lugar (o manifesto também) e o detalhe do passo diz quais.
 - Domínio renovado cujos arquivos brutos vieram com o mesmo SHA-256 do manifesto entra no relatório como "fonte
   renovada sem dado novo".
 - O relatório compara cada bloco com a versão do último commit (`git show HEAD:data/intel/<bloco>.json`; sem git, com
@@ -22,6 +24,7 @@ import datetime as dt
 import importlib
 import json
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -57,11 +60,58 @@ def _rel(p):
 
 # ---------- passos ----------
 
-def passos_dominios(dominios, baixar, importar=importlib.import_module, renovar=()):
+ANTERIOR = ".anterior"
+
+
+def _guarda_brutos(manifest_dir, dominio, raiz):
+    """Antes do --renovar: guarda ao lado de cada bruto do manifesto do domínio uma cópia `<arquivo>.anterior` (cópia,
+    não link: há domínios que reescrevem arquivos no lugar). Devolve [(arquivo, cópia)]."""
+    p = Path(manifest_dir) / f"{dominio}.json"
+    try:
+        arquivos = [i["arquivo"] for i in json.loads(p.read_text(encoding="utf-8"))]
+    except (OSError, ValueError, KeyError, TypeError):
+        return []
+    guardados = []
+    for a in dict.fromkeys(arquivos):
+        orig = Path(raiz) / a
+        if not orig.is_file():
+            continue
+        copia = orig.with_name(orig.name + ANTERIOR)
+        shutil.copy2(orig, copia)
+        guardados.append((orig, copia))
+    return guardados
+
+
+def _rel_raiz(p, raiz):
+    try:
+        return Path(p).relative_to(raiz).as_posix()
+    except ValueError:
+        return str(p)
+
+
+def passos_dominios(dominios, baixar, importar=importlib.import_module, renovar=(), manifest_dir=MANIFESTO,
+                    raiz=ROOT):
     """[(nome, função)] dos domínios pedidos, sempre na ordem de ORDEM. Com `baixar`, `fetch` (no vmda2025,
     `registrar`, que só grava no manifesto o zip fornecido pelo usuário) antes do `build`; os domínios de `renovar`
-    usam `fetch(force=True)`."""
+    usam `fetch(force=True)` e guardam os brutos do manifesto (`manifest_dir`; caminhos relativos a `raiz`) até o
+    `build` passar: se o download ou o build falham, os brutos anteriores voltam (o manifesto volta em `executar`) e
+    o detalhe do passo diz quais."""
     renovar = set(renovar)
+
+    def renova(d, m):
+        guardados = _guarda_brutos(manifest_dir, d, raiz)
+        try:
+            m.fetch(force=True)
+            m.build()
+        except BaseException as e:
+            for orig, copia in guardados:
+                copia.replace(orig)
+            if guardados:
+                e.add_note("bruto anterior restaurado: "
+                           + ", ".join(_rel_raiz(o, raiz) for o, _ in guardados) + " (o baixado de novo foi descartado)")
+            raise
+        for _, copia in guardados:
+            copia.unlink(missing_ok=True)
 
     def passo(d):
         def rodar():
@@ -73,7 +123,8 @@ def passos_dominios(dominios, baixar, importar=importlib.import_module, renovar=
                 if baixar:
                     m.registrar()
             elif d in renovar:
-                m.fetch(force=True)
+                renova(d, m)
+                return
             elif baixar:
                 m.fetch()
             m.build()
@@ -120,14 +171,15 @@ def executar(passos, intel_dir=INTEL, baixar=False, log=print, manifest_dir=MANI
         log(f"== {nome}")
         baixou = baixar if isinstance(baixar, bool) else nome in baixar
         antes = _instantaneo(pastas)
-        estado, detalhe = "ok", ""
+        estado, detalhe, notas = "ok", "", []
         try:
             rodar()
         except Pular as e:
             estado, detalhe = "falhou" if critico else "pulado", str(e)
         except SystemExit as e:
-            estado, detalhe = "falhou", str(e.code)
+            estado, detalhe, notas = "falhou", str(e.code), getattr(e, "__notes__", [])
         except Exception as e:  # noqa: BLE001 — qualquer falha do domínio vira aviso no relatório
+            notas = getattr(e, "__notes__", [])
             ausente = _arquivo_ausente(e)
             if ausente and critico:
                 estado, detalhe = "falhou", f"arquivo ausente: {ausente}"
@@ -136,6 +188,8 @@ def executar(passos, intel_dir=INTEL, baixar=False, log=print, manifest_dir=MANI
                 detalhe = f"arquivo ausente: {ausente}" + ("" if baixou else " (baixe com `--baixar`)")
             else:
                 estado, detalhe = "falhou", f"{type(e).__name__}: {e}"
+        if notas:  # ex.: o bruto anterior que o --renovar devolveu
+            detalhe = f"{detalhe}; {'; '.join(notas)}"
         if estado != "ok":
             _restaura(pastas, antes)
             if not critico:  # o passo crítico é relatado por quem chama, com a mensagem própria
@@ -225,8 +279,8 @@ def atualizar(dominios=ORDEM, baixar=False, html=True, hoje=None, intel_dir=INTE
     antes = anterior(intel_dir)
     shas_antes = {d: _shas(manifest_dir, d) for d in renovar}
     baixam = set(ORDEM) if baixar else renovar
-    passos = executar(passos_dominios(dominios, baixar, importar, renovar) + [("fontes_bloco", fontes)], intel_dir,
-                      baixam, log, manifest_dir)
+    passos = executar(passos_dominios(dominios, baixar, importar, renovar, manifest_dir) + [("fontes_bloco", fontes)],
+                      intel_dir, baixam, log, manifest_dir)
     sem_novidade = []
     for p in passos:
         d = p["passo"]

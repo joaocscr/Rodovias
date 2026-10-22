@@ -25,6 +25,8 @@ CAMPOS_DATA = ("leilao", "assinatura", "assinatura_aditivo", "inicio_operacao", 
 CAMPOS_DATA_MES = ("edital",)
 # campos que só existem na entidade (a linha de participantes e a de concorrentes não têm edital)
 CAMPOS_SO_ENT = ("edital",)
+# campos anteriores ao leilão: uma entrada só com eles (a data do edital do cronograma) não verifica o resultado
+CAMPOS_PRE_LEILAO = ("edital",)
 MESES = ("jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez")
 CAMPOS_NUM = ("desagio", "prazo_anos")
 # tarifas levam unidade e data-base ("R$ 4,083 por praça (jul/2007)"): texto livre não vazio
@@ -489,12 +491,21 @@ def nomes_do_ranking(conc_aplicado):
     return sorted(n for n in nomes if isinstance(n, str) and n)
 
 
+def tem_resultado(l):
+    """A entrada verifica o resultado do leilão: tem algum campo além dos anteriores ao leilão (CAMPOS_PRE_LEILAO —
+    leilão, vencedor, deságio, assinatura…). Uma entrada só com a data do edital não conta."""
+    return bool(set(l.get("campos") or {}) - set(CAMPOS_PRE_LEILAO))
+
+
 def cobertura(verif):
-    """Contagem de campos verificados por tipo da fonte mais forte, de campos não localizados e, à parte, dos que não
+    """Contagem de leilões verificados (entradas com resultado, `tem_resultado`) e, à parte, das entradas só com a data
+    do edital; de campos verificados por tipo da fonte mais forte, de campos não localizados e, à parte, dos que não
     se aplicam (deságio de leilão por outorga)."""
     fontes = verif.get("fontes") or {}
-    cont = {"leiloes": len(verif.get("leiloes", [])), "oficial": 0, "roadshow": 0, "imprensa": 0, "nao_localizado": 0,
-            "nao_se_aplica": 0}
+    leiloes = verif.get("leiloes", [])
+    com = sum(tem_resultado(l) for l in leiloes)
+    cont = {"leiloes": com, "so_edital": len(leiloes) - com, "oficial": 0, "roadshow": 0, "imprensa": 0,
+            "nao_localizado": 0, "nao_se_aplica": 0}
     for l in verif.get("leiloes", []):
         for c in (l.get("campos") or {}).values():
             if c.get("nao_se_aplica"):
@@ -522,9 +533,10 @@ def relatorio_markdown(verif, conc_aplicado):
         "",
         "## Cobertura",
         "",
-        "| Leilões | Campos oficial | Campos RoadShow | Campos imprensa | Não localizados | Não se aplica |",
-        "|---:|---:|---:|---:|---:|---:|",
-        f"| {cob['leiloes']} | {cob['oficial']} | {cob['roadshow']} | {cob['imprensa']} | {cob['nao_localizado']} | "
+        "| Leilões verificados | Entradas só com edital | Campos oficial | Campos RoadShow | Campos imprensa | "
+        "Não localizados | Não se aplica |",
+        "|---:|---:|---:|---:|---:|---:|---:|",
+        f"| {cob['leiloes']} | {cob['so_edital']} | {cob['oficial']} | {cob['roadshow']} | {cob['imprensa']} | {cob['nao_localizado']} | "
         f"{cob['nao_se_aplica']} |",
         "",
         "## Campos verificados",

@@ -10,11 +10,11 @@ dependerem do relógio.
 import datetime as dt
 import json
 
-from verificacao import nomes_do_ranking
+from verificacao import nomes_do_ranking, tem_resultado
 
 TIPOS = {
     "pipeline_atrasado": "Pipeline com data passada ainda como previsto",
-    "leilao_sem_verificacao": "Leilão realizado sem entrada na camada de verificação",
+    "leilao_sem_verificacao": "Leilão realizado sem resultado na camada de verificação",
     "estado_vencido": "Concessão ainda como a leiloar, com leilão já passado",
     "pipeline_nao_verificado": "Itens do pipeline sem fonte oficial",
     "fonte_antiga": "Fontes acessadas há mais de 12 meses",
@@ -86,20 +86,27 @@ def _nome(i):
     return f"{i.get('nome') or i.get('id')} ({i.get('id')})"
 
 
-def _pipeline_atrasado(itens, rotulo, hoje):
+def _pipeline_atrasado(itens, rotulo, hoje, ents_federais):
+    """`ents_federais`: ids das concessões federais — com ficha, a data do item vem da concessão (pipeline.montar),
+    não do CSV."""
     out = []
     for i in itens:
         if i.get("status") in PREVISTOS and _passou(i.get("data_prevista"), hoje):
             o_que = "a assinatura prevista" if i["status"] == "leiloado" else "a data prevista"
+            onde = ("atualize status em data/intel/pipeline.csv; data em data/roadshow/verificacao.json (ou "
+                    "entidades.json)" if i.get("ent") in ents_federais else
+                    "atualize status e data em data/intel/pipeline.csv")
             out.append(("pipeline_atrasado", _nome(i),
                         f"{o_que} ({_fmt(i['data_prevista'])}) já passou e o status ainda é "
-                        f"\"{rotulo.get(i['status'], i['status'])}\": atualize status e data em data/intel/pipeline.csv"))
+                        f"\"{rotulo.get(i['status'], i['status'])}\": {onde}"))
     return out
 
 
 def _leilao_sem_verificacao(conc, itens, verif, hoje):
     leiloes = verif.get("leiloes") or []
-    ents = {l["ent"] for l in leiloes if "ent" in l}
+    # só conta a entrada com resultado: a criada só para a data do edital não verifica o leilão
+    ents = {l["ent"] for l in leiloes if "ent" in l and tem_resultado(l)}
+    so_edital = {l["ent"] for l in leiloes if "ent" in l} - ents
     parts = {(l["participantes"].get("ano"), l["participantes"].get("lote")) for l in leiloes
              if isinstance(l.get("participantes"), dict)}
     msg = "adicione o leilão a data/roadshow/verificacao.json (receita em docs/HANDOFF.md §2)"
@@ -107,7 +114,10 @@ def _leilao_sem_verificacao(conc, itens, verif, hoje):
     for e in conc.get("entidades") or []:
         if e.get("id") not in ents and _passou(e.get("leilao"), hoje):
             vistos.add(e["id"])
-            out.append(("leilao_sem_verificacao", _nome(e), f"leilão em {_fmt(e['leilao'])}, sem verificação: {msg}"))
+            o_que = ("a entrada em data/roadshow/verificacao.json tem só a data do edital: acrescente o resultado "
+                     "(data do leilão, vencedor, deságio, assinatura) com as fontes (receita em docs/HANDOFF.md §2)"
+                     if e["id"] in so_edital else f"sem verificação: {msg}")
+            out.append(("leilao_sem_verificacao", _nome(e), f"leilão em {_fmt(e['leilao'])}, {o_que}"))
     for p in (conc.get("mercado") or {}).get("participantes") or []:
         if (p.get("ano"), p.get("lote")) not in parts:
             out.append(("leilao_sem_verificacao", f"{p.get('lote')} ({p.get('ano')})",
@@ -178,7 +188,8 @@ def itens(conc_aplicado, intel, verif, hoje=None):
     pipe = intel.get("pipeline") or {}
     lista = pipe.get("itens") or []
     rotulo = {s["key"]: s["label"] for s in pipe.get("status") or []}
-    brutos = (_pipeline_atrasado(lista, rotulo, hoje) + _leilao_sem_verificacao(conc_aplicado, lista, verif, hoje)
+    ents_federais = {e.get("id") for e in conc_aplicado.get("entidades") or []}
+    brutos = (_pipeline_atrasado(lista, rotulo, hoje, ents_federais) + _leilao_sem_verificacao(conc_aplicado, lista, verif, hoje)
               + _estado_vencido(conc_aplicado, hoje) + _pipeline_nao_verificado(lista) + _fonte_antiga(intel.get("fontes") or {}, hoje)
               + _nome_sem_grupo(conc_aplicado, verif))
     ordem = {t: k for k, t in enumerate(TIPOS)}
