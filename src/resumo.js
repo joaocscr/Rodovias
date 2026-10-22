@@ -17,7 +17,8 @@ const Resumo = (() => {
   function kpisHtml(kpis) {
     if (!kpis.length) return '';
     return `<div class="kpis resumo-kpis" id="resumo-kpis">${kpis.map(k => `<div class="kpi-tile" data-kpi="${esc(k.id)}">
-      <b>${esc(k.texto)}</b><span>${esc(k.rotulo)}</span><small class="kpi-src">Fonte: ${esc(k.fonte)}</small></div>`).join('')}</div>`;
+      <b>${esc(k.texto)}</b><span>${esc(k.rotulo)}</span>${k.nota ? `<small class="kpi-nota">${esc(k.nota)}</small>` : ''}
+      <small class="kpi-src">Fonte: ${esc(k.fonte)}</small></div>`).join('')}</div>`;
   }
 
   function achadosHtml(achados) {

@@ -197,14 +197,14 @@ test('resumo é a página inicial e o mapa abre por #mapa', async () => {
 
   const modelo = await p.evaluate(() => ({
     kpis: LeiloesModel.resumoKpis(window.CONC, window.INTEL, window.SNV)
-      .map(k => ({ id: k.id, texto: k.texto, rotulo: k.rotulo, fonte: `Fonte: ${k.fonte}` })),
+      .map(k => ({ id: k.id, texto: k.texto, rotulo: k.rotulo, nota: k.nota ?? null, fonte: `Fonte: ${k.fonte}` })),
     achados: LeiloesModel.resumoAchados(window.CONC, window.INTEL)
       .map(a => ({ id: a.id, titulo: a.titulo, texto: a.texto, formula: a.formula, fonte: `Fonte: ${a.fonte}` })),
   }));
   assert.ok(modelo.kpis.length > 0 && modelo.achados.length > 0);
   const tela = await p.evaluate(() => ({
     kpis: [...document.querySelectorAll('#resumo-kpis .kpi-tile')].map(t => ({ id: t.dataset.kpi, texto: t.querySelector('b').textContent,
-      rotulo: t.querySelector('span').textContent, fonte: t.querySelector('.kpi-src').textContent })),
+      rotulo: t.querySelector('span').textContent, nota: t.querySelector('.kpi-nota')?.textContent ?? null, fonte: t.querySelector('.kpi-src').textContent })),
     achados: [...document.querySelectorAll('#resumo-achados .achado')].map(a => ({ id: a.dataset.achado, titulo: a.querySelector('h3').textContent,
       texto: a.querySelector('.achado__texto').textContent, formula: a.querySelector('details p').textContent, fonte: a.querySelector('.src').textContent })),
     resumos: [...document.querySelectorAll('#resumo-achados details > summary')].map(s => s.textContent),
@@ -218,6 +218,12 @@ test('resumo é a página inicial e o mapa abre por #mapa', async () => {
     return Model.aggregate(window.SNV, f, Model.visibleFis(window.SNV, f)).km;
   });
   assert.equal(await p.evaluate(() => LeiloesModel.resumoKpis(window.CONC, window.INTEL, window.SNV).find(k => k.id === 'malha').valor), malha);
+  // a concessão é o último ano da série de gestão que o Mercado desenha (mesma fonte, mesmo número)
+  const ges = await p.evaluate(() => {
+    const g = window.CONC.mercado.gestao.reduce((x, y) => (y.ano > x.ano ? y : x));
+    return { km: g.privada_km, kpi: LeiloesModel.resumoKpis(window.CONC, window.INTEL, window.SNV).find(k => k.id === 'concessao').valor };
+  });
+  assert.equal(ges.kpi, ges.km);
   assert.doesNotMatch(await p.textContent('#page-resumo'), /undefined|NaN|null|Infinity/);
   assert.match(await p.textContent('#resumo-aviso'), /dados públicos; não é recomendação/);
   // atalhos para todas as outras abas, na ordem da barra
@@ -245,6 +251,24 @@ test('resumo é a página inicial e o mapa abre por #mapa', async () => {
   assert.equal(await p.isVisible('#page-resumo'), true);
   assert.deepEqual(errs, []);
   assert.deepEqual(ext, []);
+  await context.close();
+});
+
+// Celular (390×844): nem o Resumo nem o mapa alargam a página (a barra de abas rola dentro do topo).
+test('celular: Resumo e mapa sem rolagem horizontal da página', async () => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  await context.route('**/*', r => (/^(file|data):/.test(r.request().url()) ? r.continue() : r.abort()));
+  const p = await context.newPage();
+  await p.goto('file://' + HTML);
+  await p.waitForSelector('#page-resumo .page__inner');
+  for (const h of ['#resumo', '#mapa']) {
+    await p.evaluate(x => { location.hash = x; }, h);
+    await p.waitForFunction(x => Tabs.current().active === x.slice(1), h);
+    await p.waitForTimeout(100);
+    const w = await p.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
+    assert.ok(w.sw <= w.cw, `${h}: scrollWidth ${w.sw} > clientWidth ${w.cw}`);
+    assert.equal(await p.isVisible('#drawer-toggle'), true, h);
+  }
   await context.close();
 });
 

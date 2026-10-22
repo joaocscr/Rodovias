@@ -67,6 +67,7 @@ RE_DATA = re.compile(r"\d{4}-\d{2}(-\d{2})?")
 COLUNAS = ["id", "nome", "esfera", "uf", "rodovias", "km", "status", "data_prevista", "ent", "estudo", "verificado",
            "fonte_url", "fonte_data", "obs"]
 
+# "origem": "imprensa" marca a fonte não oficial (rótulo "imprensa — não oficial" na interface).
 FONTE = [
     {"nome": "Carteira de Concessões Rodoviárias 2023-2027 (Ministério dos Transportes)",
      "url": "https://www.gov.br/transportes/pt-br/assuntos/concessoes/concessoes-rodoviarias-2027",
@@ -87,7 +88,7 @@ FONTE = [
      "licenca": "Informação pública (LAI, Lei 12.527/2011)", "nota": "Portal de parcerias de SP (SPI) consultado em 20/10/2026."},
     {"nome": "Imprensa especializada (Agência iNFRA, O Tempo, Itatiaia, Atlas Público)",
      "url": "https://agenciainfra.com/", "periodo": "out/2025 a jul/2026", "acesso": ACESSO,
-     "licenca": "Fatos noticiados, citados com link; sem reprodução de texto",
+     "licenca": "Fatos noticiados, citados com link; sem reprodução de texto", "origem": "imprensa",
      "nota": "Itens com fonte apenas de imprensa aparecem como não verificados e podem estar desatualizados."},
 ]
 
