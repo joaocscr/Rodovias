@@ -1295,6 +1295,23 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 #chart-part td.wrap--wide { min-width: 288px; }
 .ranking-aliases a.link-btn { display: inline; padding: 0; height: auto; white-space: normal; }
 
+/* Aba Resumo (página inicial) */
+.resumo-kpis { grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); }
+.resumo-kpis .kpi-tile span { display: block; }
+.kpi-tile .kpi-src { display: block; margin-top: 8px; font-size: 12px; line-height: 16px; color: var(--color-light-grey); }
+.resumo-h2 { margin: 40px 0 16px; font-family: var(--font-title); font-weight: 700; font-size: 22px; line-height: 32px; color: var(--color-deep-blue); }
+.achados { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr)); gap: 16px; }
+.achado__texto { margin: 8px 0 0; font-size: 16px; line-height: 24px; color: var(--color-spacial-grey); }
+.achado__calc { margin-top: 8px; font-size: 14px; color: var(--color-spacial-grey); }
+.achado__calc summary { cursor: pointer; color: var(--color-bright-blue); }
+.achado__calc p { margin: 8px 0 0; }
+.atalhos { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 16px; }
+.atalho { display: block; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius-md); color: var(--color-spacial-grey); text-decoration: none; transition: border-color var(--transition), background var(--transition); }
+.atalho:hover { border-color: var(--color-bright-blue); background: var(--tint); }
+.atalho b { display: block; font-family: var(--font-title); font-size: 18px; color: var(--color-deep-blue); }
+.atalho span { font-size: 14px; color: var(--color-light-grey); }
+.resumo-aviso { margin-top: 32px; }
+
 </style>
 </head>
 <body>
@@ -1321,6 +1338,7 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
     <div class="legend" id="legend"></div>
   </main>
 </div>
+<section class="page" data-tab="resumo" id="page-resumo" hidden></section>
 <section class="page" data-tab="projetos" id="page-projetos" hidden></section>
 <section class="page" data-tab="trafego" id="page-trafego" hidden></section>
 <section class="page" data-tab="cargas" id="page-cargas" hidden></section>
@@ -1700,7 +1718,7 @@ const ConcModel = (() => {
 if (typeof module !== 'undefined') module.exports = ConcModel;
 
 ;
-// Leilões de concessão rodoviária: ranking de grupos econômicos e série de deságio. Puro: sem DOM.
+// Leilões de concessão rodoviária: ranking de grupos econômicos, série de deságio e os números da aba Resumo. Puro: sem DOM.
 // Consome conc.mercado.participantes (já com a camada de verificação aplicada) e conc.grupos_alias.
 const LeiloesModel = (() => {
   const num = v => typeof v === 'number' && isFinite(v);
@@ -1793,7 +1811,203 @@ const LeiloesModel = (() => {
     return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
   }
 
-  return { grupoDe, rsDiverge, rankingGrupos, leiloesSemLista, serieDesagio, mediaDesagio };
+  // ---------- Resumo (aba inicial): números-chave e achados calculados dos dados do arquivo ----------
+  // Cada número sai de conc.mercado (RoadShow + camada de verificação), do SNV ou do pipeline; nada digitado. Cada item só
+  // entra quando os dados dele existem (bloco ausente = item ausente, nunca NaN).
+  const nfx = (min, max = min) => new Intl.NumberFormat('pt-BR', { minimumFractionDigits: min, maximumFractionDigits: max });
+  const f0 = nfx(0), f1 = nfx(1), f2 = nfx(2);
+  const lista = new Intl.ListFormat('pt-BR', { type: 'conjunction' });
+  const pct1 = v => `${f1.format(v)}%`, pct2 = v => `${f2.format(v)}%`;
+  const qtd = (n, um, varios) => `${f0.format(n)} ${n === 1 ? um : varios}`;
+  const arr = x => (Array.isArray(x) ? x : []);
+  const periodoAnos = anos => {
+    const a = anos.filter(num);
+    if (!a.length) return '';
+    const de = Math.min(...a), ate = Math.max(...a);
+    return de === ate ? String(de) : `${de}–${ate}`;
+  };
+  const RS = 'RoadShow 2026-2027';
+  function rsPaginas(m, key) {
+    const p = [].concat((m.fontes || {})[key] ?? []).filter(x => x != null);
+    if (!p.length) return RS;
+    return p.length === 1 ? `${RS}, p. ${p[0]}` : `${RS}, pp. ${lista.format(p.map(String))}`;
+  }
+  // Fonte de um campo verificado numa lista de leilões: a camada de verificação pelos tipos presentes; sem verificação,
+  // o RoadShow (páginas da chave do mercado).
+  function fonteCampo(rows, campo, m, key) {
+    const tipos = new Set(rows.map(r => ((r.verif || {})[campo] || {}).tipo || 'roadshow'));
+    const partes = [];
+    if (tipos.has('oficial')) partes.push('camada de verificação (fontes oficiais)');
+    if (tipos.has('roadshow')) partes.push(tipos.size > 1 ? `${rsPaginas(m, key)}, onde não há verificação` : rsPaginas(m, key));
+    if (tipos.has('imprensa')) partes.push('imprensa — não oficial');
+    return partes.join('; ');
+  }
+  // Período do programa (anos de programa_por_ano) e as linhas válidas.
+  function programa(m) {
+    const rows = arr(m.programa_por_ano).filter(p => num(p.ano));
+    if (!rows.length) return null;
+    const anos = rows.map(p => p.ano);
+    return { rows, de: Math.min(...anos), ate: Math.max(...anos), periodo: periodoAnos(anos) };
+  }
+  const ADM_CONCESSAO = 'Concessão Federal';  // categoria de administração do SNV
+
+  // intel: parte da interface do Resumo (hoje nenhum KPI vem do INTEL).
+  function resumoKpis(conc, intel, snv) {
+    const out = [];
+    const m = (conc && conc.mercado) || {};
+    if (snv && Array.isArray(snv.fis) && snv.fis.length && snv.dict && Array.isArray(snv.trechos)) {
+      const M = typeof Model !== 'undefined' ? Model : require('./model.js');
+      const f = M.emptyFilters(), a = M.aggregate(snv, f, M.visibleFis(snv, f));
+      const fonte = snv.versao ? `SNV ${snv.versao} (DNIT)` : 'SNV (DNIT)';
+      if (a.km > 0) {
+        out.push({ id: 'malha', rotulo: 'Malha rodoviária federal no SNV', valor: a.km, texto: `${f0.format(a.km)} km`, unidade: 'km', fonte });
+        const c = a.porAdm.find(x => (snv.dict.adm || [])[x.i] === ADM_CONCESSAO);
+        if (c) {
+          out.push({ id: 'concessao', rotulo: `Sob concessão federal (${pct1(c.pct * 100)} da malha)`, valor: c.km, texto: `${f0.format(c.km)} km`,
+            unidade: 'km', fonte: `${fonte}, administração "${ADM_CONCESSAO}"` });
+        }
+      }
+    }
+    const prog = programa(m);
+    const part = arr(m.participantes).filter(p => num(p.ano));
+    if (prog && prog.rows.every(p => num(p.leiloes))) {
+      const total = prog.rows.reduce((s, p) => s + p.leiloes, 0);
+      const feitos = part.filter(p => p.ano >= prog.de && p.ano <= prog.ate);
+      out.push({ id: 'leiloes', rotulo: `Leilões realizados, de ${f0.format(total)} previstos no programa ${prog.periodo}`, valor: feitos.length,
+        texto: f0.format(feitos.length), unidade: 'leilões',
+        fonte: `${rsPaginas(m, 'programa_por_ano')} (programa)${feitos.length ? `; realizados: ${fonteCampo(feitos, 'leilao', m, 'participantes')}` : ''}` });
+    }
+    if (prog && prog.rows.every(p => num(p.capex) && num(p.opex))) {
+      const inv = prog.rows.reduce((s, p) => s + p.capex + p.opex, 0);
+      out.push({ id: 'investimento', rotulo: `Capex + opex do programa ${prog.periodo}`, valor: inv, texto: `R$ ${f1.format(inv)} bi`,
+        unidade: 'R$ bi', fonte: rsPaginas(m, 'programa_por_ano') });
+    }
+    const cd = arr(m.concorrentes_desagio).filter(x => num(x.desagio));
+    if (cd.length) {
+      const v = mediaDesagio(cd.map(x => x.desagio));
+      out.push({ id: 'desagio', rotulo: `Deságio médio dos leilões de ${periodoAnos(cd.map(x => x.ano))} (${qtd(cd.length, 'leilão', 'leilões')})`, valor: v,
+        texto: pct2(v), unidade: '%', fonte: fonteCampo(cd, 'desagio', m, 'concorrentes_desagio') });
+    }
+    if (prog) {
+      const doPrograma = part.filter(p => p.ano >= prog.de && p.ano <= prog.ate && p.vencedor);
+      const g = rankingGrupos(doPrograma, conc.grupos_alias).filter(r => r.vitorias > 0).length;
+      if (g) {
+        out.push({ id: 'grupos', rotulo: `Grupos econômicos vencedores em ${periodoAnos(doPrograma.map(p => p.ano))}`, valor: g, texto: f0.format(g),
+          unidade: 'grupos', fonte: `vencedor (adjudicatário) pela ${fonteCampo(doPrograma, 'grupo_vencedor', m, 'participantes')}; grupo da época do leilão` });
+      }
+    }
+    return out;
+  }
+
+  const ISO = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const dataBR = s => {
+    const [y, mo, d] = s.split('-');
+    return d ? `${d}/${mo}/${y}` : `${['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'][+mo - 1]}/${y}`;
+  };
+  const LIMITE_APORTE = 18;  // % de deságio a partir do qual a Portaria MT nº 995/2023 exige aporte de recursos vinculados
+  const FORA_DO_CALENDARIO = new Set(['cancelado', 'suspenso']);
+
+  function resumoAchados(conc, intel, hoje = new Date()) {
+    const out = [];
+    const m = (conc && conc.mercado) || {};
+    const aliases = (conc && conc.grupos_alias) || [];
+
+    // 1. Concorrência × deságio
+    const cdN = arr(m.concorrentes_desagio).filter(x => num(x.desagio) && num(x.n) && x.n >= 1);
+    const um = cdN.filter(x => x.n === 1), mais = cdN.filter(x => x.n >= 2);
+    if (um.length && mais.length) {
+      const a = mediaDesagio(um.map(x => x.desagio)), b = mediaDesagio(mais.map(x => x.desagio));
+      out.push({ id: 'concorrencia', titulo: 'Concorrência e deságio',
+        texto: `Em ${periodoAnos(cdN.map(x => x.ano))}, ${qtd(um.length, 'leilão', 'leilões')} com um só proponente ${um.length === 1 ? 'teve' : 'tiveram'} deságio médio de ${pct2(a)}; ` +
+          `${qtd(mais.length, 'leilão', 'leilões')} com dois ou mais proponentes, ${pct2(b)}. Diferença de ${f1.format(b - a)} pontos percentuais.`,
+        formula: 'Média simples do deságio do vencedor, separando os leilões pelo número de proponentes (1 × 2 ou mais). Leilões sem deságio localizado ficam fora.',
+        fonte: `${rsPaginas(m, 'concorrentes_desagio')} (número de proponentes); deságio: ${fonteCampo(cdN, 'desagio', m, 'concorrentes_desagio')}` });
+    }
+
+    // 2. Leilões acima de 18% (aporte de recursos vinculados)
+    const cd = arr(m.concorrentes_desagio).filter(x => num(x.desagio));
+    if (cd.length) {
+      const acima = cd.filter(x => x.desagio > LIMITE_APORTE).length;
+      out.push({ id: 'aporte', titulo: `Deságios acima de ${LIMITE_APORTE}%`,
+        texto: `${f0.format(acima)} dos ${qtd(cd.length, 'leilão', 'leilões')} de ${periodoAnos(cd.map(x => x.ano))} com deságio localizado ${acima === 1 ? 'ficou' : 'ficaram'} acima de ${LIMITE_APORTE}% ` +
+          `(${pct1(acima / cd.length * 100)}), patamar a partir do qual o vencedor precisa fazer aporte de recursos vinculados, proporcional ao deságio.`,
+        formula: `Contagem dos leilões com deságio do vencedor maior que ${LIMITE_APORTE}%, sobre os leilões com deságio localizado.`,
+        fonte: `${fonteCampo(cd, 'desagio', m, 'concorrentes_desagio')}; regra do aporte: Portaria MT nº 995/2023 (aba Regulatório)` });
+    }
+
+    // 3. Deságios da primeira rodada × programa
+    const prog = programa(m);
+    const pd = arr(m.participantes).filter(p => num(p.ano) && num(p.desagio_vencedor));
+    if (prog) {
+      const antes = pd.filter(p => p.ano < prog.de);
+      const ano0 = antes.length ? Math.min(...antes.map(p => p.ano)) : null;
+      const r0 = antes.filter(p => p.ano === ano0), r1 = pd.filter(p => p.ano >= prog.de && p.ano <= prog.ate);
+      if (r0.length && r1.length) {
+        const a = mediaDesagio(r0.map(p => p.desagio_vencedor)), b = mediaDesagio(r1.map(p => p.desagio_vencedor));
+        const per1 = periodoAnos(r1.map(p => p.ano));
+        const t = (r0.length === 1 ? `o leilão de ${ano0} teve deságio de ${pct2(a)}` : `os ${f0.format(r0.length)} leilões de ${ano0} tiveram deságio médio de ${pct2(a)}`) +
+          (r1.length === 1 ? `; no leilão de ${per1}, ${pct2(b)}.` : `; nos ${f0.format(r1.length)} leilões de ${per1}, a média foi de ${pct2(b)}.`);
+        out.push({ id: 'desagio-historico', titulo: `Deságios de ${ano0} × programa atual`,
+          texto: t.charAt(0).toUpperCase() + t.slice(1),
+          formula: `Média simples do deságio do vencedor por leilão, no primeiro ano com deságio localizado (${ano0}) e nos anos do programa (a partir de ${prog.de}).`,
+          fonte: fonteCampo(r0.concat(r1), 'desagio', m, 'participantes') });
+      }
+    }
+
+    // 4. Concentração por grupo econômico (vitórias pelo grupo da época)
+    const pv = arr(m.participantes).filter(p => num(p.ano) && p.vencedor);
+    if (pv.length) {
+      const venc = rankingGrupos(pv, aliases).filter(r => r.vitorias > 0).sort((a, b) => b.vitorias - a.vitorias || collator.compare(a.grupo, b.grupo));
+      const top = venc.filter(r => r.vitorias > 1);
+      if (top.length) {
+        const s = top.reduce((x, r) => x + r.vitorias, 0);
+        out.push({ id: 'concentracao', titulo: 'Quem mais vence',
+          texto: `Os ${qtd(pv.length, 'leilão', 'leilões')} de ${periodoAnos(pv.map(p => p.ano))} tiveram ${venc.length === 1 ? 'um único grupo vencedor' : `${f0.format(venc.length)} grupos vencedores diferentes`}. ` +
+            `${lista.format(top.map(r => `${r.grupo} (${r.vitorias})`))} ${top.length === 1 ? 'venceu mais de uma vez e levou' : 'venceram mais de uma vez e, juntos, levaram'} ` +
+            `${f0.format(s)} deles (${pct1(s / pv.length * 100)}).`,
+          formula: 'Vitórias por grupo econômico, creditadas ao grupo que disputou na época do leilão (vencedor = adjudicatário); participação = soma das vitórias dos grupos com mais de uma vitória ÷ leilões com vencedor.',
+          fonte: `${fonteCampo(pv, 'grupo_vencedor', m, 'participantes')}; ranking completo na aba Mercado` });
+      }
+    }
+
+    // 5. Calendário dos próximos leilões (pipeline)
+    const pipe = intel && intel.pipeline;
+    if (pipe && Array.isArray(pipe.itens) && pipe.itens.length) {
+      const IM = typeof IntelModel !== 'undefined' ? IntelModel : require('./intel-model.js');
+      const h = ISO(hoje);
+      const rows = IM.linhaDoTempoResumo(conc, pipe, hoje.getFullYear()).rows
+        .filter(r => !FORA_DO_CALENDARIO.has(r.status) && r.leilao >= (r.leilao.length === 7 ? h.slice(0, 7) : h));
+      if (rows.length) {
+        const porAno = new Map();
+        rows.forEach(r => porAno.set(r.leilao.slice(0, 4), (porAno.get(r.leilao.slice(0, 4)) || 0) + 1));
+        const anos = porAno.size > 1 ? `: ${lista.format([...porAno].map(([a, n]) => `${f0.format(n)} em ${a}`))}` : ` em ${[...porAno.keys()][0]}`;
+        const prox = rows[0];
+        const nomesFonte = arr(pipe.fonte).map(f => f && f.nome).filter(Boolean);
+        out.push({ id: 'calendario', titulo: 'Próximos leilões',
+          texto: `A partir de hoje (${dataBR(h)}), o pipeline tem ${qtd(rows.length, 'leilão', 'leilões')} com data${anos}. ` +
+            `O próximo é ${prox.nome}, em ${dataBR(prox.leilao)}.`,
+          formula: 'Itens do pipeline (federais e estaduais) com data do leilão a partir de hoje: a data da ficha, senão a do cronograma, senão a prevista no pipeline (mês sem dia conta o mês inteiro). Suspensos e cancelados ficam fora.',
+          fonte: `Pipeline da aba Projetos${nomesFonte.length ? `: ${nomesFonte.join('; ')}` : ''}` });
+      }
+    }
+
+    // 6. Opex na carteira do último ano do programa
+    if (prog && prog.rows.length > 1 && prog.rows.every(p => num(p.capex) && num(p.opex))) {
+      const ult = prog.rows.find(p => p.ano === prog.ate), antes = prog.rows.filter(p => p.ano < prog.ate);
+      const tot = ult.capex + ult.opex, capA = antes.reduce((s, p) => s + p.capex, 0), opA = antes.reduce((s, p) => s + p.opex, 0);
+      if (tot > 0 && capA + opA > 0) {
+        const n = num(ult.leiloes) ? ` (${qtd(ult.leiloes, 'leilão previsto', 'leilões previstos')})` : '';
+        out.push({ id: 'opex', titulo: `Opex na carteira de ${prog.ate}`,
+          texto: `Na carteira de ${prog.ate}${n}, o opex soma R$ ${f1.format(ult.opex)} bi, ${pct1(ult.opex / tot * 100)} do capex + opex (R$ ${f1.format(tot)} bi). ` +
+            `No programa de ${periodoAnos(antes.map(p => p.ano))}, a parcela do opex foi de ${pct1(opA / (capA + opA) * 100)}.`,
+          formula: 'Opex ÷ (capex + opex), em R$ bi; o período anterior soma os anos.',
+          fonte: rsPaginas(m, 'programa_por_ano') });
+      }
+    }
+    return out;
+  }
+
+  return { grupoDe, rsDiverge, rankingGrupos, leiloesSemLista, serieDesagio, mediaDesagio, resumoKpis, resumoAchados };
 })();
 
 if (typeof module !== 'undefined') module.exports = LeiloesModel;
@@ -4764,6 +4978,63 @@ const Ficha = (() => {
 })();
 
 ;
+// Aba Resumo (página inicial): números-chave, "Leitura em 60 segundos" com achados calculados (fórmula e fonte em cada um)
+// e atalhos para as outras abas. Os números vêm de LeiloesModel.resumoKpis/resumoAchados; aqui só a montagem.
+const Resumo = (() => {
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  // O que cada aba traz (texto de interface; os rótulos das abas vêm de Tabs).
+  const ATALHOS = {
+    mapa: 'Malha federal do SNV por situação, administração e concessão; busca, filtros e camadas',
+    projetos: 'Contratos, comparador de concessões, linha do tempo dos leilões e pipeline',
+    trafego: 'Volume de tráfego, praças de pedágio, índice ABCR e acidentes',
+    cargas: 'Produção agrícola, armazenagem, exportação, ferrovia, frete e carga nos trechos',
+    mercado: 'Leilões, deságios, concorrência e grupos econômicos',
+    regulatorio: 'Modelo regulatório, garantias, financiamento e otimizações contratuais',
+    fontes: 'Documentos e bases de cada número, com data de acesso',
+  };
+  let built = false;
+
+  function kpisHtml(kpis) {
+    if (!kpis.length) return '';
+    return `<div class="kpis resumo-kpis" id="resumo-kpis">${kpis.map(k => `<div class="kpi-tile" data-kpi="${esc(k.id)}">
+      <b>${esc(k.texto)}<\/b><span>${esc(k.rotulo)}<\/span><small class="kpi-src">Fonte: ${esc(k.fonte)}<\/small><\/div>`).join('')}<\/div>`;
+  }
+
+  function achadosHtml(achados) {
+    if (!achados.length) return '<p class="page__src">Os dados dos achados não estão neste arquivo.<\/p>';
+    return `<ol class="achados" id="resumo-achados">${achados.map(a => `<li class="ccard achado" data-achado="${esc(a.id)}">
+      <h3>${esc(a.titulo)}<\/h3><p class="achado__texto">${esc(a.texto)}<\/p>
+      <details class="achado__calc"><summary>Como foi calculado<\/summary><p>${esc(a.formula)}<\/p><\/details>
+      <p class="src">Fonte: ${esc(a.fonte)}<\/p><\/li>`).join('')}<\/ol>`;
+  }
+
+  function atalhosHtml() {
+    const abas = Tabs.abas().filter(t => ATALHOS[t.k]);
+    return `<nav class="atalhos" id="resumo-atalhos" aria-label="Atalhos para as abas">${abas.map(t =>
+      `<a class="atalho" href="#${esc(t.k)}" data-atalho="${esc(t.k)}"><b>${esc(t.label)}<\/b><span>${esc(ATALHOS[t.k])}<\/span><\/a>`).join('')}<\/nav>`;
+  }
+
+  function init(conc, intel, snv) {
+    if (built) return;
+    built = true;
+    const kpis = LeiloesModel.resumoKpis(conc, intel, snv);
+    const achados = LeiloesModel.resumoAchados(conc, intel);
+    document.getElementById('page-resumo').innerHTML = `<div class="page__inner">
+      <h1 class="page__title">Resumo das concessões rodoviárias federais<\/h1>
+      <p class="page__lead">Os números principais da malha federal, das concessões e dos leilões, calculados a partir dos dados deste arquivo.<\/p>
+      ${kpisHtml(kpis)}
+      <h2 class="resumo-h2">Leitura em 60 segundos<\/h2>
+      ${achadosHtml(achados)}
+      <h2 class="resumo-h2">Atalhos<\/h2>
+      ${atalhosHtml()}
+      <p class="page__src resumo-aviso" id="resumo-aviso">Análise com dados públicos; não é recomendação de investimento.<\/p>
+    <\/div>`;
+  }
+
+  return { init };
+})();
+
+;
 // Aba Projetos: comparador ordenável de contratos e projetos do RoadShow, com totais e estudos pós-2027.
 // v3: concessões estaduais no comparador (coluna e filtro Esfera) e seção Pipeline (INTEL.pipeline).
 const Projetos = (() => {
@@ -7071,13 +7342,15 @@ const UI = (() => {
 })();
 
 ;
-// Abas (Mapa | Projetos | Tráfego | Cargas | Mercado | Regulatório | Fontes) e ficha, roteadas por #hash (funciona em file://).
+// Abas (Resumo | Mapa | Projetos | Tráfego | Cargas | Mercado | Regulatório | Fontes) e ficha, roteadas por #hash (funciona em file://).
+// Resumo é a página inicial: hash vazio ou inválido abre o Resumo.
 const Tabs = (() => {
-  const TABS = [['mapa', 'Mapa'], ['projetos', 'Projetos'], ['trafego', 'Tráfego'], ['cargas', 'Cargas'],
+  const TABS = [['resumo', 'Resumo'], ['mapa', 'Mapa'], ['projetos', 'Projetos'], ['trafego', 'Tráfego'], ['cargas', 'Cargas'],
     ['mercado', 'Mercado'], ['regulatorio', 'Regulatório'], ['fontes', 'Fontes']];
   const inits = {};
   const started = new Set();
-  let active = 'mapa', prevHash = '#mapa', fichaValid = () => false;
+  const INICIAL = 'resumo';
+  let active = INICIAL, prevHash = '#' + INICIAL, fichaValid = () => false;
 
   function parse(hash) {
     const h = (hash || '').replace(/^#/, '');
@@ -7086,7 +7359,7 @@ const Tabs = (() => {
     try {
       return { tab, arg: decodeURIComponent(rest.join('/')) };
     } catch (e) {
-      return { tab: 'invalido', arg: null };  // percent-encoding malformado: o roteador cai no mapa
+      return { tab: 'invalido', arg: null };  // percent-encoding malformado: o roteador cai na página inicial
     }
   }
 
@@ -7105,14 +7378,14 @@ const Tabs = (() => {
   function route() {
     const { tab, arg } = parse(location.hash);
     if (tab === 'ficha') {
-      if (!arg || !fichaValid(arg)) { location.replace('#mapa'); return; }
+      if (!arg || !fichaValid(arg)) { location.replace('#' + INICIAL); return; }
       if (typeof Ficha !== 'undefined') Ficha.open(arg);
       return;
     }
     if (typeof Ficha !== 'undefined') Ficha.close(true);
     if (!TABS.some(([k]) => k === tab)) {
-      if (location.hash && location.hash !== '#') location.replace('#mapa');
-      show('mapa');
+      if (location.hash && location.hash !== '#') location.replace('#' + INICIAL);
+      show(INICIAL);
       return;
     }
     prevHash = '#' + tab;
@@ -7139,6 +7412,7 @@ const Tabs = (() => {
       wait();
     },
     back() { location.hash = prevHash; },
+    abas() { return TABS.map(([k, label]) => ({ k, label })); },
     current() { return Object.assign(parse(location.hash), { active }); },
   };
 })();
@@ -7152,6 +7426,7 @@ const Tabs = (() => {
   Layers.init(MapView.map, intel, snv);
   UI.init(snv, Model.createIndex(snv), conc, intel);
   Ficha.init(conc, intel, snv);
+  Tabs.on('resumo', () => Resumo.init(conc, intel, snv));
   Tabs.on('projetos', () => Projetos.init(conc, intel));
   Tabs.on('trafego', () => Trafego.init(intel, snv));
   Tabs.on('cargas', () => Cargas.init(intel, snv));

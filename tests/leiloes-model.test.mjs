@@ -144,3 +144,107 @@ test('mediaDesagio ignora nulos', () => {
   assert.equal(LeiloesModel.mediaDesagio([]), null);
   assert.equal(LeiloesModel.mediaDesagio([null, undefined]), null);
 });
+
+// ---------- Resumo (aba inicial) ----------
+// SNV mínimo: registro com 16 posições (adm na 7); dois físicos, um concedido.
+const snvFix = () => {
+  const t = adm => Object.assign(new Array(16).fill(0), { 7: adm });
+  return { versao: '202601A', dict: { adm: ['Concessão Federal', 'Federal'] }, trechos: [t(0), t(1)],
+    fis: [{ r: [0], ext: 100 }, { r: [1], ext: 300 }] };
+};
+const concFix = () => ({
+  grupos_alias: [{ nome: 'Alfa SA', grupo: 'Alfa' }],
+  mercado: {
+    fontes: { programa_por_ano: [95, 129], concorrentes_desagio: [23, 97], participantes: [11, 97] },
+    programa_por_ano: [{ ano: 2023, leiloes: 2, capex: 10, opex: 5, previsto: false },
+      { ano: 2024, leiloes: 3, capex: 20, opex: 10, previsto: false }, { ano: 2027, leiloes: 4, capex: 30, opex: 30, previsto: true }],
+    participantes: [
+      row({ ano: 2007, lote: 'P1', vencedor: 'A', desagio_vencedor: 40, verif: { desagio: { tipo: 'oficial' } } }),
+      row({ ano: 2007, lote: 'P2', vencedor: 'B', desagio_vencedor: 50, verif: { desagio: { tipo: 'oficial' } } }),
+      row({ ano: 2023, lote: 'L1', vencedor: 'Alfa SA', desagio_vencedor: 20, verif: { desagio: { tipo: 'oficial' } } }),
+      row({ ano: 2023, lote: 'L2', vencedor: 'Beta', desagio_vencedor: 0, verif: { desagio: { tipo: 'oficial' } } }),
+      row({ ano: 2024, lote: 'L3', vencedor: 'Alfa SA', desagio_vencedor: 10 }),
+    ],
+    concorrentes_desagio: [{ leilao: 'L1', ano: 2023, n: 1, desagio: 0.5, verif: { desagio: { tipo: 'oficial' } } },
+      { leilao: 'L2', ano: 2023, n: 3, desagio: 20, verif: { desagio: { tipo: 'oficial' } } },
+      { leilao: 'L3', ano: 2024, n: 2, desagio: 19 }, { leilao: 'L4', ano: 2024, n: 2, desagio: null }],
+  },
+});
+const intelFix = () => ({ pipeline: {
+  fonte: [{ nome: 'Carteira do Ministério' }, { nome: 'ANTT' }],
+  status: [{ key: 'leilao_agendado', label: 'Leilão agendado' }, { key: 'estudo', label: 'Em estudo' }],
+  itens: [{ id: 'a', nome: 'Lote X', esfera: 'federal', status: 'leilao_agendado', data_prevista: '2026-11-12' },
+    { id: 'b', nome: 'Lote Y', esfera: 'estadual', status: 'estudo', data_prevista: '2027-06' },
+    { id: 'c', nome: 'Antigo', esfera: 'federal', status: 'leilao_agendado', data_prevista: '2026-03-02' },
+    { id: 'd', nome: 'Cancelado', esfera: 'federal', status: 'cancelado', data_prevista: '2026-12-01' },
+    { id: 'e', nome: 'Sem data', esfera: 'federal', status: 'estudo', data_prevista: null }],
+} });
+const HOJE = new Date(2026, 9, 21);
+const semLixo = s => !/NaN|undefined|null|Infinity/.test(s);
+
+test('resumoKpis: valores dos KPIs com fixture', () => {
+  const k = Object.fromEntries(LeiloesModel.resumoKpis(concFix(), intelFix(), snvFix()).map(x => [x.id, x]));
+  assert.deepEqual(Object.keys(k), ['malha', 'concessao', 'leiloes', 'investimento', 'desagio', 'grupos']);
+  assert.equal(k.malha.valor, 400);
+  assert.equal(k.malha.texto, '400 km');
+  assert.match(k.malha.fonte, /SNV 202601A/);
+  assert.equal(k.concessao.valor, 100);
+  assert.match(k.concessao.rotulo, /25,0% da malha/);
+  assert.equal(k.leiloes.valor, 3, 'participantes de 2023 a 2027');
+  assert.match(k.leiloes.rotulo, /de 9 previstos.*2023–2027/);
+  assert.equal(k.investimento.valor, 105);
+  assert.equal(k.investimento.texto, 'R$ 105,0 bi');
+  assert.match(k.investimento.fonte, /RoadShow 2026-2027, pp\. 95 e 129/);
+  assert.ok(Math.abs(k.desagio.valor - 39.5 / 3) < 1e-9);
+  assert.equal(k.desagio.texto, '13,17%');
+  assert.match(k.desagio.rotulo, /2023–2024/);
+  assert.equal(k.grupos.valor, 2, 'Alfa (pelo alias) e Beta');
+  for (const x of Object.values(k)) {
+    assert.ok(x.rotulo && x.texto && x.unidade && x.fonte, x.id);
+    assert.ok(semLixo(JSON.stringify(x)), x.id);
+  }
+});
+
+test('resumoAchados: achados calculados com fórmula e fonte', () => {
+  const a = Object.fromEntries(LeiloesModel.resumoAchados(concFix(), intelFix(), HOJE).map(x => [x.id, x]));
+  assert.deepEqual(Object.keys(a), ['concorrencia', 'aporte', 'desagio-historico', 'concentracao', 'calendario', 'opex']);
+  assert.match(a.concorrencia.texto, /1 leilão com um só proponente.*0,50%/);
+  assert.match(a.concorrencia.texto, /2 leilões com dois ou mais.*19,50%/);
+  assert.match(a.aporte.texto, /2 dos 3 leilões/);
+  assert.match(a.aporte.fonte, /Portaria MT nº 995\/2023/);
+  assert.match(a['desagio-historico'].texto, /2007.*45,00%.*2023–2024.*10,00%/);
+  // 1 vencedor sem verificação (L3): a fonte cita o RoadShow além da camada de verificação
+  assert.match(a['desagio-historico'].fonte, /camada de verificação \(fontes oficiais\); RoadShow 2026-2027, pp\. 11 e 97/);
+  assert.match(a.concentracao.texto, /5 leilões de 2007–2024.*4 grupos/);
+  assert.match(a.concentracao.texto, /Alfa \(2\).*2 deles \(40,0%\)/);
+  assert.match(a.calendario.texto, /2 leilões/);
+  assert.match(a.calendario.texto, /1 em 2026 e 1 em 2027/);
+  assert.match(a.calendario.texto, /Lote X, em 12\/11\/2026/);
+  assert.doesNotMatch(a.calendario.texto, /Antigo|Cancelado/);
+  assert.match(a.opex.titulo, /2027/);
+  assert.match(a.opex.texto, /50,0%/);
+  assert.match(a.opex.texto, /2023–2024.*33,3%/);
+  for (const x of Object.values(a)) {
+    assert.ok(x.titulo && x.texto && x.formula && x.fonte, x.id);
+    assert.ok(semLixo(JSON.stringify(x)), x.id);
+  }
+});
+
+test('resumoAchados sem dados não quebra', () => {
+  for (const [c, i] of [[undefined, undefined], [null, null], [{}, {}], [{ mercado: {} }, { pipeline: {} }],
+    [{ mercado: { programa_por_ano: [], participantes: [], concorrentes_desagio: [] } }, { pipeline: { itens: [] } }]]) {
+    assert.deepEqual(LeiloesModel.resumoAchados(c, i, HOJE), []);
+    assert.deepEqual(LeiloesModel.resumoKpis(c, i, null), []);
+  }
+  // blocos parciais: só entra o que tem dado, sem NaN nem undefined
+  const c = concFix();
+  c.mercado.concorrentes_desagio.forEach(x => { x.n = null; });  // sem número de proponentes
+  c.mercado.participantes = c.mercado.participantes.filter(p => p.ano >= 2023);  // sem leilões de antes do programa
+  c.mercado.programa_por_ano = c.mercado.programa_por_ano.map(p => Object.assign({}, p, { opex: null }));
+  const ids = LeiloesModel.resumoAchados(c, null, HOJE).map(x => x.id);
+  assert.deepEqual(ids, ['aporte', 'concentracao']);
+  const k = LeiloesModel.resumoKpis(c, null, null);
+  assert.deepEqual(k.map(x => x.id), ['leiloes', 'desagio', 'grupos']);
+  assert.ok(semLixo(JSON.stringify(LeiloesModel.resumoAchados(c, null, HOJE))));
+  assert.ok(semLixo(JSON.stringify(k)));
+});

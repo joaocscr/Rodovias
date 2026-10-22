@@ -25,7 +25,7 @@ before(async () => {
   page = await context.newPage();
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
-  await page.goto('file://' + HTML);
+  await page.goto('file://' + HTML + '#mapa');  // a página inicial é o Resumo; estes testes partem do mapa
   await page.waitForSelector('#kpi-km');
 });
 after(async () => { await browser?.close(); });
@@ -152,9 +152,9 @@ async function go(hash) {
   await page.waitForTimeout(250);
 }
 
-test('v2: barra de abas (v3: 7 abas) e Mapa ativa', async () => {
+test('v2: barra de abas (fechamento: 8 abas, Resumo primeiro) e Mapa ativa', async () => {
   await go('#mapa');
-  assert.deepEqual(await page.$$eval('#tabs a', as => as.map(a => a.textContent)), ['Mapa', 'Projetos', 'Tráfego', 'Cargas', 'Mercado', 'Regulatório', 'Fontes']);
+  assert.deepEqual(await page.$$eval('#tabs a', as => as.map(a => a.textContent)), ['Resumo', 'Mapa', 'Projetos', 'Tráfego', 'Cargas', 'Mercado', 'Regulatório', 'Fontes']);
   assert.equal(await page.textContent('#tabs a.is-active'), 'Mapa');
 });
 
@@ -166,12 +166,86 @@ test('v2: voltar restaura a aba anterior', async () => {
   assert.equal(await page.isVisible('#page-projetos'), false);
 });
 
-test('v2: hash inválido cai no mapa', async () => {
+test('v2: hash inválido cai no Resumo (página inicial)', async () => {
   await go('#xyz');
-  assert.equal(await page.evaluate(() => location.hash), '#mapa');
+  assert.equal(await page.evaluate(() => location.hash), '#resumo');
+  assert.equal(await page.isVisible('#page-resumo'), true);
   await go('#ficha/nao-existe');
-  assert.equal(await page.evaluate(() => location.hash), '#mapa');
+  assert.equal(await page.evaluate(() => location.hash), '#resumo');
   assert.equal(await page.isVisible('#ficha'), false);
+  await go('#mapa');
+});
+
+// Fechamento: Resumo é a página inicial; KPIs e achados iguais ao que o modelo calcula na própria página (sem literais).
+test('resumo é a página inicial e o mapa abre por #mapa', async () => {
+  const errs = [], ext = [];
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  await context.route('**/*', r => {
+    const url = r.request().url();
+    if (url.startsWith('file:') || url.startsWith('data:')) return r.continue();
+    ext.push(url);
+    return r.abort();
+  });
+  const p = await context.newPage();
+  p.on('pageerror', e => errs.push(e.message));
+  p.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
+  await p.goto('file://' + HTML);
+  await p.waitForSelector('#page-resumo .page__inner');
+  assert.equal(await p.isVisible('#page-resumo'), true);
+  assert.equal(await p.isVisible('#map'), false);
+  assert.equal(await p.textContent('#tabs a.is-active'), 'Resumo');
+
+  const modelo = await p.evaluate(() => ({
+    kpis: LeiloesModel.resumoKpis(window.CONC, window.INTEL, window.SNV)
+      .map(k => ({ id: k.id, texto: k.texto, rotulo: k.rotulo, fonte: `Fonte: ${k.fonte}` })),
+    achados: LeiloesModel.resumoAchados(window.CONC, window.INTEL)
+      .map(a => ({ id: a.id, titulo: a.titulo, texto: a.texto, formula: a.formula, fonte: `Fonte: ${a.fonte}` })),
+  }));
+  assert.ok(modelo.kpis.length > 0 && modelo.achados.length > 0);
+  const tela = await p.evaluate(() => ({
+    kpis: [...document.querySelectorAll('#resumo-kpis .kpi-tile')].map(t => ({ id: t.dataset.kpi, texto: t.querySelector('b').textContent,
+      rotulo: t.querySelector('span').textContent, fonte: t.querySelector('.kpi-src').textContent })),
+    achados: [...document.querySelectorAll('#resumo-achados .achado')].map(a => ({ id: a.dataset.achado, titulo: a.querySelector('h3').textContent,
+      texto: a.querySelector('.achado__texto').textContent, formula: a.querySelector('details p').textContent, fonte: a.querySelector('.src').textContent })),
+    resumos: [...document.querySelectorAll('#resumo-achados details > summary')].map(s => s.textContent),
+  }));
+  assert.deepEqual(tela.kpis, modelo.kpis);
+  assert.deepEqual(tela.achados, modelo.achados);
+  assert.deepEqual(tela.resumos, modelo.achados.map(() => 'Como foi calculado'));
+  // a malha do Resumo é a mesma do KPI do mapa (sem filtro)
+  const malha = await p.evaluate(() => {
+    const f = Model.emptyFilters();
+    return Model.aggregate(window.SNV, f, Model.visibleFis(window.SNV, f)).km;
+  });
+  assert.equal(await p.evaluate(() => LeiloesModel.resumoKpis(window.CONC, window.INTEL, window.SNV).find(k => k.id === 'malha').valor), malha);
+  assert.doesNotMatch(await p.textContent('#page-resumo'), /undefined|NaN|null|Infinity/);
+  assert.match(await p.textContent('#resumo-aviso'), /dados públicos; não é recomendação/);
+  // atalhos para todas as outras abas, na ordem da barra
+  assert.deepEqual(await p.$$eval('#resumo-atalhos a', as => as.map(a => a.getAttribute('href'))),
+    await p.evaluate(() => Tabs.abas().map(t => '#' + t.k).filter(h => h !== '#resumo')));
+
+  // o mapa, montado enquanto o Resumo estava na tela, abre pelo atalho e é desenhado no tamanho do contêiner
+  await p.click('#resumo-atalhos a[href="#mapa"]');
+  await p.waitForFunction(() => Tabs.current().active === 'mapa');
+  await p.waitForTimeout(100);  // invalidateSize roda num setTimeout 0 depois de exibir a aba
+  assert.equal(await p.evaluate(() => location.hash), '#mapa');
+  assert.equal(await p.isVisible('#map'), true);
+  assert.equal(await p.isVisible('#page-resumo'), false);
+  assert.equal(await p.textContent('#tabs a.is-active'), 'Mapa');
+  const vista = await p.evaluate(() => {
+    const s = MapView.map.getSize(), el = document.getElementById('map');
+    return { w: s.x, h: s.y, cw: el.clientWidth, ch: el.clientHeight, brasilia: MapView.map.getBounds().contains([-15.8, -47.9]) };
+  });
+  assert.ok(vista.w > 0 && vista.h > 0);
+  assert.deepEqual([vista.w, vista.h], [vista.cw, vista.ch]);
+  assert.ok(vista.brasilia, 'vista inicial sobre o Brasil');
+  // voltar leva de novo ao Resumo
+  await p.goBack();
+  await p.waitForFunction(() => Tabs.current().active === 'resumo');
+  assert.equal(await p.isVisible('#page-resumo'), true);
+  assert.deepEqual(errs, []);
+  assert.deepEqual(ext, []);
+  await context.close();
 });
 
 test('v2: modo concessões é o padrão e a legenda lista os estados', async () => {
@@ -448,10 +522,10 @@ test('v2: troca de aba em menos de 300 ms', async () => {
   await go('#mapa');
 });
 
-test('v2: hash com percent-encoding inválido cai no mapa', async () => {
+test('v2: hash com percent-encoding inválido cai no Resumo', async () => {
   const before = errors.length;
   await go('#ficha/%E0%A4%A');
-  assert.equal(await page.evaluate(() => location.hash), '#mapa');
+  assert.equal(await page.evaluate(() => location.hash), '#resumo');
   assert.equal(errors.length, before);
 });
 

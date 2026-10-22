@@ -29,7 +29,7 @@ async function openPage(errs, ext, transform, viewport = { width: 1440, height: 
   const p = await context.newPage();
   p.on('pageerror', e => errs.push(e.message));
   p.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
-  await p.goto('file://' + HTML);
+  await p.goto('file://' + HTML + '#mapa');  // a página inicial é o Resumo; estes testes partem do mapa
   await p.waitForSelector('#kpi-km');
   return p;
 }
@@ -1160,8 +1160,9 @@ test('sem window.INTEL: Projetos e ficha da v2 sem esfera, pipeline nem ANTT, se
   const titles = await p.$$eval('#ficha .fblock h3', hs => hs.map(h => h.textContent));
   assert.ok(!titles.some(h => /ANTT|Praças da concessão|Pipeline/.test(h)));
   await p.evaluate(() => { location.hash = '#ficha/sp-lt01-autoban'; });
-  await p.waitForFunction(() => location.hash === '#mapa' && Tabs.current().active === 'mapa' && !Ficha.isOpen());
-  assert.equal(await p.evaluate(() => location.hash), '#mapa');
+  // ficha inexistente (sem INTEL) cai na página inicial
+  await p.waitForFunction(() => location.hash === '#resumo' && Tabs.current().active === 'resumo' && !Ficha.isOpen());
+  assert.equal(await p.evaluate(() => location.hash), '#resumo');
   assert.deepEqual(errs, []);
   await p.context().close();
 });
@@ -1180,7 +1181,7 @@ test('sem window.INTEL a seção Camadas não quebra', async () => {
 });
 
 // ---------- Task 12: abas Tráfego, Cargas e Fontes ----------
-const TABS7 = ['Mapa', 'Projetos', 'Tráfego', 'Cargas', 'Mercado', 'Regulatório', 'Fontes'];
+const TABS8 = ['Resumo', 'Mapa', 'Projetos', 'Tráfego', 'Cargas', 'Mercado', 'Regulatório', 'Fontes'];
 // Espera a condição real (aba Mapa exibida, cartão aberto, seleção feita) em vez de um tempo fixo.
 const untilMapCard = (p, extra = 'true') => p.waitForFunction(`location.hash === '#mapa' && Tabs.current().active === 'mapa' && !document.getElementById('card').hidden && (${extra})`);
 async function goTab(p, hash) {
@@ -1188,12 +1189,12 @@ async function goTab(p, hash) {
   await p.waitForFunction(h => Tabs.current().active === h.slice(1) && document.querySelector(`#page-${h.slice(1)} .page__inner`), hash);
 }
 
-test('(a) barra de abas com as 7 abas na ordem', async () => {
+test('(a) barra de abas com as 8 abas na ordem (Resumo primeiro)', async () => {
   await page.evaluate(() => { location.hash = '#mapa'; });
   await page.waitForFunction(() => Tabs.current().active === 'mapa');
-  assert.deepEqual(await page.$$eval('#tabs a', as => as.map(a => a.textContent)), TABS7);
+  assert.deepEqual(await page.$$eval('#tabs a', as => as.map(a => a.textContent)), TABS8);
   assert.deepEqual(await page.$$eval('#tabs a', as => as.map(a => a.getAttribute('href'))),
-    ['#mapa', '#projetos', '#trafego', '#cargas', '#mercado', '#regulatorio', '#fontes']);
+    ['#resumo', '#mapa', '#projetos', '#trafego', '#cargas', '#mercado', '#regulatorio', '#fontes']);
 });
 
 test('(b) Tráfego: ≥ 5 gráficos, "Fonte:" em cada cartão, KPIs do modelo, sem undefined/NaN', async () => {
@@ -1433,22 +1434,29 @@ test('(d) Fontes: ≥ 30 fontes, ≥ 9 indisponíveis com motivo, bases v1/v2 e 
   }
 });
 
-test('(e) hashes inválidos continuam caindo no Mapa', async () => {
+test('(e) hashes inválidos caem no Resumo (página inicial)', async () => {
   for (const h of ['#xyz', '#trafego/x%zz', '#Fontes']) {
     await goTab(page, '#fontes');
     await page.evaluate(x => { location.hash = x; }, h);
-    await page.waitForFunction(() => location.hash === '#mapa' && Tabs.current().active === 'mapa');
-    assert.equal(await page.isVisible('#map'), true);
+    await page.waitForFunction(() => location.hash === '#resumo' && Tabs.current().active === 'resumo');
+    assert.equal(await page.isVisible('#page-resumo'), true);
+    assert.equal(await page.isVisible('#map'), false);
   }
   await goTab(page, '#cargas');
   assert.equal(await page.isVisible('#page-cargas'), true);
   await go('#mapa');
 });
 
-test('sem window.INTEL as abas Tráfego, Cargas e Fontes degradam sem erros', async () => {
+test('sem window.INTEL as abas Resumo, Tráfego, Cargas e Fontes degradam sem erros', async () => {
   const errs = [], ext = [];
   const p = await openPage(errs, ext, html => html.replace('window.INTEL=', 'window.INTEL_AUSENTE='));
-  assert.deepEqual(await p.$$eval('#tabs a', as => as.map(a => a.textContent)), TABS7);
+  assert.deepEqual(await p.$$eval('#tabs a', as => as.map(a => a.textContent)), TABS8);
+  // Resumo sem INTEL: o achado do calendário (pipeline) some; os demais continuam, sem undefined/NaN
+  await goTab(p, '#resumo');
+  const ids = await p.$$eval('#resumo-achados .achado', as => as.map(a => a.dataset.achado));
+  assert.deepEqual(ids, await p.evaluate(() => LeiloesModel.resumoAchados(window.CONC, undefined).map(a => a.id)));
+  assert.ok(!ids.includes('calendario'));
+  assert.doesNotMatch(await p.textContent('#page-resumo'), /undefined|NaN/);
   for (const [h, re] of [['#trafego', /não estão neste arquivo/], ['#cargas', /não estão neste arquivo/], ['#fontes', /não está neste arquivo/]]) {
     await goTab(p, h);
     const t = await p.textContent('#page-' + h.slice(1));

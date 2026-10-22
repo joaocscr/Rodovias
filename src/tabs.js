@@ -1,10 +1,12 @@
-// Abas (Mapa | Projetos | Tráfego | Cargas | Mercado | Regulatório | Fontes) e ficha, roteadas por #hash (funciona em file://).
+// Abas (Resumo | Mapa | Projetos | Tráfego | Cargas | Mercado | Regulatório | Fontes) e ficha, roteadas por #hash (funciona em file://).
+// Resumo é a página inicial: hash vazio ou inválido abre o Resumo.
 const Tabs = (() => {
-  const TABS = [['mapa', 'Mapa'], ['projetos', 'Projetos'], ['trafego', 'Tráfego'], ['cargas', 'Cargas'],
+  const TABS = [['resumo', 'Resumo'], ['mapa', 'Mapa'], ['projetos', 'Projetos'], ['trafego', 'Tráfego'], ['cargas', 'Cargas'],
     ['mercado', 'Mercado'], ['regulatorio', 'Regulatório'], ['fontes', 'Fontes']];
   const inits = {};
   const started = new Set();
-  let active = 'mapa', prevHash = '#mapa', fichaValid = () => false;
+  const INICIAL = 'resumo';
+  let active = INICIAL, prevHash = '#' + INICIAL, fichaValid = () => false;
 
   function parse(hash) {
     const h = (hash || '').replace(/^#/, '');
@@ -13,7 +15,7 @@ const Tabs = (() => {
     try {
       return { tab, arg: decodeURIComponent(rest.join('/')) };
     } catch (e) {
-      return { tab: 'invalido', arg: null };  // percent-encoding malformado: o roteador cai no mapa
+      return { tab: 'invalido', arg: null };  // percent-encoding malformado: o roteador cai na página inicial
     }
   }
 
@@ -32,14 +34,14 @@ const Tabs = (() => {
   function route() {
     const { tab, arg } = parse(location.hash);
     if (tab === 'ficha') {
-      if (!arg || !fichaValid(arg)) { location.replace('#mapa'); return; }
+      if (!arg || !fichaValid(arg)) { location.replace('#' + INICIAL); return; }
       if (typeof Ficha !== 'undefined') Ficha.open(arg);
       return;
     }
     if (typeof Ficha !== 'undefined') Ficha.close(true);
     if (!TABS.some(([k]) => k === tab)) {
-      if (location.hash && location.hash !== '#') location.replace('#mapa');
-      show('mapa');
+      if (location.hash && location.hash !== '#') location.replace('#' + INICIAL);
+      show(INICIAL);
       return;
     }
     prevHash = '#' + tab;
@@ -66,6 +68,7 @@ const Tabs = (() => {
       wait();
     },
     back() { location.hash = prevHash; },
+    abas() { return TABS.map(([k, label]) => ({ k, label })); },
     current() { return Object.assign(parse(location.hash), { active }); },
   };
 })();
