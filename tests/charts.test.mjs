@@ -14,9 +14,9 @@ test('barsSvg com nulos e zero', () => {
   const svg = Charts.barsSvg([{ label: 'a', value: 0 }, { label: 'b', value: null }], {});
   assert.ok(!/NaN/.test(svg));
 });
-test('hbarsSvg ordena desc quando pedido', () => {
-  const svg = Charts.hbarsSvg([{ label: 'x', value: 1 }, { label: 'y', value: 3 }], { sort: true });
-  assert.ok(svg.indexOf('>y<') < svg.indexOf('>x<'));
+test('hbarsSvg mantém a ordem recebida (quem chama ordena; "Outros" fica por último)', () => {
+  const svg = Charts.hbarsSvg([{ label: 'x', value: 1 }, { label: 'y', value: 3 }, { label: 'Outros 2 grupos', value: 9 }]);
+  assert.ok(svg.indexOf('>x<') < svg.indexOf('>y<') && svg.indexOf('>y<') < svg.indexOf('>Outros 2 grupos<'));
 });
 test('scatterSvg', () => {
   const svg = Charts.scatterSvg([{ x: 2, y: 18.25, label: 'Lote 1' }, { x: 7, y: 19.6, label: 'Rota Agro' }], { xLabel: 'Concorrentes', yLabel: 'Deságio' });

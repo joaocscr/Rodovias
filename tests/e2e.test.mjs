@@ -1379,6 +1379,9 @@ test('mercado: o diagnóstico traz os anos do modelo; anos sem impressão só co
   for (let a = Math.min(...anosTela); a <= Math.max(...anosTela); a++) if (!anosTela.includes(a)) lacunas.push(a);
   assert.ok(lacunas.length > 0 && lacunas.every(a => !d.gestao.some(g => g.ano === a) && !imp.includes(a)), `lacunas ${lacunas}`);
   assert.ok(!anosTela.includes(2028) && !anosTela.includes(2029));
+  // a linha de fonte do cartão só cita o que alimenta alguma célula (nenhum valor vem das séries da ANTT)
+  const srcDiag = await page.textContent('#card-diag');
+  assert.ok(!/ANTT/.test(srcDiag), 'fonte do diagnóstico cita a ANTT sem que nenhum valor venha dela');
   // uma nota só: o que os anos calculados trazem e os anos sem fonte
   assert.equal(await page.locator('#diagnostico-nota').count(), 1);
   const nota = await page.textContent('#diagnostico-nota');

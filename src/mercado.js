@@ -191,7 +191,7 @@ const Mercado = (() => {
         ${m.pavimento ? card('pavimento', 'Custo do transporte de cargas por estado do pavimento', `Aumento do custo operacional do transporte rodoviário de cargas conforme o estado do pavimento. Acréscimo médio no Brasil: ${nf1.format(m.pavimento.acrescimo_medio)}%`, { key: 'pavimento',
           src: `${roadshow('pavimento')} (${m.pavimento.fonte_original})`, legend: Charts.legendHtml([['Aumento do custo operacional', C.deep]]) }) : ''}
         ${card('diag', 'Concessões rodoviárias federais por ano', 'Contratos, extensão concedida (km), valor dos contratos e investimento executado acumulado (R$ bi); * = previsto', { key: 'diagnostico', wide: true,
-          src: `RoadShow, ${pages(m.fontes.diagnostico)} (anos impressos), ${pages(m.fontes.gestao)} (extensão) e séries da ANTT (investimento); a fonte de cada valor está na última coluna`,
+          src: `RoadShow, ${pages(m.fontes.diagnostico)} (anos impressos) e ${pages(m.fontes.gestao)} (extensão nos demais anos); a fonte de cada valor está na última coluna`,
           foot: diagNotaHtml() })}
         ${card('indic', `Indicadores dos ${nLeiloesProg} leilões do programa federal de concessões rodoviárias${pProg ? ` ${pProg}` : ''} (Ministério dos Transportes)`, 'Obras e equipamentos previstos nos contratos', { key: 'indicadores_40', wide: true,
           html: `<div class="kpis">${m.indicadores_40.map(i => `<div class="kpi-tile"><b>${nf0.format(i.valor)}</b><span>${esc(i.unidade)} · ${esc(i.rotulo)}</span></div>`).join('')}</div>` })}

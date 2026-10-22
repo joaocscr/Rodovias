@@ -50,9 +50,9 @@ const Charts = (() => {
     return frame(w, h, body, o.title);
   }
 
-  // Barras horizontais com rótulo e valor.
+  // Barras horizontais com rótulo e valor, na ordem recebida.
   function hbarsSvg(data, o = {}) {
-    const rows = o.sort ? [...data].sort((a, b) => (b.value || 0) - (a.value || 0)) : data;
+    const rows = data;
     const w = o.width || 640, rh = 32, h = Math.max(rows.length * rh + 8, 48);
     if (!rows.length) return empty(w, 120);
     const fmt = o.format || (v => nf1.format(v)), unit = o.unit ? ' ' + o.unit : '';
