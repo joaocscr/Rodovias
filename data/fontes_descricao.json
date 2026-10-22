@@ -5,7 +5,8 @@
   },
   "snv": {
     "nome": "Malha rodoviária federal (SNV)",
-    "oQue": "Cadastro oficial das rodovias federais mantido pelo DNIT: cada trecho com sua BR, UF, extensão, situação e tipo de administração. É a base do mapa."
+    "oQue": "Cadastro oficial das rodovias federais mantido pelo Departamento Nacional de Infraestrutura de Transportes (DNIT): cada trecho com sua BR, UF, extensão, situação e tipo de administração. É a base do mapa.",
+    "termos": [{"id": "dnit", "texto": "DNIT"}]
   },
   "verificacao": {
     "nome": "Conferência dos leilões",
@@ -18,11 +19,13 @@
   },
   "pipeline": {
     "nome": "Projetos de concessão em andamento",
-    "oQue": "Carteira de projetos do Ministério dos Transportes, páginas da ANTT, dados abertos do BNDES, páginas de governos estaduais e, para o que ainda não tem documento oficial, imprensa especializada (não oficial)."
+    "oQue": "Carteira de projetos do Ministério dos Transportes, páginas da ANTT, dados abertos do Banco Nacional de Desenvolvimento Econômico e Social (BNDES), páginas de governos estaduais e, para o que ainda não tem documento oficial, imprensa especializada (não oficial).",
+    "termos": [{"id": "bndes", "texto": "BNDES"}]
   },
   "trafego": {
     "nome": "Tráfego, acidentes e fluxo pedagiado",
-    "oQue": "Volume diário de veículos por trecho estimado por modelo (Infra S.A. e DNIT), acidentes registrados pela Polícia Rodoviária Federal (PRF) e índice de fluxo de veículos nas praças de pedágio da ABCR, a associação das concessionárias."
+    "oQue": "Volume diário de veículos por trecho, estimado por modelo pela Infra S.A. (empresa pública federal de planejamento e estruturação de transportes, vinculada ao Ministério dos Transportes) e pelo DNIT; acidentes registrados pela Polícia Rodoviária Federal (PRF); e o índice de fluxo de veículos nas praças de pedágio da associação das concessionárias (ABCR).",
+    "termos": [{"id": "infra-sa", "texto": "Infra S.A."}, {"id": "prf", "texto": "PRF"}, {"id": "indice-abcr", "texto": "índice de fluxo de veículos nas praças de pedágio"}]
   },
   "vmda2025": {
     "nome": "Volume diário de veículos 2025 (DNIT)",
@@ -30,17 +33,17 @@
     "termo": "vmda"
   },
   "carga": {
-    "nome": "Carga transportada nas rodovias (PNL)",
-    "oQue": "Estimativa da Infra S.A. de quanta carga passa por cada trecho, pelo cenário-base do Plano Nacional de Logística.",
+    "nome": "Carga estimada nos trechos (PNL)",
+    "oQue": "Estimativa de modelo, não medição: quanta carga a Infra S.A. calcula que passa por cada trecho, no cenário-base do Plano Nacional de Logística (PNL).",
     "termo": "pnl"
   },
   "agro": {
     "nome": "Produção agrícola e armazenagem (IBGE)",
-    "oQue": "Quanto cada município produz das principais lavouras e a capacidade de armazéns, segundo o IBGE."
+    "oQue": "Quanto cada município produz das principais lavouras e a capacidade de armazéns, segundo o Instituto Brasileiro de Geografia e Estatística (IBGE)."
   },
   "multimodal": {
-    "nome": "Ferrovias, portos e exportações",
-    "oQue": "Malha ferroviária, instalações portuárias, produção de carga das ferrovias da ANTT, fluxos de carga do IBGE, exportações do Ministério do Desenvolvimento (Comex Stat) e o boletim logístico da Conab."
+    "nome": "Ferrovias, portos, exportações e boletim logístico",
+    "oQue": "Malha ferroviária, instalações portuárias, produção de carga das ferrovias (ANTT), fluxos de carga ferroviária do IBGE, exportações do Comex Stat (Ministério do Desenvolvimento, Indústria, Comércio e Serviços) e o boletim logístico da Companhia Nacional de Abastecimento (Conab)."
   },
   "municipios": {
     "nome": "Malha municipal (IBGE)",
@@ -48,10 +51,10 @@
   },
   "estaduais": {
     "nome": "Rodovias e concessões estaduais",
-    "oQue": "Malha rodoviária dos estados (Infra S.A.) e fichas das concessões estaduais, a partir de dados dos reguladores de cada estado e das fichas da ABCR."
+    "oQue": "Malha rodoviária dos estados (Infra S.A.) e fichas das concessões estaduais, publicadas pelos reguladores dos estados que aparecem no painel e pela ABCR."
   },
   "rotas": {
     "nome": "Rotas de Integração Sul-Americana",
-    "oQue": "Apresentação e relatórios do Ministério do Planejamento e Orçamento (MPO) sobre as cinco rotas que ligam o Brasil aos países vizinhos, com o traçado esquemático delas."
+    "oQue": "Apresentação e relatórios do Ministério do Planejamento e Orçamento (MPO) sobre as cinco rotas que ligam o Brasil aos países vizinhos e aos portos do Pacífico e do Caribe, com o traçado esquemático delas; contornos dos países do Natural Earth."
   }
 }

@@ -235,6 +235,12 @@
     "categorias": ["Instituições"]
   },
   {
+    "id": "infra-sa",
+    "termo": "Infra S.A.",
+    "definicao": "Empresa pública federal de planejamento e estruturação de transportes, vinculada ao Ministério dos Transportes. Neste painel, é a fonte das estimativas de tráfego e de carga por trecho e da malha rodoviária dos estados.",
+    "categorias": ["Instituições"]
+  },
+  {
     "id": "prf",
     "termo": "Polícia Rodoviária Federal",
     "sigla": "PRF",

@@ -49,14 +49,44 @@ test('data-base e acesso saem dos blocos, em dd/mm/aaaa, sem repetir nem digitar
   assert.equal(por('verificacao').acesso, '20/10/2026 a 21/10/2026');
 });
 
-test('bloco com fontes de anos diferentes mostra de que ano a que ano, ignorando códigos de versão', () => {
+test('bloco com fontes de anos diferentes diz que varia por fonte, ignorando códigos de versão', () => {
   const i = { fontes: { fontes: [
     { bloco: 'agro', nome: 'A', periodo: 'jan/2024 a ago/2026', acesso: '2026-10-20' },
     { bloco: 'agro', nome: 'B', periodo: '2010 a 2025', acesso: '2026-10-20' },
     { bloco: 'agro', nome: 'C', periodo: 'versão 202607A (jul/2026)', acesso: '2026-10-20' }] } };
-  assert.equal(ResumoModel.sobrePainel({}, i, desc).fontes[0].dataBase, '2010 a 2026, conforme a fonte');
+  assert.equal(ResumoModel.sobrePainel({}, i, desc).fontes[0].dataBase, 'varia por fonte (de 2010 a 2026)');
   const sem = { fontes: { fontes: [{ bloco: 'agro', nome: 'A', periodo: 'vigente', acesso: '2026-10-20' }, { bloco: 'agro', nome: 'B', periodo: 'atual', acesso: '2026-10-20' }] } };
   assert.equal(ResumoModel.sobrePainel({}, sem, desc).fontes[0].dataBase, 'vigente; atual');
+});
+
+test('ano de dado vem só do período de cada fonte, fora de parênteses: "PNL 2035" numa nota não vira ano de dado', () => {
+  const i = { fontes: { fontes: [
+    { bloco: 'agro', nome: 'A', periodo: 'ano-base 2017 (cenário-base do PNL 2035)', acesso: '2026-10-20' },
+    { bloco: 'agro', nome: 'B', periodo: '2023 (SNV 202401A)', acesso: '2026-10-20' },
+    { bloco: 'agro', nome: 'C', periodo: 'arquivos consultados (out/2026)', acesso: '2026-10-20' }] } };
+  assert.equal(ResumoModel.sobrePainel({}, i, desc).fontes[0].dataBase, 'varia por fonte (de 2017 a 2026)');
+  const so = { fontes: { fontes: [
+    { bloco: 'agro', nome: 'A', periodo: 'ano-base 2017 (cenário-base do PNL 2035)', acesso: '2026-10-20' },
+    { bloco: 'agro', nome: 'B', periodo: '2019', acesso: '2026-10-20' }] } };
+  assert.equal(ResumoModel.sobrePainel({}, so, desc).fontes[0].dataBase, 'varia por fonte (de 2017 a 2019)');
+});
+
+test('segmentos: cada termo vira link só na primeira ocorrência do seu texto; texto ausente ou sobreposto é ignorado', () => {
+  const termos = [{ id: 'dnit', texto: 'DNIT' }, { id: 'prf', texto: 'PRF' }, { id: 'x', texto: 'não está' }, { id: 'sobre', texto: 'NIT mantido' }];
+  const seg = ResumoModel.segmentos('Mantido pelo DNIT; o DNIT e a PRF.', termos);
+  assert.deepEqual(seg, [{ texto: 'Mantido pelo ' }, { texto: 'DNIT', id: 'dnit' }, { texto: '; o DNIT e a ' }, { texto: 'PRF', id: 'prf' }, { texto: '.' }]);
+  assert.equal(seg.map(s => s.texto).join(''), 'Mantido pelo DNIT; o DNIT e a PRF.');
+  assert.deepEqual(ResumoModel.segmentos('sem termos', undefined), [{ texto: 'sem termos' }]);
+  assert.deepEqual(ResumoModel.segmentos(null, termos), []);
+  // a ordem no texto manda, não a ordem em que os termos foram declarados
+  assert.deepEqual(ResumoModel.segmentos('A PRF e o DNIT', termos).filter(s => s.id).map(s => s.id), ['prf', 'dnit']);
+});
+
+test('sobrePainel devolve os termos declarados da fonte (lista vazia quando não há)', () => {
+  const d2 = { ...desc, agro: { ...desc.agro, termos: [{ id: 'pam', texto: 'Safras' }] } };
+  const r = ResumoModel.sobrePainel(conc, intel, d2).fontes;
+  assert.deepEqual(r.find(f => f.id === 'agro').termos, [{ id: 'pam', texto: 'Safras' }]);
+  assert.deepEqual(r.find(f => f.id === 'verificacao').termos, []);
 });
 
 test('a edição do RoadShow vem de conc.edicaoRoadshow; sem ela a frase não deixa sobra', () => {

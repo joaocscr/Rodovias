@@ -15,6 +15,7 @@ import build  # noqa: E402
 DESCRICAO = ROOT / "data" / "fontes_descricao.json"
 VERIFICACAO = "verificacao"  # CONC.verificacao: não passa por INTEL.fontes
 # O nome da empresa do autor é montado em partes para este arquivo não citá-lo.
+LINK = re.compile(r"""Glossario\.link\(\s*(['"])([^'"]+)\1""")  # Glossario.link('id'...) em src/*.js
 PROIBIDOS = re.compile(r"\bv[1-4]\b|\bv40\b|gal" + "[aá]" + "pagos|\\d{4}-\\d{2}|\\w+_\\w+", re.I)
 
 
@@ -39,7 +40,7 @@ def test_nenhuma_descricao_sobra():
 
 def test_campos_e_linguagem_clara():
     for bloco, d in descricoes().items():
-        assert set(d) <= {"nome", "oQue", "termo"}, (bloco, set(d))
+        assert set(d) <= {"nome", "oQue", "termo", "termos"}, (bloco, set(d))
         assert d["nome"].strip() and d["oQue"].strip(), bloco
         assert 40 <= len(d["oQue"]) <= 420, f"{bloco}: descrição fora de 40–420 caracteres ({len(d['oQue'])})"
         achado = PROIBIDOS.search(d["nome"] + " " + d["oQue"])
@@ -47,10 +48,61 @@ def test_campos_e_linguagem_clara():
         assert ("{edicao}" in d["oQue"]) == (bloco == "roadshow"), bloco  # a edição vem de CONC.edicaoRoadshow
 
 
+def glossario():
+    return {e["id"]: e for e in json.loads((ROOT / "data" / "glossario.json").read_text(encoding="utf-8"))}
+
+
 def test_termos_do_glossario_existem():
-    ids = {e["id"] for e in json.loads((ROOT / "data" / "glossario.json").read_text(encoding="utf-8"))}
+    ids = set(glossario())
     for bloco, d in descricoes().items():
         assert d.get("termo", "x") in ids | {"x"}, (bloco, d["termo"])
+        for t in d.get("termos", []):
+            assert set(t) == {"id", "texto"}, (bloco, t)
+            assert t["id"] in ids, (bloco, t["id"])
+            assert t["texto"] in d["oQue"], f"{bloco}: o texto '{t['texto']}' não aparece na descrição"
+
+
+def test_cada_termo_e_ligado_uma_vez_so():
+    # só a primeira menção de cada termo leva link (na ordem em que as linhas aparecem)
+    ligados = [d["termo"] for d in descricoes().values() if "termo" in d]
+    ligados += [t["id"] for d in descricoes().values() for t in d.get("termos", [])]
+    assert len(ligados) == len(set(ligados)), sorted({i for i in ligados if ligados.count(i) > 1})
+
+
+def test_sigla_do_glossario_tem_link_na_primeira_mencao():
+    # links que a própria página do Resumo já faz antes da tabela (src/resumo.js)
+    antes = {m.group(2) for m in LINK.finditer((ROOT / "src" / "resumo.js").read_text(encoding="utf-8"))}
+    ligados = set(antes)
+    gl = glossario()
+    ja = set()
+    for bloco, d in descricoes().items():
+        ligados |= {d["termo"]} if "termo" in d else set()
+        ligados |= {t["id"] for t in d.get("termos", [])}
+        texto = d["nome"] + " " + d["oQue"]
+        for i, e in gl.items():
+            sigla = e.get("sigla")
+            if sigla and i not in ja and re.search(rf"(?<!\w){re.escape(sigla)}(?!\w)", texto):
+                ja.add(i)
+                assert i in ligados, f"{bloco}: a sigla {sigla} é citada pela primeira vez sem link para o glossário ('{i}')"
+
+
+def test_siglas_de_orgaos_sao_explicadas_na_primeira_mencao():
+    # quem lê pela primeira vez precisa do nome por extenso (ou de uma explicação) junto da sigla
+    por_extenso = {
+        "DNIT": "Departamento Nacional de Infraestrutura de Transportes", "BNDES": "Banco Nacional de Desenvolvimento Econômico e Social",
+        "IBGE": "Instituto Brasileiro de Geografia e Estatística", "Conab": "Companhia Nacional de Abastecimento",
+        "ABCR": "Associação Brasileira de Concessionárias de Rodovias|associação das concessionárias", "Infra S.A.": "empresa pública federal",
+        "PRF": "Polícia Rodoviária Federal", "ANTT": "Agência Nacional de Transportes Terrestres", "MPO": "Ministério do Planejamento e Orçamento",
+        "PNL": "Plano Nacional de Logística",
+    }
+    vistos = set()
+    anteriores = ""  # frases das linhas já mostradas, incluindo a atual
+    for bloco, d in descricoes().items():
+        anteriores += " " + d["oQue"]
+        for sigla, ext in por_extenso.items():
+            if sigla not in vistos and re.search(rf"(?<!\w){re.escape(sigla)}(?!\w)", d["oQue"]):
+                vistos.add(sigla)
+                assert re.search(ext, anteriores), f"{bloco}: a sigla {sigla} aparece sem explicação ('{ext}')"
 
 
 def test_roadshow_e_explicado_sem_sigla_solta():

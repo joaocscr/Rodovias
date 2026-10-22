@@ -388,6 +388,14 @@ test('resumo: Sobre este painel mostra as fontes, a data-base e o acesso do mode
   assert.equal(await p.isVisible('#sobre-table'), true);
   const hrefs = await p.$$eval('#resumo-sobre a.glossario-link', as => as.map(a => a.getAttribute('href')));
   assert.ok(hrefs.includes('#glossario/roadshow'));
+  // termos declarados nas descrições viram link na frase da fonte (primeira menção), com o texto declarado
+  for (const f of modelo.fontes) for (const t of f.termos) {
+    assert.equal(await p.locator(`#sobre-fontes li[data-fonte="${f.id}"] a[href="#glossario/${t.id}"]`).first().textContent(), t.texto, `${f.id}: ${t.id}`);
+  }
+  assert.ok(modelo.fontes.some(f => f.termos.length > 1), 'alguma linha liga mais de um termo');
+  // data-base de bloco com várias fontes não parece série contínua; a legenda explica
+  assert.ok(modelo.fontes.some(f => /^varia por fonte \(de \d{4} a \d{4}\)$/.test(f.dataBase)));
+  assert.match(await p.textContent('#sobre-legenda'), /varia por fonte.*não uma série contínua.*aba Fontes/);
   const ids = await p.evaluate(() => window.GLOSSARIO.map(e => e.id));
   for (const h of hrefs) assert.ok(ids.includes(decodeURIComponent(h.split('/')[1])), h);
   assert.doesNotMatch(await p.textContent('#resumo-sobre'), /undefined|NaN|null|\{edicao\}/);

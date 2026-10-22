@@ -16,11 +16,19 @@ const ResumoModel = (() => {
     return ds.length ? faixa(IM.fmtDia(ds[0]), IM.fmtDia(ds[ds.length - 1])) : DASH;
   }
 
+  // Anos de dado de um período. Só vale o que está fora de parênteses (neles vêm notas como "cenário-base do PNL 2035" ou
+  // "versão de out/2026"); se fora não há ano, vale o de dentro. Códigos de versão (202607A) não são anos.
+  const ANO = /\b(?:19|20)\d{2}\b/g;
+  function anosDoPeriodo(p) {
+    const fora = String(p).replace(/\([^)]*\)/g, ' ').match(ANO);
+    return (fora || String(p).match(ANO) || []).map(Number);
+  }
+
   // Agrupa as fontes embutidas por bloco: { id, nomes, periodos, acessos }
   function blocos(conc, intel) {
     const por = new Map();
     const bloco = id => {
-      if (!por.has(id)) por.set(id, { id, nomes: [], periodos: [], acessos: [], datas: [] });
+      if (!por.has(id)) por.set(id, { id, nomes: [], periodos: [], anos: [], acessos: [], datas: [] });
       return por.get(id);
     };
     const f = intel && intel.fontes;
@@ -28,7 +36,7 @@ const ResumoModel = (() => {
     for (const x of linhas) {
       const b = bloco(x.bloco || `base:${x.nome}`);
       b.nomes.push(x.nome);
-      if (x.periodo) b.periodos.push(IM.fmtPeriodo(x.periodo));
+      if (x.periodo) { b.periodos.push(IM.fmtPeriodo(x.periodo)); b.anos.push(...anosDoPeriodo(IM.fmtPeriodo(x.periodo))); }
       b.acessos.push(x.acesso);
     }
     const docs = (conc && conc.verificacao && conc.verificacao.fontes) || [];
@@ -46,15 +54,37 @@ const ResumoModel = (() => {
     }
     const ps = unicos(b.periodos);
     if (ps.length <= 1) return ps.length ? ps[0] : DASH;
-    // Bloco com várias fontes: cada uma tem o seu período (veja a aba Fontes); aqui, só de que ano a que ano os números vão.
-    const anos = ps.flatMap(p => p.match(/\b(?:19|20)\d{2}\b/g) || []).map(Number);
-    if (!anos.length) return ps.join('; ');
-    const de = Math.min(...anos), ate = Math.max(...anos);
-    return de === ate ? String(de) : `${de} a ${ate}, conforme a fonte`;
+    // Bloco com várias fontes: cada uma tem o seu período (aba Fontes). Aqui só o menor e o maior ano, dito como variação
+    // entre fontes, para não parecer uma série contínua.
+    if (!b.anos.length) return ps.join('; ');
+    const de = Math.min(...b.anos), ate = Math.max(...b.anos);
+    return de === ate ? String(de) : `varia por fonte (de ${de} a ${ate})`;
   }
 
   // A descrição pode terminar com "{edicao}", trocado por ", " + a edição do RoadShow (CONC.edicaoRoadshow); sem edição, some.
   const comEdicao = (txt, edicao) => txt.replace(/,?\s*\{edicao\}/, edicao ? `, ${edicao}` : '');
+
+  // Divide o texto em trechos, marcando os que levam link do glossário: [{ texto, id? }]. Cada termo ({ id, texto }) vira
+  // link só na primeira ocorrência do seu texto; termo cujo texto não aparece, ou que cai sobre outro já marcado, é ignorado.
+  function segmentos(oQue, termos) {
+    const txt = oQue == null ? '' : String(oQue);
+    const marcas = [];
+    for (const t of termos || []) {
+      const i = txt.indexOf(t.texto);
+      if (i < 0 || marcas.some(m => i < m.fim && i + t.texto.length > m.ini)) continue;
+      marcas.push({ ini: i, fim: i + t.texto.length, id: t.id });
+    }
+    marcas.sort((a, b) => a.ini - b.ini);
+    const saida = [];
+    let pos = 0;
+    for (const m of marcas) {
+      if (m.ini > pos) saida.push({ texto: txt.slice(pos, m.ini) });
+      saida.push({ texto: txt.slice(m.ini, m.fim), id: m.id });
+      pos = m.fim;
+    }
+    if (pos < txt.length) saida.push({ texto: txt.slice(pos) });
+    return saida;
+  }
 
   function sobrePainel(conc, intel, descricoes) {
     const desc = descricoes || (typeof window !== 'undefined' && window.FONTES_DESCRICAO) || {};
@@ -70,6 +100,7 @@ const ResumoModel = (() => {
         nome: d ? d.nome : (b.nomes[0] || b.id),
         oQue: d ? comEdicao(d.oQue, conc && conc.edicaoRoadshow) : null,
         termo: (d && d.termo) || null,
+        termos: (d && d.termos) || [],
         dataBase: dataBaseDe(b),
         acesso: acessoDe(b.acessos),
       };
@@ -77,7 +108,7 @@ const ResumoModel = (() => {
     return { fontes, semDescricao };
   }
 
-  return { sobrePainel };
+  return { sobrePainel, segmentos };
 })();
 
 if (typeof module !== 'undefined') module.exports = ResumoModel;

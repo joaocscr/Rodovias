@@ -26,11 +26,18 @@ def carregar():
 
 
 def links_nas_abas():
-    """{id: [arquivos]} de todo Glossario.link('id') em src/*.js."""
+    """{id: [arquivos]} de todo Glossario.link('id') em src/*.js e dos termos declarados em data/fontes_descricao.json."""
     achados = {}
     for js in sorted((ROOT / "src").glob("*.js")):
         for m in LINK.finditer(js.read_text(encoding="utf-8")):
             achados.setdefault(m.group(2), []).append(js.name)
+    # a aba Resumo também liga termos pelas descrições curadas das fontes (data/fontes_descricao.json)
+    desc = json.loads((ROOT / "data" / "fontes_descricao.json").read_text(encoding="utf-8"))
+    for d in desc.values():
+        for i in [d["termo"]] if "termo" in d else []:
+            achados.setdefault(i, []).append("fontes_descricao.json")
+        for t in d.get("termos", []):
+            achados.setdefault(t["id"], []).append("fontes_descricao.json")
     return achados
 
 
