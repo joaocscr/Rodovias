@@ -263,3 +263,20 @@ test('legendHtml: formas do cronograma (círculo vazado e losango cheio) na cor 
   assert.match(html, /<circle[^>]*fill="none"[^>]*stroke="#231F20"[^>]*\/><\/svg>Edital/);
   assert.match(html, /<path[^>]*fill="#231F20"[^>]*\/><\/svg>Leilão/);
 });
+
+test('hbarsSvg: o detalhe aparece na dica da barra e na dica da linha inteira (rótulo, barra e valor)', () => {
+  const svg = Charts.hbarsSvg([{ label: 'Grupo A', value: 10, detail: 'capex 6 + opex 4' }, { label: 'Grupo B', value: 0.4, detail: 'capex 0,3 + opex 0,1' }],
+    { unit: 'R$ bi', format: v => String(v).replace('.', ',') });
+  assert.match(svg, /<title>Grupo A: 10 R\$ bi \(capex 6 \+ opex 4\)<\/title>/);
+  assert.match(svg, /<title>Grupo B: 0,4 R\$ bi \(capex 0,3 \+ opex 0,1\)<\/title>/);
+  // a barra de B é minúscula: a linha toda (<g class="hrow-tip">) carrega a dica, com área de acerto de largura total
+  const linhas = svg.match(/<g class="hrow-tip">.*?<\/g>/gs) || [];
+  assert.equal(linhas.length, 2);
+  assert.match(linhas[1], /^<g class="hrow-tip"><title>Grupo B: 0,4 R\$ bi \(capex 0,3 \+ opex 0,1\)<\/title>/);
+  assert.match(linhas[1], /class="hit"[^>]*width="640"/);
+});
+test('hbarsSvg: sem detalhe a dica é só rótulo e valor', () => {
+  const svg = Charts.hbarsSvg([{ label: 'X', value: 3 }], { unit: 'km' });
+  assert.match(svg, /<title>X: 3 km<\/title>/);
+  assert.ok(!/\(undefined|\(\)/.test(svg));
+});

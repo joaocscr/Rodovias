@@ -975,7 +975,9 @@ test('v4: série de deságio desenha um ponto por leilão com deságio, com lege
   assert.ok((await page.textContent('#card-desagio .sub')).includes(`Média dos deságios exibidos: ${x.media}% ${x.impressa}`));
   // a nota é o comentário de mercado.json (a coerência dela com a média está no pytest)
   assert.equal(await page.textContent('#card-desagio .src:last-child'), `Nota: ${x.nota}`);
-  for (const id of ['faixas', 'porN']) assert.equal(await page.textContent(`#card-${id} .sub`), `${x.periodo}, como impresso no RoadShow`);
+  const impressoSub = `Leilões do programa federal em ${x.periodo}, como impresso no RoadShow`;
+  assert.equal(await page.textContent('#card-faixas .sub'), impressoSub);
+  assert.equal(await page.textContent('#card-porN .sub'), `${impressoSub}; entre parênteses, quantos leilões tiveram esse número de concorrentes`);
 });
 
 // Linha esperada da tabela de participantes do Mercado, calculada do CONC da página (mesmas regras de mercado.js):
@@ -1207,4 +1209,110 @@ test('filtro aplicado em menos de 200 ms', async () => {
   }));
   assert.notEqual(await kpi(), before);
   assert.ok(ms < 200, `levou ${ms.toFixed(0)} ms`);
+});
+
+
+// ---------- Mercado: plural, "Outros" por último, dica do investimento e diagnóstico por ano ----------
+
+test('mercado: nenhum texto gerado traz plural quebrado e o rótulo de concorrentes flexiona', async () => {
+  await go('#mercado');
+  const txt = await page.textContent('#page-mercado');
+  assert.ok(!/ãoões|\bleilãos\b|\bconcorrentees\b/.test(txt), 'plural quebrado');
+  const m = await page.evaluate(() => window.CONC.mercado.desagio_por_n_concorrentes);
+  const rot = x => `${x.concorrentes} ${x.concorrentes === 1 ? 'concorrente' : 'concorrentes'} (${x.leiloes} ${x.leiloes === 1 ? 'leilão' : 'leilões'})`;
+  const labels = await page.$$eval('#chart-porN svg text[text-anchor="end"]', ts => ts.map(t => t.textContent));
+  assert.deepEqual(labels, m.map(rot));
+});
+
+test('mercado: "Outros N grupos" é a última barra nos gráficos de extensão e de investimento', async () => {
+  await go('#mercado');
+  const outros = await page.evaluate(() => window.CONC.mercado.grupos.filter(g => g.grupo.startsWith('Outros')).map(g => g.grupo));
+  assert.equal(outros.length, 1, 'controle: a base tem a linha "Outros"');
+  for (const id of ['grupos', 'gruposInv']) {
+    const rotulos = await page.$$eval(`#chart-${id} g.hrow-tip text[text-anchor="end"]`, ts => ts.map(t => t.textContent));
+    assert.equal(rotulos[rotulos.length - 1], outros[0], `${id}: última linha`);
+    assert.equal(rotulos.filter(r => r.startsWith('Outros')).length, 1, id);
+    // as demais seguem do maior para o menor
+    const vals = await page.$$eval(`#chart-${id} g.hrow-tip rect.cbar`, rs => rs.map(r => +r.getAttribute('width')));
+    const semOutros = vals.slice(0, -1);
+    assert.deepEqual(semOutros, [...semOutros].sort((a, b) => b - a), `${id}: ordem decrescente`);
+  }
+  // controle de que a regra faz diferença: sem ela, "Outros" ficaria antes de algum grupo menor
+  const antes = await page.evaluate(() => {
+    const g = window.CONC.mercado.grupos, o = g.find(x => x.grupo.startsWith('Outros'));
+    return g.some(x => x !== o && x.km < o.km) && g.some(x => x !== o && (x.capex_opex ?? x.capex + x.opex) < (o.capex_opex ?? o.capex + o.opex));
+  });
+  assert.ok(antes, 'controle: o "Outros" é maior que algum grupo nos dois gráficos');
+});
+
+test('mercado: a dica do investimento por grupo mostra capex e opex, na barra e na linha inteira', async () => {
+  await go('#mercado');
+  const gr = await page.evaluate(() => window.CONC.mercado.grupos.find(g => !g.grupo.startsWith('Outros')));
+  const nf2 = v => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const esperado = `${gr.grupo}: ${nf2(gr.capex_opex ?? gr.capex + gr.opex)} R$ bi (capex ${nf2(gr.capex)} + opex ${nf2(gr.opex)})`;
+  const linha = page.locator('#chart-gruposInv g.hrow-tip', { hasText: gr.grupo }).first();
+  assert.equal(await linha.locator(':scope > title').textContent(), esperado);
+  assert.equal(await linha.locator('rect.cbar title').textContent(), esperado);
+  // área de acerto de largura total: passar o mouse longe da barra, no vazio da linha, ainda cai na linha
+  const hit = await linha.locator('rect.hit').boundingBox();
+  const caixa = await page.locator('#chart-gruposInv svg').boundingBox();
+  assert.ok(hit.width >= caixa.width - 2, 'área de acerto da linha toda');
+  assert.ok(!(await page.$$eval('#chart-gruposInv title', ts => ts.some(t => /undefined|NaN/.test(t.textContent)))));
+});
+
+test('mercado: o diagnóstico traz os anos do modelo, cada valor com a fonte, e nenhum ano sem publicação', async () => {
+  await go('#mercado');
+  const d = await page.evaluate(() => {
+    const c = window.CONC, rows = MercadoModel.diagnosticoPorAno(c, window.INTEL);
+    return { rows, imp: c.mercado.diagnostico.map(x => x.ano), gestao: c.mercado.gestao, ents: c.entidades, nota: MercadoModel.diagnosticoNota(rows),
+      series: window.INTEL.antt.series };
+  });
+  const anosTela = await page.$$eval('#diagnostico tbody tr', trs => trs.map(tr => +tr.dataset.ano));
+  assert.deepEqual(anosTela, d.rows.map(r => r.ano));
+  // os anos impressos aparecem todos; os derivados são anos com extensão concedida; nada fora disso
+  for (const a of d.imp) assert.ok(anosTela.includes(a), `ano impresso ${a}`);
+  const lacunas = [];
+  for (let a = Math.min(...anosTela); a <= Math.max(...anosTela); a++) if (!anosTela.includes(a)) lacunas.push(a);
+  assert.ok(lacunas.length > 0 && lacunas.every(a => !d.gestao.some(g => g.ano === a) && !d.imp.includes(a)), `lacunas ${lacunas}`);
+  assert.ok(!anosTela.includes(2028) && !anosTela.includes(2029));
+  const nota = await page.textContent('#diagnostico-nota');
+  assert.ok(nota.includes(d.nota) && nota.includes('nenhuma fonte publica') && /só os vigentes hoje/.test(nota), nota);
+  for (const a of lacunas) assert.ok(nota.includes(String(a)), `nota cita ${a}`);
+  // anos derivados, conferidos contra os dados crus (cálculo independente do modelo)
+  const derivados = anosTela.filter(a => !d.imp.includes(a));
+  assert.ok(derivados.length >= 3, `anos derivados: ${derivados}`);
+  const ultimoImp = Math.max(...d.imp.filter(a => a < derivados[0]));
+  const base = d.rows.find(r => r.ano === ultimoImp).invest_executado_acum;
+  for (const a of derivados) {
+    const tr = page.locator(`#diagnostico tbody tr[data-ano="${a}"]`);
+    const cel = await tr.locator('td').allTextContents();
+    const contratos = d.ents.filter(e => ['vigente', 'programa'].includes(e.estado) && e.assinatura && e.assinatura <= `${a}-12-31`).length;
+    const km = d.gestao.find(g => g.ano === a).privada_km;
+    assert.equal(cel[1], contratos.toLocaleString('pt-BR'), `${a}: contratos`);
+    assert.equal(cel[2], km.toLocaleString('pt-BR'), `${a}: km`);
+    assert.equal(cel[3], '—', `${a}: valor não publicado`);
+    let inv = base;
+    for (let y = ultimoImp + 1; y <= a; y++) inv += Object.values(d.series).reduce((t, s) => t + (s.investimento[s.anos.indexOf(y)] || 0), 0) / 1e9;
+    assert.equal(cel[4], inv.toLocaleString('pt-BR', { maximumFractionDigits: 1 }), `${a}: investimento executado acumulado`);
+  }
+  // fonte em todas as células de valor e na coluna de fontes
+  const semFonte = await page.$$eval('#diagnostico tbody td.num', tds => tds.filter(td => !td.title).length);
+  assert.equal(semFonte, 0);
+  const fontes = await page.$$eval('#diagnostico tbody tr', trs => trs.map(tr => tr.lastElementChild.textContent));
+  assert.ok(fontes.every(f => /Contratos: .*km concedidos: .*Valor dos contratos: .*Investimento executado acumulado: /.test(f)), fontes.join('|'));
+  assert.ok(fontes.some(f => /ANTT/.test(f)) && fontes.some(f => /não publicado/.test(f)));
+  assert.ok(!/NaN|undefined|null/.test(await page.textContent('#card-diag')));
+});
+
+test('mercado: títulos pelo critério de clareza, com período e contagens vindos dos dados', async () => {
+  await go('#mercado');
+  const x = await page.evaluate(() => {
+    const m = window.CONC.mercado, per = s => `${Math.min(...s.map(r => r.ano))}–${Math.max(...s.map(r => r.ano))}`;
+    return { part: per(m.participantes), prog: per(m.programa_por_ano), n: m.programa_por_ano.reduce((t, r) => t + r.leiloes, 0) };
+  });
+  const h3 = id => page.textContent(`#card-${id} h3`);
+  assert.equal(await h3('serie'), `Deságio do vencedor nos leilões de concessões rodoviárias federais (ANTT), ${x.part}`);
+  assert.equal(await h3('indic'), `Indicadores dos ${x.n} leilões do programa federal de concessões rodoviárias ${x.prog} (Ministério dos Transportes)`);
+  assert.equal(await h3('programa'), `Programa federal de concessões rodoviárias ${x.prog}, por ano`);
+  assert.match(await page.textContent('#page-mercado .page__lead'), /apresentação do Ministério dos Transportes a investidores/);
 });

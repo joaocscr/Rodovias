@@ -10,7 +10,7 @@
   Tabs.on('projetos', () => Projetos.init(conc, intel));
   Tabs.on('trafego', () => Trafego.init(intel, snv));
   Tabs.on('cargas', () => Cargas.init(intel, snv));
-  Tabs.on('mercado', () => Mercado.init(conc));
+  Tabs.on('mercado', () => Mercado.init(conc, intel));
   Tabs.on('regulatorio', () => Regulatorio.init(conc));
   Tabs.on('fontes', () => Fontes.init(intel, conc));
   Tabs.init({ isFicha: id => Ficha.exists(id) });
