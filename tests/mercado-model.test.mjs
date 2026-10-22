@@ -134,3 +134,9 @@ test('diagnosticoPorAno: dados com defeito não geram NaN', () => {
   c.mercado.gestao.push({ ano: 2024, privada_km: 'lixo' });
   assert.ok(!/NaN|undefined/.test(JSON.stringify(MercadoModel.diagnosticoPorAno(c, intel()))));
 });
+
+test('grupoEhOutros: só a linha "Outros N grupos" (rótulo, grupo ou nome)', () => {
+  assert.equal(MercadoModel.grupoEhOutros({ label: 'Outros 6 grupos' }), true);
+  assert.equal(MercadoModel.grupoEhOutros({ grupo: 'Outros 2 grupos' }), true);
+  assert.equal(MercadoModel.grupoEhOutros({ label: 'Motiva' }), false);
+});

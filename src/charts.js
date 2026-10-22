@@ -63,14 +63,17 @@ const Charts = (() => {
       const v = num(r.value) ? r.value : 0, y = 4 + i * rh, bw = (v / max) * pw;
       // a dica vale para a linha inteira (rótulo, barra, valor e o vazio entre eles): barras curtas seriam difíceis de acertar
       const tip = `${esc(r.label)}: ${num(r.value) ? esc(fmt(r.value)) + esc(unit) : '—'}${r.detail ? ' (' + esc(r.detail) + ')' : ''}`;
-      body += `<g class="hrow-tip"><title>${tip}</title>` +
-        `<rect class="hit" x="0" y="${y}" width="${w}" height="${rh}" fill="${C.bright}" fill-opacity="0"/>` +
+      // o.clickable: a linha com k vira <g role="button" data-k> (abre a ficha); sem k (ex.: "Outros N grupos") fica só com a dica
+      const link = o.clickable && r.k != null;
+      const attrs = link ? ` data-k="${esc(r.k)}" role="button" tabindex="0" aria-label="${esc(o.rowLabel ? o.rowLabel(r) : r.label)}"` : '';
+      body += `<g class="hrow-tip${link ? ' hrow' : ''}"${attrs}><title>${tip}</title>` +
+        `<rect class="hit${link ? ' hrow__bg' : ''}" x="0" y="${y}" width="${w}" height="${rh}" fill="${C.bright}" fill-opacity="0"/>` +
         `<text x="${L - 8}" y="${y + 21}" text-anchor="end" fill="${C.spacial}">${esc(r.label)}</text>` +
         `<rect class="cbar" x="${L}" y="${y + 8}" width="${bw.toFixed(1)}" height="16" rx="2" fill="${r.alt ? C.bright : C.deep}">` +
         `<title>${tip}</title></rect>` +
         `<text x="${(L + bw + 8).toFixed(1)}" y="${y + 21}" fill="${C.grey}">${num(r.value) ? esc(fmt(r.value)) : '—'}</text></g>`;
     });
-    return frame(w, h, body, o.title);
+    return frame(w, h, body, o.title, o.clickable ? 'group' : 'img');
   }
 
   function scatterSvg(data, o = {}) {

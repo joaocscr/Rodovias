@@ -280,3 +280,16 @@ test('hbarsSvg: sem detalhe a dica é só rótulo e valor', () => {
   assert.match(svg, /<title>X: 3 km<\/title>/);
   assert.ok(!/\(undefined|\(\)/.test(svg));
 });
+
+test('hbarsSvg clicável: linha com k vira botão acessível; linha sem k (ex.: "Outros") e gráfico comum não', () => {
+  const rows = [{ label: 'Grupo "A"', value: 3, k: 'Grupo "A"' }, { label: 'Outros 2 grupos', value: 1 }];
+  const svg = Charts.hbarsSvg(rows, { clickable: true, rowLabel: r => `Abrir a ficha de ${r.label}` });
+  const linhas = svg.match(/<g class="hrow-tip[^>]*>/g);
+  assert.equal(linhas.length, 2);
+  assert.match(linhas[0], /class="hrow-tip hrow" data-k="Grupo &quot;A&quot;" role="button" tabindex="0" aria-label="Abrir a ficha de Grupo &quot;A&quot;"/);
+  assert.equal(linhas[1], '<g class="hrow-tip">', '"Outros" não é clicável');
+  assert.match(svg, /role="group"/);
+  const comum = Charts.hbarsSvg(rows);
+  assert.ok(!/data-k|role="button"|tabindex/.test(comum));
+  assert.match(comum, /role="img"/);
+});

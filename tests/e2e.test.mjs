@@ -1468,3 +1468,197 @@ test('mercado: títulos pelo critério de clareza, com período e contagens vind
   assert.equal(await h3('programa'), `Programa federal de concessões rodoviárias ${x.prog}, por ano`);
   assert.match(await page.textContent('#page-mercado .page__lead'), /apresentação do Ministério dos Transportes a investidores/);
 });
+
+// ---------- Mercado: ficha de grupo e consórcio ----------
+// Grupos do ranking escolhidos pelos dados (nada fixo): com consórcios e fonte de imprensa, com composição não localizada e que disputou só.
+const fichasDoRanking = () => page.evaluate(() => {
+  const c = window.CONC, rk = LeiloesModel.rankingGrupos(c.mercado.participantes, c.grupos_alias);
+  const fichas = rk.map(r => LeiloesModel.fichaGrupo(r.grupo, c));
+  const nomeDe = f => f && f.grupo;
+  return {
+    comImprensa: nomeDe(fichas.find(f => f.consorcios.some(k => k.composicaoLocalizada && k.integrantes.some(i => typeof i.participacao === 'number'))
+      && f.fontes.some(x => x.tipo === 'imprensa')) || fichas.find(f => f.consorcios.length)),
+    semComposicao: nomeDe(fichas.find(f => f.consorcios.some(k => !k.composicaoLocalizada))),
+    sozinho: nomeDe(fichas.find(f => !f.consorcios.length && f.leiloes.length)),
+    maisConsorcios: nomeDe([...fichas].sort((a, b) => b.consorcios.length - a.consorcios.length)[0]),
+  };
+});
+const abrirDoRanking = async grupo => {
+  await go('#mercado');
+  await page.locator('#ranking-grupos tbody').getByRole('button', { name: grupo, exact: true }).click();
+  await page.waitForSelector('#cons-ficha', { state: 'visible' });
+};
+const fechaFicha = async () => { if (await page.isVisible('#cons-ficha')) await page.keyboard.press('Escape'); };
+
+test('ficha de grupo: abre pelo ranking, acessível, e o conteúdo é o do modelo', async () => {
+  const { comImprensa: grupo } = await fichasDoRanking();
+  assert.ok(grupo, 'algum grupo do ranking tem consórcio na base');
+  const esperado = await page.evaluate(g => LeiloesModel.fichaGrupo(g, window.CONC), grupo);
+  await abrirDoRanking(grupo);
+  const botao = page.locator('#ranking-grupos tbody').getByRole('button', { name: grupo, exact: true });
+  const dlg = page.locator('#cons-ficha');
+  assert.equal(await dlg.getAttribute('role'), 'dialog');
+  assert.equal(await dlg.getAttribute('aria-modal'), 'true');
+  assert.equal(await page.textContent('#cons-titulo'), esperado.grupo);
+  assert.equal(await dlg.getAttribute('aria-labelledby'), 'cons-titulo');
+  assert.equal(await page.evaluate(() => document.getElementById('cons-ficha').contains(document.activeElement)), true, 'o foco entra na ficha');
+  // consórcios e leilões como no modelo
+  assert.deepEqual(await dlg.locator('.cons-card h4').allTextContents(), esperado.consorcios.map(c => c.nome));
+  assert.equal(await dlg.locator('.cons-leilao').count(), esperado.leiloes.length);
+  const res = { venceu: 'Venceu', perdeu: 'Perdeu', inabilitado: 'Inabilitado' };
+  assert.deepEqual(await dlg.locator('.cons-leilao .cons-res').allTextContents(), esperado.leiloes.map(l => res[l.resultado]));
+  assert.deepEqual(await dlg.locator('.cons-leilao__como').allTextContents(), esperado.leiloes.map(l => l.consorcio || 'Participou sozinho'));
+  // composição e participação de cada integrante: barra e percentual, ou "não informada"
+  for (const [i, c] of esperado.consorcios.entries()) {
+    const card = dlg.locator('.cons-card').nth(i);
+    assert.equal(await card.locator('.cons-int').count(), c.integrantes.length, c.nome);
+    if (!c.composicaoLocalizada) { assert.equal((await card.locator('.cons-sem').textContent()).trim(), 'Composição não localizada.'); continue; }
+    for (const [j, it] of c.integrantes.entries()) {
+      const li = card.locator('.cons-int').nth(j);
+      if (typeof it.participacao === 'number') {
+        assert.match(await li.locator('.cons-int__pct').textContent(), new RegExp(`^${it.participacao.toLocaleString('pt-BR', { maximumFractionDigits: 2 }).replace('.', '\\.')}%$`));
+        assert.equal(await li.locator('.cons-bar i').evaluate(e => e.style.width), `${it.participacao}%`);
+      } else {
+        assert.match(await li.textContent(), /participação não informada/);
+        assert.equal(await li.locator('.cons-bar').count(), 0);
+      }
+      assert.equal(await li.locator('.cons-tag', { hasText: 'líder' }).count(), it.lider ? 1 : 0);
+    }
+  }
+  // glossário no primeiro termo; fontes com o selo de origem (imprensa sempre "não oficial")
+  assert.deepEqual(await dlg.locator('.cons-lead a.glossario-link').evaluateAll(as => as.map(a => a.getAttribute('href'))), ['#glossario/grupo-economico', '#glossario/consorcio']);
+  assert.equal(await dlg.locator('.cons-fontes li').count(), esperado.fontes.length);
+  const imprensa = esperado.fontes.filter(f => f.tipo === 'imprensa').length;
+  assert.ok(imprensa > 0);
+  assert.equal(await dlg.locator('.cons-fontes .selo--imprensa').count(), imprensa);
+  assert.ok((await dlg.locator('.cons-fontes .selo--imprensa').allTextContents()).every(t => t.trim() === 'imprensa — não oficial'));
+  // o Tab gira dentro da ficha
+  for (let n = 0; n < 8; n++) {
+    await page.keyboard.press('Tab');
+    assert.equal(await page.evaluate(() => document.getElementById('cons-ficha').contains(document.activeElement)), true, `Tab ${n}`);
+  }
+  await page.keyboard.press('Shift+Tab');
+  assert.equal(await page.evaluate(() => document.getElementById('cons-ficha').contains(document.activeElement)), true);
+  // Esc fecha e o foco volta ao nome clicado
+  await page.keyboard.press('Escape');
+  assert.equal(await page.isVisible('#cons-ficha'), false);
+  assert.equal(await botao.evaluate(b => b === document.activeElement), true, 'o foco volta ao botão do ranking');
+});
+
+test('ficha de grupo: o grupo de um integrante abre a ficha dele; o fundo e o botão fecham', async () => {
+  const { maisConsorcios: grupo } = await fichasDoRanking();
+  await abrirDoRanking(grupo);
+  const outro = page.locator('#cons-ficha .cons-int__grupo .cons-open').first();
+  assert.ok(await outro.count() > 0, 'o grupo tem consórcio com integrante de outro grupo');
+  const nome = await outro.getAttribute('data-ficha');
+  const esperado = await page.evaluate(g => LeiloesModel.fichaGrupo(g, window.CONC).grupo, nome);
+  await outro.click();
+  assert.equal(await page.textContent('#cons-titulo'), esperado);
+  await page.click('#cons-ficha [data-fechar]');
+  assert.equal(await page.isVisible('#cons-ficha'), false);
+  await abrirDoRanking(grupo);
+  await page.mouse.click(4, 600);  // fora do painel
+  assert.equal(await page.isVisible('#cons-ficha'), false);
+});
+
+test('ficha de grupo: consórcio sem composição localizada e grupo que disputou sozinho nunca abrem vazios', async () => {
+  const { semComposicao, sozinho } = await fichasDoRanking();
+  assert.ok(semComposicao, 'algum grupo do ranking tem consórcio sem composição localizada');
+  assert.ok(sozinho, 'algum grupo do ranking disputou sozinho');
+  let esperado = await page.evaluate(g => LeiloesModel.fichaGrupo(g, window.CONC), semComposicao);
+  await abrirDoRanking(semComposicao);
+  assert.equal(await page.locator('#cons-ficha .cons-sem').count(), esperado.consorcios.filter(c => !c.composicaoLocalizada).length);
+  assert.match(await page.textContent('#cons-ficha'), /Composição não localizada\./);
+  await fechaFicha();
+  esperado = await page.evaluate(g => LeiloesModel.fichaGrupo(g, window.CONC), sozinho);
+  await abrirDoRanking(sozinho);
+  assert.match(await page.textContent('#cons-ficha'), /Nenhum consórcio na base: o grupo disputou sozinho/);
+  assert.equal(await page.locator('#cons-ficha .cons-card').count(), 0);
+  assert.deepEqual(await page.locator('#cons-ficha .cons-leilao__como').allTextContents(), esperado.leiloes.map(() => 'Participou sozinho'));
+  assert.ok(await page.locator('#cons-ficha .cons-leilao').count() > 0);
+  await fechaFicha();
+});
+
+test('ficha de grupo: abre pelo nome de consórcio na tabela de participantes; só consórcios são botões', async () => {
+  await go('#mercado');
+  const alvo = await page.evaluate(() => {
+    const c = window.CONC, p = c.mercado.participantes.find(r => c.consorcios.some(k => k.nome === r.vencedor && k.ano === r.ano && k.lote === r.lote && k.integrantes.length));
+    return { ano: String(p.ano), lote: p.lote, nome: p.vencedor, ficha: LeiloesModel.fichaGrupo(p.vencedor, c) };
+  });
+  await page.selectOption('#part-ano', alvo.ano);
+  const linha = page.locator('#chart-part tbody tr', { hasText: alvo.lote }).first();
+  // todos os botões da tabela são nomes de consórcio (nome de consórcio ou registro na base); empresas isoladas seguem como texto
+  const nomes = await page.$$eval('#chart-part tbody button[data-ficha]', bs => bs.map(b => b.dataset.ficha));
+  assert.ok(nomes.length > 0);
+  assert.ok(await page.evaluate(ns => ns.every(n => LeiloesModel.ehConsorcio(n, window.CONC.consorcios)), nomes));
+  await linha.getByRole('button', { name: alvo.nome, exact: true }).first().click();
+  await page.waitForSelector('#cons-ficha', { state: 'visible' });
+  assert.equal(await page.textContent('#cons-titulo'), alvo.ficha.grupo);
+  assert.ok((await page.locator('#cons-ficha .cons-card h4').allTextContents()).includes(alvo.nome));
+  await page.keyboard.press('Escape');
+  await page.selectOption('#part-ano', '');
+});
+
+test('ficha de grupo: linhas dos gráficos de grupos abrem a ficha por clique e teclado; "Outros" não é clicável', async () => {
+  await go('#mercado');
+  for (const id of ['grupos', 'gruposInv']) {
+    const linhas = page.locator(`#chart-${id} .hrow[data-k]`);
+    const m = await page.evaluate(() => window.CONC.mercado.grupos.map(g => g.grupo));
+    const semOutros = m.filter(g => !g.startsWith('Outros'));
+    assert.equal(await linhas.count(), semOutros.length, id);
+    assert.equal(await page.locator(`#chart-${id} g.hrow-tip:not([data-k])`).count(), m.length - semOutros.length, `${id}: só "Outros" fica sem botão`);
+    assert.equal(await page.locator(`#chart-${id} g.hrow-tip:not([data-k]) text`).first().textContent(), m.find(g => g.startsWith('Outros')));
+    // teclado: Enter na linha focada
+    const k = await linhas.first().getAttribute('data-k');
+    assert.equal(await linhas.first().getAttribute('role'), 'button');
+    assert.equal(await linhas.first().getAttribute('tabindex'), '0');
+    await linhas.first().focus();
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#cons-ficha', { state: 'visible' });
+    assert.equal(await page.textContent('#cons-titulo'), await page.evaluate(g => LeiloesModel.fichaGrupo(g, window.CONC).grupo, k), id);
+    await page.keyboard.press('Escape');
+    assert.equal(await linhas.first().evaluate(e => e === document.activeElement), true, `${id}: foco volta à linha`);
+    // clique numa linha do meio
+    const ultimo = linhas.last();
+    await ultimo.click({ position: { x: 20, y: 10 } });
+    await page.waitForSelector('#cons-ficha', { state: 'visible' });
+    assert.equal(await page.textContent('#cons-titulo'), await page.evaluate(g => LeiloesModel.fichaGrupo(g, window.CONC).grupo, await ultimo.getAttribute('data-k')), id);
+    await page.keyboard.press('Escape');
+  }
+  // o clique em "Outros" não abre nada
+  await page.locator('#chart-grupos g.hrow-tip:not([data-k])').first().click({ position: { x: 20, y: 10 } });
+  assert.equal(await page.isVisible('#cons-ficha'), false);
+});
+
+test('ficha de grupo: link do glossário na ficha fecha o painel e leva ao termo', async () => {
+  const { comImprensa: grupo } = await fichasDoRanking();
+  await abrirDoRanking(grupo);
+  await page.click('#cons-ficha .cons-lead a[href="#glossario/consorcio"]');
+  await page.waitForTimeout(250);
+  assert.equal(await page.isVisible('#cons-ficha'), false);
+  assert.equal(await page.evaluate(() => location.hash), '#glossario/consorcio');
+  await go('#mercado');
+});
+
+test('celular: ficha de grupo sem rolagem horizontal, painel dentro da tela', async () => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  await context.route('**/*', r => (/^(file|data):/.test(r.request().url()) ? r.continue() : r.abort()));
+  const p = await context.newPage();
+  await p.goto('file://' + HTML + '#mercado');
+  await p.waitForSelector('#ranking-grupos tbody button');
+  const grupo = await p.evaluate(() => {
+    const c = window.CONC, rk = LeiloesModel.rankingGrupos(c.mercado.participantes, c.grupos_alias);
+    return rk.map(r => LeiloesModel.fichaGrupo(r.grupo, c)).sort((a, b) => b.consorcios.length - a.consorcios.length)[0].grupo;
+  });
+  await p.locator('#ranking-grupos tbody').getByRole('button', { name: grupo, exact: true }).click();
+  await p.waitForSelector('#cons-ficha', { state: 'visible' });
+  const w = await p.evaluate(() => {
+    const d = document.getElementById('cons-ficha'), r = d.getBoundingClientRect();
+    return { sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, left: r.left, right: r.right, vw: innerWidth,
+      interno: d.scrollWidth - d.clientWidth };
+  });
+  assert.ok(w.sw <= w.cw, `a página alargou: ${w.sw} > ${w.cw}`);
+  assert.ok(w.left >= 0 && w.right <= w.vw, 'painel fora da tela');
+  assert.ok(w.interno <= 0, `algo dentro da ficha alarga além do painel (${w.interno}px)`);
+  await context.close();
+});

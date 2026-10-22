@@ -285,3 +285,75 @@ test('resumoAchados sem dados não quebra', () => {
   assert.ok(semLixo(JSON.stringify(LeiloesModel.resumoAchados(c, null, HOJE))));
   assert.ok(semLixo(JSON.stringify(k)));
 });
+
+// ---------- ficha de grupo e consórcio ----------
+const intg = (nome, grupo, participacao = null, lider = false) => ({ nome, grupo, participacao, lider });
+const fOf = { id: 'f-of', tipo: 'oficial', orgao: 'Órgão', titulo: 'Ata' }, fImp = { id: 'f-imp', tipo: 'imprensa', orgao: 'Jornal', titulo: 'Matéria' };
+const fichaConc = () => ({
+  grupos_alias: [{ nome: 'Consórcio Alfa', grupo: 'Alfa' }, { nome: 'Beta S.A.', grupo: 'Beta' }, { nome: 'Epsilon Ltda', grupo: 'Epsilon' }],
+  mercado: { participantes: [
+    { ano: 2020, lote: 'L1', vencedor: 'Consórcio Alfa', outros: [{ grupo: 'Beta S.A.' }, { grupo: 'Consórcio Gama' }], inabilitados: [{ grupo: 'Delta' }],
+      verif: { grupo_vencedor: { tipo: 'oficial', fontes: [fOf] } } },
+    { ano: 2021, lote: 'L2', vencedor: 'Beta S.A.', outros: [{ grupo: 'Consórcio Gama' }, { grupo: 'Consórcio Zeta' }] },
+    { ano: 2022, lote: 'L3', vencedor: 'Epsilon Ltda', outros: [] },
+  ] },
+  consorcios: [
+    { nome: 'Consórcio Alfa', ano: 2020, lote: 'L1', venceu: true, integrantes: [intg('Alfa Eng', 'Alfa', 60, true), intg('Beta S.A.', 'Beta', 40)], fontes: [fOf] },
+    { nome: 'Consórcio Gama', ano: 2020, lote: 'L1', venceu: false, integrantes: [], nota: 'Composição não localizada.', fontes: [fImp] },
+    { nome: 'Consórcio Gama', ano: 2021, lote: 'L2', venceu: false, integrantes: [intg('Beta S.A.', 'Beta'), intg('Teta', 'Teta')], fontes: [fImp] },
+    { nome: 'Consórcio Omega', ano: 2022, lote: 'L3', venceu: false, fora_da_camada: true, integrantes: [intg('Beta S.A.', 'Beta')], fontes: [fOf] },
+  ],
+});
+
+test('fichaGrupo: grupo com consórcios traz composição, leilões com resultado e fontes sem repetir', () => {
+  const f = LeiloesModel.fichaGrupo('Beta', fichaConc());
+  assert.equal(f.grupo, 'Beta');
+  // sozinho (nome do próprio grupo) e como integrante de consórcio, inclusive o que só a ata traz
+  assert.deepEqual(f.leiloes.map(l => [l.ano, l.lote, l.resultado, l.consorcio]), [
+    [2020, 'L1', 'perdeu', null], [2020, 'L1', 'venceu', 'Consórcio Alfa'],
+    [2021, 'L2', 'venceu', null], [2021, 'L2', 'perdeu', 'Consórcio Gama'],
+    [2022, 'L3', 'perdeu', 'Consórcio Omega']]);
+  assert.deepEqual(f.consorcios.map(c => [c.nome, c.ano, c.venceu]), [['Consórcio Alfa', 2020, true], ['Consórcio Gama', 2021, false], ['Consórcio Omega', 2022, false]]);
+  const alfa = f.consorcios[0];
+  assert.deepEqual(alfa.integrantes.map(i => [i.grupo, i.participacao, i.lider]), [['Alfa', 60, true], ['Beta', 40, false]]);
+  assert.equal(alfa.composicaoLocalizada, true);
+  assert.equal(f.consorcios[1].integrantes[0].participacao, null, 'participação não publicada continua null');
+  // fontes: uma vez cada, as do consórcio e as da verificação do vencedor
+  assert.deepEqual(f.fontes.map(x => x.id).sort(), ['f-imp', 'f-of']);
+});
+
+test('fichaGrupo: grupo que disputou sozinho não tem consórcio e a ficha não fica vazia', () => {
+  const f = LeiloesModel.fichaGrupo('Epsilon', fichaConc());
+  assert.deepEqual(f.consorcios, []);
+  assert.deepEqual(f.leiloes, [{ ano: 2022, lote: 'L3', resultado: 'venceu', consorcio: null }]);
+  const d = LeiloesModel.fichaGrupo('Delta', fichaConc());
+  assert.deepEqual(d.leiloes.map(l => [l.resultado, l.consorcio]), [['inabilitado', null]]);
+});
+
+test('fichaGrupo: consórcio sem composição localizada e consórcio sem registro', () => {
+  const f = LeiloesModel.fichaGrupo('Consórcio Gama', fichaConc());
+  assert.deepEqual(f.consorcios.map(c => [c.ano, c.composicaoLocalizada, c.registrado]), [[2020, false, true], [2021, true, true]]);
+  assert.equal(f.consorcios[0].nota, 'Composição não localizada.');
+  assert.deepEqual(f.consorcios[0].integrantes, []);
+  const z = LeiloesModel.fichaGrupo('Consórcio Zeta', fichaConc());
+  assert.deepEqual(z.consorcios.map(c => [c.nome, c.composicaoLocalizada, c.registrado, c.nota]), [['Consórcio Zeta', false, false, null]]);
+  assert.deepEqual(z.leiloes, [{ ano: 2021, lote: 'L2', resultado: 'perdeu', consorcio: 'Consórcio Zeta' }]);
+});
+
+test('fichaGrupo: nome de outra grafia (rótulo de gráfico) vai para o grupo; desconhecido devolve ficha sem leilões', () => {
+  const c = fichaConc();
+  assert.equal(LeiloesModel.resolverGrupo('BETA', c), 'Beta');
+  assert.equal(LeiloesModel.resolverGrupo('Beta Fundo de Investimento', c), 'Beta');
+  assert.equal(LeiloesModel.resolverGrupo('Consórcio Alfa', c), 'Alfa', 'alias do nome do consórcio');
+  assert.equal(LeiloesModel.resolverGrupo('Sigma', c), 'Sigma');
+  assert.deepEqual(LeiloesModel.fichaGrupo('Sigma', c), { grupo: 'Sigma', consorcios: [], leiloes: [], fontes: [] });
+  // base sem consórcios: continua funcionando com os proponentes
+  const sem = fichaConc(); delete sem.consorcios;
+  assert.equal(LeiloesModel.fichaGrupo('Beta', sem).leiloes.length, 2);
+});
+
+test('ehConsorcio: nome de consórcio ou registro na base', () => {
+  assert.equal(LeiloesModel.ehConsorcio('Consórcio Novo', []), true);
+  assert.equal(LeiloesModel.ehConsorcio('EPR (Equipav)', [{ nome: 'EPR (Equipav)' }]), true);
+  assert.equal(LeiloesModel.ehConsorcio('Beta S.A.', fichaConc().consorcios), false);
+});

@@ -680,3 +680,54 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
   .tabs a { flex: none; }
   .drawer-toggle { flex: none; }
 }
+
+/* Ficha de grupo e consórcio (aba Mercado): painel modal sobre a página */
+.cons-open { padding: 0; text-align: left; font-weight: 600; white-space: normal; }
+.grid td .cons-open { font-size: inherit; }
+.cons-backdrop { position: fixed; inset: 0; z-index: 1700; display: flex; justify-content: center; align-items: flex-start;
+  padding: calc(var(--topbar-h) + 16px) 16px 16px; background: rgba(35, 31, 32, 0.32); animation: fade 200ms ease-in-out; }
+.cons-backdrop[hidden] { display: none; }
+.cons-ficha { width: min(720px, 100%); max-height: 100%; overflow-y: auto; overflow-x: hidden; background: var(--color-snow-white);
+  border-radius: var(--radius-md); box-shadow: var(--shadow); overflow-wrap: anywhere; }
+.cons-ficha:focus { outline: none; }
+.cons-head { position: sticky; top: 0; z-index: 1; display: flex; gap: 16px; align-items: flex-start; justify-content: space-between;
+  padding: 16px 16px 8px 24px; background: var(--color-snow-white); border-bottom: 1px solid var(--line); }
+.cons-head h2 { margin: 8px 0 0; font-family: var(--font-title); font-weight: 700; font-size: 24px; line-height: 32px; color: var(--color-deep-blue); }
+.cons-head .icon-btn { flex: none; }
+.cons-body { padding: 16px 24px 24px; }
+.cons-body h3 { margin: 24px 0 8px; font-family: var(--font-secondary); font-weight: 700; font-size: 14px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-light-grey); }
+.cons-body .sub { margin: 0 0 8px; font-size: 14px; color: var(--color-light-grey); }
+.cons-body .src { margin: 8px 0 0; font-size: 14px; color: var(--color-light-grey); }
+.cons-lead { margin: 0; font-size: 14px; color: var(--color-spacial-grey); }
+.cons-card { margin-bottom: 16px; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius-md); }
+.cons-card h4 { margin: 0; font-family: var(--font-title); font-weight: 700; font-size: 16px; line-height: 24px; color: var(--color-deep-blue); }
+.cons-meta { margin: 4px 0 8px; font-size: 14px; color: var(--color-light-grey); }
+.cons-sem { margin: 0; font-size: 14px; font-style: italic; color: var(--color-spacial-grey); }
+.cons-ints { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.cons-int { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; align-items: center; padding: 8px; border-radius: var(--radius-sm); font-size: 14px; }
+.cons-int.is-grupo { background: var(--tint); }
+.cons-int__grupo { color: var(--color-light-grey); }
+.cons-int__grupo .cons-open { display: inline; font-size: 14px; }
+.cons-int__part { display: inline-flex; align-items: center; gap: 8px; justify-content: flex-end; }
+.cons-int__pct { min-width: 48px; text-align: right; font-variant-numeric: tabular-nums; }
+.cons-int__nd { font-style: italic; color: var(--color-light-grey); }
+.cons-int__obs { grid-column: 1 / -1; font-size: 12px; color: var(--color-light-grey); }
+.cons-bar { display: inline-block; width: 96px; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.cons-bar i { display: block; height: 100%; background: var(--color-bright-blue); }
+.cons-tag { display: inline-block; padding: 0 8px; border-radius: 12px; background: var(--tint); font-size: 12px; line-height: 20px; color: var(--color-deep-blue); }
+.cons-res { display: inline-block; padding: 0 8px; border-radius: 10px; font-size: 12px; font-weight: 600; line-height: 20px; border: 1px solid transparent; white-space: nowrap; }
+.cons-res--venceu { background: var(--color-deep-blue); color: var(--color-snow-white); }
+.cons-res--perdeu { border-color: var(--color-light-grey); color: var(--color-spacial-grey); }
+.cons-res--inabilitado { border: 1px dashed var(--color-light-grey); color: var(--color-light-grey); font-style: italic; }
+.cons-leiloes, .cons-fontes { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.cons-leilao { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 16px; padding-bottom: 8px; border-bottom: 1px solid var(--line); font-size: 14px; }
+.cons-leilao__como { grid-column: 2; color: var(--color-light-grey); }
+.cons-fontes { font-size: 14px; }
+.cons-fontes .selo { margin: 0 8px 0 0; }
+.cons-fontes a.link-btn { display: inline; padding: 0; height: auto; white-space: normal; font-size: 14px; }
+@media (max-width: 600px) {
+  .cons-backdrop { padding: calc(var(--topbar-h) + 8px) 8px 8px; }
+  .cons-body { padding: 16px; }
+  .cons-int { grid-template-columns: minmax(0, 1fr); }
+  .cons-int__part { justify-content: flex-start; }
+}

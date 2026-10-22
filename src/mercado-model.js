@@ -20,9 +20,9 @@ const MercadoModel = (() => {
 
   // As linhas "Outros N grupos" (agrupamento do resto) vão para o fim; as demais mantêm a ordem recebida.
   const nomeLinha = r => String((r && (r.label ?? r.grupo ?? r.nome)) ?? '');
+  const grupoEhOutros = r => nomeLinha(r).startsWith('Outros');
   function grupoOutrosPorUltimo(rows) {
-    const outros = r => nomeLinha(r).startsWith('Outros');
-    return [...rows.filter(r => !outros(r)), ...rows.filter(outros)];
+    return [...rows.filter(r => !grupoEhOutros(r)), ...rows.filter(grupoEhOutros)];
   }
 
   const anoSerie = intel => {
@@ -85,7 +85,7 @@ const MercadoModel = (() => {
     return partes.join(' ');
   }
 
-  return { plural, rotuloConcorrentes, paginas, grupoOutrosPorUltimo, diagnosticoPorAno, diagnosticoNota, faixasDeAnos };
+  return { plural, rotuloConcorrentes, paginas, grupoOutrosPorUltimo, grupoEhOutros, diagnosticoPorAno, diagnosticoNota, faixasDeAnos };
 })();
 
 if (typeof module !== 'undefined') module.exports = MercadoModel;

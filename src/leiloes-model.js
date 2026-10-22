@@ -1,4 +1,5 @@
-// Leilões de concessão rodoviária: ranking de grupos econômicos, série de deságio e os números da aba Resumo. Puro: sem DOM.
+// Leilões de concessão rodoviária: ranking de grupos econômicos, ficha de grupo e consórcio, série de deságio e os números da
+// aba Resumo. Puro: sem DOM.
 // Consome conc.mercado.participantes (já com a camada de verificação aplicada) e conc.grupos_alias.
 const LeiloesModel = (() => {
   const num = v => typeof v === 'number' && isFinite(v);
@@ -344,8 +345,89 @@ const LeiloesModel = (() => {
     return out;
   }
 
+  // ---------- Ficha de grupo e consórcio (aba Mercado) ----------
+  // Tudo sai de conc.mercado.participantes (proponentes por leilão), conc.grupos_alias (grupo da época) e conc.consorcios
+  // (composição, participação e fontes). Um grupo participa de um leilão de duas formas: pelo próprio nome (alias) ou como
+  // integrante de um consórcio proponente. O ranking só conta a primeira; a ficha mostra as duas.
+  const ehNomeDeConsorcio = nome => /^consorcio\b/.test(String(nome).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase());
+  const chaveLeilao = (c, nome = c.nome) => `${c.ano}|${c.lote}|${nome}`;
+  // Consórcio com ficha própria (registro em consorcios.json) ou com nome de consórcio.
+  const ehConsorcio = (nome, consorcios) => ehNomeDeConsorcio(nome) || arr(consorcios).some(c => c.nome === nome);
+
+  // Nome de grupo da ficha: o nome como está nos dados (grupos dos aliases, dos integrantes ou proponentes) ou, vindo de
+  // outra grafia (rótulo dos gráficos do RoadShow), o grupo de mesma grafia normalizada ou o de maior nome que o inicia
+  // ("4UM Fundo de Investimento" → 4UM). Sem correspondência, o próprio nome.
+  function resolverGrupo(nome, conc) {
+    const aliases = arr(conc && conc.grupos_alias);
+    const conhecidos = new Set([...aliases.map(a => a.grupo),
+      ...arr(conc && conc.consorcios).flatMap(c => arr(c.integrantes).map(i => i.grupo)),
+      ...arr(conc && conc.mercado && conc.mercado.participantes).flatMap(p => proponentes(p).map(b => grupoDe(b.nome, aliases)))]);
+    if (conhecidos.has(nome)) return nome;
+    const alias = aliases.find(a => a.nome === nome);
+    if (alias && alias.grupo) return alias.grupo;
+    const ordem = [...conhecidos].filter(Boolean).sort((a, b) => palavras(b).length - palavras(a).length || collator.compare(a, b));
+    const k = chave(nome);
+    const igual = ordem.find(g => chave(g) === k);
+    if (igual) return igual;
+    return ordem.find(g => comeca(palavras(nome), palavras(g))) || nome;
+  }
+
+  // Proponentes de um leilão com o resultado de cada um (nome repetido conta uma vez, pelo melhor resultado).
+  function proponentes(p) {
+    const lista = [];
+    const add = (nome, resultado) => { if (nome && !lista.some(b => b.nome === nome)) lista.push({ nome, resultado }); };
+    add(p.vencedor, 'venceu');
+    arr(p.outros).forEach(o => add(o.grupo, 'perdeu'));
+    arr(p.inabilitados).forEach(i => add(i.grupo, 'inabilitado'));
+    return lista;
+  }
+
+  // Ficha de um grupo: { grupo, consorcios: [{nome, ano, lote, venceu, integrantes, composicaoLocalizada, registrado, nota,
+  // foraDaAta, fontes}], leiloes: [{ano, lote, resultado: venceu|perdeu|inabilitado, consorcio: nome|null}], fontes }.
+  // `consorcio: null` = o grupo disputou sozinho; `composicaoLocalizada: false` = consórcio sem integrantes na base.
+  function fichaGrupo(nome, conc) {
+    const aliases = arr(conc && conc.grupos_alias), registros = arr(conc && conc.consorcios);
+    const grupo = resolverGrupo(nome, conc);
+    const porChave = new Map(registros.map(c => [chaveLeilao(c), c]));
+    const integra = c => arr(c && c.integrantes).some(i => i.grupo === grupo);
+    const consorcios = new Map(), leiloes = [], fontes = new Map(), vistos = new Set();
+    const guardaFonte = f => {
+      const k = f && (f.id || `${f.tipo}|${f.pagina}|${f.titulo}`);
+      if (f && !fontes.has(k)) fontes.set(k, f);
+    };
+    const guardaConsorcio = (c, p, nomeConsorcio, venceu) => {
+      const k = chaveLeilao(p, nomeConsorcio);
+      if (consorcios.has(k)) return;
+      const integrantes = arr(c && c.integrantes);
+      consorcios.set(k, { nome: nomeConsorcio, ano: p.ano, lote: p.lote, venceu, integrantes, composicaoLocalizada: integrantes.length > 0,
+        registrado: !!c, nota: (c && c.nota) || null, foraDaAta: !!(c && c.fora_da_ata), fontes: arr(c && c.fontes) });
+      arr(c && c.fontes).forEach(guardaFonte);
+    };
+    for (const p of arr(conc && conc.mercado && conc.mercado.participantes)) {
+      for (const b of proponentes(p)) {
+        const c = porChave.get(chaveLeilao(p, b.nome));
+        if (grupoDe(b.nome, aliases) !== grupo && !integra(c)) continue;
+        const cons = !!c || ehNomeDeConsorcio(b.nome);
+        vistos.add(chaveLeilao(p, b.nome));
+        leiloes.push({ ano: p.ano, lote: p.lote, resultado: b.resultado, consorcio: cons ? b.nome : null });
+        if (cons) guardaConsorcio(c, p, b.nome, b.resultado === 'venceu');
+        if (b.resultado === 'venceu') arr(p.verif && p.verif.grupo_vencedor && p.verif.grupo_vencedor.fontes).forEach(guardaFonte);
+      }
+    }
+    // Consórcios que as atas da ANTT trazem e o RoadShow não lista como proponentes (fora da camada de leilões)
+    for (const c of registros) {
+      const k = chaveLeilao(c);
+      if (vistos.has(k) || (grupoDe(c.nome, aliases) !== grupo && !integra(c))) continue;
+      leiloes.push({ ano: c.ano, lote: c.lote, resultado: c.venceu ? 'venceu' : 'perdeu', consorcio: c.nome });
+      guardaConsorcio(c, c, c.nome, c.venceu);
+    }
+    const ordem = (a, b) => a.ano - b.ano || collator.compare(a.lote, b.lote);
+    return { grupo, consorcios: [...consorcios.values()].sort((a, b) => ordem(a, b) || collator.compare(a.nome, b.nome)),
+      leiloes: leiloes.sort((a, b) => ordem(a, b) || collator.compare(a.consorcio || '', b.consorcio || '')), fontes: [...fontes.values()] };
+  }
+
   return { grupoDe, rsDiverge, rankingGrupos, leiloesSemLista, serieDesagio, mediaDesagio, resumoKpis, resumoAchados,
-    regraAporte, PORTARIA_APORTE };
+    regraAporte, PORTARIA_APORTE, resolverGrupo, fichaGrupo, ehConsorcio };
 })();
 
 if (typeof module !== 'undefined') module.exports = LeiloesModel;

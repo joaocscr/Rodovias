@@ -7,6 +7,7 @@
   Layers.init(MapView.map, intel, snv);
   UI.init(snv, Model.createIndex(snv), conc, intel);
   Ficha.init(conc, intel, snv);
+  Consorcios.init(conc);
   Tabs.on('resumo', () => Resumo.init(conc, intel, snv));
   Tabs.on('projetos', () => Projetos.init(conc, intel));
   Tabs.on('trafego', () => Trafego.init(intel, snv));

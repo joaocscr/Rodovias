@@ -13,7 +13,7 @@ const Mercado = (() => {
   const SERIE_TITULO = 'Deságio do vencedor nos leilões de concessões rodoviárias federais (ANTT)';
   const SERIE_NOTA = 'Pontos marcados como limitados pelo edital: desconto máximo permitido, desempate por outorga (2021)';
 
-  let m, aliases = [], regra = null, built = false, diagLinhas = [], edicao = '';
+  let m, aliases = [], consorcios = [], regra = null, built = false, diagLinhas = [], edicao = '';
   const rank = { de: null, ate: null, key: null, dir: 'desc' };
 
   // opts.src substitui o texto da fonte (padrão: páginas do RoadShow da chave); opts.foot entra abaixo do gráfico.
@@ -28,17 +28,21 @@ const Mercado = (() => {
   const refLabel = () => `linha de ${nfPct.format(regra.limite)}%: aporte de recursos vinculados, ${LeiloesModel.PORTARIA_APORTE.nome}, a partir de ${LeiloesModel.PORTARIA_APORTE.ano}`;
   const roadshow = key => `RoadShow 2026-2027, ${pages(m.fontes[key])}`;
 
+  // Nome de consórcio vira botão que abre a ficha (composição, participação e leilões); outros nomes seguem como texto.
+  const nomeHtml = nome => (LeiloesModel.ehConsorcio(nome, consorcios)
+    ? `<button type="button" class="link-btn cons-open" data-ficha="${esc(nome)}">${esc(nome)}</button>` : esc(nome));
+
   // Vencedor exibido (verificado); quando o grupo econômico tem outro nome, "nome (grupo)" — sem repetir o grupo que
   // o nome já traz entre parênteses ("… S.A. (OHL Brasil)").
-  function vencedorTxt(nome) {
+  function vencedorHtml(nome) {
     const g = LeiloesModel.grupoDe(nome, aliases);
-    return g && g !== nome && !nome.endsWith(`(${g})`) ? `${nome} (${g})` : nome;
+    return nomeHtml(nome) + (g && g !== nome && !nome.endsWith(`(${g})`) ? esc(` (${g})`) : '');
   }
 
   function proponentesTxt(p) {
     const pct = d => (d == null ? '' : ` (${nf2.format(d)}%)`);
-    const inab = (p.inabilitados || []).map(i => `${esc(i.grupo)}${pct(i.desagio)} (inabilitado${i.data ? ` em ${esc(ConcModel.fmtData(i.data))}` : ''})`);
-    return [...inab, ...(p.outros || []).map(o => `${esc(o.grupo)}${pct(o.desagio)}`)].join('; ') || '—';
+    const inab = (p.inabilitados || []).map(i => `${nomeHtml(i.grupo)}${pct(i.desagio)} (inabilitado${i.data ? ` em ${esc(ConcModel.fmtData(i.data))}` : ''})`);
+    return [...inab, ...(p.outros || []).map(o => `${nomeHtml(o.grupo)}${pct(o.desagio)}`)].join('; ') || '—';
   }
 
   // O valor do RoadShow que deixou de ser exibido fica abaixo do verificado, como na ficha
@@ -52,7 +56,7 @@ const Mercado = (() => {
         // nome do RoadShow só quando é de outro grupo; deságio diferente sempre aparece
         const rsG0 = v.grupo_vencedor && v.grupo_vencedor.roadshow, rsD = v.desagio && v.desagio.roadshow;
         const rsG = LeiloesModel.rsDiverge(p.vencedor, rsG0, aliases) ? rsG0 : null;
-        return `<tr><td>${p.ano}</td><td>${p.data ? esc(ConcModel.fmtData(p.data)) : '—'}</td><td class="wrap">${esc(p.lote)}</td><td class="wrap">${esc(vencedorTxt(p.vencedor))}${rsTxt(rsG)}</td>
+        return `<tr><td>${p.ano}</td><td>${p.data ? esc(ConcModel.fmtData(p.data)) : '—'}</td><td class="wrap">${esc(p.lote)}</td><td class="wrap">${vencedorHtml(p.vencedor)}${rsTxt(rsG)}</td>
         <td class="num">${p.desagio_vencedor == null ? '—' : nf2.format(p.desagio_vencedor) + '%'}${rsTxt(rsD == null ? null : nf2.format(rsD) + '%')}</td><td>${Selo.badge(v.desagio || v.grupo_vencedor) || '—'}</td>
         <td class="wrap wrap--wide">${proponentesTxt(p)}</td></tr>`;
       }).join('')}</tbody></table></div>`;
@@ -69,7 +73,7 @@ const Mercado = (() => {
     const seta = k => (k === rank.key ? (rank.dir === 'asc' ? ' ↑' : ' ↓') : '');
     return `<div class="table-wrap" style="max-height:480px"><table class="grid" id="ranking-grupos" data-csv-name="mercado-ranking-grupos"><thead><tr>${
       RANK_COLS.map(([k, l, n]) => `<th class="${n ? 'num' : ''}"${k === rank.key ? ` aria-sort="${rank.dir === 'asc' ? 'ascending' : 'descending'}"` : ''}><button type="button" data-sort="${k}">${esc(l)}${seta(k)}</button></th>`).join('')
-    }</tr></thead><tbody>${rows.map(r => `<tr><td>${esc(r.grupo)}</td><td class="num">${r.participacoes}</td><td class="num">${r.vitorias}</td><td class="num">${r.derrotas}</td>
+    }</tr></thead><tbody>${rows.map(r => `<tr><td><button type="button" class="link-btn cons-open" data-ficha="${esc(r.grupo)}">${esc(r.grupo)}</button></td><td class="num">${r.participacoes}</td><td class="num">${r.vitorias}</td><td class="num">${r.derrotas}</td>
       <td class="num">${nf1.format(r.taxa)}</td><td class="num">${r.primeira}</td><td class="num">${r.ultima}</td></tr>`).join('')}</tbody></table></div>`;
   }
 
@@ -176,8 +180,8 @@ const Mercado = (() => {
           `Média dos deságios exibidos: ${media == null ? '—' : nf2.format(media) + '%'}${mediaImpressa()}`, { key: 'concorrentes_desagio' })}
         ${card('faixas', 'Leilões por faixa de deságio', impresso, { key: 'faixas_desagio' })}
         ${card('porN', 'Deságio médio por número de concorrentes', `${impresso}; entre parênteses, quantos leilões tiveram esse número de concorrentes`, { key: 'desagio_por_n_concorrentes' })}
-        ${card('grupos', 'Grupos econômicos: extensão concedida', `km sob concessão federal em ${plural(nConcessoes, 'concessão', 'concessões')}, por grupo econômico líder; "Outros" reúne os grupos menores`, { key: 'grupos' })}
-        ${card('gruposInv', 'Grupos econômicos: investimento', `Capex + opex contratados nas ${plural(nConcessoes, 'concessão', 'concessões')} (R$ bi), por grupo econômico; passe o mouse sobre a linha para ver capex e opex separados`, { key: 'grupos' })}
+        ${card('grupos', 'Grupos econômicos: extensão concedida', `km sob concessão federal em ${plural(nConcessoes, 'concessão', 'concessões')}, por grupo econômico líder; "Outros" reúne os grupos menores. Clique numa linha para ver os consórcios e os leilões do grupo`, { key: 'grupos' })}
+        ${card('gruposInv', 'Grupos econômicos: investimento', `Capex + opex contratados nas ${plural(nConcessoes, 'concessão', 'concessões')} (R$ bi), por grupo econômico; passe o mouse sobre a linha para ver capex e opex separados. Clique nela para ver os consórcios e os leilões do grupo`, { key: 'grupos' })}
         ${card('gestao', 'Malha federal: gestão direta × concedida', comPeriodo('Extensão da malha rodoviária federal pavimentada, em km, administrada diretamente pelo DNIT × concedida à iniciativa privada', periodoSerie(m.gestao)), { key: 'gestao',
           legend: Charts.legendHtml([['Concedida', Charts.C.deep], ['Gestão direta', Charts.C.bright]]) })}
         ${card('invest', 'Investimento em rodovias federais: público × privado', `R$ bi por ano${periodoSerie(m.investimentos) ? `, ${periodoSerie(m.investimentos)}` : ''}: orçamento federal (público) × capex + opex das concessões (privado); * = previsto`, { key: 'investimentos',
@@ -195,11 +199,11 @@ const Mercado = (() => {
           foot: diagNotaHtml() })}
         ${card('indic', `Indicadores dos ${nLeiloesProg} leilões do programa federal de concessões rodoviárias${pProg ? ` ${pProg}` : ''} (Ministério dos Transportes)`, 'Obras e equipamentos previstos nos contratos', { key: 'indicadores_40', wide: true,
           html: `<div class="kpis">${m.indicadores_40.map(i => `<div class="kpi-tile"><b>${nf0.format(i.valor)}</b><span>${esc(i.unidade)} · ${esc(i.rotulo)}</span></div>`).join('')}</div>` })}
-        ${card('part', comPeriodo('Participantes dos leilões de concessões rodoviárias federais', pPart), 'Vencedor (adjudicatário que assinou o contrato) e demais proponentes com o deságio ofertado', { key: 'participantes', wide: true,
+        ${card('part', comPeriodo('Participantes dos leilões de concessões rodoviárias federais', pPart), 'Vencedor (adjudicatário que assinou o contrato) e demais proponentes com o deságio ofertado. Clique no nome de um consórcio para ver quem o compõe', { key: 'participantes', wide: true,
           src: `${roadshow('participantes')}; vencedor, data e deságio dos ${verificado}`,
           legend: `<div class="toolbar"><label class="sub" for="part-ano">Ano</label><select id="part-ano"><option value="">Todos</option>${anos.map(a => `<option>${a}</option>`).join('')}</select></div>`,
           html: participantesTable('') })}
-        ${card('ranking', comPeriodo('Grupos econômicos nos leilões de concessões rodoviárias federais', pPart), 'Participações, vitórias e derrotas por grupo econômico; crédito pelo grupo que disputou na época do leilão. Clique no cabeçalho para ordenar', { wide: true,
+        ${card('ranking', comPeriodo('Grupos econômicos nos leilões de concessões rodoviárias federais', pPart), 'Participações, vitórias e derrotas por grupo econômico; crédito pelo grupo que disputou na época do leilão. Clique no cabeçalho para ordenar e no nome de um grupo para ver os consórcios e os leilões dele', { wide: true,
           src: `${roadshow('participantes')} (proponentes); vencedor verificado nos ${verificado}`,
           legend: `<div class="toolbar"><label class="sub" for="rank-de">de</label><select id="rank-de">${anoOpts(rank.de)}</select>
             <label class="sub" for="rank-ate">até</label><select id="rank-ate">${anoOpts(rank.ate)}</select></div>
@@ -219,9 +223,12 @@ const Mercado = (() => {
       { unit: '%', format: v => nf1.format(v) + '%' });
     // maiores primeiro; a linha "Outros N grupos" fecha o gráfico mesmo quando a soma dela é maior que a de um grupo
     const porValor = rows => MercadoModel.grupoOutrosPorUltimo([...rows].sort((a, b) => (b.value || 0) - (a.value || 0)));
-    Charts.hbars(box('grupos'), porValor(m.grupos.map(g => ({ label: g.grupo, value: g.km }))), { unit: 'km', format: v => nf0.format(v) });
+    // cada grupo abre a ficha (k); "Outros N grupos" reúne vários e não abre
+    const fichaDe = g => (MercadoModel.grupoEhOutros(g) ? {} : { k: g.grupo });
+    const linkGrupo = { clickable: true, rowLabel: r => `Abrir a ficha de ${r.label}` };
+    Charts.hbars(box('grupos'), porValor(m.grupos.map(g => ({ label: g.grupo, value: g.km, ...fichaDe(g) }))), { unit: 'km', format: v => nf0.format(v), ...linkGrupo });
     Charts.hbars(box('gruposInv'), porValor(m.grupos.map(g => ({ label: g.grupo, value: g.capex_opex ?? (g.capex || 0) + (g.opex || 0),
-      detail: `capex ${nf2.format(g.capex)} + opex ${nf2.format(g.opex)}` }))), { unit: 'R$ bi', format: v => nf2.format(v) });
+      detail: `capex ${nf2.format(g.capex)} + opex ${nf2.format(g.opex)}`, ...fichaDe(g) }))), { unit: 'R$ bi', format: v => nf2.format(v), ...linkGrupo });
     Charts.lines(box('gestao'), [
       { name: 'Concedida', points: m.gestao.map(g => ({ x: g.ano, y: g.privada_km })) },
       { name: 'Gestão direta', points: m.gestao.map(g => ({ x: g.ano, y: g.direta_km })) },
@@ -244,6 +251,21 @@ const Mercado = (() => {
     }
     box('diag').innerHTML = diagnosticoTable();
     document.getElementById('part-ano').addEventListener('change', ev => { box('part').innerHTML = participantesTable(ev.target.value); });
+
+    // Ficha de grupo e consórcio: botão do ranking e da tabela de participantes (data-ficha), linha dos gráficos de grupos (data-k)
+    const abreFicha = (ev, seletor, attr) => {
+      const b = ev.target.closest(seletor);
+      if (!b) return false;
+      Consorcios.abrir(b.dataset[attr]);
+      return true;
+    };
+    ['ranking', 'part'].forEach(id => box(id).addEventListener('click', ev => abreFicha(ev, '[data-ficha]', 'ficha')));
+    ['grupos', 'gruposInv'].forEach(id => {
+      box(id).addEventListener('click', ev => abreFicha(ev, '.hrow[data-k]', 'k'));
+      box(id).addEventListener('keydown', ev => {
+        if ((ev.key === 'Enter' || ev.key === ' ') && abreFicha(ev, '.hrow[data-k]', 'k')) ev.preventDefault();
+      });
+    });
 
     const renderRanking = () => {
       box('ranking').innerHTML = rankingTable();
@@ -272,6 +294,7 @@ const Mercado = (() => {
     edicao = conc.edicaoRoadshow || '';
     diagLinhas = MercadoModel.diagnosticoPorAno(conc, intel);
     aliases = conc.grupos_alias || [];
+    consorcios = conc.consorcios || [];
     regra = LeiloesModel.regraAporte(conc);  // limite do aporte: o mesmo do Resumo, de regulatorio.json
     if (built) return;
     built = true;
