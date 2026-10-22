@@ -314,7 +314,7 @@ const UI = (() => {
       <h2 class="section-title">Números da seleção</h2>
       <div class="kpi"><span class="kpi__value" id="kpi-km">${Model.fmtKm(a.km)}</span>
         <span class="kpi__sub" id="kpi-n">${fmtInt.format(a.n)} ${a.n === 1 ? 'trecho' : 'trechos'}</span></div>
-      <p class="note">Extensão oficial do SNV. Trechos coincidentes entre BRs contados uma vez.</p>
+      <p class="note">Extensão oficial do ${Glossario.link('snv')}. Trechos coincidentes entre BRs contados uma vez (${Glossario.link('trecho-fisico', 'trecho físico')}).</p>
       ${intelStats(a.intel)}
       <h3 class="section-title">Por estado da concessão</h3>${concBars(a.porEstado, a.km)}
       <h3 class="section-title">Por situação</h3>${bars(a.porSituacao, 'situacao')}
@@ -422,7 +422,9 @@ const UI = (() => {
   }
 
   // ---------- Camadas de sobreposição ----------
-  const LAYERS_NOTE = 'Medido: praças, SATs (ANTT), PAM, Estoques. Modelado: VMDa, carga PNL.';
+  // Texto com links para o glossário na primeira menção de cada termo desta aba
+  const layersNote = () => `Medido: ${Glossario.link('praca-de-pedagio', 'praças')}, ${Glossario.link('sat', 'SATs')} (ANTT), ${Glossario.link('pam', 'PAM')}, Estoques. ` +
+    `Modelado: ${Glossario.link('vmda', 'VMDa')}, carga ${Glossario.link('pnl', 'PNL')}.`;
   const PROD_LABEL = { soja: 'Soja', milho1: 'Milho 1ª safra', milho2: 'Milho 2ª safra', cana: 'Cana-de-açúcar', algodao: 'Algodão', trigo: 'Trigo', cafe: 'Café' };
 
   function renderLayers() {
@@ -457,7 +459,7 @@ const UI = (() => {
           ${checks ? `<div class="checks">${checks}</div>` : '<p class="empty">Sem camadas neste arquivo.</p>'}
           ${rotas}
           ${fundo}
-          <p class="note layers__note">${esc(LAYERS_NOTE)}</p>
+          <p class="note layers__note">${layersNote()}</p>
         </div></details>`;
     sec.addEventListener('change', e => {
       const t = e.target;

@@ -152,9 +152,9 @@ async function go(hash) {
   await page.waitForTimeout(250);
 }
 
-test('v2: barra de abas (fechamento: 8 abas, Resumo primeiro) e Mapa ativa', async () => {
+test('v2: barra de abas (Resumo primeiro, Glossário por último) e Mapa ativa', async () => {
   await go('#mapa');
-  assert.deepEqual(await page.$$eval('#tabs a', as => as.map(a => a.textContent)), ['Resumo', 'Mapa', 'Projetos', 'Tráfego', 'Cargas', 'Mercado', 'Regulatório', 'Fontes']);
+  assert.deepEqual(await page.$$eval('#tabs a', as => as.map(a => a.textContent)), ['Resumo', 'Mapa', 'Projetos', 'Tráfego', 'Cargas', 'Mercado', 'Regulatório', 'Fontes', 'Glossário']);
   assert.equal(await page.textContent('#tabs a.is-active'), 'Mapa');
 });
 
@@ -173,6 +173,109 @@ test('v2: hash inválido cai no Resumo (página inicial)', async () => {
   await go('#ficha/nao-existe');
   assert.equal(await page.evaluate(() => location.hash), '#resumo');
   assert.equal(await page.isVisible('#ficha'), false);
+  await go('#mapa');
+});
+
+// Glossário: a aba lista os termos do glossario.json (embutido) em ordem alfabética; a busca e as categorias filtram; os links das outras
+// abas abrem o termo. As expectativas vêm do próprio Glossario/GLOSSARIO da página, sem textos digitados no teste.
+const glossIds = () => page.$$eval('#gloss-lista .gloss-item', es => es.map(e => e.dataset.id));
+const glossEsperado = (q, cat) => page.evaluate(([qq, c]) => Glossario.filtrar(Glossario.ordenar(window.GLOSSARIO), qq, c).map(e => e.id), [q, cat]);
+
+test('glossário: a aba existe e lista todos os termos em ordem alfabética, com definição', async () => {
+  await go('#mapa');
+  await page.click('#tabs a[href="#glossario"]');
+  await page.waitForSelector('#gloss-lista .gloss-item');
+  assert.equal(await page.textContent('#tabs a.is-active'), 'Glossário');
+  assert.equal(await page.isVisible('#page-glossario'), true);
+  assert.equal(await page.isVisible('#map'), false);
+  const todos = await page.evaluate(() => Glossario.ordenar(window.GLOSSARIO).map(e => e.id));
+  assert.ok(todos.length >= 30, `${todos.length} termos`);
+  assert.deepEqual(await glossIds(), todos);
+  assert.equal((await page.textContent('#gloss-n')).trim(), `${todos.length} termos`);
+  const vazios = await page.$$eval('#gloss-lista .gloss-item', es => es.filter(e => e.querySelector('dd p').textContent.trim().length < 20 || !e.querySelector('dt').textContent.trim()).map(e => e.dataset.id));
+  assert.deepEqual(vazios, []);
+  // fonte de norma vira link externo seguro; sem rede ao abrir a aba (a checagem global vem no fim do arquivo)
+  const ext = await page.$$eval('#gloss-lista a[href^="http"]', as => as.map(a => ({ t: a.target, rel: a.rel })));
+  assert.ok(ext.length > 0 && ext.every(a => a.t === '_blank' && /noopener/.test(a.rel)));
+});
+
+test('glossário: busca por termo, sigla ou definição ignora acento e caixa; categorias filtram; vazio avisa', async () => {
+  await go('#glossario');
+  const todos = await glossEsperado('', '');
+  for (const q of ['deságio', 'DESAGIO', 'vmda', 'ntn']) {
+    await page.fill('#gloss-q', q);
+    const esperado = await glossEsperado(q, '');
+    assert.ok(esperado.length > 0 && esperado.length < todos.length, q);
+    assert.deepEqual(await glossIds(), esperado, q);
+    assert.equal((await page.textContent('#gloss-n')).trim(), `${esperado.length} de ${todos.length} termos`, q);
+  }
+  await page.fill('#gloss-q', 'deságio');
+  assert.ok((await glossIds()).includes('desagio'));
+  await page.fill('#gloss-q', 'zzzxyz');
+  assert.deepEqual(await glossIds(), []);
+  assert.equal(await page.isVisible('#gloss-vazio'), true);
+  await page.fill('#gloss-q', '');
+  assert.deepEqual(await glossIds(), todos);
+  assert.equal(await page.isVisible('#gloss-vazio'), false);
+  // categoria
+  const cat = await page.evaluate(() => Glossario.categorias(window.GLOSSARIO).find(c => /Debêntures/.test(c)));
+  await page.click(`.gloss-cat[data-cat="${cat}"]`);
+  const dosCat = await glossEsperado('', cat);
+  assert.ok(dosCat.length > 5 && dosCat.length < todos.length);
+  assert.deepEqual(await glossIds(), dosCat);
+  assert.equal(await page.getAttribute(`.gloss-cat[data-cat="${cat}"]`, 'aria-pressed'), 'true');
+  await page.fill('#gloss-q', 'spread');
+  assert.deepEqual(await glossIds(), await glossEsperado('spread', cat));
+  await page.click('.gloss-cat[data-cat=""]');
+  await page.fill('#gloss-q', '');
+  assert.deepEqual(await glossIds(), todos);
+});
+
+test('glossário: link em outra aba abre o termo, rola até ele e o destaca; voltar retorna à aba', async () => {
+  await go('#mapa');
+  const link = page.locator('#layers-section a.glossario-link[href="#glossario/vmda"]');
+  assert.equal(await link.count(), 1);
+  await link.click();
+  await page.waitForFunction(() => Tabs.current().active === 'glossario' && document.querySelector('#gloss-vmda'));
+  assert.equal(await page.evaluate(() => location.hash), '#glossario/vmda');
+  const item = page.locator('#gloss-vmda');
+  assert.equal(await item.isVisible(), true);
+  assert.match(await item.getAttribute('class'), /is-alvo/);
+  const box = await item.boundingBox();
+  const alto = page.viewportSize().height;  // termos do fim da lista não sobem ao topo: basta estar todo à vista
+  assert.ok(box.y >= 0 && box.y + box.height <= alto, `termo fora da tela (y=${box.y}, h=${box.height}, tela=${alto})`);
+  assert.equal(await page.locator('.is-alvo').count(), 1);
+  await page.goBack();
+  await page.waitForFunction(() => Tabs.current().active === 'mapa');
+  assert.equal(await page.isVisible('#map'), true);
+});
+
+test('glossário: termo escondido por busca/categoria reaparece pela rota; id desconhecido não quebra', async () => {
+  await go('#glossario');
+  await page.fill('#gloss-q', 'zzzxyz');
+  assert.deepEqual(await glossIds(), []);
+  await go('#glossario/spread');
+  assert.equal(await page.inputValue('#gloss-q'), '');
+  assert.equal(await page.isVisible('#gloss-spread'), true);
+  assert.match(await page.getAttribute('#gloss-spread', 'class'), /is-alvo/);
+  await go('#glossario/nao-existe-xyz');
+  assert.equal(await page.evaluate(() => Tabs.current().active), 'glossario');
+  assert.equal(await page.locator('#gloss-lista .gloss-item').count() > 0, true);
+  assert.equal(await page.locator('.is-alvo').count(), 0);
+  await go('#mapa');
+});
+
+test('glossário: os links das abas apontam só para termos que existem no arquivo embutido', async () => {
+  const ausentes = [];
+  for (const h of ['#resumo', '#mapa', '#projetos', '#trafego', '#cargas', '#mercado', '#regulatorio']) {
+    await go(h);
+    const ids = await page.$$eval(`[data-tab="${h.slice(1)}"] a.glossario-link, ${h === '#mapa' ? '#panel a.glossario-link' : '.nada'}`,
+      as => [...new Set(as.map(a => decodeURIComponent(a.getAttribute('href').replace('#glossario/', ''))))]);
+    const faltam = await page.evaluate(l => l.filter(i => !window.GLOSSARIO.some(e => e.id === i)), ids);
+    ausentes.push(...faltam.map(i => `${h}: ${i}`));
+    if (h !== '#mapa') assert.ok(ids.length > 0, `${h} sem nenhum link do glossário`);
+  }
+  assert.deepEqual(ausentes, []);
   await go('#mapa');
 });
 
@@ -255,18 +358,20 @@ test('resumo é a página inicial e o mapa abre por #mapa', async () => {
 });
 
 // Celular (390×844): nem o Resumo nem o mapa alargam a página (a barra de abas rola dentro do topo).
-test('celular: Resumo e mapa sem rolagem horizontal da página', async () => {
+test('celular: Resumo, mapa e glossário sem rolagem horizontal da página', async () => {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   await context.route('**/*', r => (/^(file|data):/.test(r.request().url()) ? r.continue() : r.abort()));
   const p = await context.newPage();
   await p.goto('file://' + HTML);
   await p.waitForSelector('#page-resumo .page__inner');
-  for (const h of ['#resumo', '#mapa']) {
+  for (const h of ['#resumo', '#mapa', '#glossario', '#glossario/vmda']) {
     await p.evaluate(x => { location.hash = x; }, h);
-    await p.waitForFunction(x => Tabs.current().active === x.slice(1), h);
+    await p.waitForFunction(x => Tabs.current().active === x.slice(1).split('/')[0], h);
     await p.waitForTimeout(100);
-    const w = await p.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
+    const w = await p.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth,
+      pw: Math.max(...[...document.querySelectorAll('.page:not([hidden]), .page:not([hidden]) *')].map(e => e.scrollWidth - e.clientWidth)) }));
     assert.ok(w.sw <= w.cw, `${h}: scrollWidth ${w.sw} > clientWidth ${w.cw}`);
+    if (h.startsWith('#glossario')) assert.ok(w.pw <= 0, `${h}: algo na aba alarga além da tela (${w.pw}px)`);
     assert.equal(await p.isVisible('#drawer-toggle'), true, h);
   }
   await context.close();

@@ -640,6 +640,24 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 .atalho span { font-size: 14px; color: var(--color-light-grey); }
 .resumo-aviso { margin-top: 32px; }
 
+/* Aba Glossário e os links para ela nas outras abas */
+.glossario-link { color: var(--color-bright-blue); text-decoration: underline dotted; text-underline-offset: 3px; }
+.glossario-link:hover { text-decoration-style: solid; }
+.gloss-busca .search__input { width: min(100%, 420px); padding: 0 12px; }
+.gloss-cats { margin-bottom: 24px; }
+.gloss-lista { margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 16px; }
+.gloss-item { min-width: 0; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--color-snow-white); overflow-wrap: anywhere; scroll-margin-top: 16px; transition: border-color var(--transition), background var(--transition); }
+.gloss-item:focus { outline: none; }
+.gloss-item dt { font-family: var(--font-title); font-weight: 700; font-size: 18px; line-height: 24px; color: var(--color-deep-blue); }
+.gloss-item__sigla { font-weight: 400; color: var(--color-light-grey); }
+.gloss-item dd { margin: 8px 0 0; }
+.gloss-item dd p { margin: 0 0 8px; font-size: 16px; line-height: 24px; color: var(--color-spacial-grey); }
+.gloss-item dd p.src { font-size: 14px; line-height: 20px; color: var(--color-light-grey); }
+.gloss-item dd a.link-btn { display: inline; padding: 0; white-space: normal; text-align: left; }
+.gloss-item dd p.gloss-item__cats { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
+.gloss-tag { padding: 0 8px; border-radius: 12px; background: var(--tint); font-size: 12px; line-height: 20px; color: var(--color-deep-blue); }
+.gloss-item.is-alvo { border-color: var(--color-bright-blue); background: var(--tint); box-shadow: 0 0 0 3px var(--tint-strong); }
+
 /* Celular: a barra de abas rola na horizontal dentro do topo (sem alargar a página); o botão do painel fica fixo. */
 @media (max-width: 900px) {
   .tabs { flex: 1 1 auto; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }

@@ -156,7 +156,7 @@ const Mercado = (() => {
     const verificado = 'leilões conferidos em fonte oficial ou imprensa, com selo na tabela de participantes (documentos na aba Fontes)';
     el.innerHTML = `<div class="page__inner">
       <h1 class="page__title">Mercado de concessões rodoviárias federais</h1>
-      <p class="page__lead">Leilões, concorrência, deságios, grupos econômicos e investimentos das concessões rodoviárias federais, segundo o RoadShow: a apresentação do Ministério dos Transportes a investidores sobre a carteira de concessões${edicao ? ` (${esc(edicao)})` : ''}. Passe o mouse sobre os gráficos para ver os valores exatos.</p>
+      <p class="page__lead">Leilões, concorrência, ${Glossario.link('desagio', 'deságios')}, ${Glossario.link('grupo-economico', 'grupos econômicos')} e investimentos das concessões rodoviárias federais, segundo o ${Glossario.link('roadshow', 'RoadShow')}: a apresentação do Ministério dos Transportes a investidores sobre a carteira de concessões${edicao ? ` (${esc(edicao)})` : ''}. Passe o mouse sobre os gráficos para ver os valores exatos.</p>
       <div class="grid-cards">
         ${card('kpis', comPeriodo('Concorrência nos leilões do programa federal', pImp), `Totais dos leilões de concessões rodoviárias do programa federal${pProg ? ` ${pProg}` : ''} do Ministério dos Transportes, realizados e previstos${pImp ? ` em ${pImp}` : ''}`, { key: 'concorrencia_2023_26', wide: true,
           html: `<div class="kpis">${[[c.grupos_novos_entrantes, 'grupos participantes'], [c.km, 'km'], [c.capex, 'R$ bi de capex'], [c.opex, 'R$ bi de opex'], [c.capex_opex, 'R$ bi capex + opex'], [c.empregos_milhoes, 'milhões de empregos']]

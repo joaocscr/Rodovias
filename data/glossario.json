@@ -1,0 +1,402 @@
+[
+  {
+    "id": "snv",
+    "termo": "Sistema Nacional de Viação",
+    "sigla": "SNV",
+    "definicao": "Cadastro oficial da malha viária federal, mantido pelo DNIT: cada trecho tem código de BR, UF, extensão, situação e tipo de administração. É a base do mapa deste painel; a versão usada aparece no topo da página.",
+    "fonte": { "nome": "DNIT — PNV e SNV", "url": "https://www.gov.br/dnit/pt-br/assuntos/atlas-e-mapas/pnv-e-snv" },
+    "categorias": ["Malha e tráfego"]
+  },
+  {
+    "id": "trecho-fisico",
+    "termo": "Trecho físico",
+    "definicao": "Pedaço de rodovia contado uma única vez. No SNV, o mesmo pedaço de estrada pode aparecer sob duas BRs ao mesmo tempo (trechos coincidentes); o painel junta esses registros num só trecho físico para não somar a mesma extensão duas vezes.",
+    "categorias": ["Malha e tráfego"]
+  },
+  {
+    "id": "praca-de-pedagio",
+    "termo": "Praça de pedágio",
+    "definicao": "Ponto da rodovia concedida onde o pedágio é cobrado, em cabines ou, no sistema free flow, por pórticos. O painel usa a contagem de veículos que passam em cada praça, publicada pela ANTT, somando os dois sentidos.",
+    "categorias": ["Malha e tráfego"]
+  },
+  {
+    "id": "free-flow",
+    "termo": "Free flow",
+    "definicao": "Pedágio eletrônico sem cancela nem cabine: pórticos leem a tag ou a placa do veículo, o motorista não precisa parar e o pagamento é feito por tag ou depois da passagem.",
+    "categorias": ["Malha e tráfego"]
+  },
+  {
+    "id": "sat",
+    "termo": "Equipamento de contagem",
+    "sigla": "SAT",
+    "definicao": "Sigla usada pela ANTT para os equipamentos de contagem de veículos instalados ao longo das rodovias concedidas, fora das praças de pedágio. Cada leitura é uma contagem medida, ligada ao trecho federal mais próximo na mesma rodovia.",
+    "categorias": ["Malha e tráfego"]
+  },
+  {
+    "id": "vmd",
+    "termo": "Volume médio diário",
+    "sigla": "VMD",
+    "definicao": "Número médio de veículos que passam por dia num ponto, somados os dois sentidos. Nas praças de pedágio é a média diária dos meses com dado no ano, a partir da contagem medida pela ANTT.",
+    "categorias": ["Malha e tráfego"]
+  },
+  {
+    "id": "vmda",
+    "termo": "Volume médio diário anual",
+    "sigla": "VMDa",
+    "definicao": "Média diária de veículos ao longo de um ano inteiro num trecho de rodovia. Por ser anual, não depende da época do ano e serve para comparar trechos. Neste painel, o VMDa da Infra S.A. (2023) e o do DNIT (2025) são estimativas de modelo, não contagem.",
+    "fonte": { "nome": "DNIT — Plano Nacional de Contagem de Tráfego (PNCT)", "url": "https://servicos.dnit.gov.br/dadospnct" },
+    "categorias": ["Malha e tráfego"]
+  },
+  {
+    "id": "veic-km",
+    "termo": "Veículos-quilômetro",
+    "sigla": "veíc·km",
+    "definicao": "Soma, sobre os trechos, do VMDa de cada trecho multiplicado pela sua extensão em km. Mede quanta circulação a malha recebe por dia e serve de base para taxas como acidentes por 10⁶ veíc·km.",
+    "categorias": ["Malha e tráfego"]
+  },
+  {
+    "id": "veq",
+    "termo": "Veículo equivalente",
+    "sigla": "VEQ",
+    "definicao": "Medida que converte o tráfego de cada categoria de veículo (de passeio, caminhão com mais eixos etc.) em veículos de passeio equivalentes, ponderando pelas categorias cobradas no pedágio. Aparece nas fichas das concessões como VEQ por dia por praça.",
+    "categorias": ["Malha e tráfego"]
+  },
+  {
+    "id": "indice-abcr",
+    "termo": "Índice ABCR de fluxo pedagiado",
+    "sigla": "ABCR",
+    "definicao": "Número-índice mensal, divulgado pela Associação Brasileira de Concessionárias de Rodovias (ABCR), do fluxo de veículos nas praças de pedágio, com base 1999 = 100. Mostra a variação do fluxo, não o volume de veículos.",
+    "categorias": ["Malha e tráfego"]
+  },
+  {
+    "id": "medido-modelado",
+    "termo": "Medido × modelado",
+    "definicao": "Medido é contagem ou registro do mundo real, como os veículos que passaram numa praça de pedágio ou um acidente registrado pela PRF. Modelado é a estimativa de um modelo de transporte, usada onde não há contagem, como o VMDa dos trechos e a carga agrícola do PNL. Os dois servem para comparar trechos, mas só o medido é observação.",
+    "categorias": ["Malha e tráfego", "Cargas"]
+  },
+  {
+    "id": "pam",
+    "termo": "Produção Agrícola Municipal",
+    "sigla": "PAM",
+    "definicao": "Pesquisa anual do IBGE que informa a quantidade produzida e a área de cada lavoura, município por município. No painel, é a fonte da produção de soja, milho, cana e demais culturas, em toneladas.",
+    "categorias": ["Cargas"]
+  },
+  {
+    "id": "pnl",
+    "termo": "Plano Nacional de Logística",
+    "sigla": "PNL",
+    "definicao": "Plano de longo prazo do governo federal para a logística de cargas. Seu modelo estima, para cada trecho da rede, quanto de carga passa por ano; a carga agrícola por trecho exibida no painel (PNL 2035) é essa estimativa de modelo, não uma contagem.",
+    "categorias": ["Cargas"]
+  },
+  {
+    "id": "concessao",
+    "termo": "Concessão rodoviária",
+    "definicao": "Contrato pelo qual o governo entrega a uma empresa privada, por prazo determinado, a operação, a conservação e as obras de uma rodovia. A empresa se remunera principalmente com o pedágio.",
+    "categorias": ["Concessões e leilões"]
+  },
+  {
+    "id": "leilao",
+    "termo": "Leilão de concessão",
+    "definicao": "Disputa pública em que empresas e consórcios apresentam propostas para assumir uma concessão. Nos leilões rodoviários federais do programa atual, o critério é a menor tarifa de pedágio, e a sessão ocorre na B3.",
+    "categorias": ["Concessões e leilões"]
+  },
+  {
+    "id": "desagio",
+    "termo": "Deságio",
+    "definicao": "Desconto que o vencedor do leilão oferece sobre a tarifa-teto do edital, o valor máximo de tarifa permitido. Um deságio de 20% significa tarifa 20% abaixo do teto. Em leilões decididos pelo valor da outorga não há deságio de tarifa.",
+    "categorias": ["Concessões e leilões"]
+  },
+  {
+    "id": "outorga",
+    "termo": "Outorga",
+    "definicao": "Valor pago ao governo pelo direito de explorar a concessão. Nos leilões decididos pela maior outorga vence quem paga mais, e por isso não há deságio de tarifa.",
+    "categorias": ["Concessões e leilões"]
+  },
+  {
+    "id": "consorcio",
+    "termo": "Consórcio",
+    "definicao": "Reunião de empresas que se juntam para disputar um leilão e, se vencerem, criar a concessionária. Cada integrante tem uma participação, em percentual, no capital do consórcio.",
+    "categorias": ["Concessões e leilões"]
+  },
+  {
+    "id": "grupo-economico",
+    "termo": "Grupo econômico",
+    "definicao": "Conjunto de empresas sob o mesmo controle. No painel, consórcios e concessionárias são reunidos pelo grupo econômico líder, para mostrar quem mais vence leilões e quanto investe.",
+    "categorias": ["Concessões e leilões"]
+  },
+  {
+    "id": "spe",
+    "termo": "Sociedade de Propósito Específico",
+    "sigla": "SPE",
+    "definicao": "Empresa criada só para executar uma concessão (a concessionária). Seus acionistas são as empresas do consórcio vencedor, e é ela que assina o contrato e capta o financiamento.",
+    "categorias": ["Concessões e leilões"]
+  },
+  {
+    "id": "roadshow",
+    "termo": "RoadShow",
+    "definicao": "Apresentação do Ministério dos Transportes a investidores sobre a carteira de concessões rodoviárias 2026–2027 (edição de 14/10/2026). Suas páginas são uma das bases do painel: leilões, investimentos, regras e estudos.",
+    "fonte": { "nome": "Ministério dos Transportes — Concessões rodoviárias", "url": "https://www.gov.br/transportes/pt-br/assuntos/concessoes/concessoes-rodoviarias-2027" },
+    "categorias": ["Concessões e leilões", "Instituições"]
+  },
+  {
+    "id": "capex",
+    "termo": "Despesas de capital",
+    "sigla": "capex",
+    "definicao": "Investimento em obras e equipamentos da concessão, como duplicação, pavimento novo e sistemas de pedágio. Nos contratos, é o valor previsto para toda a vida da concessão, em reais de uma data-base.",
+    "categorias": ["Finanças"]
+  },
+  {
+    "id": "opex",
+    "termo": "Despesas operacionais",
+    "sigla": "opex",
+    "definicao": "Custo de operar e conservar a rodovia ao longo da concessão: manutenção, atendimento ao usuário, arrecadação, seguros e administração. Capex mais opex dá o total que o contrato prevê gastar.",
+    "categorias": ["Finanças"]
+  },
+  {
+    "id": "vpl",
+    "termo": "Valor presente líquido",
+    "sigla": "VPL",
+    "definicao": "Valor de hoje de uma série de valores futuros (receitas, custos), trazidos a data presente por uma taxa de desconto. Nas fichas, \"Receita (VPL)\" e \"Capex (VPL)\" são esses fluxos de toda a concessão expressos em valor presente, e não a soma simples dos valores de cada ano.",
+    "categorias": ["Finanças"]
+  },
+  {
+    "id": "wacc",
+    "termo": "Custo médio ponderado de capital",
+    "sigla": "WACC",
+    "definicao": "Taxa que combina o custo do capital próprio (o que os acionistas exigem de retorno) e o da dívida, ponderados pela participação de cada um no financiamento. Nas fichas, é a taxa de desconto do estudo econômico-financeiro da concessão.",
+    "categorias": ["Finanças"]
+  },
+  {
+    "id": "tir",
+    "termo": "Taxa interna de retorno",
+    "sigla": "TIR",
+    "definicao": "Taxa de juros anual que torna o valor presente líquido dos fluxos de caixa de um projeto igual a zero. Quanto maior, mais rentável o projeto; é comparada com o custo de capital (WACC).",
+    "categorias": ["Finanças"]
+  },
+  {
+    "id": "tkm",
+    "termo": "Tarifa quilométrica",
+    "sigla": "TKM",
+    "definicao": "Valor do pedágio por quilômetro rodado, em R$/km (nas fichas, para pista simples). Permite comparar o preço do pedágio entre concessões de tamanhos diferentes. Não confundir com o R$/t·km do frete, que é custo de transportar uma tonelada por quilômetro.",
+    "categorias": ["Finanças", "Concessões e leilões"]
+  },
+  {
+    "id": "data-base",
+    "termo": "Data-base",
+    "definicao": "Mês e ano a cujos preços os valores em reais estão expressos. Valores com data-base diferente não são diretamente comparáveis, a menos que corrigidos pela inflação até a mesma data.",
+    "categorias": ["Finanças"]
+  },
+  {
+    "id": "aporte-recursos-vinculados",
+    "termo": "Aporte de recursos vinculados",
+    "definicao": "Recursos que o vencedor precisa aportar, vinculados ao contrato, quando oferece um deságio acima do limite fixado pela Portaria MT nº 995/2023. O valor é proporcional ao deságio ofertado; o limite e as regras estão na aba Regulatório.",
+    "fonte": { "nome": "Portaria MT nº 995/2023, conforme o RoadShow (edição de 14/10/2026), p. 63" },
+    "categorias": ["Regulação", "Concessões e leilões"]
+  },
+  {
+    "id": "otimizacao-contratual",
+    "termo": "Otimização contratual",
+    "definicao": "Revisão de uma concessão em vigor, por acordo entre o governo e a concessionária, que ajusta obras, investimentos e prazo do contrato (às vezes com prorrogação), em vez de encerrá-lo e licitar de novo. No RoadShow, os acordos aparecem como aprovados pelo Tribunal de Contas da União (TCU).",
+    "fonte": { "nome": "Portaria MT nº 848/2023, conforme o RoadShow (edição de 14/10/2026), p. 33" },
+    "categorias": ["Regulação", "Concessões e leilões"]
+  },
+  {
+    "id": "relicitacao",
+    "termo": "Relicitação",
+    "definicao": "Procedimento em que o contrato de uma concessão é encerrado por acordo entre o governo e a concessionária e o trecho vai a novo leilão, para outra empresa assumir a concessão em novas condições.",
+    "fonte": { "nome": "Lei nº 13.448/2017", "url": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2017/lei/l13448.htm" },
+    "categorias": ["Regulação", "Concessões e leilões"]
+  },
+  {
+    "id": "modicidade-tarifaria",
+    "termo": "Modicidade tarifária",
+    "definicao": "Princípio de que a tarifa de pedágio deve ser a menor possível sem comprometer a qualidade do serviço nem os investimentos previstos. Orienta o critério de menor tarifa dos leilões.",
+    "categorias": ["Regulação"]
+  },
+  {
+    "id": "evtea",
+    "termo": "Estudo de viabilidade técnica, econômica e ambiental",
+    "sigla": "EVTEA",
+    "definicao": "Estudo que avalia se uma concessão é viável e define demanda de referência, investimentos, custos e tarifa. Serve de base para o edital e para o acompanhamento do risco de demanda durante o contrato.",
+    "categorias": ["Regulação"]
+  },
+  {
+    "id": "antt",
+    "termo": "Agência Nacional de Transportes Terrestres",
+    "sigla": "ANTT",
+    "definicao": "Agência reguladora federal que regula e fiscaliza as concessões rodoviárias e ferroviárias federais e conduz os leilões. Publica os dados de praças de pedágio, tráfego e investimentos usados no painel.",
+    "categorias": ["Instituições"]
+  },
+  {
+    "id": "dnit",
+    "termo": "Departamento Nacional de Infraestrutura de Transportes",
+    "sigla": "DNIT",
+    "definicao": "Órgão federal que administra as rodovias federais não concedidas e mantém o cadastro do SNV.",
+    "categorias": ["Instituições"]
+  },
+  {
+    "id": "prf",
+    "termo": "Polícia Rodoviária Federal",
+    "sigla": "PRF",
+    "definicao": "Polícia que patrulha as rodovias federais. Neste painel, é a fonte dos acidentes e mortos registrados nas rodovias.",
+    "categorias": ["Instituições"]
+  },
+  {
+    "id": "tcu",
+    "termo": "Tribunal de Contas da União",
+    "sigla": "TCU",
+    "definicao": "Órgão que fiscaliza o uso de recursos públicos e analisa os estudos e os acordos das concessões antes de seguirem adiante.",
+    "categorias": ["Instituições"]
+  },
+  {
+    "id": "bndes",
+    "termo": "Banco Nacional de Desenvolvimento Econômico e Social",
+    "sigla": "BNDES",
+    "definicao": "Banco público federal de fomento. Financia concessões rodoviárias com empréstimos, compra de debêntures e garantias, além de estruturar projetos de concessão.",
+    "categorias": ["Instituições", "Finanças"]
+  },
+  {
+    "id": "b3",
+    "termo": "B3",
+    "definicao": "Bolsa de valores do Brasil. É onde ocorrem os leilões de concessões rodoviárias federais e onde se negociam debêntures e outros títulos.",
+    "categorias": ["Instituições", "Debêntures e juros"]
+  },
+  {
+    "id": "debenture",
+    "termo": "Debênture",
+    "definicao": "Título de dívida emitido por uma empresa para captar dinheiro. Quem compra empresta à emissora e recebe remuneração (juros) até o vencimento, quando recebe o valor principal de volta.",
+    "categorias": ["Debêntures e juros"]
+  },
+  {
+    "id": "debenture-incentivada",
+    "termo": "Debênture incentivada",
+    "definicao": "Debênture emitida para financiar projetos de infraestrutura considerados prioritários, com incentivo fiscal para quem compra: pessoa física isenta de imposto de renda sobre os rendimentos e pessoa jurídica com alíquota reduzida de 15%.",
+    "fonte": { "nome": "Lei nº 12.431/2011", "url": "https://www.planalto.gov.br/ccivil_03/_ato2011-2014/2011/lei/l12431.htm" },
+    "categorias": ["Debêntures e juros", "Regulação"]
+  },
+  {
+    "id": "debenture-infraestrutura",
+    "termo": "Debênture de infraestrutura",
+    "definicao": "Criada em 2024, dá o incentivo fiscal ao emissor, que pode deduzir 130% da remuneração paga do lucro tributável (lucro real e base da CSLL). Foi pensada para atrair investidores estrangeiros e fundos de pensão.",
+    "fonte": { "nome": "Lei nº 14.801/2024, conforme o RoadShow (edição de 14/10/2026), p. 77", "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2024/lei/l14801.htm" },
+    "categorias": ["Debêntures e juros", "Regulação"]
+  },
+  {
+    "id": "mercado-secundario",
+    "termo": "Mercado secundário",
+    "definicao": "Mercado em que os investidores negociam entre si títulos que já foram emitidos. A emissão inicial, em que a empresa capta o dinheiro, é o mercado primário.",
+    "categorias": ["Debêntures e juros"]
+  },
+  {
+    "id": "negocio-intencao",
+    "termo": "Negócio × intenção",
+    "definicao": "Negócio é uma compra e venda efetivamente realizada, com taxa, preço e volume. Intenção é uma oferta de compra ou de venda registrada, que pode ou não virar negócio; por isso não se confunde com volume negociado.",
+    "categorias": ["Debêntures e juros"]
+  },
+  {
+    "id": "coordenador",
+    "termo": "Coordenador da oferta",
+    "definicao": "Banco ou corretora que estrutura a emissão de uma debênture e a distribui aos investidores.",
+    "categorias": ["Debêntures e juros"]
+  },
+  {
+    "id": "indexador",
+    "termo": "Indexador",
+    "definicao": "Índice que corrige o valor ou a remuneração de um título, como o IPCA ou o CDI. Define se o papel é IPCA+, prefixado ou DI+.",
+    "categorias": ["Debêntures e juros"]
+  },
+  {
+    "id": "ipca-mais",
+    "termo": "IPCA+",
+    "definicao": "Remuneração formada pela variação do IPCA (a inflação) mais uma taxa fixa ao ano. Se a inflação sobe, o valor do título sobe junto; a taxa fixa é o ganho acima da inflação.",
+    "categorias": ["Debêntures e juros"]
+  },
+  {
+    "id": "prefixado",
+    "termo": "Prefixado (PRÉ)",
+    "definicao": "Título cuja taxa de juros é definida na compra e não depende de índice; o investidor sabe de antemão quanto vai receber por ano.",
+    "categorias": ["Debêntures e juros"]
+  },
+  {
+    "id": "di-mais",
+    "termo": "DI+",
+    "definicao": "Remuneração formada pela variação do CDI mais uma taxa fixa ao ano (o spread sobre o CDI). Acompanha a taxa básica de juros.",
+    "categorias": ["Debêntures e juros"]
+  },
+  {
+    "id": "ipca",
+    "termo": "Índice Nacional de Preços ao Consumidor Amplo",
+    "sigla": "IPCA",
+    "definicao": "Índice oficial de inflação do Brasil, calculado pelo IBGE. É o indexador mais usado nas debêntures de infraestrutura.",
+    "categorias": ["Debêntures e juros"]
+  },
+  {
+    "id": "cdi",
+    "termo": "Certificado de Depósito Interbancário",
+    "sigla": "CDI",
+    "definicao": "Taxa média dos empréstimos de um dia entre bancos, muito próxima da Selic. É a principal referência de rentabilidade da renda fixa pós-fixada.",
+    "categorias": ["Debêntures e juros"]
+  },
+  {
+    "id": "selic",
+    "termo": "Taxa Selic",
+    "sigla": "Selic",
+    "definicao": "Taxa básica de juros da economia, que o Banco Central fixa como meta a cada reunião do Comitê de Política Monetária (Copom). Serve de referência para todas as outras taxas de juros.",
+    "fonte": { "nome": "Banco Central do Brasil — Taxa Selic", "url": "https://www.bcb.gov.br/controleinflacao/taxaselic" },
+    "categorias": ["Debêntures e juros"]
+  },
+  {
+    "id": "focus",
+    "termo": "Boletim Focus",
+    "sigla": "Focus",
+    "definicao": "Pesquisa semanal do Banco Central com as projeções de instituições financeiras para inflação, Selic, câmbio e crescimento. É a expectativa de mercado mais usada para o IPCA.",
+    "fonte": { "nome": "Banco Central do Brasil — Relatório de Mercado (Focus)", "url": "https://www.bcb.gov.br/publicacoes/focus" },
+    "categorias": ["Debêntures e juros"]
+  },
+  {
+    "id": "ntn-b",
+    "termo": "Nota do Tesouro Nacional, série B",
+    "sigla": "NTN-B",
+    "definicao": "Título público federal que paga uma taxa fixa mais a variação do IPCA (o Tesouro IPCA+). Como é considerado o investimento de menor risco com essa remuneração, sua taxa é a referência para precificar debêntures IPCA+.",
+    "fonte": { "nome": "Tesouro Direto", "url": "https://www.tesourodireto.com.br/" },
+    "categorias": ["Debêntures e juros"]
+  },
+  {
+    "id": "spread",
+    "termo": "Spread",
+    "definicao": "Diferença entre a taxa de um título e a taxa de referência de mesmo prazo. Nas debêntures IPCA+, é a taxa da debênture menos a da NTN-B do mesmo vencimento; mede o prêmio que o investidor exige pelo risco da empresa.",
+    "categorias": ["Debêntures e juros"]
+  },
+  {
+    "id": "duration",
+    "termo": "Duration",
+    "definicao": "Prazo médio, em anos, em que o investidor recebe os fluxos de caixa de um título, ponderado pelo valor de cada um. Quanto maior a duration, mais o preço do título oscila quando a taxa de juros muda.",
+    "categorias": ["Debêntures e juros"]
+  },
+  {
+    "id": "taxa-indicativa-anbima",
+    "termo": "Taxa indicativa (ANBIMA)",
+    "definicao": "Taxa de referência diária de cada debênture, calculada pela ANBIMA, a associação das instituições do mercado de capitais, a partir de preços informados pelas instituições participantes. Serve para marcar o papel a mercado quando não houve negócio.",
+    "fonte": { "nome": "ANBIMA", "url": "https://www.anbima.com.br/" },
+    "categorias": ["Debêntures e juros"]
+  },
+  {
+    "id": "taxa-media-ponderada",
+    "termo": "Taxa média ponderada pelo volume",
+    "definicao": "Média das taxas dos negócios em que cada taxa pesa conforme o volume financeiro negociado: negócios maiores influenciam mais o resultado do que os pequenos.",
+    "categorias": ["Debêntures e juros"]
+  },
+  {
+    "id": "pu",
+    "termo": "Preço unitário",
+    "sigla": "PU",
+    "definicao": "Preço de uma unidade do título, em reais, no momento do negócio. Para o mesmo papel, preço mais baixo significa taxa de retorno mais alta.",
+    "categorias": ["Debêntures e juros"]
+  },
+  {
+    "id": "rating",
+    "termo": "Rating",
+    "definicao": "Nota de risco de crédito dada por uma agência de classificação à empresa ou à emissão, indicando a chance de o pagamento ser feito em dia. Notas melhores (como AAA) costumam pagar taxas menores.",
+    "categorias": ["Debêntures e juros"]
+  }
+]

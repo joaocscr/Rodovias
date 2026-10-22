@@ -11,6 +11,7 @@ const Resumo = (() => {
     mercado: 'Leilões, deságios, concorrência e grupos econômicos',
     regulatorio: 'Modelo regulatório, garantias, financiamento e otimizações contratuais',
     fontes: 'Documentos e bases de cada número, com data de acesso',
+    glossario: 'O que significam os termos técnicos e de mercado usados no painel',
   };
   let built = false;
 
@@ -42,7 +43,7 @@ const Resumo = (() => {
     const achados = LeiloesModel.resumoAchados(conc, intel);
     document.getElementById('page-resumo').innerHTML = `<div class="page__inner">
       <h1 class="page__title">Resumo das concessões rodoviárias federais</h1>
-      <p class="page__lead">Os números principais da malha federal, das concessões e dos leilões, calculados a partir dos dados deste arquivo.</p>
+      <p class="page__lead">Os números principais da malha federal (${Glossario.link('snv')}), das concessões e dos leilões (com o ${Glossario.link('desagio')} dos vencedores), calculados a partir dos dados deste arquivo.</p>
       ${kpisHtml(kpis)}
       <h2 class="resumo-h2">Leitura em 60 segundos</h2>
       ${achadosHtml(achados)}

@@ -14,9 +14,9 @@ const Cargas = (() => {
 
   function card(id, title, sub, o = {}) {
     return `<article class="ccard${o.wide ? ' ccard--wide' : ''}" id="card-${id}">
-      <h3>${esc(title)}</h3>${sub ? `<p class="sub">${esc(sub)}</p>` : ''}
+      <h3>${esc(title)}</h3>${o.subHtml ? `<p class="sub">${o.subHtml}</p>` : sub ? `<p class="sub">${esc(sub)}</p>` : ''}
       ${o.legend || ''}<div class="chart-box" id="chart-${id}">${o.html || ''}</div>
-      ${o.note ? `<p class="src">${esc(o.note)}</p>` : ''}<p class="src">Fonte: ${esc(o.fonte || '—')}</p></article>`;
+      ${o.noteHtml ? `<p class="src">${o.noteHtml}</p>` : o.note ? `<p class="src">${esc(o.note)}</p>` : ''}<p class="src">Fonte: ${esc(o.fonte || '—')}</p></article>`;
   }
   const tile = (id, value, label) => `<div class="kpi-tile" id="${id}"><b>${esc(value)}</b><span>${esc(label)}</span></div>`;
   const box = id => document.getElementById('chart-' + id);
@@ -120,8 +120,9 @@ const Cargas = (() => {
   function cargaCard() {
     const c = IM.cargaOf(intel);
     if (!c || !IM.cargaTop(intel, snv, 1).length) return '';
-    return card('c-pnl', 'Trechos com maior carga agrícola', `Os 15 trechos físicos com mais granel sólido agrícola por ano (${c.cenario || 'PNL 2035'}, ano-base ${c.ano_base}); clique para ver no mapa`,
-      { wide: true, fonte: fonte(c, /PNL/), note: 'Estimativa de modelo de alocação em rede, não contagem.' });
+    return card('c-pnl', 'Trechos com maior carga agrícola', null,
+      { subHtml: `Os 15 ${Glossario.link('trecho-fisico', 'trechos físicos')} com mais granel sólido agrícola por ano (${esc(c.cenario || 'PNL 2035')}, ano-base ${esc(c.ano_base)}); clique para ver no mapa`,
+        wide: true, fonte: fonte(c, /PNL/), note: 'Estimativa de modelo de alocação em rede, não contagem.' });
   }
 
   // ---------- Desenho ----------
@@ -206,7 +207,7 @@ const Cargas = (() => {
     const cards = [kpisCard(), prodCard(), munCard(), siadeCard(), expCard(), fretesCard(), cargaCard()].join('');
     el.innerHTML = `<div class="page__inner">
       <h1 class="page__title">Cargas agrícolas e logística</h1>
-      <p class="page__lead">Onde se produz (IBGE PAM e Estoques), por onde se exporta (Comex Stat), o que vai de trem (SIADE), quanto custa o frete rodoviário (CONAB) e quais trechos federais carregam mais grãos segundo o modelo do PNL. Cada cartão diz a fonte, o período e se o dado é medido ou modelado.</p>
+      <p class="page__lead">Onde se produz (IBGE ${Glossario.link('pam', 'PAM')} e Estoques), por onde se exporta (Comex Stat), o que vai de trem (SIADE), quanto custa o frete rodoviário (CONAB) e quais trechos federais carregam mais grãos segundo o modelo do ${Glossario.link('pnl', 'PNL')}. Cada cartão diz a fonte, o período e se o dado é ${Glossario.link('medido-modelado', 'medido ou modelado')}.</p>
       ${cards ? `<div class="grid-cards">${cards}</div>` : '<p class="empty">Os dados de cargas (blocos agro, multimodal e carga) não estão neste arquivo.</p>'}</div>`;
     if (cards) draw();
   }

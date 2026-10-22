@@ -203,7 +203,7 @@ const Projetos = (() => {
     const el = document.getElementById('page-projetos');
     el.innerHTML = `<div class="page__inner">
       <h1 class="page__title">Projetos e contratos</h1>
-      <p class="page__lead">Contratos vigentes e projetos do programa${anos.length ? ` ${anos[0]}–${anos[anos.length - 1]}` : ''}${hasEst ? ', e concessões rodoviárias estaduais' : ''}. Capex e opex na base comparável (tabelas${base ? ` em ${esc(base)}` : ''} quando existirem; senão, a data-base da ficha, indicada na coluna). Clique numa linha para abrir a ficha.</p>
+      <p class="page__lead">Contratos vigentes e projetos do programa${anos.length ? ` ${anos[0]}–${anos[anos.length - 1]}` : ''}${hasEst ? ', e concessões rodoviárias estaduais' : ''}. ${Glossario.link('capex')} e ${Glossario.link('opex')} na base comparável (tabelas${base ? ` em ${esc(base)}` : ''} quando existirem; senão, a ${Glossario.link('data-base')} da ficha, indicada na coluna). Clique numa linha para abrir a ficha.</p>
       ${toolbar()}
       <div class="table-wrap"><table class="grid" id="proj-table" data-csv-name="projetos-comparador"></table></div>
       ${pipelineSection()}

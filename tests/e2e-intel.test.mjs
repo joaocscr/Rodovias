@@ -1189,7 +1189,7 @@ test('sem window.INTEL a seção Camadas não quebra', async () => {
 });
 
 // ---------- Task 12: abas Tráfego, Cargas e Fontes ----------
-const TABS8 = ['Resumo', 'Mapa', 'Projetos', 'Tráfego', 'Cargas', 'Mercado', 'Regulatório', 'Fontes'];
+const TABS8 = ['Resumo', 'Mapa', 'Projetos', 'Tráfego', 'Cargas', 'Mercado', 'Regulatório', 'Fontes', 'Glossário'];
 // Espera a condição real (aba Mapa exibida, cartão aberto, seleção feita) em vez de um tempo fixo.
 const untilMapCard = (p, extra = 'true') => p.waitForFunction(`location.hash === '#mapa' && Tabs.current().active === 'mapa' && !document.getElementById('card').hidden && (${extra})`);
 async function goTab(p, hash) {
@@ -1197,12 +1197,12 @@ async function goTab(p, hash) {
   await p.waitForFunction(h => Tabs.current().active === h.slice(1) && document.querySelector(`#page-${h.slice(1)} .page__inner`), hash);
 }
 
-test('(a) barra de abas com as 8 abas na ordem (Resumo primeiro)', async () => {
+test('(a) barra de abas na ordem (Resumo primeiro, Glossário por último)', async () => {
   await page.evaluate(() => { location.hash = '#mapa'; });
   await page.waitForFunction(() => Tabs.current().active === 'mapa');
   assert.deepEqual(await page.$$eval('#tabs a', as => as.map(a => a.textContent)), TABS8);
   assert.deepEqual(await page.$$eval('#tabs a', as => as.map(a => a.getAttribute('href'))),
-    ['#resumo', '#mapa', '#projetos', '#trafego', '#cargas', '#mercado', '#regulatorio', '#fontes']);
+    ['#resumo', '#mapa', '#projetos', '#trafego', '#cargas', '#mercado', '#regulatorio', '#fontes', '#glossario']);
 });
 
 test('(b) Tráfego: ≥ 5 gráficos, "Fonte:" em cada cartão, KPIs do modelo, sem undefined/NaN', async () => {

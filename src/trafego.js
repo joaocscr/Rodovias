@@ -12,9 +12,9 @@ const Trafego = (() => {
 
   function card(id, title, sub, o = {}) {
     return `<article class="ccard${o.wide ? ' ccard--wide' : ''}" id="card-${id}">
-      <h3>${esc(title)}</h3>${sub ? `<p class="sub">${esc(sub)}</p>` : ''}
+      <h3>${esc(title)}</h3>${o.subHtml ? `<p class="sub">${o.subHtml}</p>` : sub ? `<p class="sub">${esc(sub)}</p>` : ''}
       ${o.legend || ''}<div class="chart-box" id="chart-${id}">${o.html || ''}</div>
-      ${o.note ? `<p class="src">${esc(o.note)}</p>` : ''}<p class="src">Fonte: ${esc(o.fonte || '—')}</p></article>`;
+      ${o.noteHtml ? `<p class="src">${o.noteHtml}</p>` : o.note ? `<p class="src">${esc(o.note)}</p>` : ''}<p class="src">Fonte: ${esc(o.fonte || '—')}</p></article>`;
   }
 
   const tile = (id, value, label) => `<div class="kpi-tile" id="${id}"><b>${esc(value)}</b><span>${esc(label)}</span></div>`;
@@ -84,7 +84,7 @@ const Trafego = (() => {
     const aP = IM.anoPracas(intel);
     return card('t-rank', rankTitulo(), 'Veículos por dia, dois sentidos; clique numa praça para abri-la no mapa',
       { legend: Charts.legendHtml([['Leves', Charts.C.deep], ['Pesados', Charts.C.bright], ['Motos', Charts.C.grey]]),
-        fonte: fontePracas(), note: `${IM.comAno('VMD', aP)} = média diária dos meses com dado${aP != null ? ` em ${aP}` : ''}; contagem medida.` });
+        fonte: fontePracas(), noteHtml: `${Glossario.link('vmd', IM.comAno('VMD', aP))} = média diária dos meses com dado${aP != null ? ` em ${aP}` : ''}; contagem medida.` });
   }
 
   function serieCard(s) {
@@ -172,7 +172,7 @@ const Trafego = (() => {
     const cards = [kpisCard(), rankingCard(), serieCard(s), abcrCards(intel.trafego && intel.trafego.abcr), acidCards()].join('');
     el.innerHTML = `<div class="page__inner">
       <h1 class="page__title">Tráfego nas rodovias federais</h1>
-      <p class="page__lead">Contagens medidas nas praças de pedágio (ANTT), volume estimado por modelo para toda a malha (VMDa), acidentes registrados pela PRF e o Índice ABCR. Cada cartão diz a fonte, o período e se o dado é medido ou modelado; passe o mouse nos gráficos para ver os valores.</p>
+      <p class="page__lead">Contagens medidas nas ${Glossario.link('praca-de-pedagio', 'praças de pedágio')} (ANTT), volume estimado por modelo para toda a malha (${Glossario.link('vmda')}), acidentes registrados pela PRF e o ${Glossario.link('indice-abcr', 'Índice ABCR')}. Cada cartão diz a fonte, o período e se o dado é ${Glossario.link('medido-modelado', 'medido ou modelado')}; passe o mouse nos gráficos para ver os valores.</p>
       ${cards ? `<div class="grid-cards">${cards}</div>` : '<p class="empty">Os dados de tráfego (blocos trafego e antt) não estão neste arquivo.</p>'}</div>`;
     if (cards) draw(s);
   }
