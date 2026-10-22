@@ -1,0 +1,1033 @@
+{
+  "versao": 1,
+  "consorcios": [
+    {
+      "nome": "Consórcio BRVias",
+      "ano": 2007,
+      "lote": "Transbrasiliana",
+      "venceu": true,
+      "integrantes": [
+        {
+          "nome": "Splice do Brasil Telecomunicações e Eletrônica S.A.",
+          "grupo": "Splice",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "WTorre S.A.",
+          "grupo": "WTorre",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Comporte Participações S.A.",
+          "grupo": "Comporte",
+          "participacao": null,
+          "lider": false
+        }
+      ],
+      "fontes": [
+        "antt-res-2479-2007",
+        "antt-nt-5091-2023-transbrasiliana"
+      ],
+      "nota": "A Resolução ANTT nº 2.479/2007 homologa o resultado ao Consórcio BRVias 'a ser constituído' pelas três empresas; participações e líder não publicados. O controle da Transbrasiliana passou depois à Triunfo (TPI)."
+    },
+    {
+      "nome": "Consórcio Acciona",
+      "ano": 2007,
+      "lote": "Rodovia do Aço",
+      "venceu": true,
+      "integrantes": [],
+      "fontes": [
+        "antt-res-2522-2008",
+        "antt-nt-2069-2022-rodovia-do-aco",
+        "revistaoe-2014-09-24-br-393"
+      ],
+      "nota": "Composição não localizada. A Resolução ANTT nº 2.522/2008 e a NT 2069/2022 citam apenas 'Consórcio Acciona'; a imprensa (Revista O Empreiteiro) atribui a concessão à divisão de concessões da espanhola Acciona, sem listar consorciadas. Pesquisado: ANTTlegis, notas técnicas da ANTT, imprensa 2007–2008 e 2014–2018."
+    },
+    {
+      "nome": "Consórcio RodoBahia",
+      "ano": 2009,
+      "lote": "Via Bahia",
+      "venceu": true,
+      "integrantes": [
+        {
+          "nome": "Isolux Corsán",
+          "grupo": "Isolux Corsán",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Engevix",
+          "grupo": "Engevix",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Encalso",
+          "grupo": "Encalso",
+          "participacao": null,
+          "lider": false
+        }
+      ],
+      "fontes": [
+        "ifc-2010-01-bahia-federal-highways",
+        "antt-res-3085-2009",
+        "antt-nt-5937-2023-viabahia"
+      ],
+      "nota": "Integrantes segundo o brief do IFC (assessor da estruturação); razões sociais completas e participações não localizadas."
+    },
+    {
+      "nome": "Consórcio Rodovia da Vitória",
+      "ano": 2012,
+      "lote": "ECO101",
+      "venceu": true,
+      "integrantes": [
+        {
+          "nome": "Ecorodovias Infraestrutura e Logística S.A.",
+          "grupo": "Ecorodovias",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "SBS Engenharia e Construções Ltda.",
+          "grupo": "SBS Engenharia e Construções",
+          "participacao": null,
+          "lider": false
+        }
+      ],
+      "fontes": [
+        "infrapppworld-2013-08-29-eco101",
+        "jb-2013-04-17-eco101",
+        "antt-res-3814-2012",
+        "antt-nt-7038-2022-eco101"
+      ],
+      "nota": "Integrantes segundo a InfraPPPWorld (em inglês: 'EcoRodovias Infrastructure & Logistics SA and SBS Engineering and Construction LTD'). Imprensa internacional (World Highways, 2012) citou 80% Ecorodovias / 20% SBS, mas a página não pôde ser aberta para conferência; participações mantidas como não publicadas."
+    },
+    {
+      "nome": "Consórcio Planalto",
+      "ano": 2013,
+      "lote": "ECO050",
+      "venceu": true,
+      "integrantes": [
+        {
+          "nome": "Senpar",
+          "grupo": "Senpar",
+          "participacao": 20,
+          "lider": false,
+          "nota": "participação na concessionária, segundo a imprensa"
+        },
+        {
+          "nome": "Construtora Estrutural",
+          "grupo": "Construtora Estrutural",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Construtora Kamilos",
+          "grupo": "Construtora Kamilos",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Ellenco Construções",
+          "grupo": "Ellenco Construções",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Engenharia e Comércio Bandeirantes",
+          "grupo": "Engenharia e Comércio Bandeirantes",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Greca Distribuidora de Asfaltos",
+          "grupo": "Greca Asfaltos",
+          "participacao": 20,
+          "lider": false,
+          "nota": "participação na concessionária, segundo a imprensa"
+        }
+      ],
+      "fontes": [
+        "istoedinheiro-2013-09-13-br-050-grupos",
+        "em-2013-09-19-consorcio-planalto",
+        "antt-nt-5476-2024-eco050",
+        "antt-res-4205-2013"
+      ],
+      "nota": "Lista incompleta: o Estado de Minas informa nove empresas, mas a lista da ANTT reproduzida pela Agência Estado nomeia seis. Os 20% de Senpar e Greca referem-se à participação na concessionária segundo a imprensa; as demais teriam entre 5% e 10% (sem detalhamento)."
+    },
+    {
+      "nome": "Consórcio Via Brasil BR163",
+      "ano": 2021,
+      "lote": "BR-163/230/MT/PA",
+      "venceu": true,
+      "integrantes": [
+        {
+          "nome": "Conasa Infraestrutura S/A",
+          "grupo": "Conasa",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Zeta Infraestrutura S/A",
+          "grupo": "Zeta Infraestrutura",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Construtora Rocha Cavalcante Ltda.",
+          "grupo": "Rocha Cavalcante",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Engenharia de Materiais Ltda.",
+          "grupo": "Engenharia de Materiais",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "M4 Investimentos Ltda.",
+          "grupo": "M4 Investimentos",
+          "participacao": null,
+          "lider": false
+        }
+      ],
+      "fontes": [
+        "poder360-2021-07-08-br-163",
+        "antt-nt-2285-2023-via-brasil",
+        "antt-nt-9910-2024-via-brasil"
+      ],
+      "nota": "Parte da imprensa (Forbes) lista apenas quatro empresas, sem a Engenharia de Materiais; a Conasa é apresentada como principal integrante, mas a liderança formal não foi publicada. Participações não localizadas."
+    },
+    {
+      "nome": "Consórcio ECO153",
+      "ano": 2021,
+      "lote": "BR-153/080/414/GO/TO",
+      "venceu": true,
+      "integrantes": [
+        {
+          "nome": "Ecorodovias Concessões e Serviços S.A. (ECS)",
+          "grupo": "Ecorodovias",
+          "participacao": 65,
+          "lider": false
+        },
+        {
+          "nome": "GLP X Participações S.A.",
+          "grupo": "GLP",
+          "participacao": 35,
+          "lider": false
+        }
+      ],
+      "fontes": [
+        "ecorodovias-ri-2021-05-13-release-1t21",
+        "glp-2021-04-30-eco153",
+        "antt-nt-8473-2025-ecovias-araguaia",
+        "antt-concessao-ecovias-araguaia",
+        "suno-2021-10-01-ecovias-araguaia"
+      ]
+    },
+    {
+      "nome": "EPR (Equipav)",
+      "ano": 2023,
+      "lote": "Lote 1 - BR-277/373/376/476/PR e PR-418/423/427",
+      "venceu": false,
+      "integrantes": [
+        {
+          "nome": "EPR 2 Participações S.A.",
+          "grupo": "EPR",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Perfin Voyager Fundo de Investimento",
+          "grupo": "Perfin",
+          "participacao": null,
+          "lider": false
+        }
+      ],
+      "fontes": [
+        "antt-ata-leilao-rip-lote-1",
+        "noticiasagricolas-reuters-2023-08-25-rip-lote-1"
+      ],
+      "nota": "Na ata da ANTT a proponente segunda colocada (8,30%) é o 'Consórcio Infraestrutura PR'; o RoadShow a registra como 'EPR (Equipav)'. Participações não publicadas."
+    },
+    {
+      "nome": "Consórcio Infraestrutura PR",
+      "ano": 2023,
+      "lote": "Lote 2 - BR-153/277/369/PR e PR-092/151/239/407/408/411/508/804/855",
+      "venceu": true,
+      "integrantes": [
+        {
+          "nome": "EPR Participações (EPR 2 Participações S.A.)",
+          "grupo": "EPR",
+          "participacao": null,
+          "lider": true
+        },
+        {
+          "nome": "Perfin (Perfin Voyager Fundo de Investimento em Participações IE)",
+          "grupo": "Perfin",
+          "participacao": null,
+          "lider": false
+        }
+      ],
+      "fontes": [
+        "cnn-2023-09-29-rip-lote-2",
+        "poder360-2023-09-29-rip-lote-2",
+        "antt-ata-leilao-rip-lote-2",
+        "antt-delib-384-2023"
+      ],
+      "nota": "Participações no consórcio não publicadas. A EPR é uma parceria Equipav–Perfin; o Poder360 descreve o consórcio como 'liderado pela EPR'."
+    },
+    {
+      "nome": "Consórcio Infraestrutura MG",
+      "ano": 2024,
+      "lote": "BR-040/MG",
+      "venceu": true,
+      "integrantes": [
+        {
+          "nome": "EPR",
+          "grupo": "EPR",
+          "participacao": null,
+          "lider": true
+        }
+      ],
+      "fontes": [
+        "poder360-2024-04-11-br-040-mg",
+        "investnews-2024-04-11-br-040-mg",
+        "antt-ata-julgamento-br-040-mg",
+        "antt-delib-134-2024"
+      ],
+      "nota": "Lista possivelmente incompleta: as fontes dizem apenas que o consórcio é 'liderado pela EPR' (grupo controlado por Equipav e Perfin); os demais integrantes formais não foram localizados (ata da ANTT e homologação não os nomeiam). Participações não publicadas."
+    },
+    {
+      "nome": "Consórcio Vetor Norte",
+      "ano": 2024,
+      "lote": "BR-040/MG",
+      "venceu": false,
+      "integrantes": [],
+      "fontes": [
+        "antt-ata-julgamento-br-040-mg",
+        "investnews-2024-04-11-br-040-mg"
+      ],
+      "fora_da_camada": true,
+      "nota": "O RoadShow não o lista entre os proponentes, mas ele aparece na ata da ANTT (desconto de 0,00%). Composição não localizada: a imprensa só o descreve como 'consórcio formado por transportadoras e construtoras' e 'novo entrante'. Pesquisado: ata da ANTT, Itatiaia, Poder360, InvestNews, Agência iNFRA."
+    },
+    {
+      "nome": "Consórcio Opportunity Dinâmico FIP Multiestratégia Investimentos no Exterior",
+      "ano": 2024,
+      "lote": "BR-381/MG",
+      "venceu": false,
+      "integrantes": [
+        {
+          "nome": "Opportunity Dinâmico Fundo de Investimentos em Participações Multiestratégia Investimento no Exterior S.A.",
+          "grupo": "Opportunity",
+          "participacao": null,
+          "lider": false
+        }
+      ],
+      "fontes": [
+        "antt-ata-leilao-br-381-mg"
+      ],
+      "nota": "A ata da ANTT registra a proponente como um único fundo do Opportunity, sem menção a consórcio; provavelmente não é consórcio (manter como proponente individual)."
+    },
+    {
+      "nome": "Consórcio Nova BR-040",
+      "ano": 2024,
+      "lote": "BR-040/GO/MG",
+      "venceu": false,
+      "integrantes": [
+        {
+          "nome": "4UM",
+          "grupo": "4UM",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Opportunity",
+          "grupo": "Opportunity",
+          "participacao": null,
+          "lider": false
+        }
+      ],
+      "fontes": [
+        "investnews-2024-09-26-rota-dos-cristais",
+        "antt-ata-leilao-br-040-go-mg"
+      ],
+      "nota": "Razões sociais dos veículos e participações não publicadas."
+    },
+    {
+      "nome": "Consórcio Infraestrutura PR (Necton Investimentos)",
+      "ano": 2024,
+      "lote": "Lote 3 - BR-369/373/376/PR e PR-090/170/323/445",
+      "venceu": false,
+      "integrantes": [
+        {
+          "nome": "EPR",
+          "grupo": "EPR",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Perfin",
+          "grupo": "Perfin",
+          "participacao": null,
+          "lider": false
+        }
+      ],
+      "fontes": [
+        "jornaldebrasilia-2024-12-12-rip-lote-3",
+        "antt-ata-leilao-rip-lote-3"
+      ],
+      "nota": "Nome oficial na ata: 'Consórcio Infraestrutura PR' (Necton é a corretora). Participações não publicadas."
+    },
+    {
+      "nome": "Consórcio Rota Verde Goiás",
+      "ano": 2024,
+      "lote": "CN 1 - BR-060/452/GO",
+      "venceu": true,
+      "integrantes": [
+        {
+          "nome": "FIP Aviva (plataforma de concessões da Azevedo & Travassos)",
+          "grupo": "Aviva",
+          "participacao": 80,
+          "lider": true
+        },
+        {
+          "nome": "Tecpav Tecnologia e Pavimentação",
+          "grupo": "Tecpav",
+          "participacao": 20,
+          "lider": false
+        }
+      ],
+      "fontes": [
+        "azevedo-travassos-2024-12-12-fato-relevante-rota-verde",
+        "jornaldebrasilia-2024-12-12-rota-verde",
+        "antt-delib-12-2025",
+        "b3-2024-12-12-rip-lote-3-rota-verde"
+      ],
+      "nota": "Liderança: 'encabeçado pelo fundo de investimentos Aviva' (Jornal de Brasília); participações do fato relevante da Azevedo & Travassos."
+    },
+    {
+      "nome": "Consórcio Rota Cerrado - Guide",
+      "ano": 2024,
+      "lote": "CN 1 - BR-060/452/GO",
+      "venceu": false,
+      "integrantes": [
+        {
+          "nome": "XP",
+          "grupo": "XP",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "CLD Construtora",
+          "grupo": "CDL Construtora",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Construtora Caipó",
+          "grupo": "Construtora Caiapó",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "FBS Construção Civil",
+          "grupo": "FBS Construção Civil",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Jofege Pavimentação",
+          "grupo": "Jofege Pavimentação",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Conter Construções",
+          "grupo": "Conter Construções",
+          "participacao": null,
+          "lider": false
+        }
+      ],
+      "fontes": [
+        "istoedinheiro-2024-12-12-rota-verde-consorcios",
+        "istoedinheiro-2024-12-12-rota-verde",
+        "jornaldebrasilia-2024-12-12-rota-verde"
+      ],
+      "nota": "Nome sem o sufixo da corretora: 'Consórcio Rota Cerrado'. Grafias 'CLD' e 'Caipó' conforme a imprensa; nos atos oficiais da Rota da Celulose as mesmas empresas aparecem como 'CDL Construtora' e 'Construtora Caiapó' (grupo padronizado por essa grafia). Participações não publicadas."
+    },
+    {
+      "nome": "Consórcio Infraestrutura GO",
+      "ano": 2024,
+      "lote": "CN 1 - BR-060/452/GO",
+      "venceu": false,
+      "integrantes": [
+        {
+          "nome": "Grupo EPR",
+          "grupo": "EPR",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Perfin",
+          "grupo": "Perfin",
+          "participacao": null,
+          "lider": false
+        }
+      ],
+      "fontes": [
+        "istoedinheiro-2024-12-12-rota-verde-consorcios",
+        "jornaldebrasilia-2024-12-12-rota-verde"
+      ],
+      "nota": "Participações não publicadas."
+    },
+    {
+      "nome": "Consórcio Infraestrutura PR",
+      "ano": 2024,
+      "lote": "Lote 6 - BR-163/277/PR e PR-158/180/182/280/483",
+      "venceu": true,
+      "integrantes": [
+        {
+          "nome": "EPR",
+          "grupo": "EPR",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Perfin",
+          "grupo": "Perfin",
+          "participacao": null,
+          "lider": false
+        }
+      ],
+      "fontes": [
+        "b3-2024-12-19-rip-lote-6",
+        "antt-ata-leilao-rip-lote-6"
+      ],
+      "nota": "Participações não publicadas."
+    },
+    {
+      "nome": "Consórcio 4UM-Opportunity-BR-364/RO",
+      "ano": 2025,
+      "lote": "BR-364/RO - Rota Agro Norte",
+      "venceu": true,
+      "integrantes": [
+        {
+          "nome": "4UM Investimentos",
+          "grupo": "4UM",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Banco Opportunity",
+          "grupo": "Opportunity",
+          "participacao": null,
+          "lider": false
+        }
+      ],
+      "fontes": [
+        "folhape-oglobo-2025-02-27-rota-agro-norte",
+        "antt-ata-leilao-br-364-ro",
+        "antt-delib-131-2025"
+      ],
+      "nota": "Razões sociais dos veículos, participações e líder não publicados."
+    },
+    {
+      "nome": "Consórcio Nova Estrada Real",
+      "ano": 2025,
+      "lote": "BR-040/495/RJ/MG",
+      "venceu": true,
+      "integrantes": [
+        {
+          "nome": "Construcap CCPS Engenharia e Comércio S.A.",
+          "grupo": "Construcap",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Sociedad Anonima de Obras y Servicios COPASA",
+          "grupo": "Copasa (Espanha)",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "OHLA Concesiones SL",
+          "grupo": "OHLA",
+          "participacao": null,
+          "lider": false
+        }
+      ],
+      "fontes": [
+        "b3-2025-04-30-br-040-495",
+        "antt-ata-leilao-br-040-495-mg-rj",
+        "antt-ata-julgamento-br-040-495-mg-rj"
+      ],
+      "nota": "Participações no consórcio não publicadas (a imprensa espanhola cita 33,3% da OHLA na concessionária Elovias, sem detalhar as demais). A COPASA aqui é a construtora espanhola, não a Copasa-MG."
+    },
+    {
+      "nome": "Consórcio Caminhos da Celulose",
+      "ano": 2025,
+      "lote": "BR-262/267/MS e MS-040/338/395 - Rota da Celulose",
+      "venceu": true,
+      "integrantes": [
+        {
+          "nome": "XP Infra V Fundo de Investimento em Participações",
+          "grupo": "XP",
+          "participacao": null,
+          "lider": true
+        },
+        {
+          "nome": "CDL Construtora",
+          "grupo": "CDL Construtora",
+          "participacao": 18.5,
+          "lider": false,
+          "nota": "participação na concessionária, segundo a imprensa"
+        },
+        {
+          "nome": "Laços Detetores Eletrônica",
+          "grupo": "Laços Detetores Eletrônica",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Conter Construções e Comércio S/A",
+          "grupo": "Conter Construções",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Construtora Caiapó Ltda.",
+          "grupo": "Construtora Caiapó",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Ética Construtora Ltda.",
+          "grupo": "Ética Construtora",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Distribuidora Brasileira de Asfalto Ltda.",
+          "grupo": "Distribuidora Brasileira de Asfalto (Disbral)",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Conster Construções e Terraplanagem Ltda.",
+          "grupo": "Conster Construções e Terraplanagem",
+          "participacao": null,
+          "lider": false
+        }
+      ],
+      "fontes": [
+        "ms-epe-ata-sessao-rota-celulose-proponentes",
+        "ms-agencia-2026-02-07-rota-celulose",
+        "dgabc-2026-02-10-cdl-rota-celulose",
+        "ms-doe-homologacao-rota-celulose"
+      ],
+      "nota": "Leilão estadual (MS). Liderança da XP Infra conforme a Agência de Notícias de MS; os 18,5% da CDL vêm da imprensa ('18,5% do projeto'); as demais participações não foram publicadas. A fonte nova reproduz a mesma ata já registrada como 'ms-epe-ata-sessao-rota-celulose', com trecho que nomeia as consorciadas."
+    },
+    {
+      "nome": "Consórcio K&G Rota da Celulose",
+      "ano": 2025,
+      "lote": "BR-262/267/MS e MS-040/338/395 - Rota da Celulose",
+      "venceu": false,
+      "integrantes": [
+        {
+          "nome": "K Infra Concessões e Participações Ltda.",
+          "grupo": "K-Infra",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Galapagos Participações Ltda.",
+          "grupo": "Galápagos",
+          "participacao": null,
+          "lider": false
+        }
+      ],
+      "fontes": [
+        "ms-epe-ata-sessao-rota-celulose-proponentes",
+        "ms-epe-decisao-recurso-rota-celulose"
+      ],
+      "nota": "O RoadShow não o lista entre os demais proponentes (traz 'XP e um consórcio formado por Kinea e Way'), mas foi o primeiro colocado na sessão (9%) e acabou inabilitado em recurso. Participações não publicadas."
+    },
+    {
+      "nome": "Consórcio Rota Agro Brasil",
+      "ano": 2025,
+      "lote": "Rota Agro BR-060/364/GO/MT",
+      "venceu": false,
+      "integrantes": [
+        {
+          "nome": "Azevedo & Travassos Infraestrutura I Fundo de Investimento em Participações",
+          "grupo": "Azevedo & Travassos",
+          "participacao": 70,
+          "lider": true
+        },
+        {
+          "nome": "Camaçari Fundo de Investimento em Participações Multiestratégia",
+          "grupo": "Reag",
+          "participacao": 25,
+          "lider": false
+        },
+        {
+          "nome": "Sobrado Construção Ltda.",
+          "grupo": "Tecpav",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "GAE Construção & Comércio Ltda.",
+          "grupo": "Tecpav",
+          "participacao": null,
+          "lider": false
+        }
+      ],
+      "fontes": [
+        "b3-2025-08-14-rota-agro",
+        "investnews-2025-08-15-rota-agro",
+        "agenciainfra-2025-08-15-rota-agro-resultado",
+        "antt-ata-leilao-br-060-364",
+        "antt-ata-julgamento-br-060-364-1a"
+      ],
+      "nota": "O RoadShow não o lista entre os demais proponentes, mas foi o primeiro colocado (19,70%) e acabou inabilitado pela ANTT. Participações segundo a imprensa: FIP Azevedo & Travassos 70%, FIP Camaçari 25% e Sobrado e GAE (Grupo Tecpav) 5% em conjunto, sem divisão publicada entre as duas — por isso Sobrado e GAE ficam sem participação informada. O FIP Camaçari era o veículo da Reag, então controladora da Azevedo & Travassos."
+    },
+    {
+      "nome": "Consórcio Rota do Cerrado",
+      "ano": 2025,
+      "lote": "Rota Agro BR-060/364/GO/MT",
+      "venceu": false,
+      "integrantes": [
+        {
+          "nome": "XP",
+          "grupo": "XP",
+          "participacao": null,
+          "lider": false
+        }
+      ],
+      "fontes": [
+        "agenciainfra-2025-08-11-rota-agro-propostas",
+        "agenciainfra-2025-08-15-rota-agro-resultado"
+      ],
+      "nota": "Lista incompleta: neste leilão a imprensa só identifica o grupo como 'um consórcio da XP' (o Consórcio Rota do Cerrado, 10,55%); as construtoras parceiras não foram nomeadas para este certame. Participações não publicadas."
+    },
+    {
+      "nome": "Consórcio Infraestrutura PR",
+      "ano": 2025,
+      "lote": "Rodovias Integradas do Paraná - Lote 4",
+      "venceu": true,
+      "integrantes": [
+        {
+          "nome": "EPR Participações S.A.",
+          "grupo": "EPR",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Perfin Voyager Fundo de Investimento em Participações em Infraestrutura",
+          "grupo": "Perfin",
+          "participacao": null,
+          "lider": false
+        }
+      ],
+      "fontes": [
+        "b3-2025-10-23-rip-lote-4",
+        "antt-ata-leilao-rip-lote-4",
+        "antt-concessao-epr-parana"
+      ],
+      "nota": "Participações não publicadas."
+    },
+    {
+      "nome": "Consórcio Rota do Cerrado",
+      "ano": 2025,
+      "lote": "Rota Sertaneja",
+      "venceu": false,
+      "integrantes": [
+        {
+          "nome": "XP",
+          "grupo": "XP",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "CLD",
+          "grupo": "CDL Construtora",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "DP Barros",
+          "grupo": "DP Barros",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Conter",
+          "grupo": "Conter Construções",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Conster",
+          "grupo": "Conster Construções e Terraplanagem",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Caiapó",
+          "grupo": "Construtora Caiapó",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Ética",
+          "grupo": "Ética Construtora",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Disbral",
+          "grupo": "Distribuidora Brasileira de Asfalto (Disbral)",
+          "participacao": null,
+          "lider": false
+        }
+      ],
+      "fontes": [
+        "agenciainfra-2025-11-03-rota-sertaneja-integrantes",
+        "diariodocomercio-2025-11-06-rota-sertaneja",
+        "antt-ata-leilao-rota-sertaneja"
+      ],
+      "nota": "Nomes curtos conforme a imprensa; razões sociais e participações não publicadas."
+    },
+    {
+      "nome": "Consórcio Caminho do Cerrado",
+      "ano": 2025,
+      "lote": "Rota Sertaneja",
+      "venceu": false,
+      "integrantes": [
+        {
+          "nome": "Construcap",
+          "grupo": "Construcap",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Copasa (Copasa Group, Espanha)",
+          "grupo": "Copasa (Espanha)",
+          "participacao": null,
+          "lider": false
+        }
+      ],
+      "fontes": [
+        "diariodocomercio-2025-11-06-rota-sertaneja",
+        "agenciainfra-2025-11-03-rota-sertaneja-integrantes",
+        "antt-ata-leilao-rota-sertaneja"
+      ],
+      "nota": "A ata da ANTT grafa 'Consórcio Caminho do Cerrado'; a imprensa usa 'Caminhos do Cerrado'. Participações não publicadas."
+    },
+    {
+      "nome": "Consórcio Rota da Liberdade",
+      "ano": 2025,
+      "lote": "Via Liberdade - BR-356/MG, MG-262/329",
+      "venceu": true,
+      "integrantes": [
+        {
+          "nome": "Construtora Metropolitana S/A",
+          "grupo": "Construtora Metropolitana",
+          "participacao": null,
+          "lider": true
+        },
+        {
+          "nome": "Quebec Construções e Tecnologia Ambiental",
+          "grupo": "Quebec Construções",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "JCP Participações",
+          "grupo": "JCP Participações",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Abra Infraestrutura",
+          "grupo": "Abra Infraestrutura",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Construtora Contorno",
+          "grupo": "Construtora Contorno",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Renova Engenharia",
+          "grupo": "Renova Engenharia",
+          "participacao": null,
+          "lider": false
+        }
+      ],
+      "fontes": [
+        "ofator-2025-10-22-via-liberdade",
+        "mg-seinfra-homologacao-via-liberdade",
+        "mg-agencia-2025-09-18-via-liberdade"
+      ],
+      "nota": "Leilão estadual (MG). Liderança da Metropolitana conforme o ato de homologação da Seinfra; demais integrantes segundo a imprensa (o ato oficial não pôde ser relido por completo neste ambiente). Participações não publicadas."
+    },
+    {
+      "nome": "Infraestrutura MG",
+      "ano": 2025,
+      "lote": "Fernão Dias - BR-381/MG - Otimização",
+      "venceu": false,
+      "integrantes": [
+        {
+          "nome": "EPR",
+          "grupo": "EPR",
+          "participacao": null,
+          "lider": true
+        }
+      ],
+      "fontes": [
+        "diariodotransporte-2025-12-11-fernao-dias",
+        "antt-ata-processo-competitivo-fernao-dias"
+      ],
+      "nota": "Nome oficial: 'Consórcio Infraestrutura MG'. Lista possivelmente incompleta: a imprensa diz apenas 'liderado pelo grupo EPR'. Participações não publicadas."
+    },
+    {
+      "nome": "Consórcio Atlas Rodovias",
+      "ano": 2026,
+      "lote": "Rota Gerais - BR-116/251/MG",
+      "venceu": false,
+      "integrantes": [
+        {
+          "nome": "Yvy Capital (fundo Atlas)",
+          "grupo": "Yvy Capital",
+          "participacao": null,
+          "lider": true
+        },
+        {
+          "nome": "Pavidez Engenharia",
+          "grupo": "Pavidez Engenharia",
+          "participacao": null,
+          "lider": false
+        }
+      ],
+      "fontes": [
+        "agenciainfra-2026-03-31-rota-gerais",
+        "tribunademinas-2026-04-01-rota-gerais",
+        "antt-ata-leilao-rota-gerais"
+      ],
+      "fora_da_camada": true,
+      "nota": "O RoadShow não o lista entre os proponentes (traz só 'Monte Rodovias'), mas ele aparece na ata da ANTT como segundo colocado. Participações não publicadas."
+    },
+    {
+      "nome": "Consórcio 116 Sertões",
+      "ano": 2026,
+      "lote": "BR-116/324/BA/PE - Rota dos Sertões",
+      "venceu": true,
+      "integrantes": [
+        {
+          "nome": "Neo Invest Latam",
+          "grupo": "Novonor",
+          "participacao": 33.33,
+          "lider": false
+        },
+        {
+          "nome": "Infra I Fundo de Investimento em Participações em Infraestrutura Responsabilidade Ltda.",
+          "grupo": "Infra I FIP",
+          "participacao": 33.33,
+          "lider": false
+        },
+        {
+          "nome": "Mota-Engil Latam Portugal S.A.",
+          "grupo": "Mota-Engil",
+          "participacao": 33.33,
+          "lider": false
+        }
+      ],
+      "fontes": [
+        "b3-2026-05-28-rota-dos-sertoes",
+        "braziljournal-2026-05-28-rota-dos-sertoes",
+        "agenciainfra-2026-05-28-rota-dos-sertoes",
+        "antt-ata-leilao-rota-dos-sertoes"
+      ],
+      "nota": "Integrantes conforme a B3. O Brazil Journal nomeia os sócios como Nova Infra Invest (Novonor), Galapagos Capital e Mota-Engil, com um terço cada (registrado como 33,33%)."
+    },
+    {
+      "nome": "Consórcio Atlas Rodovias",
+      "ano": 2026,
+      "lote": "BR-116/324/BA/PE - Rota dos Sertões",
+      "venceu": false,
+      "integrantes": [
+        {
+          "nome": "Infra Brasil Fundo de Investimento",
+          "grupo": "Infra Brasil",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Yvy Capital",
+          "grupo": "Yvy Capital",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "Houer",
+          "grupo": "Houer",
+          "participacao": null,
+          "lider": false
+        }
+      ],
+      "fontes": [
+        "agenciainfra-2026-05-25-rota-dos-sertoes-propostas",
+        "agenciainfra-2026-05-28-rota-dos-sertoes",
+        "antt-ata-leilao-rota-dos-sertoes"
+      ],
+      "nota": "A Houer é citada como integrante ('o grupo também conta com a Houer'); a composição difere da do leilão da Rota Gerais (Yvy + Pavidez). Participações e líder não publicados."
+    },
+    {
+      "nome": "Consórcio Via dos Sertões",
+      "ano": 2026,
+      "lote": "BR-116/324/BA/PE - Rota dos Sertões",
+      "venceu": false,
+      "integrantes": [
+        {
+          "nome": "Aspen Participações",
+          "grupo": "Aspen",
+          "participacao": null,
+          "lider": false
+        },
+        {
+          "nome": "DMDL",
+          "grupo": "DMDL",
+          "participacao": null,
+          "lider": false
+        }
+      ],
+      "fontes": [
+        "agenciainfra-2026-05-28-rota-dos-sertoes",
+        "braziljournal-2026-05-28-rota-dos-sertoes",
+        "antt-ata-leilao-rota-dos-sertoes"
+      ],
+      "fora_da_camada": true,
+      "nota": "O RoadShow não o lista entre os proponentes, mas ele aparece na ata da ANTT (13,10%). Participações não publicadas."
+    },
+    {
+      "nome": "Consórcio Via dos Sertões",
+      "ano": 2026,
+      "lote": "BR-116/PR/SP - Otimização Régis Bittencourt",
+      "venceu": false,
+      "integrantes": [],
+      "fontes": [
+        "antt-ata-entrega-propostas-regis-bittencourt"
+      ],
+      "fora_da_ata": true,
+      "nota": "Composição não localizada. A ata de entrega de propostas do Processo Competitivo nº 01/2026 da ANTT lista apenas Motiva, EPR e Arteris: o nome não consta dela. O mesmo nome aparece na Rota dos Sertões (BR-116/324/BA/PE), com Aspen e DMDL."
+    }
+  ]
+}

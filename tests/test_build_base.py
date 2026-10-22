@@ -32,7 +32,7 @@ def test_build_pela_base_reproduz_payloads(tmp_path):
     html = out.read_text(encoding="utf-8")
     assert grab(html, "SNV") == json.loads((BASE / "snv.json").read_text(encoding="utf-8"))
     base = roadshow.curados(json.loads((BASE / "conc.json").read_text(encoding="utf-8")), ROADSHOW)
-    conc = verificacao.aplicar(base, verificacao.carregar(), verificacao.carregar_aliases())
+    conc = verificacao.aplicar(base, verificacao.carregar(), verificacao.carregar_aliases(), verificacao.carregar_consorcios())
     assert grab(html, "CONC") == conc
     assert grab(html, "INTEL") == {}
     assert "/*__" not in html

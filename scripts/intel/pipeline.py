@@ -38,7 +38,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from intel.fontes import RAW, ROOT, Manifest, fetch as baixar  # noqa: E402
 from roadshow import conc_da_base  # noqa: E402
-from verificacao import aplicar, carregar, carregar_aliases, validar  # noqa: E402
+from verificacao import aplicar, carregar, carregar_aliases, carregar_consorcios, validar  # noqa: E402
 
 DOMINIO = "pipeline"
 RAW_DIR = RAW / DOMINIO
@@ -207,11 +207,11 @@ def montar(csv_path=CSV, base_dir=BASE, roadshow_dir=ROADSHOW, est_path=ESTADUAI
         conc = conc_da_base(ler("conc.json"), roadshow_dir, ler("snv.json"))
     except ValueError as e:
         sys.exit(f"Falha: {e}")
-    verif, aliases = carregar(), carregar_aliases()
-    erros = validar(verif, conc, aliases)
+    verif, aliases, consorcios = carregar(), carregar_aliases(), carregar_consorcios()
+    erros = validar(verif, conc, aliases, consorcios)
     if erros:
         sys.exit("Falha na verificação dos leilões:\n" + "\n".join(erros))
-    conc = aplicar(conc, verif, aliases)
+    conc = aplicar(conc, verif, aliases, consorcios)
     por_id = {e["id"]: e for e in conc["entidades"]}
     ents = set(por_id)
     est = Path(est_path)

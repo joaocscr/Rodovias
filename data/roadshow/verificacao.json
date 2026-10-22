@@ -1743,6 +1743,294 @@
     "rs-p153": {
       "tipo": "roadshow",
       "pagina": 153
+    },
+    "cnn-2023-09-29-rip-lote-2": {
+      "tipo": "imprensa",
+      "orgao": "CNN Brasil",
+      "titulo": "Único participante, Infraestrutura PR arremata rodovias do Paraná com deságio de 0,08%",
+      "data": "2023-09-29",
+      "url": "https://www.cnnbrasil.com.br/infra/leilao_rodovias_parana_lote_2/",
+      "acesso": "2026-10-22",
+      "trecho": "O consórcio vencedor é formado pelas empresas EPR Participações e Perfin."
+    },
+    "noticiasagricolas-reuters-2023-08-25-rip-lote-1": {
+      "tipo": "imprensa",
+      "orgao": "Notícias Agrícolas (Reuters)",
+      "titulo": "Pátria Investimentos leva leilão de lote 1 de rodovias do Paraná",
+      "data": "2023-08-25",
+      "url": "https://www.noticiasagricolas.com.br/noticias/agronegocio/357985-patria-investimentos-leva-leilao-de-lote-1-de-rodovias-do-parana.amp.html",
+      "acesso": "2026-10-22",
+      "trecho": "O grupo Pátria venceu o Consórcio Infraestrutura PR, formado por EPR 2 Participações e pelo fundo de investimento Perfin Voyager, único outro credenciado para o leilão."
+    },
+    "b3-2024-12-19-rip-lote-6": {
+      "tipo": "oficial",
+      "orgao": "B3",
+      "titulo": "ANTT realiza leilão na B3 para concessão rodoviária do Lote 6 do Paraná",
+      "data": "2024-12-19",
+      "url": "https://www.b3.com.br/pt_br/noticias/leiloes-8AE490C895C89E89019611A131AE265B.htm",
+      "acesso": "2026-10-22",
+      "trecho": "São Paulo, 19 de dezembro de 2024 […] O consórcio Infraestrutura PR, formado pelas empresas EPR e Perfin, venceu com uma oferta de 0,08% de desconto sobre a tarifa básica de pedágio."
+    },
+    "b3-2025-10-23-rip-lote-4": {
+      "tipo": "oficial",
+      "orgao": "B3",
+      "titulo": "Ministério dos Transportes e ANTT realizam leilão na B3 para concessão do Lote 4 de rodovias do Paraná",
+      "data": "2025-10-23",
+      "url": "https://www.b3.com.br/pt_br/noticias/leiloes-8AA8D0CC9A099402019A1289446B73CA.htm",
+      "acesso": "2026-10-22",
+      "trecho": "O Consórcio Infraestrutura PR, composto por EPR Participações S.A. e Perfin Voyager Fundo de Investimento em Participações em Infraestrutura, foi o vencedor ao apresentar 21,30% de desconto sobre a tarifa básica de pedágio."
+    },
+    "diariodotransporte-2025-12-11-fernao-dias": {
+      "tipo": "imprensa",
+      "orgao": "Diário do Transporte",
+      "titulo": "Motiva vence leilão da BR-381 Fernão Dias e assume concessão até 2040",
+      "data": "2025-12-11",
+      "url": "https://diariodotransporte.com.br/2025/12/11/motiva-vence-leilao-da-br-381-fernao-dias-e-assume-concessao-ate-2040/",
+      "acesso": "2026-10-22",
+      "trecho": "Além da Motiva, participaram da disputa o Consórcio Infraestrutura MG, liderado pelo grupo EPR, e a Arteris, atual concessionária desde 2008."
+    },
+    "investnews-2024-04-11-br-040-mg": {
+      "tipo": "imprensa",
+      "orgao": "InvestNews",
+      "titulo": "EPR vence leilão de trecho da BR-040 com oferta de desconto de 11,2% no pedágio",
+      "data": "2024-04-11",
+      "url": "https://investnews.com.br/negocios/epr-vence-leilao-de-trecho-da-br-040-com-oferta-de-desconto-de-112-no-pedagio/amp/",
+      "acesso": "2026-10-22",
+      "trecho": "O leilão contou ainda com a participação de um consórcio formado por transportadoras e construtoras […] O Grupo EPR, controlado por Equipav e pela gestora de fundos de infraestrutura Perfin"
+    },
+    "investnews-2024-09-26-rota-dos-cristais": {
+      "tipo": "imprensa",
+      "orgao": "InvestNews",
+      "titulo": "Francesa Vinci desbanca CCR e fundos e vence leilão de rodovia que passa por MG e GO",
+      "data": "2024-09-26",
+      "url": "https://investnews.com.br/negocios/francesa-vinci-desbanca-ccr-e-fundos-e-vence-leilao-de-rodovia-que-passa-por-mg-e-go",
+      "acesso": "2026-10-22",
+      "trecho": "A Vinci superou o consórcio Nova BR 040 (formado por 4UM e Opportunity), que propôs deságio de 9,09%."
+    },
+    "azevedo-travassos-2024-12-12-fato-relevante-rota-verde": {
+      "tipo": "imprensa",
+      "orgao": "Azevedo & Travassos S.A. — Relações com Investidores (Fato Relevante, Res. CVM 44/2021)",
+      "titulo": "Fato Relevante — consórcio Rota Verde declarado vencedor do Lote CN 1",
+      "data": "2024-12-12",
+      "url": "https://api.mziq.com/mzfilemanager/v2/d/981538e8-2c26-485e-9524-89866a8a87a5/7cfb7de1-a41b-11c4-d755-f046c93a76b1",
+      "acesso": "2026-10-22",
+      "trecho": "o consórcio Rota Verde, formado pela plataforma de concessões da Companhia, representada pelo FIP Aviva (com participação de 80%), e pela Tecpav Tecnologia e Pavimentação (20%), foi declarado vencedor do leilão da concessão rodoviária do Lote CN 1"
+    },
+    "istoedinheiro-2024-12-12-rota-verde-consorcios": {
+      "tipo": "imprensa",
+      "orgao": "IstoÉ Dinheiro (Estadão Conteúdo)",
+      "titulo": "Consórcio Rota Verde leva concessão da Rota Verde com desconto de 18,07%",
+      "data": "2024-12-12",
+      "url": "https://istoedinheiro.com.br/consorcio-rota-verde-leva-concessao-da-rota-verde-com-desconto-de-1807",
+      "acesso": "2026-10-22",
+      "trecho": "Consócio Infraestrutura GO, formado pelo Grupo EPR e pela gestora Perfin […] O consórcio Rota Cerrado, que tem XP, CLD Construtora, Construtora Caipó, FBS Construção Civil, Jofege Pavimentação e a Conter Construções, fez a quarta proposta, com desconto de 10,88%."
+    },
+    "ms-epe-ata-sessao-rota-celulose-proponentes": {
+      "tipo": "oficial",
+      "orgao": "Governo de MS — Escritório de Parcerias Estratégicas (Comissão Especial de Licitação)",
+      "titulo": "Ata da sessão pública e abertura dos envelopes nº 02 — Concorrência Pública nº 001/2024 (Rota da Celulose) — qualificação das proponentes",
+      "data": "2025-05-08",
+      "url": "https://www.epe.segov.ms.gov.br/wp-content/uploads/2025/05/Ata_Sessao_Publica_do_Leilao_assinado.pdf",
+      "acesso": "2026-10-22",
+      "trecho": "CONSÓRCIO CAMINHOS DA CELULOSE formado pelas empresas XP INFRA V FUNDOS DE INVESTIMENTOS E PARTICIPAÇÕES, CDL CONSTRUTORA, LAÇOS DETETORES ELETRÔNICA, CONTER CONSTRUÇÕES E COMÉRCIO S/A, CONSTRUTORA CAIAPÓ LTDA, ÉTICA CONSTRUTORA LTDA, DISTRIBUIDORA BRASILEIRA DE ASFALTO LTDA, e CONSTER CONSTRUÇÕES E TERRAPLANAGEM LTDA […] CONSÓRCIO K&G ROTA DA CELULOSE formado pelas empresas K INFRA CONCESSÕES E PARTICIPAÇÕES LTDA e GALAPAGOS PARTICIPAÇÕES LTDA"
+    },
+    "dgabc-2026-02-10-cdl-rota-celulose": {
+      "tipo": "imprensa",
+      "orgao": "Diário do Grande ABC",
+      "titulo": "Rota da Celulose será administrada por empresa do Grande ABC",
+      "data": "2026-02-10",
+      "url": "https://www.dgabc.com.br/Noticia/4284526/rota-da-celulose-sera-administrada-por-empresa-do-grande-abc",
+      "acesso": "2026-10-22",
+      "trecho": "A companhia integra o Consórcio Caminhos da Celulose, junto com a XP Investimentos, e tem 18,5% do projeto."
+    },
+    "b3-2025-04-30-br-040-495": {
+      "tipo": "oficial",
+      "orgao": "B3",
+      "titulo": "ANTT realiza leilão na B3 para concessão do sistema rodoviário da BR-040/495/MG/RJ",
+      "data": "2025-04-30",
+      "url": "https://www.b3.com.br/pt_br/noticias/leiloes-8AA8D0CD963DF6FC0196881F78A146D1.htm",
+      "acesso": "2026-10-22",
+      "trecho": "O leilão foi arrematado pelo Consórcio Nova Estrada Real, composto pelas emprestas Construcap CCPS Engenharia e Comércio S.A, Sociedad Anonima de Obras y Servicios COPASA e OHLA Concesiones SL, que apresentou proposta de desconto de 14%"
+    },
+    "folhape-oglobo-2025-02-27-rota-agro-norte": {
+      "tipo": "imprensa",
+      "orgao": "Folha de Pernambuco (Agência O Globo)",
+      "titulo": "Com oferta única, consórcio entre banco Opportunity e 4UM vence leilão de BR em Rondônia",
+      "data": "2025-02-27",
+      "url": "https://www.folhape.com.br/economia/com-oferta-unica-consorcio-entre-banco-opportunity-e-4um-vence-leilao/394718/",
+      "acesso": "2026-10-22",
+      "trecho": "Sem concorrência, o consórcio formado pela empresa 4UM Investimentos (antiga J. Malucelli) e o banco Opportunity, venceu o leilão de concessão da Rota Agro Norte (BR-364) localizada em Rondônia."
+    },
+    "b3-2025-08-14-rota-agro": {
+      "tipo": "oficial",
+      "orgao": "B3",
+      "titulo": "Ministério dos Transportes e ANTT realizam leilão na B3 para concessão da Rota Agro",
+      "data": "2025-08-14",
+      "url": "https://www.b3.com.br/pt_br/noticias/leiloes-8AE490C998348AF20198AA0535177501.htm",
+      "acesso": "2026-10-22",
+      "trecho": "O Consórcio Rota Agro Brasil, composto por Camaçari Fundo de Investimento em Participações Multiestratégia; Azevedo & Travassos Infraestrutura I Fundo de Investimento em Participações; Sobrado Construção LTDA; GAE Construção & Comércio LTDA foi o vencedor ao apresentar apresentou proposta de desconto de 19,70%"
+    },
+    "investnews-2025-08-15-rota-agro": {
+      "tipo": "imprensa",
+      "orgao": "InvestNews",
+      "titulo": "Azevedo & Travassos vence concessão das BR-060 e BR-364 e prevê investir R$ 7,2 bilhões",
+      "data": "2025-08-15",
+      "url": "https://investnews.com.br/negocios/azevedo-travassos-vence-concessao-das-br-060-e-br-364-e-preve-investir-r-72-bilhoes/amp/",
+      "acesso": "2026-10-22",
+      "trecho": "O consórcio inclui a participação do FIP Azevedo & Travassos (70%), Sobrado e Gae do Grupo Tecpav Engenharia (5%) e FIP Camaçari (25%)."
+    },
+    "agenciainfra-2025-08-11-rota-agro-propostas": {
+      "tipo": "imprensa",
+      "orgao": "Agência iNFRA",
+      "titulo": "Rota Agro: leilão de rodovias no MT e GO tem cinco interessados",
+      "data": "2025-08-11",
+      "url": "https://agenciainfra.com/blog/?p=26090",
+      "acesso": "2026-10-22",
+      "trecho": "Entregaram propostas nesta segunda-feira (11) representantes da Way Brasil em conjunto com a gestora Kinea; da Azevedo e Travassos; da EPR; de um consórcio da VF Gomes; e de um consórcio da XP, segundo fontes."
+    },
+    "agenciainfra-2025-08-15-rota-agro-resultado": {
+      "tipo": "imprensa",
+      "orgao": "Agência iNFRA",
+      "titulo": "Leilão da Rota Agro tem desconto de 19,70% no valor do pedágio",
+      "data": "2025-08-15",
+      "url": "https://agenciainfra.com/blog/?p=26288",
+      "acesso": "2026-10-22",
+      "trecho": "A proposta inicial da Rota Agro Brasil – nome do consórcio liderado pela Azevedo e Travassos – propunha um desconto de 17,18% […] Também apresentaram envelopes para o ativo a EPR, com deságio de 10,8%, o Consórcio Rota do Cerrado, com 10,55%, e a VF Gomes, com 0%."
+    },
+    "agenciainfra-2025-11-03-rota-sertaneja-integrantes": {
+      "tipo": "imprensa",
+      "orgao": "Agência iNFRA",
+      "titulo": "Rota Sertaneja: 4 grupos vão disputar concessão da BR-153/262/GO/MG",
+      "data": "2025-11-03",
+      "url": "https://agenciainfra.com/blog/rota-sertaneja-4-grupos-vao-disputar-concessao-da-br-153-262-go-mg/",
+      "acesso": "2026-10-22",
+      "trecho": "o consórcio Rota do Cerrado – composto por XP e construtoras – e um consórcio com a Construcap e a espanhola Copasa […] Já o consórcio com a XP tem na sua composição as construtoras e empreiteiras CLD, DP Barros, Conter, Conster, Caiapó, Ética e Disbral."
+    },
+    "diariodocomercio-2025-11-06-rota-sertaneja": {
+      "tipo": "imprensa",
+      "orgao": "Diário do Comércio (MG)",
+      "titulo": "Way Concessões vence leilão de concessão da Rota Sertaneja",
+      "data": "2025-11-06",
+      "url": "https://diariodocomercio.com.br/economia/way-concessoes-vence-leilao-concessao-rota-sertaneja/",
+      "acesso": "2026-10-22",
+      "trecho": "o consórcio Rota do Cerrado, composto pela XP e construtoras, que propôs dedução de 20,36%, e o consórcio Caminhos do Cerrado, composto pela Construcap e a espanhola Copasa Group, que foi desclassificado na primeira fase do leilão, ao propor 14% de desconto"
+    },
+    "ofator-2025-10-22-via-liberdade": {
+      "tipo": "imprensa",
+      "orgao": "O Fator",
+      "titulo": "Governo de Minas homologa resultado de edital por concessão do lote rodoviário Ouro Preto-Mariana",
+      "data": "2025-10-22",
+      "url": "https://ofator.com.br/informacao/governo-de-minas-homologa-resultado-de-edital-por-concessao-do-lote-rodoviario-ouro-preto-mariana/",
+      "acesso": "2026-10-22",
+      "trecho": "O consórcio é formado pelas empresas Construtora Metropolitana, Quebec Construções e Tecnologia Ambiental, JCP Participações, Abra Infraestrutura, Construtora Contorno e Renova Engenharia."
+    },
+    "agenciainfra-2026-03-31-rota-gerais": {
+      "tipo": "imprensa",
+      "orgao": "Agência iNFRA",
+      "titulo": "EcoRodovias vence leilão da Rota Gerais (BR-116/251/MG)",
+      "data": "2026-03-31",
+      "url": "https://agenciainfra.com/blog/?p=38839",
+      "acesso": "2026-10-22",
+      "trecho": "Os 19% de desconto sobre a tarifa básica de pedágio ofertados pela EcoRodovias venceram o Consórcio Atlas Rodovias, liderado pela YVY Capital"
+    },
+    "tribunademinas-2026-04-01-rota-gerais": {
+      "tipo": "imprensa",
+      "orgao": "Tribuna de Minas",
+      "titulo": "Empresa arremata Rotas Gerais, entre Minas e Bahia, no 1º leilão rodoviário federal de 2026",
+      "data": "2026-04-01",
+      "url": "https://tribunademinas.com.br/noticias/minas/01-04-2026/empresa-arremata-rotas-gerais-entre-minas-e-bahia-no-1o-leilao-rodoviario-federal-de-2026.html?amp=1",
+      "acesso": "2026-10-22",
+      "trecho": "Já a Yvy Capital […] buscava estrear no segmento. A gestora, que participou do leilão em parceria com a Pavidez Engenharia, criou, no início deste ano, o fundo Atlas para focar em rodovias de médio porte."
+    },
+    "agenciainfra-2026-05-25-rota-dos-sertoes-propostas": {
+      "tipo": "imprensa",
+      "orgao": "Agência iNFRA",
+      "titulo": "Leilão rodoviário da Rota dos Sertões recebe três propostas",
+      "data": "2026-05-25",
+      "url": "https://agenciainfra.com/blog/?p=41820",
+      "acesso": "2026-10-22",
+      "trecho": "Outro concorrente para o leilão de quinta é o consórcio Atlas Rodovias, composto pelo Infra Brasil Fundo de Investimento e pela Yvy Capital […] O grupo também conta com a Houer […] A terceira proposta foi apresentada pelo consórcio Via dos Sertões, formado pelos grupos Aspen e DMDL."
+    },
+    "agenciainfra-2026-05-28-rota-dos-sertoes": {
+      "tipo": "imprensa",
+      "orgao": "Agência iNFRA",
+      "titulo": "Consórcio 116 Sertões vence leilão da Rota dos Sertões",
+      "data": "2026-05-28",
+      "url": "https://agenciainfra.com/blog/?p=42062",
+      "acesso": "2026-10-22",
+      "trecho": "O consórcio 116 Sertões, formado pela NEO Invest, Mota-Engil e Infra I Fundo de Investimento […] o consórcio Atlas Rodovias, composto pelo Infra Brasil Fundo de Investimento e pela Yvy Capital, ofertou deságio de 16%. Já o consórcio Via dos Sertões, formado pelos grupos Aspen e DMDL, apresentou 13,10% de desconto."
+    },
+    "braziljournal-2026-05-28-rota-dos-sertoes": {
+      "tipo": "imprensa",
+      "orgao": "Brazil Journal",
+      "titulo": "Novonor leva Rota dos Sertões e disputará mais concessões",
+      "data": "2026-05-28",
+      "url": "https://braziljournal.com/novonor-leva-rota-dos-sertoes-e-disputara-mais-concessoes/",
+      "acesso": "2026-10-22",
+      "trecho": "Um consórcio formado pela Nova Infra Invest, da Novonor, a gestora Galapagos Capital e a construtora portuguesa Mota-Engil venceu hoje o leilão da Rota dos Sertões […] O chamado Consórcio 116 Sertões, no qual cada empresa tem um terço de participação […] Também participou da licitação um consórcio formado pela Aspen Participações e pela DMDL."
+    },
+    "ifc-2010-01-bahia-federal-highways": {
+      "tipo": "imprensa",
+      "orgao": "IFC (Grupo Banco Mundial) — assessor da estruturação do projeto",
+      "titulo": "Brazil: Bahia Federal Highways — Public-Private Partnership brief (01/2010)",
+      "data": "2010-01-01",
+      "url": "https://ifc.org/content/dam/ifc/doc/2010/2010-brazil-bahia-federal-highways-ppp-brief.pdf",
+      "acesso": "2026-10-22",
+      "trecho": "The project was awarded to the Rodobahia consortium, a partnership of Spain’s Isolux Corsan and Brazil’s Engevix and Encalso."
+    },
+    "infrapppworld-2013-08-29-eco101": {
+      "tipo": "imprensa",
+      "orgao": "InfraPPPWorld",
+      "titulo": "Ecorodovias' sale of 27.5% stake in BR-101 concession gets approval",
+      "data": "2013-08-29",
+      "url": "https://www.infrapppworld.com/update/ecorodovias-sale-of-275-stake-in-br-101-concession-gets-approval",
+      "acesso": "2026-10-22",
+      "trecho": "the Brazillian TCU re-approved the tender process and finally awarded the road concession to EcoRodovias Infrastructure & Logistics SA and SBS Engineering and Construction LTD."
+    },
+    "istoedinheiro-2013-09-13-br-050-grupos": {
+      "tipo": "imprensa",
+      "orgao": "IstoÉ Dinheiro (Agência Estado)",
+      "titulo": "ANTT divulga lista dos grupos que disputam a BR-050",
+      "data": "2013-09-13",
+      "url": "https://istoedinheiro.com.br/antt-divulga-lista-dos-grupos-que-disputam-a-br-050",
+      "acesso": "2026-10-22",
+      "trecho": "além do Consórcio Planalto (formado por Senpar, Construtora Estrutural, Construtora Kamilos, Ellenco Construções, Engenharia e Comércio Bandeirantes e Greca Distribuidora de Asfaltos)."
+    },
+    "em-2013-09-19-consorcio-planalto": {
+      "tipo": "imprensa",
+      "orgao": "Estado de Minas (Agência Estado)",
+      "titulo": "Empresas familiares formam consórcio vencedor da BR-050",
+      "data": "2013-09-19",
+      "url": "https://www.em.com.br/app/noticia/economia/2013/09/19/internas_economia,450795/empresas-familiares-formam-consorcio-vencedor-da-br-050.shtml",
+      "acesso": "2026-10-22",
+      "trecho": "O consórcio Planalto, que venceu, na quinta-feira, 19, o leilão de concessão da BR-050, é formado por nove empresas […] As maiores participações são da incorporadora Senpar e da fabricante de asfalto Greca, que têm cada uma 20% na concessionária."
+    },
+    "poder360-2021-07-08-br-163": {
+      "tipo": "imprensa",
+      "orgao": "Poder360",
+      "titulo": "Consórcio Via Brasil 163 vence leilão de rodovia que liga Mato Grosso e Pará",
+      "data": "2021-07-08",
+      "url": "https://www.poder360.com.br/economia/consorcio-via-brasil-vence-leilao-de-rodovia-que-liga-mato-grosso-e-para/",
+      "acesso": "2026-10-22",
+      "trecho": "O consórcio Via Brasil 163, formado por Conasa Infraestrutura S/A, Zeta Infraestrutura S/A, Construtura Rocha Cavalcante LTDA, Engenharia de Materiais LTDA e M4 investimentos LTDA, venceu o leilão da BR-163/230 (MT/PA)"
+    },
+    "ecorodovias-ri-2021-05-13-release-1t21": {
+      "tipo": "imprensa",
+      "orgao": "Ecorodovias Infraestrutura e Logística S.A. — Relações com Investidores (release de resultados 1T21)",
+      "titulo": "Divulgação de resultados 1T21",
+      "data": "2021-05-13",
+      "url": "https://api.mziq.com/mzfilemanager/v2/d/7c109ecb-88c9-441f-91cb-66a8db417120/ce2334ec-989c-c67d-365f-dc2cf0a90dbf?origin=1",
+      "acesso": "2026-10-22",
+      "trecho": "Em abril/21, a Companhia, por meio do consórcio Eco153 (constituído pela ECS com 65% de participação e pela GLP X Participações com 35%), venceu o leilão de concessão da rodovia BR-153/414/080/TO/GO para exploração por 35 anos."
+    },
+    "glp-2021-04-30-eco153": {
+      "tipo": "imprensa",
+      "orgao": "GLP (comunicado da empresa)",
+      "titulo": "Consortium led by Ecorodovias and GLP wins Brazil highway concession",
+      "data": "2021-04-30",
+      "url": "https://www.glp.com/global/article/consortium-led-ecorodovias-and-glp-wins-brazil-highway-concession",
+      "acesso": "2026-10-22",
+      "trecho": "Sao Paulo, 30 April 2021 – A consortium formed by Ecorodovias, one of the largest Brazilian integrated logistics companies, and GLP, the global investment manager specializing in logistics, has won the BR-153 highway auction"
     }
   },
   "leiloes": [

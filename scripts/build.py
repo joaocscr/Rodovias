@@ -13,7 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from roadshow import build_conc, cobertura_markdown, conc_da_base  # noqa: E402
 from snv import build_payload, check_group_consistency, group_physical, load_records  # noqa: E402
-from verificacao import aplicar, carregar, carregar_aliases, relatorio_markdown, validar  # noqa: E402
+from verificacao import aplicar, carregar, carregar_aliases, carregar_consorcios, relatorio_markdown, validar  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 MAX_BYTES = 15_000_000
@@ -96,11 +96,11 @@ def relatorio_intel(intel):
 def camada_verificacao(conc):
     """Valida e aplica data/roadshow/verificacao.json sobre `conc` (sem mutá-lo); grava verificacao.md e imprime a
     cobertura. Sai com erro se a camada não validar."""
-    verif, aliases = carregar(), carregar_aliases()
-    erros = validar(verif, conc, aliases)
+    verif, aliases, consorcios = carregar(), carregar_aliases(), carregar_consorcios()
+    erros = validar(verif, conc, aliases, consorcios)
     if erros:
         sys.exit("Falha na verificação dos leilões:\n" + "\n".join(erros))
-    conc = aplicar(conc, verif, aliases)
+    conc = aplicar(conc, verif, aliases, consorcios)
     (ROADSHOW / "verificacao.md").write_text(relatorio_markdown(verif, conc), encoding="utf-8")
     c = conc["verificacao"]["cobertura"]
     print(f"verificação: {c['leiloes']} leilões verificados + {c['so_edital']} entradas só com edital | oficial {c['oficial']} | roadshow {c['roadshow']} | "

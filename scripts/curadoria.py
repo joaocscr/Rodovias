@@ -19,6 +19,8 @@ TIPOS = {
     "pipeline_nao_verificado": "Itens do pipeline sem fonte oficial",
     "fonte_antiga": "Fontes acessadas há mais de 12 meses",
     "nome_sem_grupo": "Nomes de proponentes sem grupo econômico",
+    "consorcio_sem_composicao": "Consórcios vencedores sem composição na base de consórcios",
+    "consorcio_fora_da_ata": "Consórcios que a ata do leilão não lista",
 }
 # status do pipeline cuja data ainda é uma previsão (leilão; no "leiloado", a assinatura prevista)
 PREVISTOS = ("estudo", "consulta_publica", "tcu", "edital", "leilao_agendado", "leiloado")
@@ -179,6 +181,34 @@ def _nome_sem_grupo(conc, verif):
              "consegue creditá-lo (o build falha até a junção existir)") for n in sorted(nomes - grupos)]
 
 
+def _rotulo_consorcio(nome, lote, ano):
+    return f"{nome} ({lote}, {ano})"
+
+
+def _consorcios(conc):
+    """Consórcio vencedor sem composição (ficha sem integrantes ou, na camada de leilões, sem ficha) e consórcio
+    marcado `fora_da_ata`. Sem `conc.consorcios` (base ainda não carregada) não há o que conferir."""
+    if "consorcios" not in (conc or {}):
+        return []
+    fichas = conc["consorcios"]
+    out = [("consorcio_sem_composicao", _rotulo_consorcio(c["nome"], c["lote"], c["ano"]),
+            "vencedor sem composição localizada: pesquise os integrantes (ata do leilão, ato de homologação, "
+            "concessionária) e preencha data/roadshow/consorcios.json")
+           for c in fichas if c.get("venceu") and not c.get("integrantes")]
+    tem = {(c["ano"], c["lote"], c["nome"]) for c in fichas}
+    for r in (conc.get("mercado") or {}).get("participantes") or []:
+        v = r.get("vencedor")
+        if isinstance(v, str) and v.startswith("Consórcio") and (r.get("ano"), r.get("lote"), v) not in tem:
+            out.append(("consorcio_sem_composicao", _rotulo_consorcio(v, r.get("lote"), r.get("ano")),
+                        "consórcio vencedor sem ficha: acrescente a composição em data/roadshow/consorcios.json"))
+    out += [("consorcio_fora_da_ata", _rotulo_consorcio(c["nome"], c["lote"], c["ano"]),
+             "o nome está na lista de proponentes do leilão, mas a ata oficial não o traz (provável erro de entrada): "
+             "confira a fonte e corrija o proponente em data/roadshow/mercado.json, ou tire a marca fora_da_ata de "
+             "data/roadshow/consorcios.json")
+            for c in fichas if c.get("fora_da_ata")]
+    return out
+
+
 def itens(conc_aplicado, intel, verif, hoje=None):
     """Lista de curadoria manual `[{tipo, item, motivo}]`, na ordem de `TIPOS` e, dentro do tipo, por item.
     `conc_aplicado`: CONC com a camada de verificação aplicada; `intel`: {bloco: dados} de data/intel/; `verif`:
@@ -191,7 +221,7 @@ def itens(conc_aplicado, intel, verif, hoje=None):
     ents_federais = {e.get("id") for e in conc_aplicado.get("entidades") or []}
     brutos = (_pipeline_atrasado(lista, rotulo, hoje, ents_federais) + _leilao_sem_verificacao(conc_aplicado, lista, verif, hoje)
               + _estado_vencido(conc_aplicado, hoje) + _pipeline_nao_verificado(lista) + _fonte_antiga(intel.get("fontes") or {}, hoje)
-              + _nome_sem_grupo(conc_aplicado, verif))
+              + _nome_sem_grupo(conc_aplicado, verif) + _consorcios(conc_aplicado))
     ordem = {t: k for k, t in enumerate(TIPOS)}
     brutos.sort(key=lambda x: (ordem[x[0]], x[1]))
     return [{"tipo": t, "item": i, "motivo": m} for t, i, m in brutos]
@@ -281,7 +311,7 @@ def relatorio(hoje, passos, diff, itens_curadoria, opcoes="", erros=(), sem_novi
     linhas += [f"| {_md(p['passo'])} | {p['estado']} | {_md(_curto(p.get('detalhe') or ''))} |" for p in passos]
     if erros:
         linhas += ["", "## Erros da camada de verificação", "",
-                   "O HTML não foi gerado. Corrija `data/roadshow/verificacao.json` ou `grupos_alias.json`:", ""]
+                   "O HTML não foi gerado. Corrija `data/roadshow/verificacao.json`, `grupos_alias.json` ou `consorcios.json`:", ""]
         linhas += [f"- {_md(e)}" for e in erros]
     if sem_novidade:
         linhas += ["", "## Fontes renovadas sem dado novo", "",

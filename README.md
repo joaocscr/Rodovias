@@ -137,7 +137,7 @@ python scripts/atualizar.py --dominios antt,pipeline --sem-html   # só alguns d
 - A data de acesso de cada arquivo (manifesto e aba Fontes) só muda quando o conteúdo baixado muda (SHA-256 diferente). Se um domínio renovado vier igual, o relatório lista-o em "Fontes renovadas sem dado novo": a fonte não publicou dado novo ou o endereço mudou (muitas URLs trazem o ano ou o mês no nome; veja a tabela abaixo).
 - Depois, leia `data/atualizacao.md`:
   - **O que mudou por bloco**: registros e tamanho de cada bloco antes e depois, comparados com o último commit.
-  - **Curadoria manual**: cada item diz o arquivo a editar. São seis tipos: item do pipeline com data passada ainda como previsto (status em `pipeline.csv`; num item com concessão federal, a data em `data/roadshow/verificacao.json` ou `entidades.json`); leilão realizado sem resultado na camada de verificação, inclusive quando a entrada da concessão só tem a data do edital (roteiro 3); concessão ainda como "a leiloar" com leilão já passado (roteiro 3); item do pipeline sem fonte oficial; fonte acessada há mais de 12 meses (para fontes baixadas, `--renovar` o domínio; para as curadas, a constante `ACESSO` no script indicado); nome de proponente sem grupo econômico (`data/roadshow/grupos_alias.json`).
+  - **Curadoria manual**: cada item diz o arquivo a editar. São oito tipos: item do pipeline com data passada ainda como previsto (status em `pipeline.csv`; num item com concessão federal, a data em `data/roadshow/verificacao.json` ou `entidades.json`); leilão realizado sem resultado na camada de verificação, inclusive quando a entrada da concessão só tem a data do edital (roteiro 3); concessão ainda como "a leiloar" com leilão já passado (roteiro 3); item do pipeline sem fonte oficial; fonte acessada há mais de 12 meses (para fontes baixadas, `--renovar` o domínio; para as curadas, a constante `ACESSO` no script indicado); nome de proponente sem grupo econômico (`data/roadshow/grupos_alias.json`); consórcio vencedor sem composição ou sem ficha, e consórcio que a ata do leilão não lista (`data/roadshow/consorcios.json`).
 - Rode os testes (seção "Testes"). Os testes de navegador comparam a tela com o que a própria página calcula e passam com dados novos. Os testes que conferem um valor concreto (`tests/test_dados_conferidos.py` e os `tests/test_intel_*.py`) falham com a mensagem "dado mudou: revise …": confira o novo valor na fonte indicada e, se estiver certo, atualize o valor esperado no teste.
 - Faça o commit dos JSON, do relatório e do HTML.
 
@@ -237,12 +237,13 @@ npm run test:e2e                     # navegador: offline, interações, desempe
 | `scripts/fetch_assets.py` | baixa as UFs do IBGE, o Leaflet e as fontes |
 | `scripts/roadshow.py` | recorte curado (km → trechos), validação e payload das concessões |
 | `scripts/intel/` | um script por domínio (`trafego`, `antt`, `carga`, `agro`, `multimodal`, `pipeline`, `estaduais` e, na v3.1, `vmda2025` e `rotas`), a junção com o SNV (`snvbase.py`), o download com manifesto (`fontes.py`) e o bloco de fontes (`fontes_bloco.py`) |
-| `scripts/verificacao.py` | camada de verificação dos leilões: valida `verificacao.json` e `grupos_alias.json` e a aplica sobre as concessões (usada pelo `build.py` e por `scripts/intel/pipeline.py`) |
+| `scripts/verificacao.py` | camada de verificação dos leilões: valida `verificacao.json`, `grupos_alias.json` e `consorcios.json` e a aplica sobre as concessões (usada pelo `build.py` e por `scripts/intel/pipeline.py`) |
 | `scripts/validate_palette.js` | validador de paleta do método dataviz (daltonismo, luminosidade, contraste), usado por `tests/palette.test.mjs` |
 | `data/base/` | SNV e recorte das concessões congelados (`snv.json`, `conc.json`), lidos pelo build; os campos curados das concessões (estado, datas, valores) são relidos de `data/roadshow/entidades.json` a cada build |
 | `data/roadshow/` | dados curados do RoadShow e relatório de cobertura |
 | `data/roadshow/verificacao.json` | v4: leilões verificados, com valor, tipo e fontes de cada campo, notas e inabilitados (a hierarquia de fontes está em "Regras dos dados do RoadShow") |
 | `data/roadshow/grupos_alias.json` | v4: nome impresso → grupo econômico, com motivo e fontes, para o ranking |
+| `data/roadshow/consorcios.json` | composição de cada consórcio (integrantes, grupo, participação quando publicada) com fontes de `verificacao.json`; aplicado como `conc.consorcios` |
 | `data/roadshow/verificacao.md` | v4: relatório de cobertura da verificação, gerado pelo `build.py` |
 | `data/intel/` | blocos da v3 (`<bloco>.json`), `pipeline.csv`, `fontes.json` e `manifest.json` |
 | `data/manifest/` | manifesto de download por domínio |

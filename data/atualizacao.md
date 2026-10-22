@@ -29,7 +29,7 @@ Registros: itens das coleções principais de cada bloco (valores preenchidos); 
 | antt | 1.938 | 1.938 | 399,2 | 399,2 | não |
 | carga | 4.312 | 4.312 | 141,3 | 141,3 | não |
 | estaduais | 16.238 | 16.238 | 2.949,8 | 2.949,8 | não |
-| fontes | 49 | 49 | 24,5 | 24,5 | sim (+33 bytes) |
+| fontes | 49 | 49 | 24,5 | 24,5 | não |
 | multimodal | 3.188 | 3.188 | 413,9 | 413,9 | não |
 | municipios | 5.571 | 5.571 | 1.687,6 | 1.687,6 | não |
 | pipeline | 64 | 64 | 42,9 | 42,9 | não |
@@ -39,7 +39,7 @@ Registros: itens das coleções principais de cada bloco (valores preenchidos); 
 
 ## Curadoria manual
 
-14 itens. Cada um diz o arquivo a editar; depois rode de novo o comando.
+16 itens. Cada um diz o arquivo a editar; depois rode de novo o comando.
 
 ### Pipeline com data passada ainda como previsto (1)
 
@@ -60,3 +60,11 @@ Registros: itens das coleções principais de cada bloco (valores preenchidos); 
 - **SP - Lote Centro-Oeste Paulista (sp-centro-oeste)** — fonte só de imprensa (verificado = false): procure página ou documento oficial e atualize fonte_url e verificado em data/intel/pipeline.csv
 - **SP - Lote Litoral Norte (sp-litoral-norte)** — fonte só de imprensa (verificado = false): procure página ou documento oficial e atualize fonte_url e verificado em data/intel/pipeline.csv
 - **SP - Rota Verde (sp-rota-verde)** — fonte só de imprensa (verificado = false): procure página ou documento oficial e atualize fonte_url e verificado em data/intel/pipeline.csv
+
+### Consórcios vencedores sem composição na base de consórcios (1)
+
+- **Consórcio Acciona (Rodovia do Aço, 2007)** — vencedor sem composição localizada: pesquise os integrantes (ata do leilão, ato de homologação, concessionária) e preencha data/roadshow/consorcios.json
+
+### Consórcios que a ata do leilão não lista (1)
+
+- **Consórcio Via dos Sertões (BR-116/PR/SP - Otimização Régis Bittencourt, 2026)** — o nome está na lista de proponentes do leilão, mas a ata oficial não o traz (provável erro de entrada): confira a fonte e corrija o proponente em data/roadshow/mercado.json, ou tire a marca fora_da_ata de data/roadshow/consorcios.json

@@ -209,13 +209,13 @@ def validar_camada():
     """(erros, conc com a camada aplicada ou None, verificacao.json): a mesma validação do build.py, sem sair, sobre o
     mesmo CONC (base congelada + JSON curados de data/roadshow/, inclusive as entidades)."""
     from roadshow import conc_da_base
-    from verificacao import aplicar, carregar, carregar_aliases, validar
+    from verificacao import aplicar, carregar, carregar_aliases, carregar_consorcios, validar
     ler = lambda nome: json.loads((BASE / nome).read_text(encoding="utf-8"))  # noqa: E731
     conc = conc_da_base(ler("conc.json"), ROADSHOW, ler("snv.json"))
-    verif, aliases = carregar(), carregar_aliases()
-    erros = validar(verif, conc, aliases)
+    verif, aliases, consorcios = carregar(), carregar_aliases(), carregar_consorcios()
+    erros = validar(verif, conc, aliases, consorcios)
     try:
-        aplicado = aplicar(conc, verif, aliases)
+        aplicado = aplicar(conc, verif, aliases, consorcios)
     except Exception:  # noqa: BLE001 — camada malformada: a lista de curadoria fica para depois da correção
         aplicado = None
     return erros, aplicado, verif
