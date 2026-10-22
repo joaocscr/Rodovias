@@ -1,6 +1,6 @@
 # Ajustes de leitura, base de consórcios, glossário e página de debêntures — Design
 
-Data: 2026-10-22 · Base: branch `claude/confident-brown-k72wi2` (PR joaocscr/Rodovias#4 aberto) · Pedido do usuário em 13 itens (22/10/2026), escolhas confirmadas em chat.
+Data: 2026-10-22 · Base: branch `claude/confident-brown-k72wi2` (PR joaocscr/Rodovias#4 aberto) · Pedido do usuário em 13 itens (22/10/2026); decisões do usuário em chat: debêntures só de rodovias e infraestrutura de transporte; aba XP = intenções; só agregados; Galapagos mantida só onde for registro público; histórico do Git não é reescrito.
 
 ## 1. Intenção
 
@@ -44,17 +44,21 @@ Aba própria com os termos de mercado e técnicos usados no painel (ex.: VMDa, V
 Nenhuma menção a versões do projeto no material (v1, v2, v3, v3.1, v4, "bases da v1/v2", "novidades da v…"). A aba Fontes lista exatamente as fontes usadas no HTML gerado — derivada dos blocos e camadas embutidos —, sem histórico. O histórico fica no GitHub.
 
 ### 3.7 Página de debêntures (aba nova)
-Universo: **emissores de rodovias e infraestrutura de transporte** (rodovias, ferrovias, portos e terminais, aeroportos, hidrovias, mobilidade urbana sobre trilhos). Classificação por arquivo curado `data/debentures/emissores.json` (emissor → subsetor), que casa os nomes das diferentes fontes; tickers sem emissor classificado vão para o relatório de curadoria.
+Universo: **emissores de rodovias e infraestrutura de transporte** (rodovias, ferrovias, portos e terminais, aeroportos, hidrovias, mobilidade urbana sobre trilhos). Universo = o setor "Transporte" das telas (rodovias, ferrovias, portos e terminais, aeroportos, hidrovias, metrô). Classificação por arquivo curado `data/debentures/emissores.json` (emissor → subsetor e grupo), que casa as várias grafias dos nomes nas fontes; a classificação inicial dos emissores que só aparecem nas planilhas de negócios é feita à mão uma vez; nomes novos em atualizações futuras vão para o relatório de curadoria. A série de debêntures incentivadas para rodovias do RoadShow (p. 77) sai da aba Mercado e passa para esta aba.
 
 Conteúdo:
 - **Indicadores macroeconômicos** (séries públicas, atualizáveis): Selic meta, CDI, IPCA 12 meses, expectativa de IPCA (Boletim Focus) e taxas das NTN-B (Tesouro Nacional), com data.
-- **Emissões:** emissores, subsetor, coordenadores/distribuidores quando a fonte trouxer, volume emitido, data de emissão, vencimento, indexador, taxa de emissão, incentivada (Lei 12.431) ou não, rating. Fontes: telas XP e BTG (arquivo enviado pelo usuário em 22/10/2026) e, se acessível, dados abertos da CVM (ofertas registradas) para emissor/coordenador/volume.
-- **Mercado secundário** (planilha de negócios de 01/10 a 21/10/2026 enviada pelo usuário; abas BTG e XP): volume negociado, número de negócios, taxa média ponderada e spread sobre a NTN-B de referência por emissor, por subsetor e ao longo do período; últimos negócios por ticker. Spread = taxa do negócio − taxa da NTN-B de vencimento mais próximo na mesma data (fonte: Tesouro Nacional / ANBIMA, conforme disponível); quando a NTN-B do dia não estiver disponível, o spread fica "—".
+- **Emissões:** emissores, subsetor, coordenadores/distribuidores quando a fonte trouxer (campos ausentes nas telas — data de emissão, coordenadores — ficam "—"; busca nos dados abertos da CVM é tentativa, não requisito), volume emitido, data de emissão, vencimento, indexador, taxa de emissão, incentivada (Lei 12.431) ou não, rating. Fontes: telas XP e BTG (arquivo enviado pelo usuário em 22/10/2026) e, se acessível, dados abertos da CVM (ofertas registradas) para emissor/coordenador/volume.
+- **Mercado secundário** (planilha enviada pelo usuário, 01/10 a 21/10/2026):
+  - aba **BTG = negócios fechados** (horário, taxa, PU, volume, agressor): volume negociado, número de negócios, taxa média ponderada pelo volume e spread sobre a NTN-B, por emissor, por subsetor e por dia; último negócio de cada papel.
+  - aba **XP = intenções de compra e venda** (decisão do usuário): mostradas **à parte**, como fluxo de intenções (volume e taxa média por direção, emissor e dia), **nunca somadas** aos negócios.
+  - Spread só para papéis IPCA+: taxa − taxa da NTN-B interpolada pelo vencimento na curva do Tesouro Nacional do mesmo dia (decisão do construtor); PRÉ e DI+ ficam "—". Taxas normalizadas para % a.a. (BTG vem em número, XP em texto "7,60%").
+- **Só agregados** (decisão do usuário): o bloco gerado e o HTML trazem apenas agregados (por emissor, subsetor e dia) e o último negócio de cada papel — nunca a lista de negócios ou intenções linha a linha. As planilhas ficam fora do git, como os demais brutos; os testes usam um arquivo de exemplo sintético e pequeno, versionado.
 - **Atualização:** as planilhas entram por uma pasta de entrada (`data/raw/debentures/`), lidas por `scripts/intel/debentures.py` (com `fetch` para as séries públicas e `build` para o bloco), integrado ao `scripts/atualizar.py`. A leitura das planilhas fica atrás de uma interface única (`ler_negocios`, `ler_telas`) para ser trocada pela API interna depois sem mexer no resto. Arquivos do usuário não vão para o git (como os demais brutos); o bloco gerado vai.
 - **Fontes:** a página e a aba Fontes dizem que os dados de mercado secundário vêm de telas e negócios de corretoras (XP e BTG) fornecidos pelo usuário, com o período.
 
 ### 3.8 Remover menções à empresa do usuário
-Nenhuma menção a "Galapagos"/"Galápagos" nos arquivos atuais do repositório nem no HTML: README, docs (specs, planos, HANDOFF, paleta), código (nomes de tokens e comentários), testes e dados. Tokens de cor passam a ter nomes neutros (ex.: "paleta base"). O histórico do Git **não** é reescrito (decisão do usuário): a `main` fica sem menções quando este trabalho entrar nela.
+Nenhuma menção a "Galapagos"/"Galápagos" nos arquivos atuais do repositório nem no HTML — README, docs (specs, planos, HANDOFF, paleta), código (nomes de tokens e comentários), testes — **exceto onde for registro público de leilão** (decisão do usuário: o nome aparece como integrante de consórcio em documentos oficiais, ex.: "Consórcio 116 Sertões (Galapagos)", "K&G Rota da Celulose (K-Infra e Galapagos)"). Tokens de cor passam a ter nomes neutros (ex.: "paleta base"). O histórico do Git **não** é reescrito (decisão do usuário): a `main` fica sem menções quando este trabalho entrar nela.
 
 ### 3.9 Documento para o TI (fora do projeto)
 Documento simples, só para o usuário, fora do repositório: o que é o projeto, arquitetura em uma página, como rodar e atualizar, dependências e fontes, o que a migração precisa (hospedagem do HTML ou de um serviço, agendamento do `atualizar.py`, acesso às fontes, substituição das planilhas pela API interna, segredos), riscos e um roteiro de demonstração de 15 minutos.
@@ -65,6 +69,6 @@ Documento simples, só para o usuário, fora do repositório: o que é o projeto
 - Tempo real: o HTML continua uma fotografia gerada pelo comando de atualização.
 
 ## 5. Critérios de aceite
-- Itens 3.1–3.8 feitos, com teste quando há código; nenhuma ocorrência de "galapagos" (sem acento ou com) em `git grep -i` nem no HTML; nenhuma menção a versão do projeto no HTML.
+- Itens 3.1–3.8 feitos, com teste quando há código; nenhuma ocorrência de "galapagos" (sem acento ou com) em `git grep -i` nem no HTML, salvo nos registros públicos de leilão (dados curados de consórcios e verificação), com um teste que só permite ali; nenhuma menção a versão do projeto no HTML.
 - Página de debêntures gerada pelo comando de atualização a partir das planilhas e das séries públicas; spreads e volumes conferidos contra a planilha num teste.
 - Três suítes verdes; HTML ≤ 15 MB; documento do TI entregue ao usuário.
