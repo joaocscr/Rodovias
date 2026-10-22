@@ -413,6 +413,10 @@ def validar_consorcios(consorcios, fontes, conc_aplicado):
                 erros.append(f"{onde}: {marca} deve ser true/false")
         if "nota" in c and not (isinstance(c["nota"], str) and c["nota"].strip()):
             erros.append(f"{onde}: nota deve ser texto não vazio")
+        # Fora da camada só com a ata que o traz: a marca não pode servir para calar uma grafia errada.
+        if c.get("fora_da_camada") and not (c.get("nota") and any(
+                (fontes.get(f) or {}).get("tipo") == "oficial" for f in c.get("fontes") or [])):
+            erros.append(f"{onde}: fora_da_camada exige nota e ao menos uma fonte oficial (a ata que traz o nome)")
         chave = (c["nome"], c["ano"], c["lote"])
         if chave in chaves:
             erros.append(f"{onde}: repetido")

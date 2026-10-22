@@ -55,8 +55,12 @@ def test_nome_precisa_casar_com_proponente_do_mesmo_leilao(conc_min):
 
 
 def test_nome_fora_da_camada_so_com_marca(conc_min):
-    c = consorcio(nome="Consórcio Delta", venceu=False, fora_da_camada=True)
+    c = consorcio(nome="Consórcio Delta", venceu=False, fora_da_camada=True, fontes=["ata"], nota="Só a ata traz.")
     assert erros(c, conc=conc_min) == []
+    # sem a ata oficial ou sem nota, a marca não basta (não pode calar uma grafia errada)
+    for kw in ({"fontes": ["jornal"], "nota": "x"}, {"fontes": ["ata"]}):
+        e = erros(consorcio(nome="Consórcio Delta", venceu=False, fora_da_camada=True, **kw), conc=conc_min)
+        assert any("exige nota" in m for m in e), (kw, e)
     # a marca não vale para quem já casa: ficaria esquecida depois que a camada ganhar o nome
     e = erros(consorcio(venceu=True, fora_da_camada=True), conc=conc_min)
     assert any("fora_da_camada" in m for m in e), e
