@@ -23,24 +23,26 @@ PERMITIDOS = (
     "data/base/conc.json",
     # O HTML embute os dados acima em `window.CONC=`; a linha é verificada à parte (test_html_marca_so_nos_dados_embutidos).
     "mapa-rodovias.html",
-    # O extrator guarda a linha do leilão da Rota dos Sertões como veio no RoadShow ("Consórcio 116 Sertões (...)"):
-    # é o mesmo registro público dos JSON acima, em literal de dados (não é comentário nem texto de interface).
-    "scripts/extract/entidades_parte_a.py",
 )
-MARCA = re.compile(r"galapagos|gal[áa]pagos", re.I)
+# O extrator guarda a linha do leilão da Rota dos Sertões como veio no RoadShow: é o mesmo registro público dos JSON
+# acima, em literal de dados. Só essa linha é aceita no arquivo.
+EXTRATOR = ("scripts/extract/entidades_parte_a.py", "Consórcio 116 Sertões (")
+# O nome é montado em partes para que este arquivo não o cite.
+_NOME = "gal" + "[aá]" + "pagos"
+MARCA = re.compile(_NOME, re.I)
 VERSAO = re.compile(r"\bv(?:[1-4](?:\.\d)?|40)\b")
 
 
 def _git_grep_marca():
-    r = subprocess.run(["git", "grep", "-n", "-i", "-I", "-E", "galapagos|galápagos"], cwd=ROOT,
+    r = subprocess.run(["git", "grep", "-n", "-i", "-I", "-E", _NOME], cwd=ROOT,
                        capture_output=True, text=True, encoding="utf-8")
     return [ln for ln in r.stdout.splitlines() if ln]
 
 
 def test_marca_so_em_registros_publicos_de_leilao():
     fora = [ln[:160] for ln in _git_grep_marca()
-            if ln.split(":", 1)[0] != "tests/test_sem_mencoes.py"
-            and not ln.split(":", 1)[0].startswith(PERMITIDOS)]
+            if not ln.split(":", 1)[0].startswith(PERMITIDOS)
+            and not (ln.split(":", 1)[0] == EXTRATOR[0] and EXTRATOR[1] in ln)]
     assert not fora, "nome da empresa fora dos registros públicos:\n" + "\n".join(fora)
 
 
