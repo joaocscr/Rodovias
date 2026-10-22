@@ -202,7 +202,7 @@ test('resumoKpis: valores dos KPIs com fixture', () => {
   assert.match(k.concessao.nota, /SNV 202601A, 100 km têm administração "Concessão Federal"; o cadastro ainda não reflete/);
   assert.equal(k.concessao.fonte, 'RoadShow 2026-2027, p. 37');
   assert.equal(k.leiloes.valor, 3, 'participantes de 2023 a 2027');
-  assert.match(k.leiloes.rotulo, /de 9 no programa 2023–2027 \(realizados e previstos\)/);
+  assert.match(k.leiloes.rotulo, /de 9 no programa federal de concessões 2023–2027 \(realizados e previstos\)/);
   assert.equal(k.investimento.valor, 105);
   assert.equal(k.investimento.texto, 'R$ 105,0 bi');
   assert.match(k.investimento.fonte, /RoadShow 2026-2027, pp\. 95 e 129/);

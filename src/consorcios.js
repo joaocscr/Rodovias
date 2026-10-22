@@ -55,7 +55,7 @@ const Consorcios = (() => {
 
   // Corpo da ficha. Os termos do glossário são linkados na primeira menção.
   function corpoHtml(f) {
-    const lead = `<p class="cons-lead">Ficha do ${Glossario.link('grupo-economico', 'grupo econômico')} na época dos leilões: os ${Glossario.link('consorcio', 'consórcios')} de que fez parte, a participação de cada integrante e os leilões que disputou.</p>`;
+    const lead = `<p class="cons-lead">Ficha do ${Glossario.link('grupo-economico', 'grupo econômico')} nos leilões de concessões rodoviárias federais (ANTT), com o grupo da época de cada leilão: os ${Glossario.link('consorcio', 'consórcios')} de que fez parte, a participação de cada integrante e os leilões que disputou.</p>`;
     if (!f.leiloes.length) {
       return `${lead}<p class="empty">Este nome não consta como proponente, nem como integrante de consórcio, nos leilões da base.</p>`;
     }

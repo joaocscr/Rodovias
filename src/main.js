@@ -14,7 +14,7 @@
   Tabs.on('cargas', () => Cargas.init(intel, snv));
   Tabs.on('mercado', () => Mercado.init(conc, intel));
   Tabs.on('regulatorio', () => Regulatorio.init(conc));
-  Tabs.on('fontes', () => Fontes.init(intel, conc));
+  Tabs.on('fontes', () => Fontes.init(intel, conc, window.GLOSSARIO, window.FONTES_DESCRICAO));
   Tabs.on('glossario', () => Glossario.render());
   Tabs.onArg('glossario', id => Glossario.focus(id));
   Tabs.init({ isFicha: id => Ficha.exists(id) });

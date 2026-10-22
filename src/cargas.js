@@ -69,7 +69,7 @@ const Cargas = (() => {
     if (k.expMilho != null) tiles.push(tile('kpi-exp-milho', IM.fmtT(k.expMilho), `de milho exportado em ${e.ano} (Comex Stat)`));
     if (!tiles.length) return '';
     const f = [a && pam(), a && a.armazenagem && est(), e && fonte(mm(), /Comex/)].filter(Boolean);
-    return card('c-kpis', 'Cargas agrícolas em números', 'Produção, armazenagem e exportação, todas medidas', { wide: true, html: `<div class="kpis">${tiles.join('')}</div>`, fonte: f.join('; ') });
+    return card('c-kpis', 'Cargas agrícolas em números', 'Produção, armazenagem e exportação no Brasil, todas medidas', { wide: true, html: `<div class="kpis">${tiles.join('')}</div>`, fonte: f.join('; ') });
   }
 
   function prodCard() {
@@ -86,7 +86,8 @@ const Cargas = (() => {
 
   function siadeCard() {
     if (!IM.siadePares(intel, GRAOS, 1).length) return '';
-    return card('c-siade', 'Fluxos ferroviários de grãos', 'Os 15 maiores pares origem → destino de soja e milho, toneladas úteis no ano',
+    const f = (mm().fonte || []).find(x => /SIADE/.test(x.nome)), per = f && f.periodo ? `, ${IM.fmtPeriodo(f.periodo)}` : '';
+    return card('c-siade', `Fluxos ferroviários de grãos${per}`, 'Os 15 maiores pares origem → destino de soja e milho nas ferrovias, em toneladas úteis no ano',
       { legend: Charts.legendHtml([['Soja', Charts.C.deep], ['Milho', Charts.C.bright]]), fonte: fonte(mm(), /SIADE/),
         note: 'Pares por estação ferroviária; açúcar, farelo de soja e fertilizantes ficam de fora.' });
   }
@@ -96,7 +97,7 @@ const Cargas = (() => {
     if (!prods.length) return '';
     if (!sh4 || !prods.some(p => p.sh4 === sh4)) sh4 = (prods.find(p => p.sh4 === '1201') || prods[0]).sh4;
     const e = mm().exportacao;
-    return card('c-exp', `Exportação ${e.ano} por URF de despacho`, 'As 12 maiores unidades da Receita no despacho do produto escolhido, e de onde vem a mercadoria', {
+    return card('c-exp', `Exportação de ${e.ano} por unidade da Receita Federal de despacho (URF)`, 'As 12 maiores unidades da Receita no despacho do produto escolhido, e de onde vem a mercadoria', {
       wide: true, fonte: fonte(mm(), /Comex/), note: 'A URF é a unidade da Receita onde a exportação foi despachada, não necessariamente o ponto de saída rodoviário; UF = origem da mercadoria.',
       legend: `<div class="toolbar"><label class="sub" for="exp-sh4">Produto</label><select id="exp-sh4">${prods.map(p =>
         `<option value="${esc(p.sh4)}"${p.sh4 === sh4 ? ' selected' : ''}>${esc(p.nome)} (SH4 ${esc(p.sh4)})</option>`).join('')}</select></div>`,
@@ -107,7 +108,7 @@ const Cargas = (() => {
     const r = IM.fretesRows(intel);
     if (!r.length) return '';
     const ufs = [...new Set(r.map(x => x.uf_o).filter(Boolean))].sort();
-    return card('c-fretes', `Fretes rodoviários de grãos, ${mm().fretes.mes}`, 'Clique no cabeçalho para ordenar; R$/t·km = R$/t ÷ distância', {
+    return card('c-fretes', `Fretes rodoviários de grãos, ${mm().fretes.mes}`, 'Rotas pesquisadas pela CONAB, em R$ por tonelada; clique no cabeçalho para ordenar; R$/t·km = R$/t ÷ distância', {
       wide: true, fonte: fonte(mm(), /CONAB/),
       note: '"Origem aproximada": no boletim, a origem vem numa célula mesclada e foi atribuída por proximidade. ' +
         '"Distância suspeita na fonte": o km do boletim é menor que 0,9 vez ou maior que 3 vezes a linha reta entre as sedes dos municípios ' +
@@ -120,7 +121,7 @@ const Cargas = (() => {
   function cargaCard() {
     const c = IM.cargaOf(intel);
     if (!c || !IM.cargaTop(intel, snv, 1).length) return '';
-    return card('c-pnl', 'Trechos com maior carga agrícola', null,
+    return card('c-pnl', 'Trechos de rodovias federais com maior carga agrícola', null,
       { subHtml: `Os 15 ${Glossario.link('trecho-fisico', 'trechos físicos')} com mais granel sólido agrícola por ano (${esc(c.cenario || 'PNL 2035')}, ano-base ${esc(c.ano_base)}); clique para ver no mapa`,
         wide: true, fonte: fonte(c, /PNL/), note: 'Estimativa de modelo de alocação em rede, não contagem.' });
   }

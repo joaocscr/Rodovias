@@ -864,7 +864,7 @@ const UI = (() => {
           `<div class="legend__sep"></div><div class="legend__row">${haloSwatch()}<span>Concessão federal</span></div>`;
       items += `<div class="legend__src">Fonte: DNIT · SNV ${esc(snv.versao)}${mode === 'concessoes' ? ` · RoadShow 2026-2027 (${esc(conc.edicaoRoadshow)})` : ''}</div>`;
     }
-    $('#legend').innerHTML = `<h2 class="section-title">Cor das rodovias</h2>
+    $('#legend').innerHTML = `<h2 class="section-title">Cor das rodovias federais</h2>
       <div class="mode-switch" role="radiogroup" aria-label="Cor das rodovias">${MODE_LIST.map(([k, label]) =>
         `<button type="button" role="radio" data-mode="${k}" aria-checked="${mode === k}" tabindex="${mode === k ? 0 : -1}">${label}</button>`).join('')}</div>
       <h2 class="section-title">Legenda</h2>${items}`;

@@ -197,7 +197,7 @@ const Regulatorio = (() => {
     const el = document.getElementById('page-regulatorio');
     el.innerHTML = `<div class="page__inner">
       <h1 class="page__title">Regulatório e financiamento</h1>
-      <p class="page__lead">Resumo fiel do RoadShow 2026-2027: modelo regulatório, mitigação de riscos, garantias, financiamento e ${Glossario.link('otimizacao-contratual', 'otimizações contratuais')}. Sem interpretação jurídica própria; consulte as páginas indicadas.</p>
+      <p class="page__lead">Resumo fiel do ${Glossario.link('roadshow', 'RoadShow 2026-2027')}${conc.edicaoRoadshow ? ` (${esc(conc.edicaoRoadshow)})` : ''}, a apresentação do Ministério dos Transportes a investidores, sobre as concessões rodoviárias federais: modelo regulatório, mitigação de riscos, garantias, financiamento e ${Glossario.link('otimizacao-contratual', 'otimizações contratuais')}. Sem interpretação jurídica própria; consulte as páginas indicadas.</p>
       <div class="reg">
         <nav class="reg__toc" aria-label="Seções do regulatório">${r.secoes.map(s => `<a href="#regulatorio" data-sec="${esc(s.id)}">${esc(s.titulo)}</a>`).join('')}</nav>
         <div>${r.secoes.map(s => `<section class="reg__sec" id="reg-${esc(s.id)}">

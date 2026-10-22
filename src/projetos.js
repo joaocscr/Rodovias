@@ -11,8 +11,8 @@ const Projetos = (() => {
 
   // [chave, rótulo, formato, numérica?]
   const BASE_COLS = [
-    ['nome', 'Nome', null, false], ['brsUfs', 'BRs/UFs', null, false], ['estado', 'Estado', 'estado', false],
-    ['dataChave', 'Data-chave', 'data', false], ['km', 'km', 'km', true], ['capex', 'Capex (R$ bi)', 'bi', true],
+    ['nome', 'Nome', null, false], ['brsUfs', 'BRs/UFs', null, false], ['estado', 'Estado da concessão', 'estado', false],
+    ['dataChave', 'Leilão ou assinatura', 'data', false], ['km', 'km', 'km', true], ['capex', 'Capex (R$ bi)', 'bi', true],
     ['opex', 'Opex (R$ bi)', 'bi', true], ['dataBase', 'Data-base', null, false], ['capexKm', 'Capex/km (R$ mi)', 'mi', true],
     ['wacc', 'WACC', 'pct', true], ['tkm', 'TKM (R$/km)', 'tkm', true], ['desagio', 'Deságio', 'pct', true], ['desagioOrigem', 'Fonte do deságio', null, false],
     ['participantes', 'Participantes', 'int', true], ['vencedor', 'Vencedor', null, false],
@@ -116,7 +116,7 @@ const Projetos = (() => {
     const pp = [...new Set(conc.estudos.map(s => s.pagina).filter(Number.isFinite))].sort((a, b) => a - b);
     const ref = pp.length ? ` (${pp.length > 1 ? 'pp.' : 'p.'} ${pp.join(', ')})` : '';
     return `<h2 class="page__title" style="font-size:22px;margin-top:40px">Estudos pós-2027</h2>
-      <p class="page__lead" id="estudos-lead">${conc.estudos.length} ${conc.estudos.length === 1 ? 'estudo contratado' : 'estudos contratados'}, só com BRs e UFs no RoadShow${ref}. No mapa, aparecem como a BR inteira na UF.</p>
+      <p class="page__lead" id="estudos-lead">${conc.estudos.length} ${conc.estudos.length === 1 ? 'estudo contratado' : 'estudos contratados'} para futuras concessões rodoviárias federais; o RoadShow${ref} só informa as BRs e UFs. No mapa, aparecem como a BR inteira na UF.</p>
       <ul class="timeline" id="estudos-list">${conc.estudos.map((s, i) => `<li>BR-${esc(s.brs.join('/'))}/${esc(s.ufs.join('/'))}${s.possivel_2027 ? ' · <b>possível 2027</b>' : ''}
         <button type="button" class="link-btn" data-estudo="${i}" ${s.fis.length ? '' : 'disabled'}>ver no mapa</button></li>`).join('')}</ul>`;
   }
@@ -128,7 +128,7 @@ const Projetos = (() => {
     const acesso = (intel.pipeline.fonte || []).map(f => f && f.acesso).filter(Boolean).sort().pop();
     return `<section id="pipeline" class="pipeline">
       <h2 class="page__title" style="font-size:22px;margin-top:40px">Pipeline</h2>
-      <p class="page__lead">Próximos passos de concessões federais e estaduais (estudo, consulta pública, TCU/TCE, edital, leilão), por data prevista; sem data no fim.
+      <p class="page__lead">Próximos passos de concessões rodoviárias federais e estaduais (estudo, consulta pública, TCU/TCE, edital, leilão), por data prevista; sem data no fim.
         Itens com a etiqueta “não verificado” vêm de uma única fonte secundária. Clique numa linha com ficha (federal ou estadual) para abri-la; “Observação” abre o detalhe do item.</p>
       <article class="ccard ccard--wide pipeline__tl" id="pipe-timeline" hidden></article>
       <div class="toolbar">
@@ -203,7 +203,7 @@ const Projetos = (() => {
     const el = document.getElementById('page-projetos');
     el.innerHTML = `<div class="page__inner">
       <h1 class="page__title">Projetos e contratos</h1>
-      <p class="page__lead">Contratos vigentes e projetos do programa${anos.length ? ` ${anos[0]}–${anos[anos.length - 1]}` : ''}${hasEst ? ', e concessões rodoviárias estaduais' : ''}. ${Glossario.link('capex')} e ${Glossario.link('opex')} na base comparável (tabelas${base ? ` em ${esc(base)}` : ''} quando existirem; senão, a ${Glossario.link('data-base')} da ficha, indicada na coluna). Clique numa linha para abrir a ficha.</p>
+      <p class="page__lead">Contratos vigentes de concessão rodoviária federal e projetos do programa federal de concessões${anos.length ? ` ${anos[0]}–${anos[anos.length - 1]}` : ''} (Ministério dos Transportes)${hasEst ? ', e concessões rodoviárias estaduais' : ''}. ${Glossario.link('capex', 'Capex')} e ${Glossario.link('opex')} em R$ bi, na base comparável (tabelas${base ? ` em ${esc(base)}` : ''} quando existirem; senão, a ${Glossario.link('data-base', 'data-base')} da ficha, indicada na coluna). "Leilão ou assinatura": data de assinatura nos contratos federais ${anos.length ? `anteriores a ${anos[0]}` : 'anteriores ao programa'}${hasEst ? ' e nas concessões estaduais' : ''}; data do leilão nos demais. Clique numa linha para abrir a ficha.</p>
       ${toolbar()}
       <div class="table-wrap"><table class="grid" id="proj-table" data-csv-name="projetos-comparador"></table></div>
       ${pipelineSection()}

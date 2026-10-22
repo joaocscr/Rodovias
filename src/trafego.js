@@ -56,7 +56,7 @@ const Trafego = (() => {
     if (k.nPracas != null) {
       tiles.push(tile('kpi-pracas', IM.fmtInt(k.nPracas), `praças com contagem${aP != null ? ` em ${aP}` : ''} (ANTT, medido)`));
       tiles.push(tile('kpi-vmd', IM.fmtInt(k.vmdTotal), `veíc./dia somados nas praças (${IM.comAno('VMD', aP)}, dois sentidos)`));
-      tiles.push(tile('kpi-pes', IM.fmtPct(k.pctPes), 'de pesados nas praças, ponderado pelo VMD'));
+      tiles.push(tile('kpi-pes', IM.fmtPct(k.pctPes), `de pesados nas praças${aP != null ? ` em ${aP}` : ''}, ponderado pelo VMD`));
     }
     // veíc·km/dia: VMDa 2025 (DNIT) na malha federal e na estadual; sem o bloco 2025, o federal com o VMDa 2023
     if (k.vkm != null) tiles.push(tile('kpi-vkm', IM.fmtVkm(k.vkm), `na malha federal (VMDa ${k.anoVkm}, modelado)`));
@@ -77,7 +77,7 @@ const Trafego = (() => {
       { wide: true, html: `<div class="kpis">${tiles.join('')}</div>`, fonte: f.join('; '), note });
   }
 
-  const rankTitulo = () => { const aP = IM.anoPracas(intel); return `As 20 praças de maior VMD${aP != null ? ` em ${aP}` : ''}`; };
+  const rankTitulo = () => { const aP = IM.anoPracas(intel); return `As 20 praças de pedágio federais de maior VMD${aP != null ? ` em ${aP}` : ''}`; };
 
   function rankingCard() {
     if (!IM.pracasRanking(intel, 1).length) return '';
@@ -90,7 +90,7 @@ const Trafego = (() => {
   function serieCard(s) {
     if (!s || !s.n) return '';
     const per = `${IM.monthLabel(s.meses[0])} a ${IM.monthLabel(s.meses[s.meses.length - 1])}`;
-    return card('t-serie', `Tráfego mensal nas praças, ${per}`, 'VMD do mês somado (mil veíc./dia), leves × pesados',
+    return card('t-serie', `Tráfego mensal nas praças de pedágio federais, ${per}`, 'VMD do mês somado (mil veíc./dia), leves × pesados',
       { legend: Charts.legendHtml([['Leves', Charts.C.deep], ['Pesados', Charts.C.bright]]), fonte: fontePracas(),
         note: `Entram só as ${IM.fmtInt(s.n)} praças (de ${IM.fmtInt(s.total)}) com os ${s.meses.length} meses completos, para a série não oscilar com praças que entram ou saem.` });
   }
@@ -109,7 +109,7 @@ const Trafego = (() => {
     const ac = IM.acidOf(intel);
     if (!ac || !ac.n) return '';
     const f = fonte(intel.trafego, /PRF/), anos = anosLabel(ac.anos);
-    let out = card('t-uf', `Acidentes e mortos por UF, média ${anos}`, 'Por ano; cada trecho conta na UF do seu registro principal no SNV',
+    let out = card('t-uf', `Acidentes e mortos nas rodovias federais por UF, média ${anos}`, 'Por ano; cada trecho conta na UF do seu registro principal no SNV',
       { wide: true, fonte: f, html: '<div class="duo"><div><h4 class="duo__title">Acidentes/ano</h4><div id="chart-t-uf-a"></div></div><div><h4 class="duo__title">Mortos/ano</h4><div id="chart-t-uf-m"></div></div></div>' });
     if (IM.vmdaOf(intel)) {
       out += card('t-taxa', 'As 15 BRs/UF com maior taxa de acidentes', `Acidentes por 10⁶ veíc·km, PRF ${anos} ÷ VMDa ${IM.vmdaOf(intel).ano}`,

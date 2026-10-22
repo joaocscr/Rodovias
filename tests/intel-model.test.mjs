@@ -866,13 +866,10 @@ test('cargaTop: físicos com maior carga agrícola modelada, com BR/UF e locais 
   assert.deepEqual(IntelModel.cargaTop({}, snvT), []);
 });
 
-test('fmtDia e fontesData: dd/mm/aaaa e listas com padrão vazio', () => {
+test('fmtDia: dd/mm/aaaa', () => {
   assert.equal(IntelModel.fmtDia('2026-10-20'), '20/10/2026');
   assert.equal(IntelModel.fmtDia(null), '—');
   assert.equal(IntelModel.fmtDia('2026'), '2026');
-  const f = IntelModel.fontesData({ fontes: { fontes: [{ nome: 'A' }], indisponiveis: [{ nome: 'B' }] } });
-  assert.deepEqual(f, { fontes: [{ nome: 'A' }], indisponiveis: [{ nome: 'B' }], base: [] });
-  assert.equal(IntelModel.fontesData({}), null);
 });
 
 

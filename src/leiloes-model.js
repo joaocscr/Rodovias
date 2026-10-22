@@ -168,13 +168,13 @@ const LeiloesModel = (() => {
     if (prog && prog.rows.every(p => num(p.leiloes))) {
       const total = prog.rows.reduce((s, p) => s + p.leiloes, 0);
       const feitos = part.filter(p => p.ano >= prog.de && p.ano <= prog.ate);
-      out.push({ id: 'leiloes', rotulo: `Leilões realizados, de ${f0.format(total)} no programa ${prog.periodo} (realizados e previstos)`, valor: feitos.length,
+      out.push({ id: 'leiloes', rotulo: `Leilões realizados, de ${f0.format(total)} no programa federal de concessões ${prog.periodo} (realizados e previstos)`, valor: feitos.length,
         texto: f0.format(feitos.length), unidade: 'leilões',
         fonte: `${rsPaginas(m, 'programa_por_ano')} (programa)${feitos.length ? `; realizados: ${fonteCampo(feitos, 'leilao', m, 'participantes')}` : ''}` });
     }
     if (prog && prog.rows.every(p => num(p.capex) && num(p.opex))) {
       const inv = prog.rows.reduce((s, p) => s + p.capex + p.opex, 0);
-      out.push({ id: 'investimento', rotulo: `Capex + opex do programa ${prog.periodo}`, valor: inv, texto: `R$ ${f1.format(inv)} bi`,
+      out.push({ id: 'investimento', rotulo: `Capex + opex do programa federal de concessões ${prog.periodo}`, valor: inv, texto: `R$ ${f1.format(inv)} bi`,
         unidade: 'R$ bi', fonte: rsPaginas(m, 'programa_por_ano') });
     }
     const todos = arr(m.concorrentes_desagio), cd = todos.filter(x => num(x.desagio));
@@ -191,7 +191,7 @@ const LeiloesModel = (() => {
       const doPrograma = part.filter(p => p.ano >= prog.de && p.ano <= prog.ate && p.vencedor);
       const g = rankingGrupos(doPrograma, conc.grupos_alias).filter(r => r.vitorias > 0).length;
       if (g) {
-        out.push({ id: 'grupos', rotulo: `Grupos econômicos vencedores em ${periodoAnos(doPrograma.map(p => p.ano))}`, valor: g, texto: f0.format(g),
+        out.push({ id: 'grupos', rotulo: `Grupos econômicos vencedores dos leilões federais de ${periodoAnos(doPrograma.map(p => p.ano))}`, valor: g, texto: f0.format(g),
           unidade: 'grupos', fonte: `vencedor (adjudicatário) pela ${fonteCampo(doPrograma, 'grupo_vencedor', m, 'participantes')}; grupo da época do leilão` });
       }
     }

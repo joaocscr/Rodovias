@@ -70,7 +70,7 @@ const Resumo = (() => {
     const achados = LeiloesModel.resumoAchados(conc, intel);
     document.getElementById('page-resumo').innerHTML = `<div class="page__inner">
       <h1 class="page__title">Resumo das concessões rodoviárias federais</h1>
-      <p class="page__lead">Os números principais da malha federal (${Glossario.link('snv')}), das concessões e dos leilões (com o ${Glossario.link('desagio')} dos vencedores), calculados a partir dos dados deste arquivo.</p>
+      <p class="page__lead">Os números principais da malha federal (${Glossario.link('snv')}), das concessões e dos leilões (com o ${Glossario.link('desagio', 'deságio')} dos vencedores), calculados a partir dos dados deste arquivo.</p>
       ${sobreHtml(ResumoModel.sobrePainel(conc, intel))}
       ${kpisHtml(kpis)}
       <h2 class="resumo-h2">Leitura em 60 segundos</h2>

@@ -208,7 +208,7 @@ const Ficha = (() => {
       ['Início da cobrança', capa.cobranca, 'data'], ['Data-base de reajuste', capa.database, 'txt'],
     ])) + (capa.url ? `<p class="ftext fpad">${link(capa.url, 'Página da concessão na ANTT')}</p>` : '') : '';
     const antHtml = ant.length ? `<ul class="flist">${ant.map(c => `<li>Contrato anterior: ${link(c.url, c.nome || c.id)} (encerrado)</li>`).join('')}</ul>` : '';
-    return block('ANTT', capaHtml + antHtml) + seriesBlock(id) + pracasBlock(id) + obrasBlock(id) + pipelineBlock(id);
+    return block('Cadastro na ANTT', capaHtml + antHtml) + seriesBlock(id) + pracasBlock(id) + obrasBlock(id) + pipelineBlock(id);
   }
 
   // Receita, investimento e custo realizados (R$ nominais), um gráfico de linhas por contrato (atual e anteriores).

@@ -978,12 +978,6 @@ const IntelModel = (() => {
     return /^\d{4}-\d{2}$/.test(String(s)) ? monthLabel(s) : String(s);
   }
 
-  function fontesData(intel) {
-    const f = intel && intel.fontes;
-    if (!f || !Array.isArray(f.fontes)) return null;
-    return { fontes: f.fontes, indisponiveis: Array.isArray(f.indisponiveis) ? f.indisponiveis : [], base: Array.isArray(f.base) ? f.base : [] };
-  }
-
   // Escolhe a unidade depois de arredondar: 999.600 t vira "1,0 Mt", não "1.000 mil t".
   const round = (v, d) => Math.round(v * 10 ** d) / 10 ** d;
   function scaled(x, units) {
@@ -1015,7 +1009,7 @@ const IntelModel = (() => {
     EST_ESTADOS, QUALIDADE_RECORTE, qualidadeRecorte, estaduaisRows, byEsfera, estIndex, trechosLabel,
     trafegoKpis, pracasRanking, pracasSerie, abcrSazonal, acidentesPorUf, taxaPorBrUf,
     cargasKpis, producaoPorUf, topMunicipios, exportProdutos, exportPorUrf, exportMatriz, siadePares, fretesRows, suspeitosNoFim, cargaTop,
-    fmtDia, fontesData, fonteTipo, fmtPeriodo, fmtMt,
+    fmtDia, fonteTipo, fmtPeriodo, fmtMt,
     fmtInt, fmtDec, fmtVmd, fmtT, fmtPct, fmtBRL, fmtVkm, fmtTkm };
 })();
 

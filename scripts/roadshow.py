@@ -5,9 +5,9 @@ from pathlib import Path
 ESTADOS = [
     ("agendado2026", "Leilão agendado 2026"),
     ("projeto2027", "Projeto 2027"),
-    ("programa", "Contrato do programa 2023–26"),
-    ("vigente", "Contrato vigente anterior"),
-    ("snv", "Concessão no SNV, fora do RoadShow"),
+    ("programa", "Contrato do programa federal 2023–26"),
+    ("vigente", "Contrato vigente anterior a 2023"),
+    ("snv", "Concessão federal no SNV sem contrato identificado"),
     ("pos2027", "Estudo pós-2027"),
     ("nenhum", "Sem concessão"),
 ]

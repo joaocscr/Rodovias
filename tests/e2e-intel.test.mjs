@@ -359,7 +359,7 @@ test('sem window.INTEL tudo degrada para "sem dado"', async () => {
 });
 
 // ---------- Task 10: camadas de sobreposição e cartões de ponto ----------
-const LAYER_LABELS = ['Praças de pedágio', 'SATs', 'Obras ANTT', 'Ferrovias em operação', 'Portos e ETCs', 'Fluxos ferroviários de grãos'];
+const LAYER_LABELS = ['Praças de pedágio', 'Contadores de tráfego (SAT)', 'Obras nas concessões federais', 'Ferrovias em operação', 'Portos e terminais', 'Fluxos ferroviários de grãos'];
 const layerBox = key => page.locator(`#layers-section input[data-layer="${key}"]`);
 async function setLayer(p, key, on) {
   const box = p.locator(`#layers-section input[data-layer="${key}"]`);
@@ -765,7 +765,7 @@ test('(a) ficha Nova Rota do Oeste: ANTT, controladora, gráfico de receita e pr
   for (const x of capa.s) assert.ok(t.includes(x), x);
   // prazo é o vigente (com prorrogações), em caixa baixa
   const kv = await page.$$eval('#ficha .fblock', bs => {
-    const b = bs.find(x => x.querySelector('h3').textContent === 'ANTT');
+    const b = bs.find(x => x.querySelector('h3').textContent === 'Cadastro na ANTT');
     return Object.fromEntries([...b.querySelectorAll('dt')].map(dt => [dt.textContent, dt.nextElementSibling.textContent]));
   });
   assert.equal(kv['Prazo atual (com prorrogações)'], capa.prazo.toLowerCase());
@@ -1409,7 +1409,7 @@ test('(d) Fontes: ≥ 30 fontes, ≥ 9 indisponíveis com motivo, bases do paine
   assert.equal(await page.locator('#fontes-base-table tbody tr').count(), await page.evaluate(() => window.INTEL.fontes.base.length));
   const t = await page.textContent('#page-fontes');
   assert.match(t, /Medido × modelado/);
-  assert.match(t, /Não disponíveis neste ambiente/);
+  assert.match(t, /Fontes procuradas e não obtidas/);
   assert.match(t, /Bases do painel/);
   const acessos = await page.evaluate(() => [...new Set(window.INTEL.fontes.fontes.map(f => f.acesso))]);
   for (const a of acessos) assert.ok(t.includes(a.split('-').reverse().join('/')), `acesso ${a} em dd/mm/aaaa`);
@@ -1432,14 +1432,75 @@ test('(d) Fontes: ≥ 30 fontes, ≥ 9 indisponíveis com motivo, bases do paine
   for (const [b, n, tp] of tipoDe) {
     if (b === 'Municípios' || b === 'Estaduais' || /Capas das concessões/.test(n)) assert.equal(tp, 'Cadastro', n);
   }
-  // v3.1: blocos novos com nome legível (nunca a chave interna), VMDa 2025 modelado e rotas como cadastro
+  // blocos com o nome do arquivo de descrições (o mesmo do Resumo), nunca a chave interna; VMDa 2025 modelado e rotas como cadastro
+  const nomeDe = await page.evaluate(() => Object.fromEntries(Object.entries(window.FONTES_DESCRICAO).map(([k, v]) => [k, v.nome])));
   const blocos = new Set(tipoDe.map(r => r[0]));
-  assert.ok(blocos.has('Tráfego (VMDa 2025)') && blocos.has('Rotas de Integração'), [...blocos].join());
+  assert.ok(blocos.has(nomeDe.vmda2025) && blocos.has(nomeDe.rotas), [...blocos].join());
   for (const b of blocos) assert.doesNotMatch(b, /^[a-z0-9]+$/, b);
   for (const [b, n, tp] of tipoDe) {
-    if (b === 'Tráfego (VMDa 2025)') assert.equal(tp, 'Modelado', n);
-    if (b === 'Rotas de Integração') assert.equal(tp, 'Cadastro', n);
+    if (b === nomeDe.vmda2025) assert.equal(tp, 'Modelado', n);
+    if (b === nomeDe.rotas) assert.equal(tp, 'Cadastro', n);
   }
+});
+
+// Fontes listadas na aba × fontes dos blocos embutidos no HTML, nos dois sentidos (nada a mais, nada a menos).
+const fontesListadas = p => p.evaluate(() => {
+  const rows = sel => [...document.querySelectorAll(sel)];
+  return {
+    dados: rows('#fontes-table tbody tr').map(tr => `${tr.dataset.bloco}|${tr.children[1].textContent}`).sort(),
+    base: rows('#fontes-base-table tbody tr').map(tr => tr.dataset.bloco).sort(),
+    docs: rows('#fontes-verificacao-table tbody tr').map(tr => tr.dataset.doc).sort(),
+    glossario: rows('#fontes-glossario-table tbody tr').map(tr => tr.children[0].textContent).sort(),
+    rotulos: Object.fromEntries(rows('#fontes-table tbody tr').map(tr => [tr.dataset.bloco, tr.children[0].textContent])),
+  };
+});
+const fontesEmbutidas = p => p.evaluate(() => {
+  const I = window.INTEL, C = window.CONC, G = window.GLOSSARIO || [];
+  const lista = x => (Array.isArray(x) ? x : x ? [x] : []);
+  const dados = Object.entries(I).filter(([k]) => k !== 'fontes').flatMap(([k, b]) => lista(b && b.fonte).map(f => `${k}|${f.nome}`)).sort();
+  // bases do painel: a malha (window.SNV) e a carteira (window.CONC), embutidas fora do INTEL
+  const base = [window.SNV && 'snv', C && 'roadshow'].filter(Boolean).sort();
+  const docs = [...new Set([...lista(C.verificacao && C.verificacao.fontes), ...lista(C.consorcios).flatMap(c => lista(c.fontes))].map(d => d.id))].sort();
+  const glossario = [...new Set(G.filter(e => e.fonte && e.fonte.nome).map(e => e.fonte.nome))].sort();
+  return { dados, base, docs, glossario };
+});
+
+test('Fontes: lista exatamente as fontes dos blocos embutidos (dados, bases, documentos dos leilões e consórcios, glossário)', async () => {
+  await goTab(page, '#fontes');
+  const l = await fontesListadas(page), e = await fontesEmbutidas(page);
+  assert.deepEqual(l.dados, e.dados, 'fontes de dados = itens "fonte" de cada bloco do INTEL');
+  assert.deepEqual(l.base, e.base);
+  assert.deepEqual(l.docs, e.docs);
+  assert.deepEqual(l.glossario, e.glossario);
+  assert.ok(e.dados.length && e.docs.length && e.glossario.length);
+  const t = await page.textContent('#page-fontes');
+  assert.doesNotMatch(t, /neste ambiente|Centro de Inteligência|novidades/i);  // sem histórico do projeto (versões: test_sem_mencoes.py)
+});
+
+test('Fontes: bloco novo com fonte (ex.: debêntures) e fonte nova no glossário entram sozinhos', async () => {
+  const errs = [], ext = [];
+  const inject = html => {
+    const i = html.indexOf('</script>', html.indexOf('window.INTEL='));
+    return `${html.slice(0, i)};(() => { const I = window.INTEL;
+      const f = { nome: 'Corretora X — negócios de exemplo', url: 'https://exemplo.invalid/', periodo: '2026-10-01/2026-10-21', acesso: '2026-10-22', licenca: 'uso restrito', tipo: 'medido' };
+      I.debentures = { fonte: [f] };
+      I.fontes.fontes.push(Object.assign({ bloco: 'debentures', nota: '' }, f));
+      if (!window.FONTES_DESCRICAO.debentures) window.FONTES_DESCRICAO.debentures = { nome: 'Debêntures (exemplo)', oQue: 'Exemplo.' };
+      window.GLOSSARIO.push({ id: 'termo-exemplo', termo: 'Termo de exemplo', definicao: 'Exemplo.', fonte: { nome: 'Norma de exemplo nº 1/2026' }, categorias: ['Finanças'] });
+    })();${html.slice(i)}`;
+  };
+  const p = await openPage(errs, ext, inject);
+  await goTab(p, '#fontes');
+  const l = await fontesListadas(p), e = await fontesEmbutidas(p);
+  assert.ok(l.dados.includes('debentures|Corretora X — negócios de exemplo'), l.dados.join('\n'));
+  assert.deepEqual(l.dados, e.dados);
+  assert.equal(l.rotulos.debentures, await p.evaluate(() => window.FONTES_DESCRICAO.debentures.nome));
+  assert.ok(l.glossario.includes('Norma de exemplo nº 1/2026'));
+  assert.deepEqual(l.glossario, e.glossario);
+  assert.match(await p.textContent('#fontes-table tr[data-bloco="debentures"]'), /01\/10\/2026 a 21\/10\/2026/);
+  assert.deepEqual(errs, []);
+  assert.deepEqual(ext, []);
+  await p.context().close();
 });
 
 test('(e) hashes inválidos caem no Resumo (página inicial)', async () => {
@@ -2096,11 +2157,11 @@ test('fechamento: períodos e constantes impressas seguem os dados (dados altera
   assert.ok((await p.textContent('#card-gestao .sub')).endsWith(`, ${x.gestao}`));
   await goTab(p, '#projetos');
   assert.deepEqual(await p.$$eval('#page-projetos .chip[data-f="ano"]', bs => bs.map(b => +b.dataset.v)), novo.anos);
-  assert.ok((await p.textContent('#page-projetos .page__lead')).includes(`programa ${novo.anos[0]}–${novo.anos[novo.anos.length - 1]}`));
-  assert.ok((await p.textContent('#estudos-lead')).startsWith(`${x.nEstudos} estudos contratados, só com BRs e UFs no RoadShow (p. 999).`));
+  assert.ok((await p.textContent('#page-projetos .page__lead')).includes(`programa federal de concessões ${novo.anos[0]}–${novo.anos[novo.anos.length - 1]}`));
+  assert.ok((await p.textContent('#estudos-lead')).startsWith(`${x.nEstudos} estudos contratados para futuras concessões rodoviárias federais; o RoadShow (p. 999) só informa as BRs e UFs.`));
   await goTab(p, '#trafego');
   assert.ok((await p.textContent('#kpi-pracas span')).includes(`em ${novo.pracas}`));
-  assert.equal(await p.textContent('#card-t-rank h3'), `As 20 praças de maior VMD em ${novo.pracas}`);
+  assert.equal(await p.textContent('#card-t-rank h3'), `As 20 praças de pedágio federais de maior VMD em ${novo.pracas}`);
   await goTab(p, '#fontes');
   const prosa = await p.textContent('.fontes-nota');
   assert.ok(prosa.includes(`Infra S.A. (${novo.vmda})`) && prosa.includes(`ano-base ${novo.pnl}`), prosa);
