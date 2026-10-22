@@ -4,10 +4,10 @@
 const Consorcios = (() => {
   const nf = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const RESULTADO = { venceu: 'Venceu', perdeu: 'Perdeu', inabilitado: 'Inabilitado' };
+  const RESULTADO = { venceu: 'Venceu', perdeu: 'Perdeu', inabilitado: 'Inabilitado', naoVenceu: 'Não venceu' };
   const ICON_CLOSE = '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
 
-  let conc = null, raiz = null, painel = null, aberto = false, origem = null;
+  let conc = null, raiz = null, painel = null, aberto = false, origem = null, inertes = [];
 
   const botaoGrupo = nome => `<button type="button" class="link-btn cons-open" data-ficha="${esc(nome)}">${esc(nome)}</button>`;
   const selo = (res, txt) => `<span class="cons-res cons-res--${res}">${esc(txt || RESULTADO[res])}</span>`;
@@ -24,19 +24,33 @@ const Consorcios = (() => {
       <span class="cons-int__part">${part}</span>${i.nota ? `<span class="cons-int__obs">${esc(i.nota)}</span>` : ''}</li>`;
   }
 
+  // Fontes (com o selo de origem) que sustentam o dado ao lado do qual aparecem
+  const fontesHtml = (fontes, rotulo) => `<ul class="cons-fontes" aria-label="${esc(rotulo)}">${fontes.map(x => `<li>${Selo.fonte(x)}</li>`).join('')}</ul>`;
+
+  // Nome do proponente ligado ao grupo por grupos_alias: o motivo e a fonte da ligação
+  // (motivo terminado em "por", como "consórcio liderado por", pede o nome do grupo logo depois)
+  const atribuicaoHtml = (a, grupo) => (a ? `<p class="cons-atrib">Nome ligado a este grupo${a.motivo ? ` (${esc(a.motivo)}${/ por$/.test(a.motivo) ? ` ${esc(grupo)}` : ''})` : ''}</p>${a.fontes.length ? fontesHtml(a.fontes, 'Fontes da ligação ao grupo') : ''}` : '');
+
   function consorcioHtml(c, grupo) {
     const composicao = c.composicaoLocalizada
       ? `<ul class="cons-ints">${c.integrantes.map(i => integranteHtml(i, grupo)).join('')}</ul>`
       : '<p class="cons-sem">Composição não localizada.</p>';
-    return `<article class="cons-card"><h4>${esc(c.nome)}</h4>
+    return `<article class="cons-card" data-cons="${esc(`${c.ano}|${c.lote}|${c.nome}`)}"><h4>${esc(c.nome)}</h4>
       <p class="cons-meta">${esc(c.ano)} · ${esc(c.lote)} · ${selo(c.venceu ? 'venceu' : 'perdeu', c.venceu ? 'Venceu o leilão' : 'Não venceu')}</p>
-      ${composicao}${c.nota ? `<p class="src">Nota: ${esc(c.nota)}</p>` : ''}</article>`;
+      ${composicao}${c.nota ? `<p class="src">Nota: ${esc(c.nota)}</p>` : ''}${atribuicaoHtml(c.atribuicao, grupo)}
+      ${c.fontes.length ? `<p class="cons-fontes__t">Fontes da composição</p>${fontesHtml(c.fontes, `Fontes da composição de ${c.nome}`)}` : ''}</article>`;
   }
 
-  function leilaoHtml(l) {
+  // Linha de um leilão: resultado, ano, lote e como o grupo disputou. Disputa sozinha com outro nome (grafia, troca de nome)
+  // diz o nome do leilão e por que ele é deste grupo; a vitória traz, recolhidas, as fontes do resultado.
+  function leilaoHtml(l, grupo) {
+    const sozinho = !l.consorcio;
+    const como = sozinho ? `Participou sozinho${l.proponente && l.proponente !== grupo ? `, como ${esc(l.proponente)}` : ''}` : esc(l.consorcio);
     return `<li class="cons-leilao"><span class="cons-leilao__quando">${selo(l.resultado)} <b>${esc(l.ano)}</b></span>
       <span class="cons-leilao__lote">${esc(l.lote)}</span>
-      <span class="cons-leilao__como">${l.consorcio ? esc(l.consorcio) : 'Participou sozinho'}</span></li>`;
+      <span class="cons-leilao__como">${como}</span>
+      ${sozinho ? atribuicaoHtml(l.atribuicao, grupo) : ''}
+      ${l.fontes.length ? `<details class="cons-leilao__fontes"><summary>Fontes do resultado</summary>${fontesHtml(l.fontes, `Fontes do resultado de ${l.lote}`)}</details>` : ''}</li>`;
   }
 
   // Corpo da ficha. Os termos do glossário são linkados na primeira menção.
@@ -48,15 +62,12 @@ const Consorcios = (() => {
     const cons = f.consorcios.length
       ? f.consorcios.map(c => consorcioHtml(c, f.grupo)).join('')
       : '<p class="empty">Nenhum consórcio na base: o grupo disputou sozinho os leilões abaixo.</p>';
-    const fontes = f.fontes.length
-      ? `<ul class="cons-fontes">${f.fontes.map(x => `<li>${Selo.fonte(x)}</li>`).join('')}</ul>`
-      : '<p class="empty">Sem fonte de consórcio: proponentes e resultados vêm do RoadShow e da verificação de cada leilão (aba Fontes).</p>';
+    const nota = f.foraDoRanking
+      ? `<p class="sub" id="cons-nota-ranking">Inclui ${MercadoModel.plural(f.foraDoRanking, 'leilão', 'leilões')} que o ranking não conta para este grupo: ele participou como integrante de consórcio, e o ranking conta só quem disputou com o próprio nome.</p>` : '';
     return `${lead}
       <h3>Consórcios</h3>${cons}
-      <h3>Leilões disputados</h3>
-      <p class="sub">Inclui os consórcios de que o grupo foi integrante; por isso a contagem pode diferir da do ranking, que credita o grupo pelo nome com que disputou.</p>
-      <ul class="cons-leiloes">${f.leiloes.map(leilaoHtml).join('')}</ul>
-      <h3>Fontes</h3>${fontes}`;
+      <h3>Leilões disputados</h3>${nota}
+      <ul class="cons-leiloes">${f.leiloes.map(l => leilaoHtml(l, f.grupo)).join('')}</ul>`;
   }
 
   function montar() {
@@ -92,23 +103,39 @@ const Consorcios = (() => {
     else if (!ev.shiftKey && document.activeElement === ultimo) { ev.preventDefault(); primeiro.focus(); }
   }
 
-  function mostrar(nome) {
+  function mostrar(nome, alvo) {
     const f = LeiloesModel.fichaGrupo(nome, conc);
     painel.innerHTML = `<div class="cons-head"><h2 id="cons-titulo">${esc(f.grupo)}</h2>
         <button type="button" class="icon-btn" data-fechar aria-label="Fechar ficha">${ICON_CLOSE}</button></div>
       <div class="cons-body">${corpoHtml(f)}</div>`;
     painel.scrollTop = 0;
     painel.querySelector('[data-fechar]').focus();
+    // aberta pelo nome de um consórcio: o cartão dele fica à vista e marcado
+    const k = alvo && `${alvo.ano}|${alvo.lote}|${alvo.consorcio}`;
+    const card = k && [...painel.querySelectorAll('.cons-card')].find(e => e.dataset.cons === k);
+    if (card) { card.classList.add('is-alvo'); card.scrollIntoView({ block: 'start' }); }
   }
 
-  // nome: grupo ou consórcio (nome do proponente); outras grafias do mesmo grupo caem no grupo (LeiloesModel.resolverGrupo)
-  function abrir(nome) {
+  // Enquanto a ficha está aberta, o resto da página fica inerte (leitores de tela e Tab não saem do painel)
+  function inertar(sim) {
+    if (sim) {
+      inertes = [...document.body.children].filter(e => e !== raiz && !e.inert && e.tagName !== 'SCRIPT');
+      inertes.forEach(e => { e.inert = true; });
+    } else {
+      inertes.forEach(e => { e.inert = false; });
+      inertes = [];
+    }
+  }
+
+  // nome: grupo ou consórcio (nome do proponente); outras grafias do mesmo grupo caem no grupo (LeiloesModel.resolverGrupo).
+  // alvo {ano, lote, consorcio}: o consórcio a destacar na ficha.
+  function abrir(nome, alvo) {
     if (!conc) return;
     montar();
-    if (!aberto) origem = document.activeElement;
+    if (!aberto) { origem = document.activeElement; inertar(true); }
     aberto = true;
     raiz.hidden = false;
-    mostrar(nome);
+    mostrar(nome, alvo);
   }
 
   // restaurarFoco = false quando a ficha fecha porque a página mudou de lugar (link do glossário, botão voltar)
@@ -116,6 +143,7 @@ const Consorcios = (() => {
     if (!aberto) return;
     aberto = false;
     raiz.hidden = true;
+    inertar(false);
     if (restaurarFoco && origem && document.contains(origem)) origem.focus();
     origem = null;
   }

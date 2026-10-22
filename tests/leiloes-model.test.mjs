@@ -312,7 +312,7 @@ test('fichaGrupo: grupo com consórcios traz composição, leilões com resultad
   assert.deepEqual(f.leiloes.map(l => [l.ano, l.lote, l.resultado, l.consorcio]), [
     [2020, 'L1', 'perdeu', null], [2020, 'L1', 'venceu', 'Consórcio Alfa'],
     [2021, 'L2', 'venceu', null], [2021, 'L2', 'perdeu', 'Consórcio Gama'],
-    [2022, 'L3', 'perdeu', 'Consórcio Omega']]);
+    [2022, 'L3', 'naoVenceu', 'Consórcio Omega']]);  // só a ata diz que não venceu
   assert.deepEqual(f.consorcios.map(c => [c.nome, c.ano, c.venceu]), [['Consórcio Alfa', 2020, true], ['Consórcio Gama', 2021, false], ['Consórcio Omega', 2022, false]]);
   const alfa = f.consorcios[0];
   assert.deepEqual(alfa.integrantes.map(i => [i.grupo, i.participacao, i.lider]), [['Alfa', 60, true], ['Beta', 40, false]]);
@@ -320,12 +320,51 @@ test('fichaGrupo: grupo com consórcios traz composição, leilões com resultad
   assert.equal(f.consorcios[1].integrantes[0].participacao, null, 'participação não publicada continua null');
   // fontes: uma vez cada, as do consórcio e as da verificação do vencedor
   assert.deepEqual(f.fontes.map(x => x.id).sort(), ['f-imp', 'f-of']);
+  // cada consórcio traz as próprias fontes (a participação se rastreia até ela); o resultado traz as da verificação, só na vitória
+  assert.deepEqual(f.consorcios.map(c => c.fontes.map(x => x.id)), [['f-of'], ['f-imp'], ['f-of']]);
+  assert.deepEqual(f.leiloes.map(l => l.fontes.map(x => x.id)), [[], ['f-of'], [], [], []]);
+  // dois leilões só chegam pelo consórcio ou pela ata: o ranking não os conta para o grupo
+  assert.equal(f.foraDoRanking, 1);
+  assert.equal(LeiloesModel.fichaGrupo('Epsilon', fichaConc()).foraDoRanking, 0);
+});
+
+test('fichaGrupo: dois nomes do mesmo grupo no mesmo lote contam uma vez, com o melhor resultado (como o ranking)', () => {
+  const c = fichaConc();
+  c.grupos_alias.push({ nome: 'Beta Holding', grupo: 'Beta', motivo: 'troca de nome', fontes: [fImp] });
+  c.mercado.participantes.push(
+    // a verificação renomeou o vencedor; a lista do RoadShow manteve o nome antigo
+    { ano: 2023, lote: 'L4', vencedor: 'Beta S.A.', outros: [{ grupo: 'Beta Holding' }, { grupo: 'Epsilon Ltda' }] },
+    { ano: 2023, lote: 'L5', vencedor: 'Epsilon Ltda', outros: [{ grupo: 'Beta Holding' }], inabilitados: [{ grupo: 'Beta S.A.' }] });
+  const f = LeiloesModel.fichaGrupo('Beta', c);
+  assert.deepEqual(f.leiloes.filter(l => l.ano === 2023).map(l => [l.lote, l.resultado, l.consorcio]), [['L4', 'venceu', null], ['L5', 'inabilitado', null]]);
+  // a contagem de leilões do grupo é a do ranking (cada grupo uma vez por leilão)
+  const rk = LeiloesModel.rankingGrupos(c.mercado.participantes, c.grupos_alias).find(r => r.grupo === 'Beta');
+  const proprios = new Set(f.leiloes.filter(l => !l.consorcio || l.proponente !== l.consorcio).map(l => `${l.ano}|${l.lote}`));
+  assert.equal(proprios.size, rk.participacoes);
+  // um consórcio no mesmo lote continua em linha própria (é outra forma de disputar)
+  assert.equal(f.leiloes.filter(l => l.ano === 2020).length, 2);
+});
+
+test('fichaGrupo: nome ligado ao grupo por alias traz o motivo e as fontes da ligação', () => {
+  const c = fichaConc();
+  c.grupos_alias.find(a => a.nome === 'Epsilon Ltda').motivo = 'razão social do grupo';
+  c.grupos_alias.find(a => a.nome === 'Epsilon Ltda').fontes = [fImp];
+  const e = LeiloesModel.fichaGrupo('Epsilon', c).leiloes[0];
+  assert.equal(e.proponente, 'Epsilon Ltda');
+  assert.deepEqual([e.atribuicao.motivo, e.atribuicao.fontes.map(x => x.id)], ['razão social do grupo', ['f-imp']]);
+  // nome igual ao do grupo, ou chegada como integrante: sem atribuição
+  assert.equal(LeiloesModel.fichaGrupo('Delta', c).leiloes[0].atribuicao, null);
+  assert.ok(LeiloesModel.fichaGrupo('Beta', c).leiloes.every(l => l.consorcio !== 'Consórcio Alfa' || l.atribuicao === null));
+  // consórcio ligado ao grupo pelo alias: o cartão também traz a ligação
+  const alfa = LeiloesModel.fichaGrupo('Alfa', c);
+  assert.equal(alfa.consorcios[0].nome, 'Consórcio Alfa');
+  assert.deepEqual(alfa.consorcios[0].atribuicao, { motivo: null, fontes: [] });
 });
 
 test('fichaGrupo: grupo que disputou sozinho não tem consórcio e a ficha não fica vazia', () => {
   const f = LeiloesModel.fichaGrupo('Epsilon', fichaConc());
   assert.deepEqual(f.consorcios, []);
-  assert.deepEqual(f.leiloes, [{ ano: 2022, lote: 'L3', resultado: 'venceu', consorcio: null }]);
+  assert.deepEqual(f.leiloes.map(l => [l.ano, l.lote, l.resultado, l.consorcio]), [[2022, 'L3', 'venceu', null]]);
   const d = LeiloesModel.fichaGrupo('Delta', fichaConc());
   assert.deepEqual(d.leiloes.map(l => [l.resultado, l.consorcio]), [['inabilitado', null]]);
 });
@@ -337,7 +376,7 @@ test('fichaGrupo: consórcio sem composição localizada e consórcio sem regist
   assert.deepEqual(f.consorcios[0].integrantes, []);
   const z = LeiloesModel.fichaGrupo('Consórcio Zeta', fichaConc());
   assert.deepEqual(z.consorcios.map(c => [c.nome, c.composicaoLocalizada, c.registrado, c.nota]), [['Consórcio Zeta', false, false, null]]);
-  assert.deepEqual(z.leiloes, [{ ano: 2021, lote: 'L2', resultado: 'perdeu', consorcio: 'Consórcio Zeta' }]);
+  assert.deepEqual(z.leiloes.map(l => [l.ano, l.lote, l.resultado, l.consorcio]), [[2021, 'L2', 'perdeu', 'Consórcio Zeta']]);
 });
 
 test('fichaGrupo: nome de outra grafia (rótulo de gráfico) vai para o grupo; desconhecido devolve ficha sem leilões', () => {
@@ -346,7 +385,7 @@ test('fichaGrupo: nome de outra grafia (rótulo de gráfico) vai para o grupo; d
   assert.equal(LeiloesModel.resolverGrupo('Beta Fundo de Investimento', c), 'Beta');
   assert.equal(LeiloesModel.resolverGrupo('Consórcio Alfa', c), 'Alfa', 'alias do nome do consórcio');
   assert.equal(LeiloesModel.resolverGrupo('Sigma', c), 'Sigma');
-  assert.deepEqual(LeiloesModel.fichaGrupo('Sigma', c), { grupo: 'Sigma', consorcios: [], leiloes: [], fontes: [] });
+  assert.deepEqual(LeiloesModel.fichaGrupo('Sigma', c), { grupo: 'Sigma', consorcios: [], leiloes: [], fontes: [], foraDoRanking: 0 });
   // base sem consórcios: continua funcionando com os proponentes
   const sem = fichaConc(); delete sem.consorcios;
   assert.equal(LeiloesModel.fichaGrupo('Beta', sem).leiloes.length, 2);

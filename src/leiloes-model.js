@@ -382,48 +382,75 @@ const LeiloesModel = (() => {
     return lista;
   }
 
-  // Ficha de um grupo: { grupo, consorcios: [{nome, ano, lote, venceu, integrantes, composicaoLocalizada, registrado, nota,
-  // foraDaAta, fontes}], leiloes: [{ano, lote, resultado: venceu|perdeu|inabilitado, consorcio: nome|null}], fontes }.
-  // `consorcio: null` = o grupo disputou sozinho; `composicaoLocalizada: false` = consórcio sem integrantes na base.
+  // Ficha de um grupo: { grupo, consorcios, leiloes, fontes, foraDoRanking }.
+  // consorcios: [{nome, ano, lote, venceu, integrantes, composicaoLocalizada, registrado, nota, fontes, atribuicao}]
+  //   (`composicaoLocalizada: false` = consórcio sem integrantes na base; `fontes` = as da composição).
+  // leiloes: [{ano, lote, resultado: venceu|perdeu|inabilitado|naoVenceu, consorcio: nome|null, proponente, atribuicao, fontes}]
+  //   (`consorcio: null` = o grupo disputou sozinho; `naoVenceu` = a base só diz que o consórcio não venceu; `fontes` =
+  //   as do resultado do leilão, só nas vitórias; `proponente` = o nome que consta do leilão).
+  // atribuicao: {motivo, fontes} quando o nome do proponente está ligado ao grupo por grupos_alias, senão null.
+  // fontes: todas as dos consórcios e dos resultados, sem repetir. foraDoRanking: leilões da ficha que o ranking não conta
+  // para o grupo (participou só como integrante de consórcio ou o consórcio só consta das atas).
+  const MELHOR = { venceu: 3, inabilitado: 2, perdeu: 1, naoVenceu: 0 };
   function fichaGrupo(nome, conc) {
     const aliases = arr(conc && conc.grupos_alias), registros = arr(conc && conc.consorcios);
     const grupo = resolverGrupo(nome, conc);
     const porChave = new Map(registros.map(c => [chaveLeilao(c), c]));
     const integra = c => arr(c && c.integrantes).some(i => i.grupo === grupo);
-    const consorcios = new Map(), leiloes = [], fontes = new Map(), vistos = new Set();
-    const guardaFonte = f => {
-      const k = f && (f.id || `${f.tipo}|${f.pagina}|${f.titulo}`);
-      if (f && !fontes.has(k)) fontes.set(k, f);
+    const consorcios = new Map(), vistos = new Set(), contados = new Set(), todos = new Set();
+    let leiloes = [];
+    const atribuicaoDe = proponente => {
+      const a = aliases.find(x => x.nome === proponente);
+      return a && a.grupo === grupo && proponente !== grupo ? { motivo: a.motivo || null, fontes: arr(a.fontes) } : null;
     };
-    const guardaConsorcio = (c, p, nomeConsorcio, venceu) => {
+    const guardaConsorcio = (c, p, nomeConsorcio, venceu, atribuicao) => {
       const k = chaveLeilao(p, nomeConsorcio);
       if (consorcios.has(k)) return;
       const integrantes = arr(c && c.integrantes);
       consorcios.set(k, { nome: nomeConsorcio, ano: p.ano, lote: p.lote, venceu, integrantes, composicaoLocalizada: integrantes.length > 0,
-        registrado: !!c, nota: (c && c.nota) || null, foraDaAta: !!(c && c.fora_da_ata), fontes: arr(c && c.fontes) });
-      arr(c && c.fontes).forEach(guardaFonte);
+        registrado: !!c, nota: (c && c.nota) || null, fontes: arr(c && c.fontes), atribuicao });
     };
     for (const p of arr(conc && conc.mercado && conc.mercado.participantes)) {
       for (const b of proponentes(p)) {
         const c = porChave.get(chaveLeilao(p, b.nome));
-        if (grupoDe(b.nome, aliases) !== grupo && !integra(c)) continue;
-        const cons = !!c || ehNomeDeConsorcio(b.nome);
+        const pelaNome = grupoDe(b.nome, aliases) === grupo;
+        if (!pelaNome && !integra(c)) continue;
+        const cons = !!c || ehNomeDeConsorcio(b.nome), atribuicao = pelaNome ? atribuicaoDe(b.nome) : null;
+        const res = (p.verif && p.verif.grupo_vencedor && p.verif.grupo_vencedor.fontes) || [];
         vistos.add(chaveLeilao(p, b.nome));
-        leiloes.push({ ano: p.ano, lote: p.lote, resultado: b.resultado, consorcio: cons ? b.nome : null });
-        if (cons) guardaConsorcio(c, p, b.nome, b.resultado === 'venceu');
-        if (b.resultado === 'venceu') arr(p.verif && p.verif.grupo_vencedor && p.verif.grupo_vencedor.fontes).forEach(guardaFonte);
+        todos.add(`${p.ano}|${p.lote}`);
+        if (pelaNome) contados.add(`${p.ano}|${p.lote}`);
+        leiloes.push({ ano: p.ano, lote: p.lote, resultado: b.resultado, consorcio: cons ? b.nome : null, proponente: b.nome, atribuicao,
+          fontes: b.resultado === 'venceu' ? arr(res) : [] });
+        if (cons) guardaConsorcio(c, p, b.nome, b.resultado === 'venceu', atribuicao);
       }
     }
     // Consórcios que as atas da ANTT trazem e o RoadShow não lista como proponentes (fora da camada de leilões)
     for (const c of registros) {
       const k = chaveLeilao(c);
-      if (vistos.has(k) || (grupoDe(c.nome, aliases) !== grupo && !integra(c))) continue;
-      leiloes.push({ ano: c.ano, lote: c.lote, resultado: c.venceu ? 'venceu' : 'perdeu', consorcio: c.nome });
-      guardaConsorcio(c, c, c.nome, c.venceu);
+      const pelaNome = grupoDe(c.nome, aliases) === grupo;
+      if (vistos.has(k) || (!pelaNome && !integra(c))) continue;
+      const atribuicao = pelaNome ? atribuicaoDe(c.nome) : null;
+      todos.add(`${c.ano}|${c.lote}`);
+      leiloes.push({ ano: c.ano, lote: c.lote, resultado: c.venceu ? 'venceu' : 'naoVenceu', consorcio: c.nome, proponente: c.nome, atribuicao, fontes: [] });
+      guardaConsorcio(c, c, c.nome, c.venceu, atribuicao);
     }
+    // Dois nomes do mesmo grupo no mesmo lote disputando sozinhos (a verificação renomeou o vencedor e a lista do RoadShow
+    // manteve o nome antigo): uma linha, com o melhor resultado, como o ranking conta o grupo uma vez por leilão.
+    const sozinhos = new Map();
+    leiloes = leiloes.filter(l => {
+      if (l.consorcio) return true;
+      const k = `${l.ano}|${l.lote}`, outro = sozinhos.get(k);
+      if (!outro) { sozinhos.set(k, l); return true; }
+      if (MELHOR[l.resultado] > MELHOR[outro.resultado]) Object.assign(outro, l);
+      return false;
+    });
     const ordem = (a, b) => a.ano - b.ano || collator.compare(a.lote, b.lote);
+    const fontes = new Map();
+    [...consorcios.values(), ...leiloes].forEach(x => arr(x.fontes).forEach(f => fontes.set(f.id || `${f.tipo}|${f.pagina}|${f.titulo}`, f)));
     return { grupo, consorcios: [...consorcios.values()].sort((a, b) => ordem(a, b) || collator.compare(a.nome, b.nome)),
-      leiloes: leiloes.sort((a, b) => ordem(a, b) || collator.compare(a.consorcio || '', b.consorcio || '')), fontes: [...fontes.values()] };
+      leiloes: leiloes.sort((a, b) => ordem(a, b) || collator.compare(a.consorcio || '', b.consorcio || '')), fontes: [...fontes.values()],
+      foraDoRanking: [...todos].filter(k => !contados.has(k)).length };
   }
 
   return { grupoDe, rsDiverge, rankingGrupos, leiloesSemLista, serieDesagio, mediaDesagio, resumoKpis, resumoAchados,

@@ -717,11 +717,19 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 .cons-tag { display: inline-block; padding: 0 8px; border-radius: 12px; background: var(--tint); font-size: 12px; line-height: 20px; color: var(--color-deep-blue); }
 .cons-res { display: inline-block; padding: 0 8px; border-radius: 10px; font-size: 12px; font-weight: 600; line-height: 20px; border: 1px solid transparent; white-space: nowrap; }
 .cons-res--venceu { background: var(--color-deep-blue); color: var(--color-snow-white); }
-.cons-res--perdeu { border-color: var(--color-light-grey); color: var(--color-spacial-grey); }
+.cons-res--perdeu, .cons-res--naoVenceu { border-color: var(--color-light-grey); color: var(--color-spacial-grey); }
 .cons-res--inabilitado { border: 1px dashed var(--color-light-grey); color: var(--color-light-grey); font-style: italic; }
 .cons-leiloes, .cons-fontes { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .cons-leilao { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 16px; padding-bottom: 8px; border-bottom: 1px solid var(--line); font-size: 14px; }
-.cons-leilao__como { grid-column: 2; color: var(--color-light-grey); }
+.cons-leilao__como, .cons-leilao > .cons-atrib, .cons-leilao > .cons-fontes, .cons-leilao__fontes { grid-column: 2; }
+.cons-leilao__como { color: var(--color-light-grey); }
+.cons-leilao__fontes summary { cursor: pointer; font-size: 14px; color: var(--color-bright-blue); }
+.cons-leilao__fontes summary:focus-visible { outline: 2px solid var(--color-bright-blue); outline-offset: 2px; }
+.cons-atrib { margin: 8px 0 0; font-size: 14px; color: var(--color-light-grey); }
+.cons-leilao > .cons-atrib { margin: 0; }
+.cons-fontes__t { margin: 12px 0 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-light-grey); }
+.cons-card { scroll-margin-top: 80px; }
+.cons-card.is-alvo { border-color: var(--color-bright-blue); box-shadow: 0 0 0 3px var(--tint-strong); }
 .cons-fontes { font-size: 14px; }
 .cons-fontes .selo { margin: 0 8px 0 0; }
 .cons-fontes a.link-btn { display: inline; padding: 0; height: auto; white-space: normal; font-size: 14px; }
