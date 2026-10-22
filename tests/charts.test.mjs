@@ -32,7 +32,7 @@ test('stackedSvg', () => {
   const svg = Charts.stackedSvg([{ label: '2020', parts: [3, 4] }, { label: '2021', parts: [null, 2] }], { names: ['Público', 'Privado'] });
   assert.equal((svg.match(/<rect class="cbar/g) || []).length, 3);
 });
-test('linesSvg: formatX nos rótulos do eixo e nas dicas; r = raio dos pontos (padrão 4, v2 igual)', () => {
+test('linesSvg: formatX nos rótulos do eixo e nas dicas; r = raio dos pontos (padrão 4)', () => {
   const s = [{ name: 'Leves', points: [{ x: 2016.75, y: 100 }, { x: 2018.75, y: 120 }] }];
   const base = Charts.linesSvg(s, {});
   assert.match(base, / r="4" /);

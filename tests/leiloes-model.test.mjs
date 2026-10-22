@@ -227,8 +227,8 @@ test('resumoAchados: achados calculados com fórmula e fonte', () => {
   assert.match(a.aporte.formula, /p\. 61 diz "a partir de 18%"; nenhum leilão tem deságio de exatamente 18%/);
   assert.match(a.aporte.fonte, /Portaria MT nº 995\/2023, RoadShow 2026-2027, pp\. 61, 65 e 73/);
   assert.match(a['desagio-historico'].texto, /2007.*45,00%.*2023–2024.*10,00%/);
-  // 1 vencedor sem verificação (L3): a fonte cita o RoadShow além da camada de verificação
-  assert.match(a['desagio-historico'].fonte, /camada de verificação \(fontes oficiais\); RoadShow 2026-2027, pp\. 11 e 97/);
+  // 1 vencedor sem verificação (L3): a fonte cita o RoadShow além dos documentos oficiais dos leilões
+  assert.match(a['desagio-historico'].fonte, /documentos oficiais dos leilões \(atas, editais e homologações; lista na aba Fontes\); RoadShow 2026-2027, pp\. 11 e 97, onde não há documento conferido/);
   assert.match(a.concentracao.texto, /Nos 5 leilões de 2007–2024 com vencedor listado no RoadShow, venceram 4 grupos/);
   assert.match(a.concentracao.texto, /Alfa \(2\).*2 deles \(40,0%\)/);
   // 2010 tem 1 leilão no gráfico por ano e nenhum na lista; 2027 (previsto) não conta

@@ -5,7 +5,7 @@
 // - glossário: as fontes citadas nas definições (GLOSSARIO[].fonte), com os termos que as usam;
 // - indisponíveis: fontes procuradas que não deram dado (INTEL.fontes.indisponiveis).
 // O nome de cada bloco vem de data/fontes_descricao.json (o mesmo do Resumo). Bloco novo com fonte entra sozinho; sem
-// descrição, aparece com a própria chave e é apontado em `semDescricao`.
+// descrição, aparece com a própria chave (o pytest de data/fontes_descricao.json falha listando o bloco).
 const FontesModel = (() => {
   const lista = x => (Array.isArray(x) ? x : []);
 
@@ -19,7 +19,6 @@ const FontesModel = (() => {
 
     // sort estável: dentro do bloco, a ordem do arquivo; bloco sem descrição no fim
     const dados = lista(f.fontes).map(comRotulo).sort((a, b) => posicao(a.bloco) - posicao(b.bloco));
-    const semDescricao = [...new Set(dados.filter(x => !desc[x.bloco]).map(x => x.bloco))];
 
     const documentos = [], vistos = new Set();
     const addDoc = d => {
@@ -39,7 +38,7 @@ const FontesModel = (() => {
     }
 
     return { dados, base: lista(f.base).map(comRotulo), documentos, glossario: [...porNome.values()],
-      indisponiveis: lista(f.indisponiveis), semDescricao };
+      indisponiveis: lista(f.indisponiveis) };
   }
 
   return { listar };

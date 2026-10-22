@@ -152,3 +152,20 @@ def test_estudo_com_outras_brs_falha(tmp_path):
     (d / "estudos_pos2027.json").write_text(json.dumps(est, ensure_ascii=False), encoding="utf-8")
     with pytest.raises(ValueError, match=r"precisa de recorte no SNV"):
         roadshow.conc_da_base(conc, d, snv)
+
+
+def test_rotulos_dos_estados_seguem_os_anos_do_programa():
+    """Os anos nos rótulos "Contrato do programa federal 2023–26" e "anterior a 2023" saem de ano_programa dos contratos
+    do programa: deslocar os anos muda os rótulos; sem contrato do programa, ficam os rótulos sem ano."""
+    ents = json.loads((ROADSHOW / "entidades.json").read_text(encoding="utf-8"))
+    rot = {x["key"]: x["label"] for x in roadshow.estados(ents)}
+    anos = sorted({e["ano_programa"] for e in ents if e["estado"] == "programa"})
+    assert rot["programa"] == f"Contrato do programa federal {anos[0]}–{str(anos[-1])[-2:]}"
+    assert rot["vigente"] == f"Contrato vigente anterior a {anos[0]}"
+    mais = [dict(e, ano_programa=e["ano_programa"] + 10) if e.get("ano_programa") else e for e in ents]
+    rot10 = {x["key"]: x["label"] for x in roadshow.estados(mais)}
+    assert rot10["programa"] == f"Contrato do programa federal {anos[0] + 10}–{str(anos[-1] + 10)[-2:]}"
+    assert rot10["vigente"] == f"Contrato vigente anterior a {anos[0] + 10}"
+    sem = {x["key"]: x["label"] for x in roadshow.estados([e for e in ents if e["estado"] != "programa"])}
+    assert sem["programa"] == "Contrato do programa federal" and sem["vigente"] == "Contrato vigente anterior ao programa"
+    assert [x["key"] for x in roadshow.estados(ents)] == [k for k, _ in roadshow.ESTADOS]

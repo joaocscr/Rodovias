@@ -26,9 +26,9 @@ const Fontes = (() => {
     const n = k => IM.fmtInt(c[k] || 0);
     const rs = f => f.tipo === 'roadshow';
     const cobertura = v.cobertura ? ` ${n('leiloes')} leilões conferidos${c.so_edital ? ` e ${n('so_edital')} ${c.so_edital === 1 ? 'entrada' : 'entradas'} só com a data do edital` : ''}; campos por origem: ${n('oficial')} oficial, ${n('roadshow')} RoadShow, ${n('imprensa')} imprensa — não oficial e ${n('nao_localizado')} não localizado em fonte oficial${c.nao_se_aplica ? `; ${n('nao_se_aplica')} não se aplica (deságio de leilão por outorga)` : ''}.` : '';
-    const consorcios = ((conc && conc.consorcios) || []).length ? ' A composição dos consórcios (aba Mercado) usa documentos desta mesma lista.' : '';
+    const consorcios = ((conc && conc.consorcios) || []).length ? ' e a composição dos consórcios (aba Mercado)' : '';
     return `<h2 class="fontes-h2" id="fontes-verificacao">Documentos dos leilões de concessões rodoviárias federais e dos consórcios <span class="page__src">(${IM.fmtInt(docs.length)} ${docs.length === 1 ? 'documento' : 'documentos'})</span></h2>
-      <p class="page__src" id="fontes-verif-cobertura">Nos campos de leilão (data, vencedor, deságio, tarifas, prazo, assinatura e início da operação), o valor exibido vem de documento de órgão público quando existe; senão, do RoadShow; por último, de imprensa, marcada como não oficial.${cobertura}${consorcios}</p>
+      <p class="page__src" id="fontes-verif-cobertura">Atas, editais, homologações e demais documentos usados para conferir os leilões (os "documentos oficiais dos leilões" citados nas outras abas)${consorcios}. Nos campos de leilão (data, vencedor, deságio, tarifas, prazo, assinatura e início da operação), o valor exibido vem de documento de órgão público quando existe; senão, do RoadShow; por último, de imprensa, marcada como não oficial.${cobertura}</p>
       ${tabela('fontes-verificacao-table', docs, [
         ['Tipo', r => Selo.badge({ tipo: r.tipo, fontes: [] })], ['Órgão/veículo', r => txt(r.orgao || (rs(r) ? 'Ministério dos Transportes' : null)), 'wrap'],
         ['Título', r => txt(r.titulo || (rs(r) ? Selo.fonteTexto(r) : null)), 'wrap fontes-nome'], ['Data', r => txt(r.data ? ConcModel.fmtData(r.data) : null)],

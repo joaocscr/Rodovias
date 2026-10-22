@@ -69,6 +69,38 @@ test('título da página e do topo', async () => {
   assert.match(await page.textContent('.topbar__sub'), /SNV .*RoadShow/);
 });
 
+// Título e linha de origem (malha e concessões) legíveis sem passar o mouse: nada cortado, em telas largas e no celular,
+// também com uma 10ª aba (a barra de abas rola dentro do topo).
+test('topo: título e linha de origem sem corte em 1440, 1280, 1024 e 390 px, com 10 abas', async () => {
+  for (const width of [1440, 1280, 1024, 390]) {
+    const context = await browser.newContext({ viewport: { width, height: 800 } });
+    await context.route('**/*', r => (/^(file|data):/.test(r.request().url()) ? r.continue() : r.abort()));
+    const p = await context.newPage();
+    await p.goto('file://' + HTML + '#mapa');
+    await p.waitForSelector('#kpi-km');
+    for (const abas of [9, 10]) {
+      const r = await p.evaluate(abas => {
+        const nav = document.getElementById('tabs');
+        if (abas > nav.children.length) { const a = document.createElement('a'); a.textContent = 'Debêntures'; a.href = '#'; nav.append(a); }
+        const m = el => ({ sw: el.scrollWidth, cw: el.clientWidth, sh: el.scrollHeight, ch: el.clientHeight, vis: el.offsetParent !== null });
+        const sub = document.getElementById('topbar-sub'), map = document.getElementById('map').getBoundingClientRect();
+        return { titulo: m(document.querySelector('.topbar__titles')), sub: m(sub), txt: sub.innerText, doc: document.documentElement.scrollWidth,
+          vw: innerWidth, mapTop: map.top, subBottom: sub.getBoundingClientRect().bottom };
+      }, abas);
+      const tag = `${width} px, ${abas} abas`;
+      for (const k of ['titulo', 'sub']) {
+        assert.ok(r[k].vis, `${tag}: ${k} visível`);
+        assert.ok(r[k].sw <= r[k].cw, `${tag}: ${k} cortado na largura ${JSON.stringify(r[k])}`);
+      }
+      assert.ok(r.sub.sh <= r.sub.ch, `${tag}: linha de origem cortada na altura ${JSON.stringify(r.sub)}`);
+      assert.match(r.txt, /Malha rodoviária federal: SNV \S+ \(DNIT\) · Concessões: RoadShow/, tag);
+      assert.ok(r.doc <= r.vw, `${tag}: página alargou`);
+      assert.ok(Math.abs(r.mapTop - r.subBottom) < 1, `${tag}: o mapa começa logo abaixo da linha de origem`);
+    }
+    await context.close();
+  }
+});
+
 test('(a) seletor "Cor das rodovias" com os 6 rótulos na ordem, acessível', async () => {
   const g = page.locator('#legend [role="radiogroup"]');
   assert.equal(await g.getAttribute('aria-label'), 'Cor das rodovias');
@@ -271,7 +303,7 @@ test('cartão de trecho planejado (PLA) marca tráfego e acidentes como "trecho 
   await page.click('#card-close');
 });
 
-test('v3.1: trecho "não simulável" no VMDa 2025 mostra "uso restrito (área urbana)" no cartão', async () => {
+test('trecho "não simulável" no VMDa 2025 mostra "uso restrito (área urbana)" no cartão', async () => {
   const j = await page.evaluate(() => {
     const f = window.INTEL.vmda2025.fis;
     return window.SNV.fis.findIndex((_, j) => f.ns[j] === 1 && f.t[j] != null);
@@ -334,7 +366,7 @@ test('(g) troca de modo em menos de 300 ms', async t => {
   }
 });
 
-test('(i) volta ao modo Concessões com legenda e halo da v2', async () => {
+test('(i) volta ao modo Concessões com legenda e halo', async () => {
   await mode('concessoes');
   assert.equal(await page.evaluate(() => MapView.colorMode()), 'concessoes');
   assert.ok((await legend()).includes(A.agendado));
@@ -375,7 +407,7 @@ test('(a) seção Camadas acima de Filtros, aberta, com os rótulos, fontes e no
   assert.match(t, /Camadas/);
   for (const l of LAYER_LABELS) assert.ok(t.includes(l), l);
   for (const l of ['Fundo municipal', 'Nenhum', 'Soja', 'Milho', 'Cana', 'Algodão', 'Café', 'Trigo', 'Armazenagem']) assert.ok(t.includes(l), l);
-  assert.match(t, /Medido: praças, SATs \(ANTT\), PAM, Estoques\. Modelado: VMDa, carga PNL\./);
+  assert.match(t, /Medido: praças e contadores de tráfego \(SAT\) da ANTT, PAM, Estoques\. Modelado: VMDa, carga PNL\./);
   // todas desligadas por padrão; fundo = Nenhum
   assert.equal(await page.locator('#layers-section input[data-layer]:checked').count(), 0);
   assert.equal(await page.locator('#layers-section input[name="fundo"]:checked').getAttribute('value'), '');
@@ -565,7 +597,7 @@ test('cartão do trecho lista "Medições no trecho" e abre o cartão da praça'
   await page.click('#card-close');
 });
 
-test('SATs e Obras: cartões com período, % pesados e previsto × executado', async () => {
+test('Contadores de tráfego (SAT) e obras: cartões com período, % pesados e previsto × executado', async () => {
   await setLayer(page, 'sats', true);
   await setLayer(page, 'obras', true);
   assert.ok(await page.evaluate(() => Layers.count('sats')) >= 400);
@@ -1156,7 +1188,7 @@ test('Pipeline: linha do tempo de editais e leilões bate com o modelo (linhas, 
   await go('#mapa');
 });
 
-test('sem window.INTEL: Projetos e ficha da v2 sem esfera, pipeline nem ANTT, sem erros', async () => {
+test('sem window.INTEL: Projetos e ficha sem esfera, pipeline nem ANTT, sem erros', async () => {
   const errs = [], ext = [];
   const p = await openPage(errs, ext, html => html.replace('window.INTEL=', 'window.INTEL_AUSENTE='));
   await go('#projetos', p);
@@ -2157,7 +2189,7 @@ test('fechamento: períodos e constantes impressas seguem os dados (dados altera
   assert.ok((await p.textContent('#card-gestao .sub')).endsWith(`, ${x.gestao}`));
   await goTab(p, '#projetos');
   assert.deepEqual(await p.$$eval('#page-projetos .chip[data-f="ano"]', bs => bs.map(b => +b.dataset.v)), novo.anos);
-  assert.ok((await p.textContent('#page-projetos .page__lead')).includes(`programa federal de concessões ${novo.anos[0]}–${novo.anos[novo.anos.length - 1]}`));
+  assert.ok((await p.textContent('#page-projetos .page__lead')).includes(`(contratos e programa ${novo.anos[0]}–${novo.anos[novo.anos.length - 1]})`));
   assert.ok((await p.textContent('#estudos-lead')).startsWith(`${x.nEstudos} estudos contratados para futuras concessões rodoviárias federais; o RoadShow (p. 999) só informa as BRs e UFs.`));
   await goTab(p, '#trafego');
   assert.ok((await p.textContent('#kpi-pracas span')).includes(`em ${novo.pracas}`));

@@ -169,7 +169,7 @@ const Mercado = (() => {
         ${card('leiloes', 'Leilões por ano', comPeriodo('Número de leilões de concessões rodoviárias federais (ANTT)', periodoSerie(m.leiloes_por_ano)), { key: 'leiloes_por_ano', wide: true,
           legend: Charts.legendHtml([['Realizados', Charts.C.deep], ['Previstos', Charts.C.bright, 0.45]]) })}
         ${card('serie', comPeriodo(SERIE_TITULO, pPart), 'Desconto sobre a tarifa-teto oferecido pelo vencedor de cada leilão, na data do leilão', { wide: true,
-          src: `${verificado}; RoadShow 2026-2027, ${pages(m.fontes.participantes)}, onde não há verificação`,
+          src: `${verificado}; RoadShow 2026-2027, ${pages(m.fontes.participantes)}, onde não há documento conferido`,
           legend: `<div id="serie-legenda">${Charts.legendHtml([{ label: 'oficial', color: C.deep, shape: 'dot' }, { label: 'RoadShow', color: C.bright, shape: 'dot' },
             { label: 'imprensa — não oficial', color: C.grey, shape: 'ring' },
             ...(regra ? [{ label: refLabel(), color: C.spacial, shape: 'line' }] : [])])}${

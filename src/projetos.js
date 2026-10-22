@@ -203,9 +203,10 @@ const Projetos = (() => {
     const el = document.getElementById('page-projetos');
     el.innerHTML = `<div class="page__inner">
       <h1 class="page__title">Projetos e contratos</h1>
-      <p class="page__lead">Contratos vigentes de concessão rodoviária federal e projetos do programa federal de concessões${anos.length ? ` ${anos[0]}–${anos[anos.length - 1]}` : ''} (Ministério dos Transportes)${hasEst ? ', e concessões rodoviárias estaduais' : ''}. ${Glossario.link('capex', 'Capex')} e ${Glossario.link('opex')} em R$ bi, na base comparável (tabelas${base ? ` em ${esc(base)}` : ''} quando existirem; senão, a ${Glossario.link('data-base', 'data-base')} da ficha, indicada na coluna). "Leilão ou assinatura": data de assinatura nos contratos federais ${anos.length ? `anteriores a ${anos[0]}` : 'anteriores ao programa'}${hasEst ? ' e nas concessões estaduais' : ''}; data do leilão nos demais. Clique numa linha para abrir a ficha.</p>
+      <p class="page__lead">Concessões rodoviárias federais${anos.length ? ` (contratos e programa ${anos[0]}–${anos[anos.length - 1]})` : ''}${hasEst ? ' e estaduais' : ''}; ${Glossario.link('capex', 'capex')} e ${Glossario.link('opex')} em R$ bi. Cada linha abre a ficha.</p>
       ${toolbar()}
       <div class="table-wrap"><table class="grid" id="proj-table" data-csv-name="projetos-comparador"></table></div>
+      <p class="page__src" id="proj-nota">Programa: carteira federal de concessões rodoviárias do Ministério dos Transportes${anos.length ? ` (${anos[0]}–${anos[anos.length - 1]})` : ''}. Capex e opex na base comparável (tabelas${base ? ` em ${esc(base)}` : ''} quando existirem; senão, a ${Glossario.link('data-base', 'data-base')} da ficha, indicada na coluna). "Leilão ou assinatura": data de assinatura nos contratos federais ${anos.length ? `anteriores a ${anos[0]}` : 'anteriores ao programa'}${hasEst ? ' e nas concessões estaduais' : ''}; data do leilão nos demais.</p>
       ${pipelineSection()}
       ${estudos()}</div>`;
     renderTable();

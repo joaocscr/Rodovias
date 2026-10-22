@@ -423,7 +423,7 @@ const UI = (() => {
 
   // ---------- Camadas de sobreposição ----------
   // Texto com links para o glossário na primeira menção de cada termo desta aba
-  const layersNote = () => `Medido: ${Glossario.link('praca-de-pedagio', 'praças')}, ${Glossario.link('sat', 'SATs')} (ANTT), ${Glossario.link('pam', 'PAM')}, Estoques. ` +
+  const layersNote = () => `Medido: ${Glossario.link('praca-de-pedagio', 'praças')} e contadores de tráfego (${Glossario.link('sat', 'SAT')}) da ANTT, ${Glossario.link('pam', 'PAM')}, Estoques. ` +
     `Modelado: ${Glossario.link('vmda', 'VMDa')}, carga ${Glossario.link('pnl', 'PNL')}.`;
   const PROD_LABEL = { soja: 'Soja', milho1: 'Milho 1ª safra', milho2: 'Milho 2ª safra', cana: 'Cana-de-açúcar', algodao: 'Algodão', trigo: 'Trigo', cafe: 'Café' };
 
@@ -631,7 +631,7 @@ const UI = (() => {
           [IM.comAno('Receita', aP), IM.fmtBRL(r.receita)], [`Meses com dado${aP != null ? ` em ${aP}` : ''}`, IM.has(r.meses) ? String(r.meses) : null],
         ])}${pointConc(r.ent, r.conc)}${pracaChart(i)}`, r.fis);
     } else if (key === 'sats') {
-      showCard(`SAT ${r.id}`, `Equipamento de contagem · ${rodUf(r)}`,
+      showCard(`SAT ${r.id}`, `Contador de tráfego · ${rodUf(r)}`,
         `<div class="card__badges"><span class="badge">Contagem medida · ANTT</span></div>
         ${grid([
           ['VMD', IM.fmtVmd(r.vmd)], ['% pesados', IM.fmtPct(r.pes)], ['% motos', IM.fmtPct(r.moto)],
@@ -639,7 +639,7 @@ const UI = (() => {
         ])}${pointConc(r.ent, r.conc)}`, r.fis);
     } else if (key === 'obras') {
       const km = kmFmt(r.km_i) ? `km ${kmFmt(r.km_i)}${kmFmt(r.km_f) && r.km_f !== r.km_i ? `–${kmFmt(r.km_f)}` : ''}` : null;
-      showCard(r.descricao || r.tipo || 'Obra', `Obra ANTT · ${rodUf(r)}`,
+      showCard(r.descricao || r.tipo || 'Obra', `Obra na concessão federal · ${rodUf(r)}`,
         `${grid([
           ['Tipo', r.tipo], ['Localização', km], ['Ano', IM.has(r.ano) ? String(r.ano) : null],
           ['Previsto', IM.fmtPct(r.previsto)], ['Executado', IM.fmtPct(r.executado)],

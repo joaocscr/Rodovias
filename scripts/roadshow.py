@@ -5,13 +5,25 @@ from pathlib import Path
 ESTADOS = [
     ("agendado2026", "Leilão agendado 2026"),
     ("projeto2027", "Projeto 2027"),
-    ("programa", "Contrato do programa federal 2023–26"),
-    ("vigente", "Contrato vigente anterior a 2023"),
+    ("programa", "Contrato do programa federal"),
+    ("vigente", "Contrato vigente anterior ao programa"),
     ("snv", "Concessão federal no SNV sem contrato identificado"),
     ("pos2027", "Estudo pós-2027"),
     ("nenhum", "Sem concessão"),
 ]
 CONTRATO = {"vigente", "programa"}
+
+
+def estados(entidades):
+    """Rótulos dos estados de concessão. Os anos do programa federal (ex.: 2023–26) e o início dele ("anterior a 2023")
+    vêm de `ano_programa` dos contratos do programa; sem eles, ficam os rótulos sem ano de ESTADOS."""
+    anos = sorted({e["ano_programa"] for e in entidades if e.get("estado") == "programa" and e.get("ano_programa")})
+    rotulo = dict(ESTADOS)
+    if anos:
+        de, ate = anos[0], anos[-1]
+        rotulo["programa"] = f"{rotulo['programa']} {de}–{str(ate)[-2:]}" if ate != de else f"{rotulo['programa']} {de}"
+        rotulo["vigente"] = f"Contrato vigente anterior a {de}"
+    return [{"key": k, "label": rotulo[k]} for k, _ in ESTADOS]
 CONCESSAO_SNV = "Concessão Federal"
 TOL_OK_PCT, TOL_OK_KM, TOL_APROX_PCT = 0.05, 10.0, 0.20
 EDICAO = "edição de 14/10/2026"
@@ -117,7 +129,7 @@ def build_conc(records, groups, data_dir):
     covered = cobertos(entidades, ent_fis)
     estudos_out = [dict(s, fis=_fis_by_br_uf(records, groups, s["brs"], s["ufs"])) for s in estudos]
     conc = {
-        "estados": [{"key": k, "label": label} for k, label in ESTADOS],
+        "estados": estados(entidades),
         "entidades": entidades,
         "entFis": ent_fis,
         "fisEnt": fis_ent,
@@ -184,7 +196,7 @@ def atualiza_entidades(conc, data_dir, payload):
         raise ValueError("estudo pós-2027 novo, removido ou com outras BRs/UFs precisa de recorte no SNV: rode "
                          "build.py --shp")
     estudos = [dict(s, fis=b["fis"]) for s, b in zip(est, conc.get("estudos", []))]
-    out = dict(conc, estados=[{"key": k, "label": label} for k, label in ESTADOS], entidades=entidades,
+    out = dict(conc, estados=estados(entidades), entidades=entidades,
                estudos=estudos, edicaoRoadshow=EDICAO)
     out["snvOnly"] = snv_only_payload(payload, cobertos(entidades, conc["entFis"]))
     return out

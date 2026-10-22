@@ -152,13 +152,13 @@ async function go(hash) {
   await page.waitForTimeout(250);
 }
 
-test('v2: barra de abas (Resumo primeiro, Glossário por último) e Mapa ativa', async () => {
+test('barra de abas (Resumo primeiro, Glossário por último) e Mapa ativa', async () => {
   await go('#mapa');
   assert.deepEqual(await page.$$eval('#tabs a', as => as.map(a => a.textContent)), ['Resumo', 'Mapa', 'Projetos', 'Tráfego', 'Cargas', 'Mercado', 'Regulatório', 'Fontes', 'Glossário']);
   assert.equal(await page.textContent('#tabs a.is-active'), 'Mapa');
 });
 
-test('v2: voltar restaura a aba anterior', async () => {
+test('voltar restaura a aba anterior', async () => {
   await go('#mapa'); await go('#projetos');
   assert.equal(await page.isVisible('#page-projetos'), true);
   await page.goBack(); await page.waitForTimeout(250);
@@ -166,7 +166,7 @@ test('v2: voltar restaura a aba anterior', async () => {
   assert.equal(await page.isVisible('#page-projetos'), false);
 });
 
-test('v2: hash inválido cai no Resumo (página inicial)', async () => {
+test('hash inválido cai no Resumo (página inicial)', async () => {
   await go('#xyz');
   assert.equal(await page.evaluate(() => location.hash), '#resumo');
   assert.equal(await page.isVisible('#page-resumo'), true);
@@ -404,27 +404,34 @@ test('resumo: Sobre este painel mostra as fontes, a data-base e o acesso do mode
 });
 
 // Celular (390×844): nem o Resumo nem o mapa alargam a página (a barra de abas rola dentro do topo).
-test('celular: Resumo, mapa e glossário sem rolagem horizontal da página', async () => {
+test('celular: nenhuma aba (Resumo, mapa, Projetos, Tráfego, Cargas, Mercado, Regulatório, Fontes, Glossário) com rolagem horizontal da página', async () => {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   await context.route('**/*', r => (/^(file|data):/.test(r.request().url()) ? r.continue() : r.abort()));
   const p = await context.newPage();
   await p.goto('file://' + HTML);
   await p.waitForSelector('#page-resumo .page__inner');
-  for (const h of ['#resumo', '#mapa', '#glossario', '#glossario/vmda']) {
+  for (const h of ['#resumo', '#mapa', '#projetos', '#trafego', '#cargas', '#mercado', '#regulatorio', '#fontes', '#glossario', '#glossario/vmda']) {
     await p.evaluate(x => { location.hash = x; }, h);
     await p.waitForFunction(x => Tabs.current().active === x.slice(1).split('/')[0], h);
     await p.waitForTimeout(100);
     if (h === '#resumo') await p.evaluate(() => document.querySelectorAll('#resumo-sobre details').forEach(d => { d.open = true; }));  // tabela de data-base aberta
-    const w = await p.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth,
-      pw: Math.max(...[...document.querySelectorAll('.page:not([hidden]), .page:not([hidden]) *')].map(e => e.scrollWidth - e.clientWidth)) }));
+    if (h === '#cargas') await p.waitForSelector('#pnl-table');  // a tabela da PNL alargava a página (texto oculto fora da caixa)
+    const w = await p.evaluate(() => {
+      const pg = document.querySelector('.page:not([hidden])');
+      return { sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth,
+        // a própria aba não rola na horizontal (tabelas e gráficos largos rolam dentro das suas caixas)
+        aba: pg ? pg.scrollWidth - pg.clientWidth : 0,
+        pw: Math.max(...[...document.querySelectorAll('.page:not([hidden]), .page:not([hidden]) *')].map(e => e.scrollWidth - e.clientWidth)) };
+    });
     assert.ok(w.sw <= w.cw, `${h}: scrollWidth ${w.sw} > clientWidth ${w.cw}`);
+    assert.ok(w.aba <= 0, `${h}: a aba rola na horizontal (${w.aba}px)`);
     if (h === '#resumo' || h.startsWith('#glossario')) assert.ok(w.pw <= 0, `${h}: algo na aba alarga além da tela (${w.pw}px)`);
     assert.equal(await p.isVisible('#drawer-toggle'), true, h);
   }
   await context.close();
 });
 
-test('v2: modo concessões é o padrão e a legenda lista os estados', async () => {
+test('modo concessões é o padrão e a legenda lista os estados', async () => {
   await go('#mapa');
   assert.equal(await page.evaluate(() => MapView.colorMode()), 'concessoes');
   const rotulos = await page.evaluate(() => window.CONC.estados.filter(s => s.key !== 'nenhum').map(s => s.label));
@@ -436,7 +443,7 @@ test('v2: modo concessões é o padrão e a legenda lista os estados', async () 
   await page.click('[data-mode="concessoes"]');
 });
 
-test('v2: filtro de estado Projeto 2027 bate com o modelo', async () => {
+test('filtro de estado Projeto 2027 bate com o modelo', async () => {
   await go('#mapa');
   await page.click('#clear-filters').catch(() => {});
   const det = page.locator('details[data-group="c-estado"]');
@@ -458,7 +465,7 @@ test('v2: filtro de estado Projeto 2027 bate com o modelo', async () => {
   await page.click('#clear-filters');
 });
 
-test('v2: busca por nome de projeto realça a entidade', async () => {
+test('busca por nome de projeto realça a entidade', async () => {
   await go('#mapa');
   await page.fill('#search-input', 'Rotas Gerais');
   await page.waitForSelector('#suggestions li');
@@ -469,7 +476,7 @@ test('v2: busca por nome de projeto realça a entidade', async () => {
   await page.click('#clear-search');
 });
 
-test('v2: trecho da Transbrasiliana lista contrato e otimização e leva à ficha', async () => {
+test('trecho da Transbrasiliana lista contrato e otimização e leva à ficha', async () => {
   await go('#mapa');
   const j = await page.evaluate(() => {
     const c = window.CONC, a = c.entidades.findIndex(e => e.id === 'transbrasiliana');
@@ -487,7 +494,7 @@ test('v2: trecho da Transbrasiliana lista contrato e otimização e leva à fich
   await page.keyboard.press('Escape');
 });
 
-test('v2: ficha da Rotas Gerais', async () => {
+test('ficha da Rotas Gerais', async () => {
   await go('#ficha/rotas-gerais');
   const t = await page.textContent('#ficha');
   const x = await page.evaluate(() => {
@@ -573,7 +580,7 @@ test('cartão do mapa: uma linha resumo da pista da concessão, igual ao modelo'
   await page.keyboard.press('Escape');
 });
 
-test('v2: ficha da Rota dos Sertões mostra data-base e valor dez/2024', async () => {
+test('ficha da Rota dos Sertões mostra data-base e valor dez/2024', async () => {
   await go('#ficha/rota-dos-sertoes');
   const t = await page.textContent('#ficha');
   const x = await page.evaluate(() => {
@@ -584,7 +591,7 @@ test('v2: ficha da Rota dos Sertões mostra data-base e valor dez/2024', async (
   for (const s of x.s) assert.ok(t.includes(s), s);
 });
 
-test('v2: aviso de divergência mostra páginas', async () => {
+test('aviso de divergência mostra páginas', async () => {
   const id = await page.evaluate(() => window.CONC.entidades.find(e => (e.divergencias || []).length).id);
   await go('#ficha/' + id);
   await page.locator('.div-flag').first().click();
@@ -593,7 +600,7 @@ test('v2: aviso de divergência mostra páginas', async () => {
   assert.match(t, /p\. \d+/);
 });
 
-test('v2: ficha de contrato antigo sem undefined/null/NaN', async () => {
+test('ficha de contrato antigo sem undefined/null/NaN', async () => {
   const id = await page.evaluate(() => window.CONC.entidades.find(e => e.estado === 'vigente' && !e.ficha).id);
   await go('#ficha/' + id);
   assert.equal(await page.isVisible('#ficha-title'), true);
@@ -603,7 +610,7 @@ test('v2: ficha de contrato antigo sem undefined/null/NaN', async () => {
   assert.equal(await page.locator('#ficha .fblock h3 + :empty').count(), 0);
 });
 
-test('v2: ver no mapa a partir da ficha', async () => {
+test('ver no mapa a partir da ficha', async () => {
   await go('#ficha/rotas-gerais');
   await page.click('#ficha-map');
   await page.waitForTimeout(300);
@@ -612,7 +619,7 @@ test('v2: ver no mapa a partir da ficha', async () => {
   await page.evaluate(() => MapView.highlight(null));
 });
 
-test('v2: Esc fecha a ficha e volta ao hash anterior', async () => {
+test('Esc fecha a ficha e volta ao hash anterior', async () => {
   await go('#projetos'); await go('#ficha/rotas-gerais');
   await page.keyboard.press('Escape');
   await page.waitForTimeout(250);
@@ -620,7 +627,7 @@ test('v2: Esc fecha a ficha e volta ao hash anterior', async () => {
   assert.equal(await page.isVisible('#ficha'), false);
 });
 
-test('v2: comparador com todas as concessões federais, ordenação, filtro e totais', async () => {
+test('comparador com todas as concessões federais, ordenação, filtro e totais', async () => {
   await go('#projetos');
   // v3: com concessões estaduais no arquivo, as entidades do RoadShow são a esfera federal
   if (await page.locator('#proj-esfera').count()) await page.selectOption('#proj-esfera', 'federal');
@@ -654,7 +661,7 @@ test('v2: comparador com todas as concessões federais, ordenação, filtro e to
   if (await page.locator('#proj-esfera').count()) await page.selectOption('#proj-esfera', '');
 });
 
-test('v2: aba Mercado tem gráficos com fonte e tooltip', async () => {
+test('aba Mercado tem gráficos com fonte e tooltip', async () => {
   await go('#mercado');
   assert.ok(await page.locator('#page-mercado svg.chart').count() >= 7);
   const semFonte = await page.$$eval('#page-mercado .ccard', cs => cs.filter(c => ![...c.querySelectorAll('.src')].some(s => s.textContent.startsWith('Fonte:'))).length);
@@ -663,7 +670,7 @@ test('v2: aba Mercado tem gráficos com fonte e tooltip', async () => {
   assert.equal(await page.locator('#chart-leiloes rect.cbar title').first().textContent(), `${l0.ano}: ${l0.n} leilões`);
 });
 
-test('v2: aba Regulatório com índice, otimizações e estudos', async () => {
+test('aba Regulatório com índice, otimizações e estudos', async () => {
   await go('#regulatorio');
   const reg = await page.evaluate(() => ({ secoes: window.CONC.regulatorio.secoes.length, otim: window.CONC.regulatorio.otimizacoes.length }));
   assert.equal(await page.locator('.reg__toc a').count(), reg.secoes);
@@ -688,7 +695,7 @@ test('v2: aba Regulatório com índice, otimizações e estudos', async () => {
   await page.evaluate(() => MapView.highlight(null));
 });
 
-test('v2: troca de aba em menos de 300 ms', async () => {
+test('troca de aba em menos de 300 ms', async () => {
   await go('#mapa');
   const ms = await page.evaluate(() => new Promise(resolve => {
     const t0 = performance.now();
@@ -700,14 +707,14 @@ test('v2: troca de aba em menos de 300 ms', async () => {
   await go('#mapa');
 });
 
-test('v2: hash com percent-encoding inválido cai no Resumo', async () => {
+test('hash com percent-encoding inválido cai no Resumo', async () => {
   const before = errors.length;
   await go('#ficha/%E0%A4%A');
   assert.equal(await page.evaluate(() => location.hash), '#resumo');
   assert.equal(errors.length, before);
 });
 
-test('v2: ver no mapa vira destaque com chip e pode ser limpo', async () => {
+test('ver no mapa vira destaque com chip e pode ser limpo', async () => {
   await go('#mapa');
   await page.fill('#search-input', 'Rotas Gerais');
   await page.waitForSelector('#suggestions li');
@@ -720,7 +727,7 @@ test('v2: ver no mapa vira destaque com chip e pode ser limpo', async () => {
   assert.deepEqual(await page.evaluate(() => MapView.highlighted()), []);
 });
 
-test('v2: total do comparador avisa bases mistas', async () => {
+test('total do comparador avisa bases mistas', async () => {
   await go('#projetos');
   await page.click('[data-f="estado"][data-v="projeto2027"]');
   assert.match(await page.textContent('#proj-table tfoot'), /bases mistas/i);
@@ -730,14 +737,14 @@ test('v2: total do comparador avisa bases mistas', async () => {
   await page.click('[data-f="estado"][data-v="vigente"]');
 });
 
-test('v2: gráfico de investimento por grupo usa o nome completo', async () => {
+test('gráfico de investimento por grupo usa o nome completo', async () => {
   await go('#mercado');
   const full = await page.evaluate(() => window.CONC.mercado.grupos.map(g => g.grupo));
   const txt = await page.textContent('#chart-gruposInv');
   assert.ok(full.filter(n => n.includes(' ')).every(n => txt.includes(n)), 'nomes completos');
 });
 
-test('v4: toda table.grid visível tem botão CSV', async () => {
+test('toda table.grid visível tem botão CSV', async () => {
   for (const hash of ['#projetos', '#mercado', '#fontes']) {
     await go(hash);
     const r = await page.evaluate(() => {
@@ -753,7 +760,7 @@ test('v4: toda table.grid visível tem botão CSV', async () => {
   }
 });
 
-test('v4: CSV do comparador respeita filtro', async () => {
+test('CSV do comparador respeita filtro', async () => {
   await go('#projetos');
   await page.selectOption('#proj-uf', 'SP');
   await page.waitForTimeout(150);
@@ -774,7 +781,7 @@ test('v4: CSV do comparador respeita filtro', async () => {
   await page.selectOption('#proj-uf', '');
 });
 
-test('v4: CSV do pipeline exporta só o nome, sem a observação recolhida', async () => {
+test('CSV do pipeline exporta só o nome, sem a observação recolhida', async () => {
   await go('#projetos');
   const nomes = await page.$$eval('#pipe-table tbody tr', trs => trs.map(tr => {
     const td = tr.querySelector('td.name');
@@ -794,7 +801,7 @@ test('v4: CSV do pipeline exporta só o nome, sem a observação recolhida', asy
   assert.ok(!txt.includes('Observação'), 'sem texto de observação');
 });
 
-test('v4: CSV protege células que começam como fórmula', async () => {
+test('CSV protege células que começam como fórmula', async () => {
   await go('#fontes');
   // injeta numa linha visível valores que o Excel leria como fórmula e restaura depois
   const orig = await page.evaluate(() => {
@@ -906,7 +913,7 @@ const abreDivergencia = rotulo => page.evaluate(r => {
   dt.nextElementSibling.querySelector('.div-flag').click();
 }, rotulo);
 
-test('v4: ficha do Lote 5 do Paraná mostra selo e RoadShow na divergência', async () => {
+test('ficha do Lote 5 do Paraná mostra selo e RoadShow na divergência', async () => {
   await go('#ficha/rodovias-integradas-do-parana-lote-5');
   const x = await esperadoFicha('rodovias-integradas-do-parana-lote-5');
   assert.equal(x.e.verif.desagio.tipo, 'oficial');
@@ -926,7 +933,7 @@ test('v4: ficha do Lote 5 do Paraná mostra selo e RoadShow na divergência', as
   await page.keyboard.press('Escape');
 });
 
-test('v4: ficha da Rota da Celulose mostra nota de inabilitação', async () => {
+test('ficha da Rota da Celulose mostra nota de inabilitação', async () => {
   await go('#ficha/rota-da-celulose');
   const x = await esperadoFicha('rota-da-celulose');
   const n = await notasVerif();
@@ -951,7 +958,7 @@ test('v4: ficha da Rota da Celulose mostra nota de inabilitação', async () => 
   assert.equal(linhas[0], `${esperado.grupo} (vencedor) oficial ${pct[0]} oficial RoadShow: ${pct[1]}`);
 });
 
-test('v4: vencedor verificado fora da lista do RoadShow entra no topo (Transbrasiliana)', async () => {
+test('vencedor verificado fora da lista do RoadShow entra no topo (Transbrasiliana)', async () => {
   await go('#ficha/transbrasiliana');
   const x = await esperadoFicha('transbrasiliana');
   const linhas = await partLinhas();
@@ -971,7 +978,7 @@ test('v4: vencedor verificado fora da lista do RoadShow entra no topo (Transbras
   assert.ok(!ls.slice(1).some(l => l.includes(rsL)), ls.join('\n'));
 });
 
-test('v4: otimização distingue contrato original e termo aditivo; popover sem alternativa "-"', async () => {
+test('otimização distingue contrato original e termo aditivo; popover sem alternativa "-"', async () => {
   await go('#ficha/regis-bittencourt');
   const x = await esperadoFicha('regis-bittencourt');
   assert.equal(x.e.tipo, 'otimizacao');
@@ -989,7 +996,7 @@ test('v4: otimização distingue contrato original e termo aditivo; popover sem 
   await page.keyboard.press('Escape');
 });
 
-test('v4: comparador tem a fonte do deságio e Fontes lista a verificação', async () => {
+test('comparador tem a fonte do deságio e Fontes lista a verificação', async () => {
   await go('#projetos');
   const ths = await page.$$eval('#proj-table thead th', t => t.map(x => x.textContent.trim().replace(/ [↑↓]$/, '')));
   const i = ths.indexOf('Fonte do deságio');
@@ -1023,7 +1030,7 @@ async function rankPeriodo(de, ate) {
   await page.selectOption('#rank-ate', String(ate));
 }
 
-test('v4: Mercado mostra ranking com taxa de êxito e filtro de período altera as linhas', async () => {
+test('Mercado mostra ranking com taxa de êxito e filtro de período altera as linhas', async () => {
   await go('#mercado');
   assert.equal(await page.getAttribute('#ranking-grupos', 'data-csv-name'), 'mercado-ranking-grupos');
   const ths = await page.$$eval('#ranking-grupos thead th', t => t.map(x => x.textContent.trim().replace(/ [↑↓]$/, '')));
@@ -1085,7 +1092,7 @@ test('fechamento: seletores de período trocam de lugar quando de > até', async
   await rankPeriodo(anos[0], anos[anos.length - 1]);
 });
 
-test('v4: série de deságio desenha um ponto por leilão com deságio, com legenda', async () => {
+test('série de deságio desenha um ponto por leilão com deságio, com legenda', async () => {
   await go('#mercado');
   const esperado = await page.evaluate(() => {
     const m = window.CONC.mercado, p = m.participantes, s = LeiloesModel.serieDesagio(p);
@@ -1153,7 +1160,7 @@ const celulasPart = async x => {
   return page.locator('#chart-part tbody tr', { hasText: x.lote }).locator('td').allTextContents();
 };
 
-test('v4: Transbrasiliana aparece com o vencedor verificado e o ranking credita o grupo da época', async () => {
+test('Transbrasiliana aparece com o vencedor verificado e o ranking credita o grupo da época', async () => {
   await go('#mercado');
   const ths = await page.$$eval('#chart-part thead th', t => t.map(x => x.textContent.trim()));
   assert.deepEqual(ths, ['Ano', 'Data', 'Lote', 'Vencedor', 'Deságio vencedor', 'Fonte', 'Demais proponentes (deságio)']);
@@ -1193,7 +1200,7 @@ test('v4: Transbrasiliana aparece com o vencedor verificado e o ranking credita 
   await rankPeriodo(anos[0], anos[anos.length - 1]);
 });
 
-test('v4: Mercado mostra abaixo do verificado o vencedor e o deságio que o RoadShow imprime', async () => {
+test('Mercado mostra abaixo do verificado o vencedor e o deságio que o RoadShow imprime', async () => {
   await go('#mercado');
   // Lote 5: o nome do RoadShow é do mesmo grupo (sem sublinha de nome); o deságio diferente continua
   const l5 = await linhaPart('Rodovias Integradas do Paraná - Lote 5');

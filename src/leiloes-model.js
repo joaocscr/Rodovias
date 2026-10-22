@@ -113,13 +113,15 @@ const LeiloesModel = (() => {
     if (!p.length) return RS;
     return p.length === 1 ? `${RS}, p. ${p[0]}` : `${RS}, pp. ${lista.format(p.map(String))}`;
   }
-  // Fonte de um campo verificado numa lista de leilões: a camada de verificação pelos tipos presentes; sem verificação,
-  // o RoadShow (páginas da chave do mercado).
+  // Fonte de um campo verificado numa lista de leilões: os documentos dos leilões (aba Fontes) pelos tipos presentes; sem
+  // documento conferido, o RoadShow (páginas da chave do mercado).
+  // Mesmo nome da seção da aba Fontes que lista esses documentos.
+  const DOCS_OFICIAIS = 'documentos oficiais dos leilões (atas, editais e homologações; lista na aba Fontes)';
   function fonteCampo(rows, campo, m, key) {
     const tipos = new Set(rows.map(r => ((r.verif || {})[campo] || {}).tipo || 'roadshow'));
     const partes = [];
-    if (tipos.has('oficial')) partes.push('camada de verificação (fontes oficiais)');
-    if (tipos.has('roadshow')) partes.push(tipos.size > 1 ? `${rsPaginas(m, key)}, onde não há verificação` : rsPaginas(m, key));
+    if (tipos.has('oficial')) partes.push(DOCS_OFICIAIS);
+    if (tipos.has('roadshow')) partes.push(tipos.size > 1 ? `${rsPaginas(m, key)}, onde não há documento conferido` : rsPaginas(m, key));
     if (tipos.has('imprensa')) partes.push('imprensa — não oficial');
     return partes.join('; ');
   }

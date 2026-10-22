@@ -49,11 +49,10 @@ test('fontes de dados: uma linha por fonte de cada bloco, na ordem do arquivo de
     [['antt', 'Praças'], ['agro', 'PAM'], ['agro', 'Estoques'], ['debentures', 'Negócios'], ['novo', 'Fonte sem descrição']]);
 });
 
-test('nome do bloco vem do arquivo de descrições; sem descrição, a chave do bloco (e o bloco é apontado)', () => {
+test('nome do bloco vem do arquivo de descrições; sem descrição, a chave do bloco', () => {
   const r = FontesModel.listar(intel, conc, glossario, desc);
   assert.equal(r.dados.find(f => f.bloco === 'debentures').rotulo, 'Debêntures de transporte');
   assert.equal(r.dados.find(f => f.bloco === 'novo').rotulo, 'novo');
-  assert.deepEqual(r.semDescricao, ['novo']);
   assert.deepEqual(r.base.map(f => f.rotulo), ['Malha federal', 'Carteira do Ministério']);
 });
 
@@ -77,7 +76,7 @@ test('indisponíveis vêm do bloco de fontes', () => {
 
 test('sem blocos: listas vazias, nada quebra', () => {
   const r = FontesModel.listar(null, null, null, null);
-  assert.deepEqual(r, { dados: [], base: [], documentos: [], glossario: [], indisponiveis: [], semDescricao: [] });
+  assert.deepEqual(r, { dados: [], base: [], documentos: [], glossario: [], indisponiveis: [] });
   const s = FontesModel.listar({ fontes: { fontes: [{ bloco: 'x', nome: 'X' }] } }, { verificacao: {} }, [], undefined);
   assert.deepEqual(s.dados.map(f => f.rotulo), ['x']);
 });

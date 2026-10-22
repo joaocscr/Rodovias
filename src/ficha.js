@@ -179,7 +179,7 @@ const Ficha = (() => {
         ${anttBlocks(e.id)}
         <p class="ficha__foot">Fonte: RoadShow 2026-2027 (${esc(conc.edicaoRoadshow)}), Ministério dos Transportes${pages.length ? `, ${pages.length > 1 ? 'pp.' : 'p.'} ${pages.length > 1 ? `${pages.slice(0, -1).join(', ')} e ${pages[pages.length - 1]}` : pages[0]}` : ''}${
   intel && (IM.anttCapa(intel, e.id) || IM.anttAnteriores(intel, e.id).length) ? '; ANTT (dados abertos e páginas das concessões)' : ''}${
-  e.verif && Object.keys(e.verif).length ? '; campos de leilão conferidos na verificação dos leilões (selo de origem em cada campo)' : ''}.</p>
+  e.verif && Object.keys(e.verif).length ? '; campos de leilão conferidos nos documentos oficiais dos leilões (lista na aba Fontes; selo de origem em cada campo)' : ''}.</p>
       </div>`;
 
     if (capexChart) Charts.bars($('#ficha-capex'), f.capex_anual.map(a => ({ label: `Ano ${a.ano}`, value: a.valor })),

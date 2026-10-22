@@ -65,7 +65,7 @@ def assemble(payload, conc, intel, out):
             f"\nwindow.FONTES_DESCRICAO={dump(fontes_descricao)};")
 
     html = (ROOT / "src" / "template.html").read_text(encoding="utf-8")
-    html = html.replace("{{VERSAO}}", payload["versao"])
+    html = html.replace("{{VERSAO}}", payload["versao"]).replace("{{EDICAO}}", conc.get("edicaoRoadshow") or "")
     for key, value in [("CSS", css), ("DATA", script_safe(data)), ("JS", script_safe(js))]:
         html = html.replace(f"/*__{key}__*/", value)
     Path(out).write_text(html, encoding="utf-8")

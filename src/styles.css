@@ -22,6 +22,8 @@
   --font-title: 'Gadugi', 'Hind', 'Inter', sans-serif;
   --panel-w: 360px;
   --topbar-h: 56px;
+  --subbar-h: 24px;  /* linha sob a barra superior: de onde vêm a malha e as concessões */
+  --top-h: calc(var(--topbar-h) + var(--subbar-h));
 }
 
 * { box-sizing: border-box; }
@@ -45,11 +47,25 @@ button, input { font: inherit; color: inherit; }
   background: var(--color-deep-blue);
   color: var(--color-snow-white);
 }
-.topbar__titles { display: flex; align-items: baseline; gap: 16px; min-width: 0; }
+.topbar__titles { display: flex; align-items: center; flex: none; }
 .topbar__title { margin: 0; font-family: var(--font-title); font-weight: 700; font-size: 20px; letter-spacing: 0.01em; white-space: nowrap; }
-.topbar__sub { font-size: 14px; opacity: 0.8; white-space: nowrap; }
+.topbar__sub {
+  height: var(--subbar-h); margin: 0; padding: 0 24px; overflow: hidden;
+  background: var(--color-deep-blue); color: var(--color-snow-white); border-top: 1px solid rgba(247, 247, 248, 0.16);
+  font-size: 12px; line-height: 22px; white-space: nowrap;
+}
+.topbar__sub-extra { opacity: 0.8; }
+/* Telas médias: só a origem (malha e concessões); celular: até duas linhas, quebrando entre palavras. */
+@media (max-width: 1100px) { .topbar__sub-extra { display: none; } }
+/* O título nunca é cortado: sem espaço, sai o complemento e a barra de abas rola na horizontal dentro do topo. */
+@media (max-width: 1180px) { .topbar__title-extra { display: none; } }
+@media (max-width: 600px) {
+  :root { --subbar-h: 40px; }
+  .topbar__title { max-width: 6.5em; font-size: 16px; line-height: 20px; white-space: normal; }  /* "Rodovias do / Brasil": duas linhas, mais espaço às abas */
+  .topbar__sub { padding: 1px 16px 2px; line-height: 18px; white-space: normal; }
+}
 
-.app { display: flex; height: calc(100% - var(--topbar-h)); }
+.app { display: flex; height: calc(100% - var(--top-h)); }
 
 /* Painel lateral */
 .panel {
@@ -250,9 +266,8 @@ button, input { font: inherit; color: inherit; }
 /* Telas estreitas: painel vira gaveta */
 @media (max-width: 900px) {
   .drawer-toggle { display: inline-flex; }
-  .topbar__sub { display: none; }
   .panel {
-    position: fixed; z-index: 1100; top: var(--topbar-h); bottom: 0; left: 0;
+    position: fixed; z-index: 1100; top: var(--top-h); bottom: 0; left: 0;
     width: min(var(--panel-w), 100vw); box-shadow: var(--shadow);
     transform: translateX(-100%); transition: transform 250ms ease-in-out;
   }
@@ -267,7 +282,7 @@ button, input { font: inherit; color: inherit; }
 /* ---------- Abas, páginas, ficha, comparador, gráficos ---------- */
 [hidden] { display: none !important; }
 .topbar { gap: 24px; }
-.tabs { display: flex; gap: 8px; height: 100%; align-items: stretch; margin-left: auto; }
+.tabs { display: flex; gap: 8px; height: 100%; align-items: stretch; margin-left: auto; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
 .tabs a {
   display: flex; align-items: center; padding: 0 16px; color: var(--color-snow-white); text-decoration: none;
   font-size: 14px; font-weight: 600; opacity: 0.75; border-bottom: 3px solid transparent;
@@ -277,7 +292,7 @@ button, input { font: inherit; color: inherit; }
 .tabs a.is-active { opacity: 1; border-bottom-color: var(--color-snow-white); }
 .tabs a:focus-visible { outline-color: var(--color-snow-white); outline-offset: -4px; }
 
-.page { height: calc(100% - var(--topbar-h)); overflow-y: auto; padding: 32px 40px 64px; }
+.page { height: calc(100% - var(--top-h)); overflow-y: auto; padding: 32px 40px 64px; }
 .page__inner { max-width: 1440px; margin: 0 auto; }
 .page__title { margin: 0 0 8px; font-family: var(--font-title); font-weight: 700; font-size: 28px; line-height: 40px; color: var(--color-deep-blue); }
 .page__lead { margin: 0 0 24px; font-size: 16px; color: var(--color-light-grey); max-width: 880px; }
@@ -285,7 +300,8 @@ button, input { font: inherit; color: inherit; }
 
 /* Barra de filtros das páginas */
 .toolbar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-bottom: 16px; }
-.toolbar .mini-input { width: 280px; margin: 0; }
+.toolbar .mini-input { width: 280px; max-width: 100%; margin: 0; }
+.toolbar select { max-width: 100%; min-width: 0; }  /* nomes longos (ex.: produtos da exportação) não alargam o cartão no celular */
 .toolbar select, .select {
   height: 40px; padding: 0 32px 0 12px; border: 1px solid var(--line-strong); border-radius: var(--radius-md);
   background: var(--color-snow-white); font-size: 14px; color: var(--color-spacial-grey); cursor: pointer;
@@ -320,7 +336,7 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 .ccard--wide { grid-column: 1 / -1; }
 .ccard h3 { margin: 0 0 4px; font-family: var(--font-title); font-weight: 700; font-size: 18px; color: var(--color-deep-blue); }
 .ccard .sub { margin: 0 0 16px; font-size: 14px; color: var(--color-light-grey); }
-.ccard .chart-box { width: 100%; overflow-x: auto; }
+.ccard .chart-box { position: relative; width: 100%; overflow-x: auto; }  /* relative: o texto oculto (visually-hidden) das tabelas fica dentro da caixa que rola, sem alargar a página */
 .ccard .src { margin-top: 8px; font-size: 14px; color: var(--color-light-grey); }
 .chart-legend { display: flex; flex-wrap: wrap; gap: 16px; margin: 0 0 8px; font-size: 14px; }
 .chart-legend span { display: inline-flex; align-items: center; gap: 8px; }
@@ -330,9 +346,9 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 .kpi-tile span { font-size: 14px; color: var(--color-light-grey); }
 
 /* Ficha */
-.ficha-backdrop { position: fixed; inset: var(--topbar-h) 0 0 0; z-index: 1500; background: rgba(35, 31, 32, 0.32); animation: fade 200ms ease-in-out; }
+.ficha-backdrop { position: fixed; inset: var(--top-h) 0 0 0; z-index: 1500; background: rgba(35, 31, 32, 0.32); animation: fade 200ms ease-in-out; }
 .ficha {
-  position: fixed; z-index: 1600; top: calc(var(--topbar-h) + 16px); bottom: 16px; right: 16px; width: min(960px, calc(100vw - 32px));
+  position: fixed; z-index: 1600; top: calc(var(--top-h) + 16px); bottom: 16px; right: 16px; width: min(960px, calc(100vw - 32px));
   overflow-y: auto; background: var(--color-snow-white); border-radius: var(--radius-md); box-shadow: var(--shadow);
   animation: slide-in 250ms ease-in-out;
 }
@@ -404,7 +420,7 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
   .page { padding: 24px 16px 48px; }
   .grid-cards { grid-template-columns: 1fr; }
   .ficha__body { grid-template-columns: 1fr; }
-  .reg { grid-template-columns: 1fr; }
+  .reg { grid-template-columns: minmax(0, 1fr); }  /* minmax: tabela larga rola na própria caixa, sem alargar a página */
   .reg__toc { position: static; }
 }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -484,6 +500,8 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 .fchart svg { max-width: 100%; height: auto; display: block; }
 .fgrid dd .base--dark { color: var(--color-spacial-grey); }
 .table-wrap--static { max-height: none; overflow: visible; }
+/* Celular: tabela larga rola dentro da própria caixa, não a página inteira */
+@media (max-width: 900px) { .table-wrap--static { position: relative; overflow-x: auto; } }
 .grid--static th, .grid--static tfoot td { position: static; }
 .grid--static tbody tr, .grid tbody tr.is-static { cursor: default; }
 .grid--static tbody tr:hover, .grid tbody tr.is-static:hover { background: none; }
@@ -542,11 +560,7 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 .fontes-table td.fontes-nota-col { min-width: 320px; color: var(--color-light-grey); }
 .fontes-table a.link-btn { padding: 0; text-align: left; }
 .page__inner > .table-wrap + .fontes-h2 { margin-top: 40px; }
-/* 7 abas: o subtítulo encolhe com reticências (só some na regra de largura ≤ 900 px); abas mais justas abaixo de 1600 px */
-.topbar__titles { flex: 1 1 auto; overflow: hidden; }
-.topbar__title { flex: none; }
-.topbar__sub { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.tabs { flex: none; }
+/* Abas mais justas abaixo de 1600 px */
 .fontes-legenda { margin: 8px 0 0; }
 @media (max-width: 1600px) { .tabs a { padding: 0 8px; } }
 @media (max-width: 1180px) { .tabs { gap: 0; } }
@@ -674,10 +688,10 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 .gloss-tag { padding: 0 8px; border-radius: 12px; background: var(--tint); font-size: 12px; line-height: 20px; color: var(--color-deep-blue); }
 .gloss-item.is-alvo { border-color: var(--color-bright-blue); background: var(--tint); box-shadow: 0 0 0 3px var(--tint-strong); }
 
-/* Celular: a barra de abas rola na horizontal dentro do topo (sem alargar a página); o botão do painel fica fixo. */
+/* A barra de abas rola na horizontal dentro do topo quando não cabe (sem alargar a página); o botão do painel fica fixo. */
+.tabs a { flex: none; }
 @media (max-width: 900px) {
-  .tabs { flex: 1 1 auto; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
-  .tabs a { flex: none; }
+  .tabs { flex: 1 1 auto; }
   .drawer-toggle { flex: none; }
 }
 
@@ -685,7 +699,7 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 .cons-open { padding: 0; text-align: left; font-weight: 600; white-space: normal; }
 .grid td .cons-open { font-size: inherit; }
 .cons-backdrop { position: fixed; inset: 0; z-index: 1700; display: flex; justify-content: center; align-items: flex-start;
-  padding: calc(var(--topbar-h) + 16px) 16px 16px; background: rgba(35, 31, 32, 0.32); animation: fade 200ms ease-in-out; }
+  padding: calc(var(--top-h) + 16px) 16px 16px; background: rgba(35, 31, 32, 0.32); animation: fade 200ms ease-in-out; }
 .cons-backdrop[hidden] { display: none; }
 .cons-ficha { width: min(720px, 100%); max-height: 100%; overflow-y: auto; overflow-x: hidden; background: var(--color-snow-white);
   border-radius: var(--radius-md); box-shadow: var(--shadow); overflow-wrap: anywhere; }
@@ -734,7 +748,7 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 .cons-fontes .selo { margin: 0 8px 0 0; }
 .cons-fontes a.link-btn { display: inline; padding: 0; height: auto; white-space: normal; font-size: 14px; }
 @media (max-width: 600px) {
-  .cons-backdrop { padding: calc(var(--topbar-h) + 8px) 8px 8px; }
+  .cons-backdrop { padding: calc(var(--top-h) + 8px) 8px 8px; }
   .cons-body { padding: 16px; }
   .cons-int { grid-template-columns: minmax(0, 1fr); }
   .cons-int__part { justify-content: flex-start; }

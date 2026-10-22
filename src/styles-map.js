@@ -98,15 +98,15 @@ function haloSwatch(width = 32) {
     `<line x1="1" y1="5" x2="${width - 1}" y2="5" stroke="${COLORS.deepBlue}" stroke-width="3" stroke-linecap="round"/></svg>`;
 }
 
-// Modo "Concessões" (spec §5.1): estilo por estado, na ordem de prioridade.
+// Modo "Concessões" (spec §5.1): estilo por estado, na ordem de prioridade. Os rótulos vêm de CONC.estados (scripts/roadshow.py).
 const CONC_STYLES = {
-  agendado2026: { label: 'Leilão agendado 2026', color: COLORS.brightBlue, weight: 4, dash: null, opacity: 1, z: 7, halo: { color: COLORS.brightBlue, opacity: 0.3, extra: 5 } },
-  projeto2027: { label: 'Projeto 2027', color: COLORS.brightBlue, weight: 3, dash: '6 4', opacity: 1, z: 6 },
-  programa: { label: 'Contrato do programa federal 2023–26', color: COLORS.deepBlue, weight: 3.5, dash: null, opacity: 1, z: 5 },
-  vigente: { label: 'Contrato vigente anterior a 2023', color: COLORS.deepBlue, weight: 2.5, dash: null, opacity: 1, z: 4, halo: { color: COLORS.spacialGrey, opacity: 0.35, extra: 3 } },
-  snv: { label: 'Concessão federal no SNV sem contrato identificado', color: COLORS.deepBlue, weight: 1.5, dash: null, opacity: 1, z: 3, halo: { color: COLORS.spacialGrey, opacity: 0.35, extra: 3 } },
-  pos2027: { label: 'Estudo pós-2027', color: COLORS.lightGrey, weight: 2, dash: '1 4', opacity: 1, z: 2 },
-  nenhum: { label: 'Sem concessão', color: COLORS.lightGrey, weight: 1, dash: null, opacity: 0.5, z: 1 },
+  agendado2026: { color: COLORS.brightBlue, weight: 4, dash: null, opacity: 1, z: 7, halo: { color: COLORS.brightBlue, opacity: 0.3, extra: 5 } },
+  projeto2027: { color: COLORS.brightBlue, weight: 3, dash: '6 4', opacity: 1, z: 6 },
+  programa: { color: COLORS.deepBlue, weight: 3.5, dash: null, opacity: 1, z: 5 },
+  vigente: { color: COLORS.deepBlue, weight: 2.5, dash: null, opacity: 1, z: 4, halo: { color: COLORS.spacialGrey, opacity: 0.35, extra: 3 } },
+  snv: { color: COLORS.deepBlue, weight: 1.5, dash: null, opacity: 1, z: 3, halo: { color: COLORS.spacialGrey, opacity: 0.35, extra: 3 } },
+  pos2027: { color: COLORS.lightGrey, weight: 2, dash: '1 4', opacity: 1, z: 2 },
+  nenhum: { color: COLORS.lightGrey, weight: 1, dash: null, opacity: 0.5, z: 1 },
 };
 
 function concStyleSwatch(key, width = 32) {
