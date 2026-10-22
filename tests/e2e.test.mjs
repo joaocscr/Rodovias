@@ -357,6 +357,44 @@ test('resumo é a página inicial e o mapa abre por #mapa', async () => {
   await context.close();
 });
 
+// "Sobre este painel": as linhas, a data-base e o acesso na tela são os do modelo (lidos dos blocos embutidos), sem texto digitado.
+test('resumo: Sobre este painel mostra as fontes, a data-base e o acesso do modelo', async () => {
+  const p = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  const errs = [];
+  p.on('pageerror', e => errs.push(e.message));
+  await p.goto('file://' + HTML);
+  await p.waitForSelector('#resumo-sobre');
+  const modelo = await p.evaluate(() => ResumoModel.sobrePainel(window.CONC, window.INTEL, window.FONTES_DESCRICAO));
+  assert.deepEqual(modelo.semDescricao, [], `fontes sem descrição: ${modelo.semDescricao.join(', ')}`);
+  assert.ok(modelo.fontes.length >= 13);
+  assert.deepEqual(await p.$$eval('#resumo-sobre h3, #resumo-sobre summary', es => es.map(e => e.firstChild.textContent.trim())),
+    ['Para que serve', 'De onde vêm as informações', 'Data-base das informações']);
+  // "De onde vêm": uma linha por fonte do modelo, com a frase curada
+  assert.deepEqual(await p.$$eval('#sobre-fontes li', ls => ls.map(l => l.dataset.fonte)), modelo.fontes.map(f => f.id));
+  const frases = await p.$$eval('#sobre-fontes li', ls => ls.map(l => l.textContent));
+  modelo.fontes.forEach((f, i) => { assert.ok(frases[i].includes(f.nome) && frases[i].includes(f.oQue), f.id); });
+  // o RoadShow é explicado, com a edição que vem do dado
+  const rs = modelo.fontes.find(f => f.id === 'roadshow');
+  assert.match(rs.oQue, /^Apresentação do Ministério dos Transportes a investidores sobre a carteira de concessões rodoviárias 2026–2027, /);
+  assert.ok(rs.oQue.includes(await p.evaluate(() => window.CONC.edicaoRoadshow)));
+  // "Data-base": a tabela é a do modelo
+  assert.deepEqual(await p.$$eval('#sobre-table thead th', hs => hs.map(h => h.textContent)), ['Informação', 'Data-base', 'Acesso']);
+  assert.deepEqual(await p.$$eval('#sobre-table tbody tr', rs2 => rs2.map(r => [r.dataset.fonte, ...[...r.cells].map(c => c.textContent)])),
+    modelo.fontes.map(f => [f.id, f.nome, f.dataBase, f.acesso]));
+  assert.ok(modelo.fontes.every(f => /^(\d{2}\/\d{2}\/\d{4})( a \d{2}\/\d{2}\/\d{4})?$/.test(f.acesso)), 'acesso em dd/mm/aaaa');
+  // os recolhidos abrem pelo título; termos técnicos levam ao glossário
+  assert.equal(await p.evaluate(() => document.getElementById('sobre-database').open), false);
+  await p.click('#sobre-database > summary');
+  assert.equal(await p.isVisible('#sobre-table'), true);
+  const hrefs = await p.$$eval('#resumo-sobre a.glossario-link', as => as.map(a => a.getAttribute('href')));
+  assert.ok(hrefs.includes('#glossario/roadshow'));
+  const ids = await p.evaluate(() => window.GLOSSARIO.map(e => e.id));
+  for (const h of hrefs) assert.ok(ids.includes(decodeURIComponent(h.split('/')[1])), h);
+  assert.doesNotMatch(await p.textContent('#resumo-sobre'), /undefined|NaN|null|\{edicao\}/);
+  assert.deepEqual(errs, []);
+  await p.close();
+});
+
 // Celular (390×844): nem o Resumo nem o mapa alargam a página (a barra de abas rola dentro do topo).
 test('celular: Resumo, mapa e glossário sem rolagem horizontal da página', async () => {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
@@ -368,10 +406,11 @@ test('celular: Resumo, mapa e glossário sem rolagem horizontal da página', asy
     await p.evaluate(x => { location.hash = x; }, h);
     await p.waitForFunction(x => Tabs.current().active === x.slice(1).split('/')[0], h);
     await p.waitForTimeout(100);
+    if (h === '#resumo') await p.evaluate(() => document.querySelectorAll('#resumo-sobre details').forEach(d => { d.open = true; }));  // tabela de data-base aberta
     const w = await p.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth,
       pw: Math.max(...[...document.querySelectorAll('.page:not([hidden]), .page:not([hidden]) *')].map(e => e.scrollWidth - e.clientWidth)) }));
     assert.ok(w.sw <= w.cw, `${h}: scrollWidth ${w.sw} > clientWidth ${w.cw}`);
-    if (h.startsWith('#glossario')) assert.ok(w.pw <= 0, `${h}: algo na aba alarga além da tela (${w.pw}px)`);
+    if (h === '#resumo' || h.startsWith('#glossario')) assert.ok(w.pw <= 0, `${h}: algo na aba alarga além da tela (${w.pw}px)`);
     assert.equal(await p.isVisible('#drawer-toggle'), true, h);
   }
   await context.close();

@@ -17,7 +17,7 @@ from verificacao import aplicar, carregar, carregar_aliases, relatorio_markdown,
 
 ROOT = Path(__file__).resolve().parent.parent
 MAX_BYTES = 15_000_000
-JS_FILES = ["vendor/leaflet/leaflet.js", "src/model.js", "src/conc-model.js", "src/leiloes-model.js", "src/mercado-model.js", "src/intel-model.js", "src/styles-map.js", "src/charts.js", "src/map.js", "src/layers.js",
+JS_FILES = ["vendor/leaflet/leaflet.js", "src/model.js", "src/conc-model.js", "src/leiloes-model.js", "src/mercado-model.js", "src/intel-model.js", "src/resumo-model.js", "src/styles-map.js", "src/charts.js", "src/map.js", "src/layers.js",
             "src/selo.js", "src/glossario.js", "src/ficha.js", "src/resumo.js", "src/projetos.js", "src/trafego.js", "src/cargas.js", "src/mercado.js", "src/regulatorio.js", "src/fontes.js",
             "src/csv.js", "src/ui.js", "src/tabs.js", "src/main.js"]
 ROADSHOW = ROOT / "data" / "roadshow"
@@ -60,7 +60,9 @@ def assemble(payload, conc, intel, out):
     js = "\n;\n".join((ROOT / p).read_text(encoding="utf-8") for p in JS_FILES if (ROOT / p).exists())
     dump = lambda o: json.dumps(o, ensure_ascii=False, separators=(",", ":"))  # noqa: E731
     glossario = json.loads((ROOT / "data" / "glossario.json").read_text(encoding="utf-8"))
-    data = f"window.SNV={dump(payload)};\nwindow.CONC={dump(conc)};\nwindow.INTEL={dump(intel)};\nwindow.GLOSSARIO={dump(glossario)};"
+    fontes_descricao = json.loads((ROOT / "data" / "fontes_descricao.json").read_text(encoding="utf-8"))
+    data = (f"window.SNV={dump(payload)};\nwindow.CONC={dump(conc)};\nwindow.INTEL={dump(intel)};\nwindow.GLOSSARIO={dump(glossario)};"
+            f"\nwindow.FONTES_DESCRICAO={dump(fontes_descricao)};")
 
     html = (ROOT / "src" / "template.html").read_text(encoding="utf-8")
     html = html.replace("{{VERSAO}}", payload["versao"])

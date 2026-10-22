@@ -1,0 +1,57 @@
+{
+  "roadshow": {
+    "nome": "Carteira de concessões do Ministério dos Transportes (RoadShow)",
+    "oQue": "Apresentação do Ministério dos Transportes a investidores sobre a carteira de concessões rodoviárias 2026–2027{edicao}. Dela vêm os contratos, os prazos, os investimentos previstos e o cadastro das concessões."
+  },
+  "snv": {
+    "nome": "Malha rodoviária federal (SNV)",
+    "oQue": "Cadastro oficial das rodovias federais mantido pelo DNIT: cada trecho com sua BR, UF, extensão, situação e tipo de administração. É a base do mapa."
+  },
+  "verificacao": {
+    "nome": "Conferência dos leilões",
+    "oQue": "Atas, editais, avisos e notícias usados para conferir data, vencedor, deságio e tarifas de cada leilão. Vale o documento de órgão público quando existe; depois o RoadShow; por último a imprensa, sempre marcada como não oficial."
+  },
+  "antt": {
+    "nome": "Concessões e pedágios (ANTT)",
+    "oQue": "Dados abertos da Agência Nacional de Transportes Terrestres: praças de pedágio, veículos que passam em cada uma, receitas, investimentos e as páginas das concessões rodoviárias.",
+    "termo": "antt"
+  },
+  "pipeline": {
+    "nome": "Projetos de concessão em andamento",
+    "oQue": "Carteira de projetos do Ministério dos Transportes, páginas da ANTT, dados abertos do BNDES, páginas de governos estaduais e, para o que ainda não tem documento oficial, imprensa especializada (não oficial)."
+  },
+  "trafego": {
+    "nome": "Tráfego, acidentes e fluxo pedagiado",
+    "oQue": "Volume diário de veículos por trecho estimado por modelo (Infra S.A. e DNIT), acidentes registrados pela Polícia Rodoviária Federal (PRF) e índice de fluxo de veículos nas praças de pedágio da ABCR, a associação das concessionárias."
+  },
+  "vmda2025": {
+    "nome": "Volume diário de veículos 2025 (DNIT)",
+    "oQue": "Estimativa do DNIT, por modelo, de quantos veículos passam por dia em cada trecho da malha federal.",
+    "termo": "vmda"
+  },
+  "carga": {
+    "nome": "Carga transportada nas rodovias (PNL)",
+    "oQue": "Estimativa da Infra S.A. de quanta carga passa por cada trecho, pelo cenário-base do Plano Nacional de Logística.",
+    "termo": "pnl"
+  },
+  "agro": {
+    "nome": "Produção agrícola e armazenagem (IBGE)",
+    "oQue": "Quanto cada município produz das principais lavouras e a capacidade de armazéns, segundo o IBGE."
+  },
+  "multimodal": {
+    "nome": "Ferrovias, portos e exportações",
+    "oQue": "Malha ferroviária, instalações portuárias, produção de carga das ferrovias da ANTT, fluxos de carga do IBGE, exportações do Ministério do Desenvolvimento (Comex Stat) e o boletim logístico da Conab."
+  },
+  "municipios": {
+    "nome": "Malha municipal (IBGE)",
+    "oQue": "Contornos dos municípios brasileiros, usados para localizar a produção e os trechos no mapa."
+  },
+  "estaduais": {
+    "nome": "Rodovias e concessões estaduais",
+    "oQue": "Malha rodoviária dos estados (Infra S.A.) e fichas das concessões estaduais, a partir de dados dos reguladores de cada estado e das fichas da ABCR."
+  },
+  "rotas": {
+    "nome": "Rotas de Integração Sul-Americana",
+    "oQue": "Apresentação e relatórios do Ministério do Planejamento e Orçamento (MPO) sobre as cinco rotas que ligam o Brasil aos países vizinhos, com o traçado esquemático delas."
+  }
+}

@@ -639,6 +639,22 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 .atalho b { display: block; font-family: var(--font-title); font-size: 18px; color: var(--color-deep-blue); }
 .atalho span { font-size: 14px; color: var(--color-light-grey); }
 .resumo-aviso { margin-top: 32px; }
+.sobre { margin-bottom: 8px; }
+.sobre .resumo-h2 { margin-top: 32px; }
+.sobre__h { margin: 16px 0 8px; font-family: var(--font-title); font-weight: 700; font-size: 18px; line-height: 24px; color: var(--color-deep-blue); }
+.sobre__texto { margin: 0; font-size: 16px; line-height: 24px; color: var(--color-spacial-grey); }
+.sobre__det { margin-top: 16px; font-size: 16px; line-height: 24px; color: var(--color-spacial-grey); }
+.sobre__det > summary { cursor: pointer; font-family: var(--font-title); font-weight: 700; font-size: 18px; line-height: 24px; color: var(--color-deep-blue); }
+.sobre__det > summary:focus-visible { outline: 2px solid var(--color-bright-blue); outline-offset: 2px; }
+.sobre__det > summary .page__src { font-family: var(--font-body); font-weight: 400; }
+.sobre__lista { margin: 12px 0 0; padding-left: 20px; display: grid; gap: 8px; overflow-wrap: anywhere; }
+.sobre__lista b { color: var(--color-deep-blue); }
+.sobre__det .table-wrap { margin-top: 12px; }
+.sobre-table th, .sobre-table td { white-space: normal; vertical-align: top; }
+.sobre-table td:first-child { overflow-wrap: anywhere; }
+.sobre-table th:last-child, .sobre-table td:last-child { min-width: 92px; }  /* a data não quebra no meio; só entre "a" */
+@media (max-width: 600px) { .sobre-table th, .sobre-table td { padding: 8px; } }
+.sobre__det .page__src { margin: 8px 0 0; }
 
 /* Aba Glossário e os links para ela nas outras abas */
 .glossario-link { color: var(--color-bright-blue); text-decoration: underline dotted; text-underline-offset: 3px; }

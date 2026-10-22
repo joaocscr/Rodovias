@@ -3,7 +3,7 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "test": "node --test tests/model.test.mjs tests/conc-model.test.mjs tests/selo.test.mjs tests/leiloes-model.test.mjs tests/mercado-model.test.mjs tests/intel-model.test.mjs tests/charts.test.mjs tests/regulatorio.test.mjs tests/palette.test.mjs tests/csv.test.mjs tests/glossario.test.mjs",
+    "test": "node --test tests/model.test.mjs tests/conc-model.test.mjs tests/selo.test.mjs tests/leiloes-model.test.mjs tests/mercado-model.test.mjs tests/intel-model.test.mjs tests/charts.test.mjs tests/regulatorio.test.mjs tests/palette.test.mjs tests/csv.test.mjs tests/glossario.test.mjs tests/resumo-model.test.mjs",
     "test:e2e": "NODE_PATH=$(npm root -g) node --test --test-concurrency=1 tests/e2e.test.mjs tests/e2e-intel.test.mjs"
   }
 }
