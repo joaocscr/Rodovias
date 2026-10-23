@@ -26,6 +26,9 @@ TIPOS = {
     "debentures_sem_serie": "Debêntures sem série pública ou sem curva das NTN-B (indicador ou spread \"—\")",
     "taxa_fora_do_intervalo": "Taxas de debêntures fora do intervalo plausível (fora das médias)",
     "linha_sem_data": "Linhas das planilhas de debêntures sem data legível (fora dos totais)",
+    "idex_arquivo_antigo": "Planilha do IDEX-Infra com o último dia muito antes dos dados de debêntures",
+    "idex_relatorio_ilegivel": "Relatórios mensais do IDEX-Infra que não puderam ser lidos",
+    "idex_reconciliacao": "Retornos mensais do IDEX-Infra que não fecham com o acumulado do ano impresso",
 }
 # status do pipeline cuja data ainda é uma previsão (leilão; no "leiloado", a assinatura prevista)
 PREVISTOS = ("estudo", "consulta_publica", "tcu", "edital", "leilao_agendado", "leiloado")
@@ -37,6 +40,8 @@ ACESSO_CURADO = {
     "pipeline": "revise as fontes e as linhas de data/intel/pipeline.csv e atualize ACESSO e FONTE em "
                 "scripts/intel/pipeline.py",
     "base": "revise a fonte e atualize ACESSO e BASE em scripts/intel/fontes_bloco.py",
+    "idex": "os arquivos vêm do usuário: salve a planilha de dados e o relatório mensal novos do IDEX-Infra em data/raw/idex/ e "
+            "rode `python scripts/atualizar.py --dominios idex`",
     "vmda2025": "o arquivo vem do Google Drive do usuário: troque o zip em data/raw/trafego/vmda2025/ por uma versão nova "
                 "e rode `python scripts/atualizar.py --baixar --dominios vmda2025`",
 }
@@ -46,6 +51,7 @@ ACESSO_CURADO_FONTE_DO_USUARIO = ("a data é a de quando a planilha das corretor
 # bloco de data/intel/ → domínio (script de scripts/intel/) que o gera, quando o nome difere
 DOMINIO_DO_BLOCO = {"municipios": "agro"}
 DIAS_FONTE_ANTIGA = 365
+DIAS_IDEX_ANTIGO = 45  # último dia da planilha do IDEX × data do bloco de debêntures
 # o que conta como registro em cada bloco: caminhos (a.b) de listas — conta os valores preenchidos — ou de dicionários
 # — conta as chaves. Bloco fora daqui: listas de primeiro nível e `linhas` dos sub-blocos (sem `fonte`).
 REGISTROS = {
@@ -54,6 +60,7 @@ REGISTROS = {
     "carga": ["gsa"],
     "debentures": ["emissoes", "secundario.ultimo_por_ticker"],
     "estaduais": ["malha.linhas", "entidades"],
+    "idex": ["spread", "papeis"],
     "fontes": ["fontes", "indisponiveis", "base"],
     "multimodal": ["ferrovias", "portos", "siade", "exportacao.linhas", "fretes.linhas"],
     "municipios": ["ids"],
@@ -260,6 +267,33 @@ def _debentures(bloco):
     return out
 
 
+def _idex(bloco, debentures):
+    """Pendências do bloco do IDEX-Infra (scripts/intel/idex.py): planilha com o último dia muito antes do fim dos dados de
+    debêntures, relatório mensal que não se lê e ano cujos retornos mensais não fecham com o acumulado impresso."""
+    bloco = bloco or {}
+    pend = bloco.get("pendencias") or {}
+    salvar = "salve o arquivo certo em data/raw/idex/ e rode `python scripts/atualizar.py --dominios idex`"
+    out = []
+    ultimo = ((bloco.get("spread") or [{}])[-1] or {}).get("data")
+    ate = (((debentures or {}).get("secundario") or {}).get("periodo") or {}).get("ate")
+    if _data(ultimo) and _data(ate) and (_data(ate) - _data(ultimo)).days > DIAS_IDEX_ANTIGO:
+        out.append(("idex_arquivo_antigo", "Planilha de dados do IDEX-Infra",
+                    f"o último dia da planilha é {_fmt(ultimo)}, {(_data(ate) - _data(ultimo)).days} dias antes do fim dos "
+                    f"dados de debêntures ({_fmt(ate)}): o spread do IDEX-Infra ficou para trás; exporte a planilha de "
+                    f"dados mais recente e {salvar}"))
+    out += [("idex_relatorio_ilegivel", p["arquivo"],
+             f"o relatório não pôde ser lido ({p['motivo']}); os retornos mensais saem sem ele: confira se é o relatório "
+             f"mensal do IDEX-Infra com a página \"Histórico de performance\" e {salvar}")
+            for p in pend.get("relatorios_ilegiveis") or []]
+    out += [("idex_reconciliacao", f"{p['nome']}, {p['ano']}",
+             f"os retornos mensais de {p['ano']} compõem {_n(p['produto'], 2)}%, mas o relatório ({p['arquivo']}) imprime "
+             f"{_n(p['acumulado'], 2)}% de acumulado no ano (tolerância de 0,05 ponto percentual): provável erro de "
+             "digitação no relatório; confira com a IDEX Analytics. Os retornos mensais são usados como estão e o "
+             "acumulado de 12 meses sai do produto deles")
+            for p in pend.get("reconciliacao") or []]
+    return out
+
+
 def itens(conc_aplicado, intel, verif, hoje=None):
     """Lista de curadoria manual `[{tipo, item, motivo}]`, na ordem de `TIPOS` e, dentro do tipo, por item.
     `conc_aplicado`: CONC com a camada de verificação aplicada; `intel`: {bloco: dados} de data/intel/; `verif`:
@@ -272,7 +306,8 @@ def itens(conc_aplicado, intel, verif, hoje=None):
     ents_federais = {e.get("id") for e in conc_aplicado.get("entidades") or []}
     brutos = (_pipeline_atrasado(lista, rotulo, hoje, ents_federais) + _leilao_sem_verificacao(conc_aplicado, lista, verif, hoje)
               + _estado_vencido(conc_aplicado, hoje) + _pipeline_nao_verificado(lista) + _fonte_antiga(intel.get("fontes") or {}, hoje)
-              + _nome_sem_grupo(conc_aplicado, verif) + _consorcios(conc_aplicado) + _debentures(intel.get("debentures")))
+              + _nome_sem_grupo(conc_aplicado, verif) + _consorcios(conc_aplicado) + _debentures(intel.get("debentures"))
+              + _idex(intel.get("idex"), intel.get("debentures")))
     ordem = {t: k for k, t in enumerate(TIPOS)}
     brutos.sort(key=lambda x: (ordem[x[0]], x[1]))
     return [{"tipo": t, "item": i, "motivo": m} for t, i, m in brutos]
