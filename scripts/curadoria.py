@@ -26,6 +26,7 @@ TIPOS = {
     "debentures_sem_serie": "Debêntures sem série pública ou sem curva das NTN-B (indicador ou spread \"—\")",
     "taxa_fora_do_intervalo": "Taxas de debêntures fora do intervalo plausível (fora das médias)",
     "linha_sem_data": "Linhas das planilhas de debêntures sem data legível (fora dos totais)",
+    "ida_dias_com_falha": "Dias do IDA (ANBIMA) que não foram baixados (faltam na série)",
 }
 # status do pipeline cuja data ainda é uma previsão (leilão; no "leiloado", a assinatura prevista)
 PREVISTOS = ("estudo", "consulta_publica", "tcu", "edital", "leilao_agendado", "leiloado")
@@ -53,6 +54,7 @@ REGISTROS = {
     "antt": ["pracas.linhas", "sats.linhas", "capas", "series", "obras.linhas"],
     "carga": ["gsa"],
     "debentures": ["emissoes", "secundario.ultimo_por_ticker"],
+    "ida": ["indices", "papeis"],
     "estaduais": ["malha.linhas", "entidades"],
     "fontes": ["fontes", "indisponiveis", "base"],
     "multimodal": ["ferrovias", "portos", "siade", "exportacao.linhas", "fretes.linhas"],
@@ -260,6 +262,20 @@ def _debentures(bloco):
     return out
 
 
+def _ida(bloco):
+    """Dias do IDA que o cache não tem e o `fetch` não conseguiu baixar (ou que ainda não foram pedidos), por índice."""
+    dias = ((bloco or {}).get("pendencias") or {}).get("dias_sem_download") or []
+    por_indice = {}
+    for d in dias:
+        por_indice.setdefault(d["indice"], []).append(d["data"])
+    return [("ida_dias_com_falha", ind,
+             f"{len(datas)} dia(s) sem download no cache de data/raw/ida/ ({', '.join(_fmt(d) for d in datas[:6])}"
+             f"{', …' if len(datas) > 6 else ''}): a série fica sem esses pontos; rode "
+             "`python scripts/atualizar.py --baixar --dominios ida` (o site da ANBIMA responde \"muitas requisições\" "
+             "em rajadas; só os dias que faltam são pedidos de novo)")
+            for ind, datas in sorted(por_indice.items())]
+
+
 def itens(conc_aplicado, intel, verif, hoje=None):
     """Lista de curadoria manual `[{tipo, item, motivo}]`, na ordem de `TIPOS` e, dentro do tipo, por item.
     `conc_aplicado`: CONC com a camada de verificação aplicada; `intel`: {bloco: dados} de data/intel/; `verif`:
@@ -272,7 +288,8 @@ def itens(conc_aplicado, intel, verif, hoje=None):
     ents_federais = {e.get("id") for e in conc_aplicado.get("entidades") or []}
     brutos = (_pipeline_atrasado(lista, rotulo, hoje, ents_federais) + _leilao_sem_verificacao(conc_aplicado, lista, verif, hoje)
               + _estado_vencido(conc_aplicado, hoje) + _pipeline_nao_verificado(lista) + _fonte_antiga(intel.get("fontes") or {}, hoje)
-              + _nome_sem_grupo(conc_aplicado, verif) + _consorcios(conc_aplicado) + _debentures(intel.get("debentures")))
+              + _nome_sem_grupo(conc_aplicado, verif) + _consorcios(conc_aplicado) + _debentures(intel.get("debentures"))
+              + _ida(intel.get("ida")))
     ordem = {t: k for k, t in enumerate(TIPOS)}
     brutos.sort(key=lambda x: (ordem[x[0]], x[1]))
     return [{"tipo": t, "item": i, "motivo": m} for t, i, m in brutos]

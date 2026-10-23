@@ -1,12 +1,12 @@
 # Atualização dos dados — 23/10/2026
 
-Gerado por `python scripts/atualizar.py` (sem --baixar, --dominios debentures). Diferenças em relação à versão de `data/intel/` no último commit do git.
+Gerado por `python scripts/atualizar.py` (--baixar, --dominios ida). Diferenças em relação à versão de `data/intel/` no último commit do git.
 
 ## Passos
 
 | Passo | Resultado | Detalhe |
 |---|---|---|
-| debentures | ok |  |
+| ida | ok |  |
 | fontes_bloco | ok |  |
 | validação da verificação | ok |  |
 | build.py (HTML) | ok |  |
@@ -20,9 +20,10 @@ Registros: itens das coleções principais de cada bloco (valores preenchidos); 
 | agro | 5.571 | 5.571 | 210,5 | 210,5 | não |
 | antt | 1.938 | 1.938 | 399,2 | 399,2 | não |
 | carga | 4.312 | 4.312 | 141,3 | 141,3 | não |
-| debentures | 236 | 236 | 91,2 | 96,3 | sim (+5,1 KB) |
+| debentures | 236 | 236 | 96,3 | 96,3 | não |
 | estaduais | 16.238 | 16.238 | 2.949,8 | 2.949,8 | não |
-| fontes | 54 | 55 | 28,0 | 28,7 | sim (+717 bytes) |
+| fontes | 55 | 56 | 28,7 | 29,7 | sim (+1,0 KB) |
+| ida | — | 99 | — | 10,7 | novo |
 | multimodal | 3.188 | 3.188 | 413,9 | 413,9 | não |
 | municipios | 5.571 | 5.571 | 1.687,6 | 1.687,6 | não |
 | pipeline | 64 | 64 | 42,9 | 42,9 | não |

@@ -41,8 +41,10 @@ SAIDA = ROOT / "data" / "atualizacao.md"
 HTML = ROOT / "mapa-rodovias.html"
 PDF_ROADSHOW = ROOT / "data" / "raw" / "roadshow.pdf"
 # vmda2025 lê a malha estadual (estaduais.json); pipeline confere `ent` contra conc.json e estaduais.json; debentures lê
-# as planilhas do usuário (data/raw/debentures/*.xlsx) e baixa as séries públicas
-ORDEM = ("trafego", "antt", "carga", "agro", "multimodal", "pipeline", "debentures", "estaduais", "vmda2025", "rotas")
+# as planilhas do usuário (data/raw/debentures/*.xlsx) e baixa as séries públicas; ida lê os papéis de debentures.json e a
+# curva das NTN-B baixada por debentures
+ORDEM = ("trafego", "antt", "carga", "agro", "multimodal", "pipeline", "debentures", "ida", "estaduais", "vmda2025",
+         "rotas")
 # o zip do VMDa 2025 vem do Drive do usuário: não há o que baixar de novo
 RENOVAVEIS = tuple(d for d in ORDEM if d != "vmda2025")
 PASSO_HTML = "build.py (HTML)"

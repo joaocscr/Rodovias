@@ -61,5 +61,10 @@
     "nome": "Debêntures de infraestrutura de transporte",
     "oQue": "Planilhas das corretoras XP e BTG (telas de debêntures e negócios): negócios fechados (BTG) e intenções de compra e venda (XP) no mercado secundário. Cadastro de debêntures da ANBIMA (SND): data de emissão e coordenador líder. Também Selic, CDI, IPCA e a expectativa do Boletim Focus, do Banco Central do Brasil, e as NTN-B do Tesouro Nacional, base do spread.",
     "termos": [{"id": "debenture", "texto": "debêntures"}, {"id": "mercado-secundario", "texto": "mercado secundário"}, {"id": "coordenador", "texto": "coordenador líder"}, {"id": "selic", "texto": "Selic"}, {"id": "cdi", "texto": "CDI"}, {"id": "ipca", "texto": "IPCA"}, {"id": "focus", "texto": "Boletim Focus"}, {"id": "ntn-b", "texto": "NTN-B"}, {"id": "spread", "texto": "spread"}]
+  },
+  "ida": {
+    "nome": "Índice de Debêntures ANBIMA (IDA)",
+    "oQue": "Resultado diário dos índices de debêntures da ANBIMA (IPCA Infraestrutura, IPCA, Geral e DI): número-índice, duration e carteira teórica com a taxa indicativa de cada papel. Daí saem a evolução dos índices, o spread médio do IPCA Infraestrutura sobre a NTN-B e a taxa dos papéis de transporte.",
+    "termos": [{"id": "duration", "texto": "duration"}, {"id": "taxa-indicativa-anbima", "texto": "taxa indicativa"}]
   }
 }
