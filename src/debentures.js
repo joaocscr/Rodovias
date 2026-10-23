@@ -258,6 +258,9 @@ const Debentures = (() => {
     return `<p class="page__lead" id="deb-ind-lead">Dois índices de mercado servem de régua para as debêntures de transporte. O ${Glossario.link('ida', 'IDA')} (Índice de Debêntures ANBIMA) acompanha uma ${Glossario.link('carteira-teorica', 'carteira teórica')} de debêntures privadas e tem quatro subíndices: IDA-IPCA Infraestrutura (o mais próximo destas debêntures), IDA-IPCA, IDA-Geral e IDA-DI. O ${Glossario.link('idex-infra', 'IDEX-Infra')}, da IDEX Analytics, é um índice de debêntures de infraestrutura, em duas versões, Geral e Core; seu spread vem em ${Glossario.link('ponto-base', 'pontos-base')}, e o painel o converte em p.p. (100 pontos-base = 1 p.p.).</p>`;
   }
 
+  // Uma linha por ano que não fecha (relatório do IDEX-Infra): o dado segue como publicado e a tela diz isso.
+  const ressalvas = (id, avisos) => (avisos.length ? `<div id="${id}">${avisos.map(a => `<p class="deb-nota deb-aviso deb-ressalva">${esc(a.texto)}</p>`).join('')}</div>` : '');
+
   function indicesCards() {
     const spreadSub = 'Em p.p. (pontos percentuais); o spread do IDEX-Infra, dado em pontos-base, é dividido por 100. Sem a curva do Tesouro no dia, o spread do painel e o do IDA ficam sem valor, e vale o último dia que tem. “Ver somado” (no mercado secundário, acima) muda só a linha de transporte';
     const datas = DM.tabelaIndices(bloco, ida, idex).datas;
@@ -315,14 +318,14 @@ const Debentures = (() => {
     else {
       const ret = DM.retornosIdex(idex), sp = DM.spreadIdex(idex), cob = DM.coberturaIdex(idex);
       dir += `<h4 class="duo__title" id="deb-idex-ret-titulo">IDEX-Infra: retorno acumulado, ${esc(cob.retornos)}</h4>`;
-      dir += ret.length ? `${Charts.legendHtml(ret.map((r, k) => [r.nome, [C.deep, C.bright][k % 2]]))}<div id="chart-d-ind-idex-ret"></div>` : '<p class="empty">Sem retornos mensais.</p>';
+      dir += ret.length ? `${Charts.legendHtml(ret.map((r, k) => [r.nome, [C.deep, C.bright][k % 2]]))}<div id="chart-d-ind-idex-ret"></div>${ressalvas('deb-idex-ret-ressalvas', DM.avisosIdex(idex, 'serie'))}` : '<p class="empty">Sem retornos mensais.</p>';
       dir += `<h4 class="duo__title" id="deb-idex-spread-titulo">IDEX-Infra Geral: spread médio diário sobre a NTN-B (p.p.), ${esc(cob.spread)}</h4>`;
       dir += sp.length ? `${legenda('Spread médio ponderado (p.p.)', C.deep)}<div id="chart-d-ind-idex-spread"></div>` : '<p class="empty">Sem spread diário.</p>';
     }
     // ---- retorno em 12 meses lado a lado: cada janela dita no próprio cartão, com o peso do número
     const r12 = DM.comparacaoRetorno12m(ida, idex);
     const tiles = r12.length ? `<h4 class="duo__title" style="margin-top:24px">Retorno em 12 meses</h4><div class="kpis" id="deb-ind-12m">${r12.map((x, k) =>
-      `<div class="kpi-tile" id="deb-ind-12m-${k}"><b>${esc(fmtPct2(x.pct))}</b><b class="kpi-janela">${esc(x.janela)}</b><span>${esc(x.origem)}</span></div>`).join('')}</div>${
+      `<div class="kpi-tile" id="deb-ind-12m-${k}"><b>${esc(fmtPct2(x.pct))}</b><b class="kpi-janela">${esc(x.janela)}</b><span>${esc(x.origem)}</span></div>`).join('')}</div>${ressalvas('deb-ind-12m-ressalvas', DM.avisosIdex(idex, '12m'))}${
       DM.janelasDiferentes(r12) ? '<p class="deb-nota deb-aviso" id="deb-ind-12m-aviso">Janelas diferentes: os números não são diretamente comparáveis.</p>' : ''}` : '';
     el.innerHTML = `<div class="duo"><div id="deb-ind-ida">${esq}</div><div id="deb-ind-idex">${dir}</div></div>${tiles}`;
 

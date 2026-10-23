@@ -389,6 +389,21 @@ test('comparacaoRetorno12m: cada número traz a sua janela; janelas que terminam
   assert.deepEqual(D.comparacaoRetorno12m(undefined, undefined), []);
 });
 
+test('avisosIdex: ano que não fecha vira uma frase, só quando o ano está na janela de 12 meses ou no gráfico acumulado', () => {
+  const av = (nome, ano) => ({ tipo: 'reconciliacao', nome, ano, produto: 3.5, acumulado_impresso: 2.25, relatorio: '2026-03' });
+  const com = { ...idex, avisos: [av('Idex-Infra Geral', '2026'), av('Idex-Infra Core', '2026'), av('Idex-Infra Geral', '2019')] };
+  const frase = nome => `O relatório de mar/2026 imprime acumulado de 2,25% em 2026 (${nome}), mas os retornos mensais compõem 3,50%; os valores são mostrados como publicados.`;
+  assert.deepEqual(D.avisosIdex(com, 'serie').map(a => a.texto), [frase('IDEX-Infra Geral'), frase('IDEX-Infra Core')], '2019 não tem retorno no gráfico');
+  assert.deepEqual(D.avisosIdex(com, '12m').map(a => a.texto), [frase('IDEX-Infra Geral')], 'o cartão de 12 meses é só do Geral');
+  // ano fora dos 12 meses do cartão (série longa): aparece no gráfico, não no cartão
+  const longa = { ...com, retornos: { 'Idex-Infra Geral': Array.from({ length: 30 }, (_, k) => ({ mes: `${2024 + Math.floor(k / 12)}-${String(k % 12 + 1).padStart(2, '0')}`, pct: 1 })) },
+    avisos: [av('Idex-Infra Geral', '2024')] };
+  assert.equal(D.avisosIdex(longa, 'serie').length, 1);
+  assert.deepEqual(D.avisosIdex(longa, '12m'), []);
+  assert.deepEqual(D.avisosIdex(idex, 'serie'), [], 'sem avisos no bloco: nada');
+  assert.deepEqual(D.avisosIdex(undefined, '12m'), []);
+});
+
 test('lacunas do IDA: dia útil sem ponto no trecho diário interrompe a linha; antes disso (série semanal) não', () => {
   const dia = (d, v) => ({ data: d, numero_indice: v });
   const serie = [dia('2026-08-07', 100), dia('2026-08-14', 101), dia('2026-09-30', 102), dia('2026-10-01', 103), dia('2026-10-05', 104), dia('2026-10-06', 105)];

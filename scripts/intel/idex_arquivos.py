@@ -3,8 +3,8 @@
 É a única parte do domínio que conhece o formato dos arquivos. Para ler da API do IDEX no futuro, escreva um módulo
 irmão com as mesmas funções e o mesmo contrato de saída e passe-as a `idex.montar`.
 
-- `arquivos(pasta)` → {"datafile": Path | None, "relatorios": [Path]}. `datafile`: o `*datafile*.xlsx` mais recente
-  (data de modificação, depois o nome); `relatorios`: os `*.pdf` da pasta, por nome.
+- `arquivos(pasta)` → {"datafiles": [Path], "relatorios": [Path]}. `datafiles`: todos os `*datafile*.xlsx` da pasta, por
+  nome (a data de modificação não conta: cópias e sincronização a mudam); `relatorios`: os `*.pdf` da pasta, por nome.
 - `ler_datafile(path)` → [{data: "AAAA-MM-DD", ticker, peso: float, duration: float | None, spread_bps: float | None}].
   Lê a aba "Detalhado", colunas `Data`, `Debênture`, `Peso no índice (%)`, `Duration` e `MID spread (Bps/NTNB)`. O peso é
   uma fração (a soma do dia é 1), apesar do "(%)" do cabeçalho. Aba ou coluna ausente: ValueError.
@@ -32,9 +32,8 @@ TOKEN = re.compile(r"(?P<pct>[-−–]?\d+,\d+\s*%)|(?P<nome>Idex-Infra\s+(?:Ger
 
 def arquivos(pasta):
     pasta = Path(pasta)
-    datafiles = [p for p in pasta.glob("*datafile*.xlsx") if not p.name.startswith("~$")]
-    datafile = max(datafiles, key=lambda p: (p.stat().st_mtime, p.name), default=None)
-    return {"datafile": datafile, "relatorios": sorted(pasta.glob("*.pdf"))}
+    datafiles = sorted(p for p in pasta.glob("*datafile*.xlsx") if not p.name.startswith("~$"))
+    return {"datafiles": datafiles, "relatorios": sorted(pasta.glob("*.pdf"))}
 
 
 def _numero(v):

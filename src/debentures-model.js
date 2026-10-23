@@ -386,6 +386,18 @@ const DebenturesModel = (() => {
     }
     return out;
   }
+  // Avisos de reconciliação do bloco do IDEX-Infra (`avisos`): anos em que os retornos mensais não compõem o acumulado
+  // impresso no relatório. Cada um volta com a frase para a tela. escopo '12m': só o Geral, e só se o ano está entre os 12
+  // meses do cartão; escopo 'serie': qualquer índice cujo ano aparece nos retornos do gráfico acumulado.
+  function avisosIdex(idex, escopo) {
+    const ret = retornosIdex(idex), pontosDe = k => (ret.find(r => r.chave === k) || { pontos: [] }).pontos;
+    return (((idex && idex.avisos) || [])).filter(a => a && a.tipo === 'reconciliacao' && num(a.produto) && num(a.acumulado_impresso))
+      .filter(a => {
+        const meses = escopo === '12m' ? (a.nome === R_IDEX ? pontosDe(a.nome).slice(-12) : []) : pontosDe(a.nome);
+        return meses.some(p => p.mes.slice(0, 4) === String(a.ano));
+      })
+      .map(a => ({ ...a, texto: `O relatório${a.relatorio ? ` de ${fmtData(a.relatorio)}` : ''} imprime acumulado de ${nf2.format(a.acumulado_impresso)}% em ${a.ano} (${nomeIdex(a.nome)}), mas os retornos mensais compõem ${nf2.format(a.produto)}%; os valores são mostrados como publicados.` }));
+  }
   // Verdadeiro quando as janelas de 12 meses terminam em datas diferentes (os números não são diretamente comparáveis).
   const janelasDiferentes = linhas => new Set((linhas || []).map(l => l.ate)).size > 1;
 
@@ -471,7 +483,7 @@ const DebenturesModel = (() => {
     ] };
   }
 
-  return { CORRETORAS, lacunasIda, janelasDiferentes, coberturaIda, coberturaIdex, evolucaoIda, variacoesIda, periodoIda, retornosIdex, spreadIdex, periodoIdex, comparacaoRetorno12m, comparacaoSpread, tabelaIndicesPorPapel, tabelaIndices,
+  return { CORRETORAS, lacunasIda, janelasDiferentes, coberturaIda, coberturaIdex, evolucaoIda, variacoesIda, periodoIda, retornosIdex, spreadIdex, periodoIdex, avisosIdex, comparacaoRetorno12m, comparacaoSpread, tabelaIndicesPorPapel, tabelaIndices,
     fonteIda, fonteIdex, diaNum, mesNum, rotuloMes, ROTULO_NEGOCIOS, ROTULO_SOMADO, DASH, mediaDe, somaLinha, mesclar, series, kpis, intencoes, macro, curvaNtnb, curvaAte, notaCurva, periodoTexto, fonteCurta,
     FILTROS_SUBSETOR, contagemSubsetor, filtrarSubsetor, notaIncentivadas, tabelaEmissoes, tabelaEmissores, tabelaUltimo, serieIncentivadas, taxaIpca, taxaTexto, taxaMediaTexto, rotuloIndexador,
     fmtPct, fmtPp, fmtInt, fmtVolume, fmtData, fmtDiaMes };

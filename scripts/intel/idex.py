@@ -1,22 +1,26 @@
 """IDEX-Infra (IDEX Analytics) → data/intel/idex.json.
 
 Entradas: os arquivos do usuário em data/raw/idex/ (fora do git; leitura em idex_arquivos.py)
-- a planilha de dados (`*datafile*.xlsx`, aba "Detalhado"): por dia e por debênture, o peso no índice, a duration e o
-  spread sobre a NTN-B em pontos-base;
+- as planilhas de dados (`*datafile*.xlsx`, aba "Detalhado"; pode haver várias, de períodos diferentes): por dia e por
+  debênture, o peso no índice, a duration e o spread sobre a NTN-B em pontos-base;
 - o relatório mensal (PDF): tabela "Histórico de performance", com o retorno mensal do IDEX-Infra Geral e do Core.
 Não há o que baixar: `fetch` não faz nada.
 
 Saída: só agregados. Do IDEX entram o spread médio e a duration média do Geral por dia (médias ponderadas pelo peso) e o
 spread dos papéis de transporte (os `ticker` de data/intel/debentures.json) no último dia da planilha; nunca a carteira
-inteira. O retorno mensal do Geral e do Core vem do relatório; `acumulado_12m` é o produto dos doze últimos retornos
+inteira. Com mais de uma planilha, os agregados diários se juntam por dia (no dia que mais de uma traz, vale a planilha
+de último dia mais recente, depois o nome) e o spread dos papéis e o período da fonte vêm da planilha de último dia mais
+recente. O retorno mensal do Geral e do Core vem do relatório; `acumulado_12m` é o produto dos doze últimos retornos
 mensais (sem doze meses seguidos, None).
 
 Histórico: data/indices/idex_historico.json guarda os agregados diários já vistos e é gerado e versionado de propósito
-(a planilha cobre um mês; a série cresce a cada planilha nova). O dia da planilha atual vence o do histórico.
+(a planilha cobre um mês; a série cresce a cada planilha nova). O dia das planilhas atuais vence o do histórico.
 
 O bloco não depende do dia em que roda: a data de acesso de cada arquivo é a do primeiro dia em que o conteúdo foi visto
 (SHA-256 no manifesto, data/manifest/idex.json). Relatório que não se lê e retorno anual que não bate com o acumulado
-impresso vão em `pendencias`, só para a curadoria (build.py não os embute no HTML).
+impresso vão em `pendencias`, só para a curadoria (build.py não os embute no HTML). Relatório substituído por outro mais
+novo que traz o mesmo ano não entra na reconciliação. O aviso de que um ano não fecha também vai em `avisos` (sem dado
+restrito), que fica no HTML para a tela dizer que o número é mostrado como foi publicado.
 """
 import datetime as dt
 import json
@@ -197,15 +201,22 @@ def montar(pasta=PASTA, historico=HISTORICO, debentures=DEBENTURES, hoje=None, m
     pela primeira vez (AAAA-MM-DD; padrão, hoje). `manifesto`: onde fica o dia em que cada arquivo foi visto (padrão, o
     do domínio; quem chama grava com `save`). Sem arquivo nenhum: FileNotFoundError."""
     achados = arquivos(pasta)
-    if not achados["datafile"] and not achados["relatorios"]:
+    if not achados["datafiles"] and not achados["relatorios"]:
         raise FileNotFoundError(2, "nenhum arquivo do IDEX-Infra", str(Path(pasta)))
     hoje = hoje or dt.date.today().isoformat()
     manifesto = manifesto if manifesto is not None else Manifest("idex")
     anterior = ler_historico(historico)
 
-    linhas = idex_arquivos.ler_datafile(achados["datafile"]) if achados["datafile"] else []
-    dias = agregar_dias(linhas)
-    serie = mesclar(anterior, dias)
+    lidas = []  # (arquivo, linhas, dias): as planilhas, da de último dia mais antigo para a mais recente
+    for f in achados["datafiles"]:
+        linhas = idex_arquivos.ler_datafile(f)
+        lidas.append((f, linhas, agregar_dias(linhas)))
+    lidas.sort(key=lambda x: (x[2][-1]["data"] if x[2] else "", x[0].name))
+    serie = anterior
+    for _, _, dias_f in lidas:
+        serie = mesclar(serie, dias_f)  # no mesmo dia vale a planilha mais recente
+    recente = next((x for x in reversed(lidas) if x[2]), None)
+    _, linhas, dias = recente or (None, [], [])
 
     papeis, universo = {}, _universo(debentures)
     if linhas:
@@ -222,14 +233,21 @@ def montar(pasta=PASTA, historico=HISTORICO, debentures=DEBENTURES, hoje=None, m
             ilegiveis.append({"arquivo": _rel(r), "motivo": f"{type(e).__name__}: {e}"})
             continue
         lidos.append((r, rel))
+    lidos.sort(key=lambda x: (x[1]["mes_referencia"], x[0].name))  # o relatório mais novo vence
+    dono = {(n, a): r for r, rel in lidos for n, anos in rel["acumulado_ano"].items() for a in anos}
     retornos, reconciliacao = {}, []
-    for r, rel in sorted(lidos, key=lambda x: (x[1]["mes_referencia"], x[0].name)):  # o relatório mais novo vence
+    for r, rel in lidos:
         for nome, meses in rel["retornos"].items():
             retornos.setdefault(nome, {}).update(meses)
-        reconciliacao += [{**p, "arquivo": _rel(r)} for p in reconciliar(rel)]
+        # só o relatório que fornece os meses de um ano é conferido: o substituído por um mais novo não deixa pendência
+        reconciliacao += [{**p, "arquivo": _rel(r), "relatorio": rel["mes_referencia"]} for p in reconciliar(rel)
+                          if dono[(p["nome"], p["ano"])] == r]
+    avisos = [{"tipo": "reconciliacao", "nome": p["nome"], "ano": p["ano"], "produto": p["produto"],
+               "acumulado_impresso": p["acumulado"], "relatorio": p["relatorio"]}
+              for p in sorted(reconciliacao, key=lambda p: (p["nome"], p["ano"]))]
 
-    itens = ([(achados["datafile"], "Planilha de dados do IDEX-Infra, fornecida ao projeto",
-               _intervalo(dias[0]["data"], dias[-1]["data"]) if dias else "")] if achados["datafile"] else [])
+    itens = [(f, "Planilha de dados do IDEX-Infra, fornecida ao projeto", _intervalo(d[0]["data"], d[-1]["data"]) if d else "")
+             for f, _, d in lidas]
     for r, rel in lidos:
         m = sorted({m for v in rel["retornos"].values() for m in v})
         itens.append((r, "Relatório mensal do IDEX-Infra, fornecido ao projeto", _intervalo(m[0], m[-1])))
@@ -248,6 +266,7 @@ def montar(pasta=PASTA, historico=HISTORICO, debentures=DEBENTURES, hoje=None, m
         "retornos": {n: [{"mes": m, "pct": v} for m, v in sorted(meses.items())] for n, meses in sorted(retornos.items())},
         "acumulado_12m": {n: acumulado_12m(meses) for n, meses in sorted(retornos.items())},
         "papeis": papeis,
+        "avisos": avisos,
         "pendencias": {"relatorios_ilegiveis": ilegiveis, "reconciliacao": reconciliacao},
     }
     return bloco, {"spread": serie}

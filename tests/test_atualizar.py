@@ -41,7 +41,7 @@ def _modulos(chamadas, tmp_path, falha=None, sem_bruto=None, zip_existe=True, re
             m = types.SimpleNamespace(build=build, fetch=fetch, PASTA=tmp_path, planilhas=lambda: [tmp_path / "a.xlsx"])
         if d == "idex":  # com arquivos na pasta de entrada
             m = types.SimpleNamespace(build=build, fetch=fetch, PASTA=tmp_path,
-                                      arquivos=lambda: {"datafile": tmp_path / "a.xlsx", "relatorios": []})
+                                      arquivos=lambda: {"datafiles": [tmp_path / "a.xlsx"], "relatorios": []})
         mods[f"intel.{d}"] = m
     return mods.__getitem__
 

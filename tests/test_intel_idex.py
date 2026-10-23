@@ -3,12 +3,15 @@ diários, histórico acumulado, reconciliação dos retornos e bloco data/intel/
 (tests/fixtures/idex/gerar.py); os do usuário ficam fora do git e só são lidos no último teste, pulado sem eles."""
 import copy
 import datetime as dt
+import importlib.util
 import json
+import os
 import shutil
 import sys
 import types
 from pathlib import Path
 
+import openpyxl
 import pymupdf
 import pytest
 
@@ -23,6 +26,10 @@ FIX = ROOT / "tests" / "fixtures" / "idex"
 DATAFILE = FIX / "idex_teste_datafile.xlsx"
 RELATORIO = FIX / "relatorio_teste.pdf"
 GERAL, CORE = "Idex-Infra Geral", "Idex-Infra Core"
+
+_spec = importlib.util.spec_from_file_location("idex_gerar", FIX / "gerar.py")
+gerar = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(gerar)
 
 
 class _Manifesto:
@@ -69,12 +76,35 @@ def test_ler_datafile_fixture():
     assert [l["ticker"] for l in linhas[3:]] == ["TSTR11", "FERX11", "ENRG11"]
 
 
-def test_arquivos_acha_datafile_e_relatorios(pasta):
+def test_arquivos_acha_planilhas_e_relatorios(pasta):
     a = ia.arquivos(pasta)
-    assert a["datafile"] == pasta / DATAFILE.name
+    assert a["datafiles"] == [pasta / DATAFILE.name]
     assert a["relatorios"] == [pasta / RELATORIO.name]
     vazio = ia.arquivos(pasta / "nao_existe")
-    assert vazio == {"datafile": None, "relatorios": []}
+    assert vazio == {"datafiles": [], "relatorios": []}
+
+
+def _planilha(destino, dias, mtime=None):
+    """Planilha sintética: `dias` = [(AAAA-MM-DD, [(ticker, peso, duration, spread_bps)])]; `mtime` fixa a data de modificação."""
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Detalhado"
+    ws.append(gerar.CABECALHO)
+    for dia, papeis in dias:
+        for ticker, peso, duration, spread in papeis:
+            ws.append([dt.datetime.fromisoformat(dia), ticker, peso, 0, 0, 0, duration, spread, "Teste", False, "Emissor Teste",
+                       1.0, 1000.0])
+    wb.save(destino)
+    if mtime:
+        os.utime(destino, (mtime, mtime))
+    return destino
+
+
+def test_arquivos_lista_todas_as_planilhas_por_nome_sem_olhar_a_data_de_modificacao(pasta):
+    b = _planilha(pasta / "a_datafile_antiga.xlsx", [("2026-08-10", [("TSTR11", 1.0, 3.0, 90.0)])], mtime=2_000_000_000)
+    os.utime(pasta / DATAFILE.name, (1_000_000_000, 1_000_000_000))
+    (pasta / "~$lock_datafile.xlsx").write_bytes(b"")
+    assert ia.arquivos(pasta)["datafiles"] == [b, pasta / DATAFILE.name]
 
 
 def test_ler_relatorio_fixture():
@@ -100,6 +130,33 @@ def test_ler_relatorio_sem_a_pagina_levanta(tmp_path):
 
 
 # ---------- agregados ----------
+
+def test_varias_planilhas_juntam_por_dia_e_a_de_ultimo_dia_mais_recente_dita_os_papeis(pasta, universo, tmp_path):
+    # a planilha antiga é a de modificação mais nova: a ordem vem dos dias, não do arquivo
+    _planilha(pasta / "outra_datafile.xlsx",
+              [("2026-09-10", [("TSTR11", 1.0, 3.0, 80.0)]),
+               ("2026-09-22", [("TSTR11", 0.5, 3.0, 999.0), ("FERX11", 0.5, 3.0, 999.0)])], mtime=2_000_000_000)
+    m = _Manifesto()
+    bloco, historico = _montar(pasta, universo, tmp_path, manifesto=m)
+    assert [d["data"] for d in bloco["spread"]] == ["2026-09-10", "2026-09-22", "2026-09-23"]
+    assert bloco["spread"][0]["spread_medio_bps"] == 80.0  # dia que só a outra planilha traz
+    assert bloco["spread"][1]["spread_medio_bps"] == 105.0  # dia nas duas: vale a planilha de último dia mais recente
+    assert bloco["papeis"] == {"FERX11": {"spread_bps": 140.0, "data": "2026-09-23"},
+                               "TSTR11": {"spread_bps": 110.0, "data": "2026-09-23"}}
+    assert "22/09/2026 a 23/09/2026" in bloco["fonte"][0]["periodo"]  # o período da fonte é o da planilha mais recente
+    assert "desde 10/09/2026" in bloco["fonte"][0]["periodo"]
+    periodos = {i["arquivo"].rsplit("/", 1)[-1]: i["periodo"] for i in m.items if i["arquivo"].endswith(".xlsx")}
+    assert periodos == {DATAFILE.name: "22/09/2026 a 23/09/2026", "outra_datafile.xlsx": "10/09/2026 a 22/09/2026"}
+    assert historico == {"spread": bloco["spread"]}
+
+
+def test_varias_planilhas_dia_repetido_vale_o_arquivo_de_ultimo_dia_mais_recente_qualquer_que_seja_o_nome(pasta, universo,
+                                                                                                         tmp_path):
+    _planilha(pasta / "zzz_datafile.xlsx", [("2026-09-22", [("TSTR11", 1.0, 3.0, 999.0)])])  # nome por último, dias antigos
+    bloco, _ = _montar(pasta, universo, tmp_path)
+    assert next(d for d in bloco["spread"] if d["data"] == "2026-09-22")["spread_medio_bps"] == 105.0
+    assert bloco["papeis"]["TSTR11"]["data"] == "2026-09-23"
+
 
 def test_agregar_dia_ponderado():
     linhas = [l for l in ia.ler_datafile(DATAFILE) if l["data"] == "2026-09-22"]
@@ -161,6 +218,37 @@ def test_reconciliacao_ano():
     quase = copy.deepcopy(r)
     quase["acumulado_ano"][GERAL]["2025"] = 6.09  # 0,04 p.p. de diferença: dentro da tolerância
     assert idex.reconciliar(quase) == []
+
+
+def _relatorio_antigo(destino, monkeypatch, soma=1.0):
+    """Relatório só até dez/2025, com o acumulado de 2025 impresso `soma` p.p. acima do produto dos meses."""
+    antes = gerar.acumulado
+    monkeypatch.setattr(gerar, "RETORNOS", {2025: gerar.RETORNOS[2025]})
+    monkeypatch.setattr(gerar, "acumulado", lambda meses: round(antes(meses) + soma, 2))
+    gerar.relatorio(destino)
+
+
+def test_reconciliacao_gera_aviso_para_a_tela(pasta, universo, tmp_path, monkeypatch):
+    (pasta / RELATORIO.name).unlink()
+    _relatorio_antigo(pasta / "antigo.pdf", monkeypatch)
+    bloco, _ = _montar(pasta, universo, tmp_path)
+    assert [x["nome"] for x in bloco["avisos"]] == [CORE, GERAL]  # por nome, e os dois índices divergem
+    geral = bloco["avisos"][1]
+    assert geral == {"tipo": "reconciliacao", "nome": GERAL, "ano": "2025", "produto": 6.05, "acumulado_impresso": 7.05,
+                     "relatorio": "2025-12"}
+    assert len(bloco["pendencias"]["reconciliacao"]) == 2  # o mesmo achado segue na curadoria
+
+
+def test_sem_divergencia_nao_ha_aviso(pasta, universo, tmp_path):
+    bloco, _ = _montar(pasta, universo, tmp_path)
+    assert bloco["avisos"] == [] and bloco["pendencias"]["reconciliacao"] == []
+
+
+def test_relatorio_substituido_por_outro_mais_novo_nao_deixa_pendencia(pasta, universo, tmp_path, monkeypatch):
+    _relatorio_antigo(pasta / "antigo.pdf", monkeypatch)  # imprime acumulado errado em 2025; o relatório de 03/2026 corrige
+    bloco, _ = _montar(pasta, universo, tmp_path)
+    assert bloco["pendencias"]["reconciliacao"] == [] and bloco["avisos"] == []
+    assert len(bloco["retornos"][GERAL]) == 15  # os meses não se repetem
 
 
 def test_relatorio_ilegivel_vai_para_curadoria(pasta, universo, tmp_path):
@@ -245,7 +333,7 @@ def test_sem_arquivos_levanta_arquivo_ausente(tmp_path, universo):
 
 def test_sem_arquivos_pula(tmp_path):
     chamadas = []
-    vazio = types.SimpleNamespace(PASTA=ROOT / "data/raw/idex", arquivos=lambda: {"datafile": None, "relatorios": []},
+    vazio = types.SimpleNamespace(PASTA=ROOT / "data/raw/idex", arquivos=lambda: {"datafiles": [], "relatorios": []},
                                   fetch=lambda force=False: chamadas.append("idex.fetch"),
                                   build=lambda: chamadas.append("idex.build"))
     outro = types.SimpleNamespace(fetch=lambda force=False: chamadas.append("rotas.fetch"),
@@ -268,11 +356,11 @@ def test_fetch_e_no_op():
 REAL = ROOT / "data" / "raw" / "idex"
 
 
-@pytest.mark.skipif(not (ia.arquivos(REAL)["datafile"] and ia.arquivos(REAL)["relatorios"]),
+@pytest.mark.skipif(not (ia.arquivos(REAL)["datafiles"] and ia.arquivos(REAL)["relatorios"]),
                     reason="arquivos do IDEX do usuário ausentes em data/raw/idex/")
 def test_arquivos_reais_leem_e_reconciliam():
     a = ia.arquivos(REAL)
-    dias = {l["data"] for l in ia.ler_datafile(a["datafile"])}
+    dias = {l["data"] for f in a["datafiles"] for l in ia.ler_datafile(f)}
     assert len(dias) >= 1
     for r in a["relatorios"]:
         rel = ia.ler_relatorio(r)

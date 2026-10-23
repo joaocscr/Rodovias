@@ -2662,6 +2662,39 @@ test('Debêntures: seção de índices entre o mercado secundário e o RoadShow,
   assert.equal(new Set(gl).size, gl.length, 'um link por termo');
 });
 
+test('Debêntures: linha sobre o acumulado impresso aparece só quando o bloco do IDEX-Infra traz o aviso', async () => {
+  const frase = (mes, a) => `O relatório de ${mes} imprime acumulado de ${fmt2(a.acumulado_impresso)}% em ${a.ano} (${a.nome.replace(/^Idex/, 'IDEX')}), mas os retornos mensais compõem ${fmt2(a.produto)}%; os valores são mostrados como publicados.`;
+  // a página como está: as linhas são as dos avisos do bloco que o modelo diz que valem, nem mais nem menos
+  await abreDeb();
+  const real = await page.evaluate(() => ({ avisos: window.INTEL.idex.avisos || [], m12: DebenturesModel.avisosIdex(window.INTEL.idex, '12m').map(a => a.texto), serie: DebenturesModel.avisosIdex(window.INTEL.idex, 'serie').map(a => a.texto) }));
+  assert.deepEqual((await page.$$eval('#deb-ind-12m-ressalvas .deb-ressalva', ps => ps.map(p => p.textContent))), real.m12);
+  assert.deepEqual((await page.$$eval('#deb-idex-ret-ressalvas .deb-ressalva', ps => ps.map(p => p.textContent))), real.serie);
+  // sem aviso no bloco: nenhuma linha
+  const errs = [], ext = [];
+  const sem = await openPage(errs, ext, html => html.replace('window.GLOSSARIO=', 'window.INTEL.idex.avisos=[];window.GLOSSARIO='));
+  await goTab(sem, '#debentures');
+  assert.equal(await sem.locator('.deb-ressalva').count(), 0);
+  assert.equal(await sem.locator('#deb-ind-12m-ressalvas, #deb-idex-ret-ressalvas').count(), 0);
+  await sem.context().close();
+  // aviso injetado para o último ano do Geral (valores de teste): uma linha sob o cartão de 12 meses e outra sob o gráfico
+  const injeta = html => html.replace('window.GLOSSARIO=', "(()=>{const r=window.INTEL.idex.retornos['Idex-Infra Geral'].slice().sort((a,b)=>(a.mes<b.mes?-1:1)),u=r[r.length-1].mes;"
+    + "window.INTEL.idex.avisos=[{tipo:'reconciliacao',nome:'Idex-Infra Geral',ano:u.slice(0,4),produto:3.21,acumulado_impresso:2.1,relatorio:u},"
+    + "{tipo:'reconciliacao',nome:'Idex-Infra Geral',ano:'1999',produto:9,acumulado_impresso:1,relatorio:u}];})();window.GLOSSARIO=");
+  const com = await openPage(errs, ext, injeta);
+  await goTab(com, '#debentures');
+  const aviso = await com.evaluate(() => window.INTEL.idex.avisos[0]);
+  const esperado = frase(await com.evaluate(a => DebenturesModel.fmtData(a.relatorio), aviso), aviso);
+  assert.deepEqual(await com.$$eval('#deb-ind-12m-ressalvas .deb-ressalva', ps => ps.map(p => p.textContent)), [esperado]);
+  assert.deepEqual(await com.$$eval('#deb-idex-ret-ressalvas .deb-ressalva', ps => ps.map(p => p.textContent)), [esperado], 'o ano de 1999 não tem retorno: sem linha');
+  // a linha fica sob o cartão (depois dos cartões, antes do aviso de janelas) e sob o gráfico, e não alarga a página
+  assert.ok(await com.evaluate(() => { const l = document.getElementById('deb-ind-12m-ressalvas'), k = document.getElementById('deb-ind-12m'); return !!(k.compareDocumentPosition(l) & Node.DOCUMENT_POSITION_FOLLOWING); }));
+  assert.ok(await com.evaluate(() => { const l = document.getElementById('deb-idex-ret-ressalvas'), c = document.getElementById('chart-d-ind-idex-ret'); return !!(c.compareDocumentPosition(l) & Node.DOCUMENT_POSITION_FOLLOWING); }));
+  assert.equal(await com.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  assert.deepEqual(errs, []);
+  assert.deepEqual(ext, []);
+  await com.context().close();
+});
+
 test('Debêntures: spread comparado bate com o modelo e com os blocos, com "ver somado" desligado e ligado', async () => {
   await abreDeb();
   const { ida, idex } = await blocosIdx(page);
