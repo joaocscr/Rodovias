@@ -27,9 +27,9 @@
   },
   {
     "id": "sat",
-    "termo": "Equipamento de contagem",
+    "termo": "Contador de tráfego",
     "sigla": "SAT",
-    "definicao": "Sigla usada pela ANTT para os equipamentos de contagem de veículos instalados ao longo das rodovias concedidas, fora das praças de pedágio. Cada leitura é uma contagem medida, ligada ao trecho federal mais próximo na mesma rodovia.",
+    "definicao": "Equipamento de contagem de veículos instalado ao longo das rodovias concedidas, fora das praças de pedágio; SAT é a sigla usada pela ANTT. Cada leitura é uma contagem medida, ligada ao trecho federal mais próximo na mesma rodovia.",
     "categorias": ["Malha e tráfego"]
   },
   {
@@ -134,7 +134,7 @@
   {
     "id": "roadshow",
     "termo": "RoadShow",
-    "definicao": "Apresentação do Ministério dos Transportes a investidores sobre a carteira de concessões rodoviárias 2026–2027 (edição de 14/10/2026). Suas páginas são uma das bases do painel: leilões, investimentos, regras e estudos.",
+    "definicao": "Apresentação do Ministério dos Transportes a investidores sobre a carteira de concessões rodoviárias 2026–2027 (a edição usada aparece na aba Fontes). Suas páginas são uma das bases do painel: leilões, investimentos, regras e estudos.",
     "fonte": { "nome": "Ministério dos Transportes — Concessões rodoviárias", "url": "https://www.gov.br/transportes/pt-br/assuntos/concessoes/concessoes-rodoviarias-2027" },
     "categorias": ["Concessões e leilões", "Instituições"]
   },
@@ -190,14 +190,14 @@
     "id": "aporte-recursos-vinculados",
     "termo": "Aporte de recursos vinculados",
     "definicao": "Recursos que o vencedor precisa aportar, vinculados ao contrato, quando oferece um deságio acima do limite previsto no edital (regra da Portaria MT nº 995/2023, segundo o RoadShow). O valor é proporcional ao deságio ofertado; o limite e as regras estão na aba Regulatório.",
-    "fonte": { "nome": "Portaria MT nº 995/2023, conforme o RoadShow (edição de 14/10/2026), p. 63" },
+    "fonte": { "nome": "Portaria MT nº 995/2023, conforme o RoadShow, p. 63" },
     "categorias": ["Regulação", "Concessões e leilões"]
   },
   {
     "id": "otimizacao-contratual",
     "termo": "Otimização contratual",
     "definicao": "Revisão de uma concessão em vigor, por acordo entre o governo e a concessionária, que ajusta obras, investimentos e prazo do contrato (às vezes com prorrogação), em vez de encerrá-lo e licitar de novo. No RoadShow, os acordos aparecem como aprovados pelo Tribunal de Contas da União (TCU).",
-    "fonte": { "nome": "Portaria MT nº 848/2023, conforme o RoadShow (edição de 14/10/2026), p. 33" },
+    "fonte": { "nome": "Portaria MT nº 848/2023, conforme o RoadShow, p. 33" },
     "categorias": ["Regulação", "Concessões e leilões"]
   },
   {
@@ -284,7 +284,7 @@
     "id": "debenture-infraestrutura",
     "termo": "Debênture de infraestrutura",
     "definicao": "Criada em 2024, dá o incentivo fiscal ao emissor, que pode deduzir 130% da remuneração paga do lucro tributável (lucro real e base da CSLL). Volta-se a investidores que não aproveitam a isenção da debênture incentivada, como os fundos de pensão.",
-    "fonte": { "nome": "Lei nº 14.801/2024, conforme o RoadShow (edição de 14/10/2026), p. 77", "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2024/lei/l14801.htm" },
+    "fonte": { "nome": "Lei nº 14.801/2024, conforme o RoadShow, p. 77", "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2024/lei/l14801.htm" },
     "categorias": ["Debêntures e juros", "Regulação"]
   },
   {
@@ -308,7 +308,7 @@
   {
     "id": "indexador",
     "termo": "Indexador",
-    "definicao": "Índice que corrige o valor ou a remuneração de um título, como o IPCA ou o CDI. Define se o papel é IPCA+, prefixado ou DI+.",
+    "definicao": "Índice que corrige o valor ou a remuneração de um título, como o IPCA ou o CDI. Define se o papel é IPCA+, DI+, percentual do DI (% do DI) ou prefixada.",
     "categorias": ["Debêntures e juros"]
   },
   {
@@ -319,14 +319,14 @@
   },
   {
     "id": "prefixado",
-    "termo": "Prefixado (PRÉ)",
-    "definicao": "Título cuja taxa de juros é definida na compra e não depende de índice; o investidor sabe de antemão quanto vai receber por ano.",
+    "termo": "Prefixada",
+    "definicao": "Remuneração com taxa de juros definida na compra, que não depende de índice (também escrita PRÉ nas planilhas das corretoras); o investidor sabe de antemão quanto vai receber por ano.",
     "categorias": ["Debêntures e juros"]
   },
   {
     "id": "di-mais",
     "termo": "DI+",
-    "definicao": "Remuneração formada pela variação do CDI mais uma taxa fixa ao ano (o spread sobre o CDI). Acompanha a taxa básica de juros.",
+    "definicao": "Remuneração formada pela variação do DI (a taxa do CDI) mais uma taxa fixa ao ano, o spread sobre o DI. Acompanha a taxa básica de juros. Quando o papel paga uma fração do DI, em vez de uma taxa somada, aparece como “% do DI”: 105% do DI rende 1,05 vez a taxa do DI.",
     "categorias": ["Debêntures e juros"]
   },
   {

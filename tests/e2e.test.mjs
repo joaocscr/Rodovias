@@ -279,6 +279,24 @@ test('glossário: os links das abas apontam só para termos que existem no arqui
   await go('#mapa');
 });
 
+test('glossário: siglas e termos que as abas citam sem explicar levam ao glossário, uma vez por aba', async () => {
+  const ids = async seletor => page.$$eval(`${seletor} a.glossario-link`, as => as.map(a => decodeURIComponent(a.getAttribute('href').replace('#glossario/', ''))));
+  await go('#projetos');
+  const proj = await ids('#proj-nota');
+  for (const id of ['wacc', 'tkm', 'vpl', 'veq', 'free-flow']) assert.ok(proj.includes(id), `Projetos: ${id}`);
+  await go('#mercado');
+  const sub = await ids('#card-serie .sub');
+  assert.deepEqual(sub.filter(i => ['outorga', 'aporte-recursos-vinculados'].includes(i)).sort(), ['aporte-recursos-vinculados', 'outorga']);
+  await go('#regulatorio');
+  const reg = await ids('#page-regulatorio .reg');
+  // cada termo do texto do RoadShow vira link só na primeira vez; só os que o texto realmente cita
+  for (const id of ['spe', 'modicidade-tarifaria', 'evtea', 'b3']) assert.ok(reg.filter(i => i === id).length <= 1, `Regulatório: ${id} repetido`);
+  const citados = { spe: 'SPE', 'modicidade-tarifaria': 'modicidade tarifária', evtea: 'EVTEA', b3: 'B3' };
+  const texto = await page.textContent('#page-regulatorio .reg');
+  for (const [id, t] of Object.entries(citados)) if (texto.includes(t)) assert.ok(reg.includes(id), `Regulatório cita "${t}" sem link`);
+  await go('#mapa');
+});
+
 // Fechamento: Resumo é a página inicial; KPIs e achados iguais ao que o modelo calcula na própria página (sem literais).
 test('resumo é a página inicial e o mapa abre por #mapa', async () => {
   const errs = [], ext = [];
@@ -375,7 +393,7 @@ test('resumo: Sobre este painel mostra as fontes, a data-base e o acesso do mode
   modelo.fontes.forEach((f, i) => { assert.ok(frases[i].includes(f.nome) && frases[i].includes(f.oQue), f.id); });
   // o RoadShow é explicado, com a edição que vem do dado
   const rs = modelo.fontes.find(f => f.id === 'roadshow');
-  assert.match(rs.oQue, /^Apresentação do Ministério dos Transportes a investidores sobre a carteira de concessões rodoviárias 2026–2027, /);
+  assert.match(rs.oQue, /^Apresentação do Ministério dos Transportes a investidores sobre a carteira de concessões rodoviárias[^,]*, /);
   assert.ok(rs.oQue.includes(await p.evaluate(() => window.CONC.edicaoRoadshow)));
   // "Data-base": a tabela é a do modelo
   assert.deepEqual(await p.$$eval('#sobre-table thead th', hs => hs.map(h => h.textContent)), ['Informação', 'Data-base', 'Acesso']);
@@ -1430,7 +1448,8 @@ test('mercado: o diagnóstico traz os anos do modelo; anos sem impressão só co
   await go('#mercado');
   const d = await page.evaluate(() => {
     const c = window.CONC, rows = MercadoModel.diagnosticoPorAno(c, window.INTEL);
-    return { rows, imp: c.mercado.diagnostico, gestao: c.mercado.gestao, nota: MercadoModel.diagnosticoNota(rows), pag: c.mercado.fontes };
+    return { rows, imp: c.mercado.diagnostico, gestao: c.mercado.gestao, nota: MercadoModel.diagnosticoNota(rows), pag: c.mercado.fontes,
+      pagGestao: MercadoModel.paginas(c.mercado.fontes.gestao) };
   });
   const anosTela = await page.$$eval('#diagnostico tbody tr', trs => trs.map(tr => +tr.dataset.ano));
   assert.deepEqual(anosTela, d.rows.map(r => r.ano));
@@ -1439,14 +1458,15 @@ test('mercado: o diagnóstico traz os anos do modelo; anos sem impressão só co
   const lacunas = [];
   for (let a = Math.min(...anosTela); a <= Math.max(...anosTela); a++) if (!anosTela.includes(a)) lacunas.push(a);
   assert.ok(lacunas.length > 0 && lacunas.every(a => !d.gestao.some(g => g.ano === a) && !imp.includes(a)), `lacunas ${lacunas}`);
-  assert.ok(!anosTela.includes(2028) && !anosTela.includes(2029));
   // a linha de fonte do cartão só cita o que alimenta alguma célula (nenhum valor vem das séries da ANTT)
   const srcDiag = await page.textContent('#card-diag');
   assert.ok(!/ANTT/.test(srcDiag), 'fonte do diagnóstico cita a ANTT sem que nenhum valor venha dela');
   // uma nota só: o que os anos calculados trazem e os anos sem fonte
   assert.equal(await page.locator('#diagnostico-nota').count(), 1);
   const nota = await page.textContent('#diagnostico-nota');
-  assert.ok(nota.includes(d.nota) && /só publica a extensão concedida \(p\. 37\)/.test(nota) && /2028 e 2029: nenhuma fonte publica esses anos/.test(nota), nota);
+  const faltam = await page.evaluate(a => MercadoModel.faixasDeAnos(a), lacunas);
+  assert.ok(nota.includes(d.nota) && nota.includes(`só publica a extensão concedida (${d.pagGestao})`), nota);
+  assert.ok(nota.includes(`${faltam}: nenhuma fonte publica ${lacunas.length > 1 ? 'esses anos' : 'esse ano'}`), nota);
   // anos sem impressão: extensão = série de gestão (cálculo cru), o resto "—" com "não publicado" na dica; nada reconstruído
   const derivados = anosTela.filter(a => !imp.includes(a));
   assert.ok(derivados.length >= 3, `anos derivados: ${derivados}`);

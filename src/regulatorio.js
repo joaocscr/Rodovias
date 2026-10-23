@@ -168,9 +168,18 @@ const Regulatorio = (() => {
       <p class="src diagrama__fonte">${esc(rodape(d))}</p></figure>`;
   }
 
+  // Termos do glossário que o texto do RoadShow cita sem explicar: cada um vira link na primeira vez que aparece na página
+  // (parágrafos e listas, na ordem; tabelas ficam como estão). `ainda` é refeito a cada montagem da página.
+  const TERMOS_NO_TEXTO = [['spe', 'SPE'], ['modicidade-tarifaria', 'modicidade tarifária'], ['evtea', 'EVTEA'], ['b3', 'B3']];
+  let ainda = new Map(TERMOS_NO_TEXTO);
+  function comLinks(txt) {
+    const segs = ResumoModel.segmentos(txt, [...ainda].map(([id, texto]) => ({ id, texto })));
+    return segs.map(s => (s.id ? (ainda.delete(s.id), Glossario.link(s.id, s.texto)) : esc(s.texto))).join('');
+  }
+
   function blocoHtml(b) {
-    if (b.tipo === 'p') return `<p>${esc(b.texto)}</p>`;
-    if (b.tipo === 'lista') return `<ul>${b.itens.map(i => `<li>${esc(i)}</li>`).join('')}</ul>`;
+    if (b.tipo === 'p') return `<p>${comLinks(b.texto)}</p>`;
+    if (b.tipo === 'lista') return `<ul>${b.itens.map(i => `<li>${comLinks(i)}</li>`).join('')}</ul>`;
     if (b.tipo === 'tabela') {
       return `<div class="table-wrap" style="max-height:none"><table class="grid" data-csv-name="regulatorio-${esc(b.cabecalho[0])}"><thead><tr>${b.cabecalho.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead>` +
         `<tbody>${b.linhas.map(l => `<tr>${l.map(c => `<td style="white-space:normal">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
@@ -193,6 +202,7 @@ const Regulatorio = (() => {
   function init(conc) {
     if (built) return;
     built = true;
+    ainda = new Map(TERMOS_NO_TEXTO);
     const r = conc.regulatorio;
     const el = document.getElementById('page-regulatorio');
     el.innerHTML = `<div class="page__inner">

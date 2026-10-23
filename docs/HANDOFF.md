@@ -1,25 +1,24 @@
 # Handoff · Rodovias do Brasil · Centro de Inteligência
 
-Documento para retomar o projeto numa conversa nova. Estado em 23/10/2026: `main` em `4d88be8` (v3.1 e a primeira versão deste HANDOFF). A verificação dos leilões, o fechamento do projeto e os ajustes seguintes (abas Debêntures e Glossário, fichas de grupo e consórcio, "Sobre este painel", aba Fontes derivada dos blocos, clareza das abas) estão no branch `claude/confident-brown-k72wi2`, no PR [joaocscr/Rodovias#4](https://github.com/joaocscr/Rodovias/pull/4), aberto e ainda sem merge (o merge só sai quando o usuário pede).
+Documento para retomar o projeto numa conversa nova. Estado em 23/10/2026: `main` em `4d88be8`. A verificação dos leilões, o fechamento do projeto e os ajustes seguintes (abas Debêntures e Glossário, fichas de grupo e consórcio, "Sobre este painel", aba Fontes derivada dos blocos, clareza das abas) estão no branch `claude/confident-brown-k72wi2`, no PR [joaocscr/Rodovias#4](https://github.com/joaocscr/Rodovias/pull/4), aberto e ainda sem merge (o merge só sai quando o usuário pede).
 
 **Para começar uma sessão nova:** abra o repositório `joaocscr/Rodovias` em claude.ai/code e mande como primeira mensagem algo como *"Leia `docs/HANDOFF.md` e o `README.md`. Quero continuar com …"*.
 
 ## 1. Onde estamos
 
-| Versão | O que entrou | PR |
-|---|---|---|
-| v1 | Mapa da malha federal (SNV 202607A), filtros, busca, soma de km | — |
-| v2 | Concessões do RoadShow (federais), abas Projetos, Mercado e Regulatório | — |
-| v3 | Centro de inteligência: tráfego (VMDa 2023, PRF, ABCR), ANTT (praças, SATs, obras), carga agrícola (PNL 2035), municípios e produção (PAM, armazéns), multimodal (ferrovias, portos, SIADE, Comex, fretes CONAB), pipeline de concessões, malha e concessões estaduais, catálogo de fontes | [joaocscr/Rodovias#1](https://github.com/joaocscr/Rodovias/pull/1) |
-| v3.1 | Rotas de Integração Sul-Americana (MPO), paleta de dados estendida, VMDa Modelagem 2025 (federal e estadual, por sentido) | [joaocscr/Rodovias#2](https://github.com/joaocscr/Rodovias/pull/2) |
-| v4 — final | Verificação dos leilões em fonte oficial (47 leilões), selo de origem, série de deságio 2007–2026, ranking de grupos econômicos, exportação CSV. Fechamento: aba Resumo como página inicial, linha do tempo de editais e leilões, pista pelo SNV nas concessões, gráficos e diagramas do RoadShow que faltavam, reconciliação dos totais, atualização em um comando com relatório de curadoria | [joaocscr/Rodovias#4](https://github.com/joaocscr/Rodovias/pull/4) (aberto) |
-| ajustes e debêntures (mesmo PR) | Aba **Debêntures** (emissões, cenário de juros, mercado secundário com spread sobre a NTN-B e a chave "ver somado"), aba **Glossário** (61 termos ligados às outras abas), **ficha de grupo e de consórcio** no Mercado (base `consorcios.json`, 34 consórcios), **Sobre este painel** no Resumo, aba **Fontes** montada dos blocos embutidos (`fontes_descricao.json`), diagnóstico por ano e correções do Mercado, passe de clareza em todas as abas, retirada de menções a versões e à empresa do autor | [joaocscr/Rodovias#4](https://github.com/joaocscr/Rodovias/pull/4) (aberto) |
+| Área | O que há hoje |
+|---|---|
+| Mapa | Malha federal (SNV 202607A) com filtros, busca e soma de km; concessões do RoadShow (federais) e estaduais; rotas de integração sul-americana (MPO); paleta de dados estendida; VMDa 2025 (federal e estadual, por sentido) |
+| Centro de inteligência | Tráfego (VMDa, PRF, ABCR), ANTT (praças, SATs, obras), carga agrícola (PNL 2035), municípios e produção (PAM, armazéns), multimodal (ferrovias, portos, SIADE, Comex, fretes CONAB), pipeline de concessões, catálogo de fontes |
+| Leilões | Verificação em fonte oficial (47 leilões), selo de origem, série de deságio 2007–2026, ranking de grupos econômicos, fichas de grupo e de consórcio (base `consorcios.json`, 34 consórcios), exportação CSV |
+| Abas | Resumo como página inicial (com "Sobre este painel"), Projetos com linha do tempo de editais e leilões, Mercado, **Debêntures** (emissões, cenário de juros, mercado secundário com spread sobre a NTN-B e a chave "ver somado"), Regulatório, **Fontes** montada dos blocos embutidos (`fontes_descricao.json`), **Glossário** (61 termos ligados às outras abas) |
+| Atualização | Um comando (`scripts/atualizar.py`) com relatório de curadoria, reconciliação dos totais, passe de clareza em todas as abas, sem menção a versões do projeto nem à empresa do autor |
 
-**Regra de versão:** cada entrega que entra na `main` por PR ganha um **número inteiro** (v4, v5…). Não há mais "ponto um" (a v3.1 foi a última).
+O histórico das entregas está no Git e nos PRs: [joaocscr/Rodovias#1](https://github.com/joaocscr/Rodovias/pull/1) e [#2](https://github.com/joaocscr/Rodovias/pull/2) já estão na `main`; o [#4](https://github.com/joaocscr/Rodovias/pull/4) (verificação dos leilões, fechamento, debêntures, glossário e demais ajustes) está aberto. Cada entrega que entra na `main` por PR segue o mesmo caminho: spec, plano, execução e revisão.
 
-Entregável: `mapa-rodovias.html` (arquivo único, offline, ~12,1 MB; limite de 15 MB imposto pelo build). Testes verdes na entrega: pytest 460 passaram, 9 foram pulados e 22 são falhas esperadas (`xfail`, as divergências do próprio RoadShow da reconciliação); `npm test` 267; e2e 152. Os pulados são os que exigem `data/raw/` ou o PDF do RoadShow; a contagem de passados muda conforme o que existe em `data/raw/`, então compare só no mesmo container.
+Entregável: `mapa-rodovias.html` (arquivo único, offline, ~12,1 MB; limite de 15 MB imposto pelo build). Testes verdes na entrega: pytest 463 passaram, 9 foram pulados e 22 são falhas esperadas (`xfail`, as divergências do próprio RoadShow da reconciliação); `npm test` 271; e2e 153. Os pulados são os que exigem `data/raw/` ou o PDF do RoadShow; a contagem de passados muda conforme o que existe em `data/raw/`, então compare só no mesmo container.
 
-Specs e planos de cada versão: `docs/superpowers/specs/` e `docs/superpowers/plans/`. Paleta: `docs/paleta.md`. Uso, camadas e comandos: `README.md`.
+Specs e planos de cada entrega: `docs/superpowers/specs/` e `docs/superpowers/plans/`. Paleta: `docs/paleta.md`. Uso, camadas e comandos: `README.md`.
 
 ## 2. Arquitetura em uma página
 
@@ -51,7 +50,7 @@ Specs e planos de cada versão: `docs/superpowers/specs/` e `docs/superpowers/pl
   - `ConcModel.pistaSNV` (pista pelo SNV, na ficha e no cartão do mapa) e `IntelModel.fisSit`.
   - Gráficos novos em `src/mercado.js` e diagramas em `src/regulatorio.js`, com dados de `mercado.json` e `regulatorio.json`.
   - O módulo `tabs.js` tem o Resumo como `INICIAL`: hash vazio ou inválido abre o Resumo, `#mapa` abre o mapa.
-- **Ordem de regeneração:** `trafego antt carga agro multimodal pipeline estaduais`, depois `vmda2025` (lê a malha estadual), `rotas`, `fontes_bloco.py` e `build.py`. Comandos completos no README, seção "Atualizar os dados"; `python scripts/atualizar.py` faz tudo isso em um comando.
+- **Ordem de regeneração:** `trafego antt carga agro multimodal pipeline debentures estaduais`, depois `vmda2025` (lê a malha estadual), `rotas`, `fontes_bloco.py` e `build.py`. Comandos completos no README, seção "Atualizar os dados"; `python scripts/atualizar.py` faz tudo isso em um comando.
 - **Junção com o SNV:** `scripts/intel/snvbase.py` (`snv()`, `.trechos`, `.fis` com os 6.815 físicos, `find_km`, `fis_of_km`, `snap`, `nearest`, `geom_m` em EPSG:5880, `encode_line`/`decode_line`, `norm_br`). Todo array "por físico" tem 6.815 posições na ordem de `data/base/snv.json`; `null` significa sem dado.
 - **Front:** Leaflet 1.9.4 vendorizado, renderização em canvas, JS ES2020 sem bundler, concatenado na ordem de `JS_FILES` (`scripts/build.py`). Os módulos puros, testados com `node --test`, são `model`, `conc-model`, `leiloes-model`, `intel-model`, `mercado-model`, `resumo-model`, `fontes-model`, `debentures-model`, `styles-map` (paleta), `charts`, `selo` e `csv` (a parte que não toca o DOM). Os módulos de UI são `map`, `layers`, `ficha`, `projetos`, `resumo`, `trafego`, `cargas`, `mercado`, `debentures`, `regulatorio`, `fontes`, `glossario`, `consorcios`, `ui`, `tabs` e `main`. O e2e usa Playwright com `--test-concurrency=1`, porque em paralelo fica instável.
 - **Cada bloco** tem `fonte` e `tipo` (`modelado`, `medido` ou `cadastro`). A interface rotula modelado × medido e mostra o ano.
@@ -91,7 +90,7 @@ Os cinco roteiros (dados públicos em um comando, nova versão do RoadShow, leil
 - **Planilhas de debêntures** (XP e BTG): são do usuário, ficam em `data/raw/debentures/` e não têm cópia no Drive nem no git. Sem elas o build funciona (o bloco do repositório basta) e os testes que as leem são pulados; para testar o fluxo, use as planilhas sintéticas de `tests/fixtures/debentures/`.
 - **Pastas no Drive:**
   - `Rodovias`: `12dLB6bWWw46hpY6DXwSi-410tFPh5eV2`.
-  - Subpasta `v3-dados`: `1snRqfTWHDxCv_ryc-XGOON7off6QTS-L`, com `manifesto-fontes-v3.csv`, `fontes.json` e `pipeline.csv`, atualizados na v3.1.
+  - Subpasta `v3-dados`: `1snRqfTWHDxCv_ryc-XGOON7off6QTS-L`, com `manifesto-fontes-v3.csv`, `fontes.json` e `pipeline.csv` (atualizados junto com as rotas e o VMDa 2025).
 - **Sem os brutos,** o `build.py` funciona normalmente, porque lê só `data/base/` e `data/intel/`. Os testes que exigem bruto são pulados.
 
 ## 4. Pegadinhas do ambiente
@@ -106,7 +105,7 @@ Os cinco roteiros (dados públicos em um comando, nova versão do RoadShow, leil
 - **O DOU (`www.in.gov.br`) não responde daqui.** Os atos do DOU foram lidos em reproduções oficiais (ANTTlegis, Atlas Público) ou em páginas da ANTT, e cada fonte diz isso no trecho. O extrato da assinatura da Rota da Celulose no DOE-MS também não pôde ser consultado (o site de imprensa oficial de MS responde 403).
 - **Sites do governo de Minas Gerais** (`artemig.mg.gov.br`, `infraestrutura.mg.gov.br`) falham na verificação TLS: um usa a raiz nova da Let's Encrypt (ISRG Root YR) ausente do container e o outro não envia o certificado intermediário. Baixe `root-yr.pem` e `int-yr2.pem` de `letsencrypt.org/certs` (por TLS verificado), acrescente-os a uma **cópia** do bundle do proxy no scratchpad e use `curl --cacert`. Nunca desligue a verificação TLS.
 - **Campo Grande News e a gazeta de MS** respondem 403 de forma intermitente por `curl`; o `WebFetch` ou uma nova tentativa costuma funcionar.
-- **A base do SNV está congelada** em `data/base/`, extraída dos payloads da v2, porque o shapefile não desceu pelo conector. Para regenerar, use `build.py --shp`, que também reescreve `data/base/`. Da base, o build pela base usa só o SNV e o recorte das concessões (`entFis`, `km_mapeado`, `nota_trecho`); os campos curados das concessões e dos estudos (estado, datas, valores, fichas) são relidos de `data/roadshow/entidades.json` e `estudos_pos2027.json` a cada build (`roadshow.conc_da_base`), e `snvOnly` é recalculado com os estados atuais. Basta editar o JSON e rodar `scripts/atualizar.py`. Concessão nova ou removida, ou estudo com outras BRs/UFs, para o build e pede `--shp`.
+- **A base do SNV está congelada** em `data/base/`, extraída dos payloads do primeiro mapa, porque o shapefile não desceu pelo conector. Para regenerar, use `build.py --shp`, que também reescreve `data/base/`. Da base, o build pela base usa só o SNV e o recorte das concessões (`entFis`, `km_mapeado`, `nota_trecho`); os campos curados das concessões e dos estudos (estado, datas, valores, fichas) são relidos de `data/roadshow/entidades.json` e `estudos_pos2027.json` a cada build (`roadshow.conc_da_base`), e `snvOnly` é recalculado com os estados atuais. Basta editar o JSON e rodar `scripts/atualizar.py`. Concessão nova ou removida, ou estudo com outras BRs/UFs, para o build e pede `--shp`.
 - **As rotas do MPO não têm geodado oficial.** Foram extraídas do PDF vetorial (apresentação de 01/07/2026, p. 7) e georreferenciadas por 70 cidades (RMS ~9 km), por isso são rotuladas "esquemático". Os insumos derivados ficam em `data/raw/rotas/derived/`.
 
 ## 5. Decisões já tomadas (não reabrir sem motivo)
@@ -117,7 +116,7 @@ Cada uma com o que custa se estiver errada.
 |---|---|
 | VMDa = 0 vira `null` (sem dado) | trechos de tráfego real ~0 aparecem como "sem dado" |
 | Veículos PNL: anual ÷ 365 | escala diária da carga desloca se a base for dias úteis |
-| Datas de leilão e assinatura do pipeline seguem o valor exibido pela camada de verificação (na v3 seguiam `conc.json`); as demais datas vêm dos campos curados das concessões (base congelada + `entidades.json`, por `roadshow.conc_da_base`) | divergência com a fonte do pipeline quando houver atualização só em um lado |
+| Datas de leilão e assinatura do pipeline seguem o valor exibido pela camada de verificação (antes seguiam `conc.json`); as demais datas vêm dos campos curados das concessões (base congelada + `entidades.json`, por `roadshow.conc_da_base`) | divergência com a fonte do pipeline quando houver atualização só em um lado |
 | Limiares de praça contados por entrada do cadastro | praça com várias entradas pesa mais |
 | SAT: janela de 12 meses com fallback para o último período disponível | período diferente entre SATs |
 | Concessões estaduais desenhadas a partir dos físicos (entFis), com estilo próprio | trechos de cortes aproximados podem sobrar ou faltar |
@@ -135,23 +134,23 @@ Cada uma com o que custa se estiver errada.
 | Cores das rotas aprovadas; camadas temáticas esmaecidas a 0,35 com as rotas ligadas | — |
 | "Uso restrito" só para "Não Simulável" (não para < 200 veíc./dia num sentido) | links de baixo volume sem aviso |
 | VMDa 2025 é a base do Tráfego e do veíc·km; Pesados continua em 2023; pesados 2025 = 2025 × participação 2023, rotulado "estimativa" | estimativa de pesados enviesada onde o mix mudou |
-| **v4:** hierarquia de fontes dos campos de leilão: oficial (ato de órgão público) > RoadShow > imprensa, esta sempre marcada "não oficial" | um valor de imprensa ou do RoadShow aparece onde havia ato oficial não achado |
-| **v4:** o valor do RoadShow que não é o exibido fica registrado como divergência; nada entra sem fonte; `entidades.json` e `mercado.json` não são reescritos | — (reversível) |
-| **v4:** agregados impressos pelo RoadShow (médias da p. 25, faixas da p. 27) continuam como impressos, rotulados; só os cálculos do painel usam o valor exibido | a média impressa (12,36%, 25 leilões) e a exibida (12,83%, 24 leilões, sem a Ponte São Borja) convivem, com nota que explica |
-| **v4:** crédito pelo grupo da época do leilão; aquisição posterior não junta (vira nota) | uma vitória fica com o grupo antigo (ex.: Transbrasiliana 2007 é do BRVias, não da Triunfo) |
-| **v4:** vencedor é o adjudicatário que assinou; quem deu o melhor lance e foi inabilitado é participação com derrota, com nota e data (Rota da Celulose: K&G 9% inabilitado em 04/08/2025; Caminhos da Celulose 8%) | — |
-| **v4:** em vigentes, o "Vencedor" é o da época do leilão (BRVias, OHL Brasil, Planalto…), com o rótulo do RoadShow como divergência e a aquisição como nota | a ficha mostra o vencedor histórico e não o controlador atual |
-| **v4:** OHL Brasil (vencedora dos 5 lotes de 2007) é um grupo próprio no ranking, separado da Arteris: o controle foi vendido em 2012 à Abertis e à Brookfield, e o nome mudou depois; a nota de cada lote explica | a Arteris aparece sem as vitórias de 2007 |
-| **v4:** consórcio no ranking conta para o grupo líder quando a fonte indica, senão para cada grupo nomeado; "razão social do grupo" só exige `fontes` quando a expansão não é óbvia (o teste confere) | alguns nomes triviais sem fonte |
-| **v4:** deságio limitado pelo edital (Rio-SP 15,31%, Araguaia 16,25%, desempate por outorga) tem o flag `limitado_pelo_edital`; entra nas médias e aparece com anel na série | dois pontos com ressalva em vez de excluídos |
-| **v4 (substituída no fechamento pela linha `nao_se_aplica`, abaixo):** Ponte São Borja: 0,38% é ágio sobre a outorga mínima, não deságio de tarifa; deságio `não localizado` (sai de séries e médias), RoadShow fica como divergência | a ficha mostra "—" onde o RoadShow imprime 0,38 |
-| **v4:** `tarifa_teto` e `tarifa_vencedora` são texto (valor, unidade e data-base), porque as unidades variam (R$/praça, R$/100 km) | sem ordenação numérica de tarifas |
-| **v4:** nas otimizações, `assinatura` é o contrato original e `assinatura_aditivo` o aditivo (rótulos distintos); o `prazo_anos` conta do aditivo | — |
-| **v4:** a ficha mostra também tarifa-teto, tarifa vencedora e prazo da concessão (campos de leilão da spec) | o prazo pode repetir um valor dos extras |
-| **v4:** o início da operação da Rota da Celulose fica "não localizado" (o do RoadShow, 30/12/2025, é anterior à assinatura exibida) | um campo com "—" |
-| **v4:** Rota dos Sertões passou de "leiloado" a "contrato" no pipeline, com a assinatura de 29/09/2026 | uma linha do pipeline |
-| **v4:** a nota de `mercado.concorrentes_desagio` foi reescrita (comentário nosso, não transcrição) em `mercado.json`, em `data/base/conc.json` e em `scripts/extract/mercado.py` | o texto diverge da promessa de "intocado" |
-| **v4:** Via Liberdade segue como concessão na lista; a natureza de PPP estadual é só nota | a esfera da entidade fica como no RoadShow |
+| hierarquia de fontes dos campos de leilão: oficial (ato de órgão público) > RoadShow > imprensa, esta sempre marcada "não oficial" | um valor de imprensa ou do RoadShow aparece onde havia ato oficial não achado |
+| o valor do RoadShow que não é o exibido fica registrado como divergência; nada entra sem fonte; `entidades.json` e `mercado.json` não são reescritos | — (reversível) |
+| agregados impressos pelo RoadShow (médias da p. 25, faixas da p. 27) continuam como impressos, rotulados; só os cálculos do painel usam o valor exibido | a média impressa (12,36%, 25 leilões) e a exibida (12,83%, 24 leilões, sem a Ponte São Borja) convivem, com nota que explica |
+| crédito pelo grupo da época do leilão; aquisição posterior não junta (vira nota) | uma vitória fica com o grupo antigo (ex.: Transbrasiliana 2007 é do BRVias, não da Triunfo) |
+| vencedor é o adjudicatário que assinou; quem deu o melhor lance e foi inabilitado é participação com derrota, com nota e data (Rota da Celulose: K&G 9% inabilitado em 04/08/2025; Caminhos da Celulose 8%) | — |
+| em vigentes, o "Vencedor" é o da época do leilão (BRVias, OHL Brasil, Planalto…), com o rótulo do RoadShow como divergência e a aquisição como nota | a ficha mostra o vencedor histórico e não o controlador atual |
+| OHL Brasil (vencedora dos 5 lotes de 2007) é um grupo próprio no ranking, separado da Arteris: o controle foi vendido em 2012 à Abertis e à Brookfield, e o nome mudou depois; a nota de cada lote explica | a Arteris aparece sem as vitórias de 2007 |
+| consórcio no ranking conta para o grupo líder quando a fonte indica, senão para cada grupo nomeado; "razão social do grupo" só exige `fontes` quando a expansão não é óbvia (o teste confere) | alguns nomes triviais sem fonte |
+| deságio limitado pelo edital (Rio-SP 15,31%, Araguaia 16,25%, desempate por outorga) tem o flag `limitado_pelo_edital`; entra nas médias e aparece com anel na série | dois pontos com ressalva em vez de excluídos |
+| (Substituída pela linha `nao_se_aplica`, abaixo.) Ponte São Borja: 0,38% é ágio sobre a outorga mínima, não deságio de tarifa; deságio `não localizado` (sai de séries e médias), RoadShow fica como divergência | a ficha mostra "—" onde o RoadShow imprime 0,38 |
+| `tarifa_teto` e `tarifa_vencedora` são texto (valor, unidade e data-base), porque as unidades variam (R$/praça, R$/100 km) | sem ordenação numérica de tarifas |
+| nas otimizações, `assinatura` é o contrato original e `assinatura_aditivo` o aditivo (rótulos distintos); o `prazo_anos` conta do aditivo | — |
+| a ficha mostra também tarifa-teto, tarifa vencedora e prazo da concessão (campos de leilão da spec) | o prazo pode repetir um valor dos extras |
+| o início da operação da Rota da Celulose fica "não localizado" (o do RoadShow, 30/12/2025, é anterior à assinatura exibida) | um campo com "—" |
+| Rota dos Sertões passou de "leiloado" a "contrato" no pipeline, com a assinatura de 29/09/2026 | uma linha do pipeline |
+| a nota de `mercado.concorrentes_desagio` foi reescrita (comentário nosso, não transcrição) em `mercado.json`, em `data/base/conc.json` e em `scripts/extract/mercado.py` | o texto diverge da promessa de "intocado" |
+| Via Liberdade segue como concessão na lista; a natureza de PPP estadual é só nota | a esfera da entidade fica como no RoadShow |
 | **Fechamento:** `nao_se_aplica` é um marcador próprio da camada (hoje só no deságio), com selo próprio, em vez de "não localizado" | o selo diz "não se aplica" onde alguém acharia que o dado existe e não foi achado |
 | **Fechamento:** Régis Bittencourt mostra 15 anos (minuta do aditivo e página da ANTT) e registra os 25 anos da B3 como divergência declarada (`alternativas`) | se a B3 estiver certa, a ficha mostra 15 e a B3 aparece só no ícone de divergência |
 | **Fechamento:** "RoadShow: …" só aparece quando o nome impresso é de outro grupo econômico; o teste de "mesmo grupo" compara também a grafia normalizada e o início do nome | um rótulo diferente do mesmo grupo (ex.: "Ecorodovias e SBS Engenharia", ECO101 2012) fica escondido |
@@ -178,7 +177,7 @@ Cada uma com o que custa se estiver errada.
 | Debêntures: o arquivo do Tesouro atrasa alguns dias; os últimos dias ficam sem spread em vez de usar a curva do último dia disponível | a tela mostra "—" nos dias mais recentes até o Tesouro publicar |
 | Debêntures: o universo é a lista curada `data/debentures/emissores.json`, não a coluna "Setor" da tela BTG (que põe concessionárias de rodovia em "Comércio" e "Construção Civil"); emissor sem classificação fica fora da página e vai para a curadoria | um emissor de transporte novo só entra depois de classificado |
 | Debêntures: `grupo` é `null` quando o controlador não está confirmado (Entrevias, MetrôRio e MS-306 ficaram assim depois da conferência em fontes públicas) | esses emissores não somam em nenhum grupo |
-| Debêntures: taxa fora de (−10, 50] % a.a. (DI+: (−5, 20]; % DI: 0 a 300) é erro provável de digitação: sai das médias e do spread, mas conta no volume e no número, e vai para a curadoria; negócio de volume zero conta no número e nunca é o "último negócio"; a Selic é o último valor até a data de hoje (a série traz datas futuras) | uma taxa real extrema ficaria fora das médias até alguém confirmar |
+| Debêntures: taxa fora de (−10, 50] % a.a. (DI+: (−5, 20]; % DI: 0 a 300) é erro provável de digitação: sai das médias e do spread, mas conta no volume e no número, e vai para a curadoria; negócio de volume zero conta no número e nunca é o "último negócio"; a Selic é o último valor até o dia do download do arquivo (a série traz datas futuras), e o bloco não depende do dia em que o build roda | uma taxa real extrema ficaria fora das médias até alguém confirmar |
 | Consórcios: o grupo é o da época do leilão; quando o integrante é um fundo sem controlador identificado em registro, o grupo é o próprio nome (Infra I FIP, do 116 Sertões); participação `null` quando não publicada; composição não localizada fica `integrantes: []` com nota dizendo onde se procurou | a ficha mostra "composição não localizada" onde existe composição ainda não achada |
 | Consórcios: comunicado de empresa e brief de organismo multilateral entram como fonte `imprensa` ("não oficial"), porque o validador só aceita `oficial` em domínio de órgão público ou da B3 | 4 fontes ficam com a marca "não oficial" mesmo sendo primárias |
 | Mercado, diagnóstico por ano: de 2023 a 2025 só a extensão concedida (RoadShow p. 37) é mostrada; contratos, valor e investimento acumulado ficam "—" ("não publicado"), sem reconstruir a partir das concessões de hoje ou da série da ANTT | a tabela tem buracos que o RoadShow não preenche |
@@ -235,4 +234,4 @@ Nada disto se resolve daqui; cada item diz o que falta.
 
 ## 7. Processo usado
 
-Brainstorming e spec, depois plano, depois execução por subagentes: uma tarefa por vez, cada uma com brief, implementação com TDD, revisão de spec e revisão de qualidade. No fim, uma revisão do branch inteiro e uma rodada de correções (no fechamento da v4, cada tarefa teve revisão própria e as correções saíram em rodadas; o histórico do PR mostra quais). Antes de abrir o PR, rodar as três suítes e `python scripts/atualizar.py` (ou `python scripts/build.py`), conferindo o tamanho; o e2e exige o HTML gerado antes. O desenvolvimento é feito num branch `claude/*` e entra na `main` por PR, com merge só quando o usuário pede.
+Brainstorming e spec, depois plano, depois execução por subagentes: uma tarefa por vez, cada uma com brief, implementação com TDD, revisão de spec e revisão de qualidade. No fim, uma revisão do branch inteiro e uma rodada de correções (no fechamento da verificação dos leilões, cada tarefa teve revisão própria e as correções saíram em rodadas; o histórico do PR mostra quais). Antes de abrir o PR, rodar as três suítes e `python scripts/atualizar.py` (ou `python scripts/build.py`), conferindo o tamanho; o e2e exige o HTML gerado antes. O desenvolvimento é feito num branch `claude/*` e entra na `main` por PR, com merge só quando o usuário pede.

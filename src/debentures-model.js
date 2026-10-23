@@ -1,6 +1,6 @@
 // Aba Debêntures: cálculos puros (sem DOM) sobre o bloco window.INTEL.debentures. O bloco traz só agregados (por dia, emissor
 // e subsetor) e o último negócio de cada papel. Taxa média e spread vêm com o peso (volume) de cada média, por indexador:
-// médias de indexadores diferentes (IPCA+, CDI+, prefixado) nunca se misturam, e as intenções de compra e venda podem ser
+// médias de indexadores diferentes (IPCA+, DI+, % do DI, prefixada) nunca se misturam, e as intenções de compra e venda podem ser
 // somadas aos negócios recombinando as médias pelos pesos, sem perder exatidão (series com somado: true).
 const DebenturesModel = (() => {
   const DASH = '—';
@@ -11,7 +11,7 @@ const DebenturesModel = (() => {
   const nf0 = nf(0), nf1 = nf(1), nf2 = nf(2);
   const collator = new Intl.Collator('pt-BR');
   const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
-  const INDEXADORES = ['IPCA+', 'DI+', 'PRÉ'];  // ordem de exibição; outros indexadores vêm depois, em ordem alfabética
+  const INDEXADORES = ['IPCA+', 'DI+', '% DI', 'PRÉ'];  // ordem de exibição; outros indexadores vêm depois, em ordem alfabética
   const MEDIDAS = ['volume', 'n', 'taxa_media', 'volume_taxa', 'spread_medio', 'volume_spread', 'por_direcao'];
 
   // ---------- formatação ----------
@@ -35,20 +35,24 @@ const DebenturesModel = (() => {
   }
   const fmtDiaMes = s => (s ? String(s).split('-').slice(1).reverse().join('/') : DASH);
 
-  // Taxa de um papel, escrita como o mercado a escreve: "IPCA + 7,34%", "CDI + 0,50%", "prefixada 13,50%".
+  // Um só vocabulário para o indexador, na coluna "Indexador", nas taxas e nos textos: o dado traz IPCA+, DI+, % DI e PRÉ.
+  const ROTULO_INDEXADOR = { 'IPCA+': 'IPCA+', 'DI+': 'DI+', '% DI': '% do DI', 'PRÉ': 'Prefixada' };
+  const rotuloIndexador = ix => ROTULO_INDEXADOR[ix] || ix || DASH;
+  // Taxa de um papel, escrita como o mercado a escreve: "IPCA + 7,34%", "DI + 0,50%", "105,00% do DI", "Prefixada 13,50%".
   function taxaTexto(indexador, taxa) {
     if (!num(taxa)) return DASH;
     const t = nf2.format(taxa);
     if (indexador === 'IPCA+') return `IPCA + ${t}%`;
-    if (indexador === 'DI+') return `CDI + ${t}%`;
-    if (indexador === 'PRÉ') return `prefixada ${t}%`;
+    if (indexador === 'DI+') return `DI + ${t}%`;
+    if (indexador === '% DI') return `${t}% do DI`;
+    if (indexador === 'PRÉ') return `Prefixada ${t}%`;
     return `${indexador || ''} ${t}%`.trim();
   }
   const ordemIndexador = (a, b) => {
     const ia = INDEXADORES.indexOf(a), ib = INDEXADORES.indexOf(b);
     return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || collator.compare(a, b);
   };
-  // {"IPCA+": 8.35, "DI+": 0.6} -> "IPCA + 8,35%; CDI + 0,60%": uma taxa por indexador, nunca uma média entre eles
+  // {"IPCA+": 8.35, "DI+": 0.6} -> "IPCA + 8,35%; DI + 0,60%": uma taxa por indexador, nunca uma média entre eles
   function taxaMediaTexto(dict) {
     const ks = Object.keys(dict || {}).filter(k => num(dict[k])).sort(ordemIndexador);
     return ks.length ? ks.map(k => taxaTexto(k, dict[k])).join('; ') : DASH;
@@ -145,15 +149,15 @@ const DebenturesModel = (() => {
 
   // ---------- indicadores macroeconômicos e curva de NTN-B ----------
   const MACRO = [
-    ['selic', 'Selic meta', 'a.a.', 'taxa básica de juros definida pelo Copom', 'selic'],
-    ['cdi', 'CDI', 'a.a.', 'taxa diária dos empréstimos entre bancos, anualizada', 'cdi'],
-    ['ipca12m', 'IPCA em 12 meses', '', 'inflação acumulada nos 12 meses até o mês indicado', 'ipca'],
-    ['focus_ipca', 'Expectativa de IPCA (Focus)', '', 'mediana das projeções do mercado para a inflação dos próximos 12 meses', 'focus'],
+    ['selic', 'Selic meta', 'a.a.', 'taxa básica de juros definida pelo Copom'],
+    ['cdi', 'CDI', 'a.a.', 'taxa diária dos empréstimos entre bancos, anualizada'],
+    ['ipca12m', 'IPCA em 12 meses', '', 'inflação acumulada nos 12 meses até o mês indicado'],
+    ['focus_ipca', 'Expectativa de IPCA (Focus)', '', 'mediana das projeções do mercado para a inflação dos próximos 12 meses'],
   ];
   function macro(bloco) {
     const m = (bloco && bloco.macro) || {};
-    return MACRO.filter(([k]) => m[k] && num(m[k].valor)).map(([k, rotulo, un, explica, termo]) => ({
-      id: k, rotulo, explica, termo, valor: `${nf2.format(m[k].valor)}%${un ? ` ${un}` : ''}`, data: fmtData(m[k].data),
+    return MACRO.filter(([k]) => m[k] && num(m[k].valor)).map(([k, rotulo, un, explica]) => ({
+      id: k, rotulo, explica, valor: `${nf2.format(m[k].valor)}%${un ? ` ${un}` : ''}`, data: fmtData(m[k].data),
       bruto: m[k].valor }));
   }
   function curvaNtnb(bloco) {
@@ -170,6 +174,26 @@ const DebenturesModel = (() => {
     return ate && fim && fim > ate
       ? `O Tesouro Nacional publicou a curva até ${fmtData(ate)}: nos negócios dos dias seguintes (até ${fmtData(fim)}) o spread aparece como “${DASH}”.` : '';
   }
+  // Linha "Fonte:" curta dos cartões: quem forneceu e o período; nome completo, licença e nota ficam na aba Fontes.
+  // o.corretoras: ['BTG', 'XP'] (as que existem no bloco); o.periodo: 'dados' (período dos negócios e intenções), 'tela'
+  // (data da tela) ou 'intencoes'; o.bcb: Banco Central; o.tesouro: curva das NTN-B (com o.curva, "curva de dd/mm/aaaa").
+  function fonteCurta(bloco, o = {}) {
+    const list = bloco && bloco.fonte ? (Array.isArray(bloco.fonte) ? bloco.fonte : [bloco.fonte]) : [];
+    const acha = re => list.find(x => x && re.test(x.nome || ''));
+    const partes = [];
+    const corr = (o.corretoras || []).map(c => [c, acha(new RegExp(`^${c}\\b`))]).filter(([, f]) => f);
+    if (corr.length) {
+      const nome = corr.length > 1 ? `Corretoras ${corr.map(([c]) => c).join(' e ')}` : `Corretora ${corr[0][0]}`;
+      const dePeriodo = (f, rotulo) => { const m = new RegExp(`${rotulo} de ([^;]+)`).exec((f && f.periodo) || ''); return m ? m[1].trim() : ''; };
+      const per = o.periodo === 'dados' ? periodoTexto(bloco.secundario && bloco.secundario.periodo)
+        : o.periodo === 'tela' ? `telas de ${dePeriodo(corr[0][1], 'tela')}`.replace(/ de $/, '')
+        : o.periodo === 'intencoes' ? `intenções de ${dePeriodo(corr[0][1], 'intenções')}`.replace(/ de $/, '') : '';
+      partes.push(per ? `${nome}, ${per}` : nome);
+    }
+    if (o.bcb && (acha(/Banco Central/))) partes.push('Banco Central do Brasil');
+    if (o.tesouro && acha(/Tesouro Nacional/)) partes.push(o.curva && curvaAte(bloco) ? `Tesouro Nacional, curva de ${fmtData(curvaAte(bloco))}` : 'Tesouro Nacional (curva das NTN-B)');
+    return partes.join('; ') || DASH;
+  }
   const periodoTexto = p => (p && p.de && p.ate ? `${fmtData(p.de)} a ${fmtData(p.ate)}` : '');
 
   // ---------- tabelas ----------
@@ -180,7 +204,7 @@ const DebenturesModel = (() => {
     { k: 'emissor', rotulo: 'Emissor', fmt: l => txt(l.emissor) },
     { k: 'subsetor', rotulo: 'Subsetor', fmt: l => txt(l.subsetor) },
     { k: 'grupo', rotulo: 'Grupo', fmt: l => txt(l.grupo) },
-    { k: 'indexador', rotulo: 'Indexador', fmt: l => txt(l.indexador) },
+    { k: 'indexador', rotulo: 'Indexador', fmt: l => rotuloIndexador(l.indexador) },
     { k: 'taxa_emissao', rotulo: 'Taxa na emissão', num: true, fmt: l => taxaTexto(l.indexador, l.taxa_emissao) },
     { k: 'vencimento', rotulo: 'Vencimento', num: true, fmt: l => fmtData(l.vencimento) },
     { k: 'volume_emitido', rotulo: 'Volume emitido', num: true, fmt: l => fmtVolume(l.volume_emitido) },
@@ -218,7 +242,7 @@ const DebenturesModel = (() => {
     { k: 'ticker', rotulo: 'Papel', fmt: l => txt(l.ticker) },
     { k: 'emissor', rotulo: 'Emissor', fmt: l => txt(l.emissor) },
     { k: 'subsetor', rotulo: 'Subsetor', fmt: l => txt(l.subsetor) },
-    { k: 'indexador', rotulo: 'Indexador', fmt: l => txt(l.indexador) },
+    { k: 'indexador', rotulo: 'Indexador', fmt: l => rotuloIndexador(l.indexador) },
     { k: 'vencimento', rotulo: 'Vencimento', num: true, fmt: l => fmtData(l.vencimento) },
     { k: 'quando', rotulo: 'Data e hora', num: true, fmt: l => `${fmtData(l.data)}${l.hora ? ` ${l.hora}` : ''}` },
     { k: 'taxa', rotulo: 'Taxa', num: true, fmt: l => taxaTexto(l.indexador, l.taxa) },
@@ -236,8 +260,8 @@ const DebenturesModel = (() => {
     return d && Array.isArray(d.serie) && d.serie.length ? d : null;
   }
 
-  return { ROTULO_NEGOCIOS, ROTULO_SOMADO, DASH, mediaDe, somaLinha, mesclar, series, kpis, intencoes, macro, curvaNtnb, curvaAte, notaCurva, periodoTexto,
-    tabelaEmissoes, tabelaEmissores, tabelaUltimo, serieIncentivadas, taxaIpca, taxaTexto, taxaMediaTexto,
+  return { ROTULO_NEGOCIOS, ROTULO_SOMADO, DASH, mediaDe, somaLinha, mesclar, series, kpis, intencoes, macro, curvaNtnb, curvaAte, notaCurva, periodoTexto, fonteCurta,
+    tabelaEmissoes, tabelaEmissores, tabelaUltimo, serieIncentivadas, taxaIpca, taxaTexto, taxaMediaTexto, rotuloIndexador,
     fmtPct, fmtPp, fmtInt, fmtVolume, fmtData, fmtDiaMes };
 })();
 

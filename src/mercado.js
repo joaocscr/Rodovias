@@ -20,7 +20,7 @@ const Mercado = (() => {
   function card(id, title, sub, opts = {}) {
     const note = m.notas && m.notas[opts.key] ? `<p class="src">Nota: ${esc(m.notas[opts.key])}</p>` : '';
     return `<article class="ccard${opts.wide ? ' ccard--wide' : ''}" id="card-${id}">
-      <h3>${esc(title)}</h3>${sub ? `<p class="sub">${esc(sub)}</p>` : ''}
+      <h3>${esc(title)}</h3>${sub || opts.subHtml ? `<p class="sub">${esc(sub || '')}${opts.subHtml || ''}</p>` : ''}
       ${opts.legend || ''}<div class="chart-box" id="chart-${id}">${opts.html || ''}</div>${opts.foot || ''}
       <p class="src">Fonte: ${esc(opts.src || roadshow(opts.key || id))}</p>${note}</article>`;
   }
@@ -168,7 +168,8 @@ const Mercado = (() => {
             .filter(([v]) => v != null).map(([v, l]) => `<div class="kpi-tile"><b>${nf1.format(v)}</b><span>${l}</span></div>`).join('')}</div>` })}
         ${card('leiloes', 'Leilões por ano', comPeriodo('Número de leilões de concessões rodoviárias federais (ANTT)', periodoSerie(m.leiloes_por_ano)), { key: 'leiloes_por_ano', wide: true,
           legend: Charts.legendHtml([['Realizados', Charts.C.deep], ['Previstos', Charts.C.bright, 0.45]]) })}
-        ${card('serie', comPeriodo(SERIE_TITULO, pPart), 'Desconto sobre a tarifa-teto oferecido pelo vencedor de cada leilão, na data do leilão', { wide: true,
+        ${card('serie', comPeriodo(SERIE_TITULO, pPart), 'Desconto sobre a tarifa-teto oferecido pelo vencedor de cada leilão, na data do leilão.', { wide: true,
+          subHtml: ` Leilões decididos pela maior ${Glossario.link('outorga', 'outorga')} não têm deságio de tarifa e ficam de fora${regra ? `; a linha tracejada marca o limite do ${Glossario.link('aporte-recursos-vinculados', 'aporte de recursos vinculados')}` : ''}.`,
           src: `${verificado}; RoadShow 2026-2027, ${pages(m.fontes.participantes)}, onde não há documento conferido`,
           legend: `<div id="serie-legenda">${Charts.legendHtml([{ label: 'oficial', color: C.deep, shape: 'dot' }, { label: 'RoadShow', color: C.bright, shape: 'dot' },
             { label: 'imprensa — não oficial', color: C.grey, shape: 'ring' },

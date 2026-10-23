@@ -194,7 +194,7 @@ const LeiloesModel = (() => {
       const g = rankingGrupos(doPrograma, conc.grupos_alias).filter(r => r.vitorias > 0).length;
       if (g) {
         out.push({ id: 'grupos', rotulo: `Grupos econômicos vencedores dos leilões federais de ${periodoAnos(doPrograma.map(p => p.ano))}`, valor: g, texto: f0.format(g),
-          unidade: 'grupos', fonte: `vencedor (adjudicatário) pela ${fonteCampo(doPrograma, 'grupo_vencedor', m, 'participantes')}; grupo da época do leilão` });
+          unidade: 'grupos', fonte: `vencedor (adjudicatário): ${fonteCampo(doPrograma, 'grupo_vencedor', m, 'participantes')}; grupo da época do leilão` });
       }
     }
     out.forEach(k => { if (k.nota == null) delete k.nota; });  // linha secundária só quando existe

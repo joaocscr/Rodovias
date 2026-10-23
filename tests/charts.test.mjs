@@ -316,3 +316,27 @@ test('ticksFrom: marcas entre o mínimo e o máximo, a primeira no múltiplo do 
   assert.deepEqual(Charts.ticksFrom(6.71, 6.83), [6.7, 6.75, 6.8, 6.85]);
   assert.deepEqual(Charts.ticksFrom(5, 5), [5]);
 });
+
+test('hbarsSvg: rótulo comprido termina em "…" com o texto inteiro na dica, e a coluna cresce até 55% da largura', () => {
+  const longo = 'Deságio médio por número de concorrentes (7 leilões)';
+  const svg = Charts.hbarsSvg([{ label: longo, value: 3 }, { label: 'Curto', value: 1 }], { width: 342 });
+  const texto = svg.match(/<text x="(\d+)" y="\d+" text-anchor="end" fill="#231F20">(.*?)<\/text>/);
+  assert.ok(Number(texto[1]) <= 342 * 0.55, 'coluna de rótulos limitada a 55% da largura');
+  assert.match(texto[2], new RegExp(`^<title>${longo.replace(/[()]/g, '\\$&')}</title>.+…$`));
+  const curto = svg.match(/fill="#231F20">(Curto)<\/text>/);
+  assert.ok(curto, 'rótulo que cabe não leva título nem reticências');
+  const largo = Charts.hbarsSvg([{ label: longo, value: 3 }], { width: 900 });
+  assert.ok(largo.includes(`fill="#231F20">${longo}</text>`), 'com espaço o rótulo aparece inteiro');
+});
+
+test('hstackSvg: rótulo cortado leva o texto inteiro na dica do rótulo', () => {
+  const svg = Charts.hstackSvg([{ label: 'Concessionária de Rodovias do Interior Paulista S.A.', parts: [3] }], { width: 342, labelWidth: 280 });
+  assert.match(svg, /<title>Concessionária de Rodovias do Interior Paulista S\.A\.<\/title>[^<]+…<\/text>/);
+  assert.ok(Number(svg.match(/<text x="(\d+)" y="\d+" text-anchor="end"/)[1]) <= 342 * 0.55);
+});
+
+test('linesSvg: o último rótulo do eixo x cabe na margem direita', () => {
+  const svg = Charts.linesSvg([{ name: 'S', points: [{ x: 2029, y: 1 }, { x: 2055, y: 2 }] }], { width: 342, stepX: 6 });
+  const ultimo = [...svg.matchAll(/<text x="([\d.]+)" y="\d+" text-anchor="middle" fill="#525254">(\d{4})<\/text>/g)].pop();
+  assert.ok(Number(ultimo[1]) + 15 <= 342, `último rótulo em x=${ultimo[1]}`);
+});

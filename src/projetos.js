@@ -128,7 +128,7 @@ const Projetos = (() => {
     const acesso = (intel.pipeline.fonte || []).map(f => f && f.acesso).filter(Boolean).sort().pop();
     return `<section id="pipeline" class="pipeline">
       <h2 class="page__title" style="font-size:22px;margin-top:40px">Pipeline</h2>
-      <p class="page__lead">Próximos passos de concessões rodoviárias federais e estaduais (estudo, consulta pública, TCU/TCE, edital, leilão), por data prevista; sem data no fim.
+      <p class="page__lead">Próximos passos de concessões rodoviárias federais e estaduais (estudo, consulta pública, ${Glossario.link('tcu', 'TCU')}/TCE, edital, leilão), por data prevista; sem data no fim.
         Itens com a etiqueta “não verificado” vêm de uma única fonte secundária. Clique numa linha com ficha (federal ou estadual) para abri-la; “Observação” abre o detalhe do item.</p>
       <article class="ccard ccard--wide pipeline__tl" id="pipe-timeline" hidden></article>
       <div class="toolbar">
@@ -206,7 +206,7 @@ const Projetos = (() => {
       <p class="page__lead">Concessões rodoviárias federais${anos.length ? ` (contratos e programa ${anos[0]}–${anos[anos.length - 1]})` : ''}${hasEst ? ' e estaduais' : ''}; ${Glossario.link('capex', 'capex')} e ${Glossario.link('opex')} em R$ bi. Cada linha abre a ficha.</p>
       ${toolbar()}
       <div class="table-wrap"><table class="grid" id="proj-table" data-csv-name="projetos-comparador"></table></div>
-      <p class="page__src" id="proj-nota">Programa: carteira federal de concessões rodoviárias do Ministério dos Transportes${anos.length ? ` (${anos[0]}–${anos[anos.length - 1]})` : ''}. Capex e opex na base comparável (tabelas${base ? ` em ${esc(base)}` : ''} quando existirem; senão, a ${Glossario.link('data-base', 'data-base')} da ficha, indicada na coluna). "Leilão ou assinatura": data de assinatura nos contratos federais ${anos.length ? `anteriores a ${anos[0]}` : 'anteriores ao programa'}${hasEst ? ' e nas concessões estaduais' : ''}; data do leilão nos demais.</p>
+      <p class="page__src" id="proj-nota">Programa: carteira federal de concessões rodoviárias do Ministério dos Transportes${anos.length ? ` (${anos[0]}–${anos[anos.length - 1]})` : ''}. Capex e opex na base comparável (tabelas${base ? ` em ${esc(base)}` : ''} quando existirem; senão, a ${Glossario.link('data-base', 'data-base')} da ficha, indicada na coluna). "Leilão ou assinatura": data de assinatura nos contratos federais ${anos.length ? `anteriores a ${anos[0]}` : 'anteriores ao programa'}${hasEst ? ' e nas concessões estaduais' : ''}; data do leilão nos demais. Siglas das colunas: ${Glossario.link('wacc', 'WACC')} (custo de capital do projeto) e ${Glossario.link('tkm', 'TKM')} (tarifa por quilômetro); nas colunas opcionais, ${Glossario.link('vpl', 'VPL')} (valor presente da receita), ${Glossario.link('veq', 'VEQ')} (veículos equivalentes por dia nas praças) e os pórticos do pedágio ${Glossario.link('free-flow', 'free flow')}.</p>
       ${pipelineSection()}
       ${estudos()}</div>`;
     renderTable();

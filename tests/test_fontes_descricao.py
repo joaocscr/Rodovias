@@ -107,7 +107,7 @@ def test_siglas_de_orgaos_sao_explicadas_na_primeira_mencao():
 
 def test_roadshow_e_explicado_sem_sigla_solta():
     d = descricoes()["roadshow"]["oQue"]
-    assert d.startswith("Apresentação do Ministério dos Transportes a investidores sobre a carteira de concessões rodoviárias 2026–2027")
+    assert d.startswith("Apresentação do Ministério dos Transportes a investidores sobre a carteira de concessões rodoviárias")
 
 
 def test_build_embute_as_descricoes(tmp_path):

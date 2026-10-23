@@ -20,7 +20,7 @@ const Cargas = (() => {
   }
   const tile = (id, value, label) => `<div class="kpi-tile" id="${id}"><b>${esc(value)}</b><span>${esc(label)}</span></div>`;
   const box = id => document.getElementById('chart-' + id);
-  const width = el => Math.max(320, (el && el.clientWidth) || 640);
+  const width = el => Math.max(280, (el && el.clientWidth) || 640);
   const agro = () => intel.agro || null, mm = () => intel.multimodal || null;
   const pam = () => fonte(agro(), /PAM/), est = () => fonte(agro(), /Estoques/);
 

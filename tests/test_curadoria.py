@@ -116,6 +116,15 @@ def test_fonte_antiga():
     assert "20/10/2025" in itens[0]["motivo"] and "366 dias" in itens[0]["motivo"]
 
 
+def test_planilha_de_corretora_antiga_pede_planilha_nova():
+    conc, intel, verif = _em_dia()
+    intel["fontes"]["fontes"].append({"bloco": "debentures", "nome": "BTG — tela", "url": "https://b", "acesso": "2025-10-01",
+                                      "licenca": "Dados de corretora, fornecidos ao projeto; uso restrito"})
+    itens = curadoria.itens(conc, intel, verif, hoje=HOJE)
+    assert _tipos(itens) == [("fonte_antiga", "BTG — tela (debentures)")]
+    assert "data/raw/debentures/" in itens[0]["motivo"] and "--renovar" not in itens[0]["motivo"]
+
+
 def test_nome_sem_grupo():
     conc, intel, verif = _em_dia()
     conc["mercado"]["participantes"][0]["outros"].append({"grupo": "Consórcio Novo"})

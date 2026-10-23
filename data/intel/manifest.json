@@ -1,6 +1,6 @@
 {
- "arquivos": 269,
- "bytes": 1360942766,
+ "arquivos": 271,
+ "bytes": 1361576471,
  "itens": [
   {
    "dominio": "agro",
@@ -1123,6 +1123,28 @@
    "periodo": "",
    "licenca": "Licença Aberta para Bases de Dados (ODbL) do Open Data Commons",
    "acesso": "2026-10-22"
+  },
+  {
+   "dominio": "debentures",
+   "descricao": "Planilha de debêntures das corretoras, fornecida ao projeto",
+   "url": "",
+   "arquivo": "data/raw/debentures/tela.xlsx",
+   "bytes": 233516,
+   "sha256": "69c99913e89034328a5a57531ffaffc7b8e8399e7d8fb050e20fd1007163c10e",
+   "periodo": "",
+   "licenca": "Dados de corretora, fornecidos ao projeto; uso restrito",
+   "acesso": "2026-10-23"
+  },
+  {
+   "dominio": "debentures",
+   "descricao": "Planilha de debêntures das corretoras, fornecida ao projeto",
+   "url": "",
+   "arquivo": "data/raw/debentures/trades.xlsx",
+   "bytes": 400189,
+   "sha256": "03a2abdd2c9bb3f43446bda664ab5ed941f1603f08683d0609ee0cd275d5be5b",
+   "periodo": "",
+   "licenca": "Dados de corretora, fornecidos ao projeto; uso restrito",
+   "acesso": "2026-10-23"
   },
   {
    "dominio": "estaduais",

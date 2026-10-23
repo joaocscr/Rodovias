@@ -41,7 +41,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from intel import debentures_planilhas as _planilhas  # noqa: E402
 from intel.debentures_planilhas import ler_negocios, ler_telas  # noqa: E402,F401 — leitores padrão de `montar`
 from intel.debentures_texto import normalizar, para_data, taxa_pct  # noqa: E402
-from intel.fontes import RAW, ROOT, Manifest, fetch as _fetch  # noqa: E402
+from intel.fontes import RAW, ROOT, Manifest, fetch as _fetch, sha256  # noqa: E402
 
 PASTA = RAW / "debentures"
 PUBLICO = PASTA / "publico"
@@ -298,14 +298,23 @@ def _ler_json(path):
         return None
 
 
-def _macro(publico, hoje):
-    """(macro, curvas, séries ausentes). Vale o último valor até `hoje` (a Selic meta vem publicada para os dias
-    seguintes, até a próxima reunião do Copom). Série sem arquivo (ou ilegível) fica None e vai para as pendências."""
+def _baixado(manifesto, urls):
+    """Dia do último download dos arquivos de `urls` (o mais recente entre eles), ou None se o manifesto não os traz."""
+    datas = [i.get("baixado") or i["acesso"] for i in manifesto.items if i.get("url") in urls and i.get("acesso")]
+    return max(datas) if datas else None
+
+
+def _macro(publico, hoje, manifesto):
+    """(macro, curvas, séries ausentes). Vale o último valor até o dia em que o arquivo da série foi baixado (a Selic
+    meta vem publicada para os dias seguintes, até a próxima reunião do Copom: nunca vale uma data posterior ao
+    download); sem registro do download no manifesto, até `hoje`. Assim o resultado depende do arquivo, não do dia em
+    que o build roda. Série sem arquivo (ou ilegível) fica None e vai para as pendências."""
     publico = Path(publico)
     macro, ausentes = {}, []
-    for chave, (_, _, arq) in SERIES.items():
+    for chave, (cod, n, arq) in SERIES.items():
         dados = _ler_json(publico / arq)
-        validos = [d for d in dados if (para_data(d.get("data")) or "9") <= hoje] if isinstance(dados, list) else []
+        limite = _baixado(manifesto, {SGS.format(cod, n)}) or hoje
+        validos = [d for d in dados if (para_data(d.get("data")) or "9") <= limite] if isinstance(dados, list) else []
         ult = validos[-1] if validos else None
         if not ult:
             macro[chave] = None
@@ -348,15 +357,28 @@ def _intervalo(datas):
     return _br(datas[0]) if datas[0] == datas[-1] else f"{_br(datas[0])} a {_br(datas[-1])}"
 
 
-def _acesso(urls, padrao):
-    datas = [i["acesso"] for i in Manifest("debentures").items if i["url"] in urls]
-    return max(datas) if datas else padrao
+def registrar_planilhas(manifesto, arquivos, hoje):
+    """Registra no manifesto as planilhas do usuário (arquivo, SHA-256, `acesso`). `acesso` é o dia em que o conteúdo
+    foi visto pela primeira vez: o mesmo SHA-256, com o mesmo nome ou outro, mantém a data; arquivo novo ou alterado
+    leva `hoje`. Assim o bloco não muda quando o build roda de novo em outro dia. Planilha que saiu da pasta sai do
+    manifesto. Devolve {caminho: acesso}."""
+    antes = {i["sha256"]: i["acesso"] for i in manifesto.items if not i.get("url") and i.get("acesso")}
+    novos, acessos = [], {}
+    for p in arquivos:
+        p = Path(p)
+        sha = sha256(p)
+        acessos[p] = antes.get(sha, hoje)
+        novos.append({"dominio": "debentures", "descricao": "Planilha de debêntures das corretoras, fornecida ao projeto",
+                      "url": "", "arquivo": _rel(p), "bytes": p.stat().st_size, "sha256": sha, "periodo": "",
+                      "licenca": "Dados de corretora, fornecidos ao projeto; uso restrito", "acesso": acessos[p]})
+    manifesto.items = [i for i in manifesto.items if i.get("url")] + novos
+    return acessos
 
 
-def _fontes(telas, mov, macro, curvas, dias_usados):
+def _fontes(telas, mov, macro, curvas, dias_usados, manifesto, acesso_corretora, hoje):
     """Fontes do bloco. Datas das planilhas vêm dos dados (data da tela, horário dos negócios e das intenções); o acesso
-    às planilhas é a data em que o bloco foi gerado."""
-    hoje = dt.date.today().isoformat()
+    de cada corretora é o dia em que se viu pela primeira vez a planilha mais recente que a traz (`acesso_corretora`), o
+    das séries públicas é o do último download (manifesto). Nenhuma data vem do dia em que o bloco é gerado."""
     tela_btg = _intervalo(t["data"] for t in telas if t["origem"] == "BTG")
     tela_xp = _intervalo(t["data"] for t in telas if t["origem"] == "XP")
     xp_sem_data = not tela_xp  # a tela XP traz só a hora da atualização: vale a data da tela BTG (dito na nota da fonte)
@@ -368,20 +390,22 @@ def _fontes(telas, mov, macro, curvas, dias_usados):
     usuario = "Planilha exportada da plataforma da corretora e fornecida ao projeto; não há endereço público para estes dados."
     out = [
         {"nome": "BTG — tela de debêntures e negócios fechados no mercado secundário", "url": "https://www.btgpactual.com/",
-         "periodo": f"tela de {tela_btg}; negócios de {neg}" if neg else f"tela de {tela_btg}", "acesso": hoje,
+         "periodo": f"tela de {tela_btg}; negócios de {neg}" if neg else f"tela de {tela_btg}",
+         "acesso": acesso_corretora.get("BTG") or hoje,
          "licenca": "Dados de corretora, fornecidos ao projeto; uso restrito", "tipo": "medido",
          "nota": usuario + " Da tela vêm emissor, setor, indexador, taxa de emissão, vencimento, volume emitido e se a "
                  "debênture é incentivada. O universo são os emissores de transporte classificados à mão a partir do "
                  "setor Transporte da tela e dos nomes que aparecem nas planilhas (a tela põe algumas concessionárias "
-                 "de rodovia em outros setores). Os negócios fechados entram só somados por dia, emissor e segmento, "
+                 "de rodovia em outros setores). Os negócios fechados entram só somados por dia, emissor e subsetor, "
                  "com o último negócio de cada papel; registros com volume zero contam no número de negócios, mas "
                  "não nas médias."},
         {"nome": "XP — tela de debêntures e intenções de compra e venda", "url": "https://www.xpi.com.br/",
          "periodo": f"tela de {tela_xp}; intenções de {inten}" if inten else f"tela de {tela_xp}",
-         "acesso": hoje, "licenca": "Dados de corretora, fornecidos ao projeto; uso restrito", "tipo": "medido",
+         "acesso": acesso_corretora.get("XP") or hoje,
+         "licenca": "Dados de corretora, fornecidos ao projeto; uso restrito", "tipo": "medido",
          "nota": usuario + " Da tela vêm a taxa de emissão e a nota de crédito (rating). As intenções são pedidos de "
                  "compra ou venda, não negócios realizados: ficam à parte, somadas por direção, dia, emissor e "
-                 "segmento, com o último pedido de cada papel."
+                 "subsetor, com o último pedido de cada papel."
                  + (" A tela da XP traz só a hora da atualização, não a data; vale a data da tela da BTG." if xp_sem_data else "")},
     ]
     sgs = [k for k in SERIES if macro.get(k)]
@@ -389,21 +413,21 @@ def _fontes(telas, mov, macro, curvas, dias_usados):
         urls = {SGS.format(SERIES[k][0], SERIES[k][1]) for k in sgs}
         datas = {k: macro[k]["data"] for k in sgs}
         out.append({"nome": "Banco Central do Brasil — Sistema Gerenciador de Séries Temporais (Selic, CDI e IPCA)",
-                    "url": "https://www3.bcb.gov.br/sgspub/", "acesso": _acesso(urls, hoje),
+                    "url": "https://www3.bcb.gov.br/sgspub/", "acesso": _baixado(manifesto, urls) or hoje,
                     "periodo": "; ".join(f"{ROTULO_SERIE[k].split(' (')[0]}: {_br(d)}" for k, d in datas.items()),
                     "licenca": "Dados abertos do Banco Central do Brasil", "tipo": "medido",
                     "nota": "Último valor publicado da Selic meta (série 432), do CDI (série 12, taxa diária anualizada "
                             "em 252 dias úteis) e do IPCA acumulado em 12 meses (série 13522)."})
     if macro.get("focus_ipca"):
         out.append({"nome": "Banco Central do Brasil — Expectativas de mercado (Boletim Focus), IPCA dos próximos 12 meses",
-                    "url": "https://www.bcb.gov.br/publicacoes/focus", "acesso": _acesso({FOCUS_URL}, hoje),
+                    "url": "https://www.bcb.gov.br/publicacoes/focus", "acesso": _baixado(manifesto, {FOCUS_URL}) or hoje,
                     "periodo": _br(macro["focus_ipca"]["data"]), "licenca": "Dados abertos do Banco Central do Brasil",
                     "tipo": "medido",
                     "nota": "Mediana das expectativas das instituições pesquisadas para o IPCA dos próximos 12 meses "
                             "(série suavizada), na data mais recente."})
     if curvas:
         out.append({"nome": "Tesouro Nacional — Taxas dos títulos ofertados pelo Tesouro Direto (NTN-B)",
-                    "url": TESOURO_PAGINA, "acesso": _acesso({TESOURO_URL}, hoje),
+                    "url": TESOURO_PAGINA, "acesso": _baixado(manifesto, {TESOURO_URL}) or hoje,
                     "periodo": _intervalo(dias_usados | {max(curvas)}),
                     "licenca": "Licença Aberta para Bases de Dados (ODbL) do Open Data Commons", "tipo": "medido",
                     "nota": "Taxa de compra da manhã do Tesouro IPCA+ com Juros Semestrais (NTN-B) e do Tesouro IPCA+ "
@@ -423,22 +447,30 @@ def plausivel(taxa, indexador):
 
 
 def montar(pasta=PASTA, publico=PUBLICO, emissores=EMISSORES, ler_telas=ler_telas, ler_negocios=ler_negocios,
-           hoje=None):
+           hoje=None, manifesto=None):
     """Bloco data/intel/debentures.json a partir das planilhas de `pasta`, das séries de `publico` e da classificação
     `emissores` (caminho). `ler_telas`/`ler_negocios`: leitores trocáveis (ver o início do arquivo). `hoje`: data de
-    referência das séries públicas (AAAA-MM-DD; padrão, hoje). Sem planilhas: FileNotFoundError."""
+    referência de planilha vista pela primeira vez e das séries sem registro de download (AAAA-MM-DD; padrão, hoje).
+    `manifesto`: onde ficam o dia em que cada planilha foi vista e o do download das séries (padrão, o do domínio; quem
+    chama grava com `save`). Sem planilhas: FileNotFoundError."""
     arquivos = planilhas(pasta)
     if not arquivos:
         raise FileNotFoundError(2, "nenhuma planilha .xlsx", str(Path(pasta) / "*.xlsx"))
-    telas, mov = [], {"negocios": [], "intencoes": []}
+    hoje = hoje or dt.date.today().isoformat()
+    manifesto = manifesto if manifesto is not None else Manifest("debentures")
+    acessos = registrar_planilhas(manifesto, arquivos, hoje)
+    telas, mov, acesso_corretora = [], {"negocios": [], "intencoes": []}, {}
     for p in arquivos:
-        telas += ler_telas(p)
-        m = ler_negocios(p)
+        ts, m = ler_telas(p), ler_negocios(p)
+        telas += ts
         mov["negocios"] += m["negocios"]
         mov["intencoes"] += m["intencoes"]
+        traz = {t["origem"] for t in ts} | ({"BTG"} if m["negocios"] else set()) | ({"XP"} if m["intencoes"] else set())
+        for o in traz:
+            acesso_corretora[o] = max(acesso_corretora.get(o, ""), acessos[Path(p)])
     emis = carregar_emissores(emissores)
     classe, pend = _universo(telas, mov, emis)
-    macro, curvas, ausentes = _macro(publico, hoje or dt.date.today().isoformat())
+    macro, curvas, ausentes = _macro(publico, hoje, manifesto)
 
     dias_sem_curva, dias_usados, descartadas, sem_data = set(), set(), defaultdict(int), defaultdict(int)
     universo = {}
@@ -463,7 +495,7 @@ def montar(pasta=PASTA, publico=PUBLICO, emissores=EMISSORES, ler_telas=ler_tela
     agreg = lambda ls, d=False: _conjunto([{**l, "emissor": l["emissor_classe"]} for l in ls], d)  # noqa: E731
     datas = [l["data"] for t in ("negocios", "intencoes") for l in mov[t] if l["data"]]
     return {
-        "fonte": _fontes(telas, mov, macro, curvas, dias_usados),
+        "fonte": _fontes(telas, mov, macro, curvas, dias_usados, manifesto, acesso_corretora, hoje),
         "tipo": "medido",
         "macro": macro,
         "emissoes": _emissoes(telas, classe),
@@ -513,14 +545,16 @@ def fetch(force=False):  # noqa: ARG001 — `force` existe pela interface comum;
             falhas.append(arq)
             print(f"AVISO: {e}", file=sys.stderr)
             continue
-        m.add(url, dest, descricao, licenca=licenca)
+        m.add(url, dest, descricao, licenca=licenca)["baixado"] = dt.date.today().isoformat()
     m.save()
     if falhas:
         print(f"AVISO: séries públicas sem download: {', '.join(falhas)}", file=sys.stderr)
 
 
 def build():
-    doc = montar()
+    manifesto = Manifest("debentures")
+    doc = montar(manifesto=manifesto)
+    manifesto.save()
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(doc, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     sec, p = doc["secundario"], doc["pendencias"]

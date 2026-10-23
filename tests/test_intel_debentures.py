@@ -35,9 +35,24 @@ def _ntnb(venc, pontos):
     return t0 + (t1 - t0) * _dias(v0, venc) / _dias(v0, v1)
 
 
+class _Manifesto:
+    """Manifesto em memória: o teste não toca em data/manifest/."""
+    def __init__(self, items=None):
+        self.items = list(items or [])
+
+    def save(self):
+        pass
+
+
+def _downloads(dia="2026-10-22"):
+    """Registros de download das séries públicas, como o `fetch` grava no manifesto."""
+    urls = [deb.SGS.format(c, n) for c, n, _ in deb.SERIES.values()] + [deb.FOCUS_URL, deb.TESOURO_URL]
+    return [{"url": u, "acesso": dia, "baixado": dia, "sha256": u[-8:]} for u in urls]
+
+
 @pytest.fixture(scope="module")
 def bloco():
-    return deb.montar(FIX, PUBLICO, EMISSORES)
+    return deb.montar(FIX, PUBLICO, EMISSORES, hoje="2026-10-22", manifesto=_Manifesto(_downloads()))
 
 
 def _por(lista, campo):
@@ -308,6 +323,50 @@ def test_selic_publicada_para_dias_futuros_vale_a_de_hoje(tmp_path):
     assert m["selic"] == {"valor": 14.25, "data": "2026-10-02"}
 
 
+def _pasta_com_planilhas(tmp_path):
+    pasta = tmp_path / "entrada"
+    pasta.mkdir()
+    for nome in ("telas.xlsx", "negocios.xlsx"):
+        shutil.copy(FIX / nome, pasta / nome)
+    return pasta
+
+
+def test_bloco_nao_depende_do_dia_do_build(tmp_path):
+    """Mesmas entradas, builds em dias diferentes (com o manifesto gravado entre eles): bloco idêntico byte a byte; a data
+    de acesso das planilhas é a do primeiro dia, e uma planilha nova leva a data do dia em que apareceu."""
+    pasta = _pasta_com_planilhas(tmp_path)
+    man = _Manifesto(_downloads())
+    a = deb.montar(pasta, PUBLICO, EMISSORES, hoje="2026-10-22", manifesto=man)
+    man.save()
+    b = deb.montar(pasta, PUBLICO, EMISSORES, hoje="2026-12-01", manifesto=man)
+    assert json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
+    btg = next(f for f in b["fonte"] if f["nome"].startswith("BTG"))
+    assert btg["acesso"] == "2026-10-22"
+    # planilha alterada (outro conteúdo): data nova; a outra continua com a antiga
+    shutil.copy(FIX / "negocios.xlsx", pasta / "negocios2.xlsx")
+    wb = pasta / "negocios2.xlsx"
+    wb.write_bytes(wb.read_bytes() + b"\0")
+    c = deb.montar(pasta, PUBLICO, EMISSORES, hoje="2026-12-01", manifesto=man)
+    datas = {i["arquivo"].rsplit("/", 1)[-1]: i["acesso"] for i in man.items if not i["url"]}
+    assert datas == {"negocios.xlsx": "2026-10-22", "telas.xlsx": "2026-10-22", "negocios2.xlsx": "2026-12-01"}
+    assert next(f for f in c["fonte"] if f["nome"].startswith("BTG"))["acesso"] == "2026-12-01"
+
+
+def test_serie_publica_nao_vale_depois_do_download(tmp_path):
+    """Selic meta com data futura no arquivo: vale até o dia do download registrado, qualquer que seja o "hoje"."""
+    pub = tmp_path / "publico"
+    shutil.copytree(PUBLICO, pub)
+    serie = json.loads((pub / "sgs_432.json").read_text(encoding="utf-8"))
+    (pub / "sgs_432.json").write_text(json.dumps(serie + [{"data": "05/11/2026", "valor": "13.00"}]), encoding="utf-8")
+    url = deb.SGS.format(*deb.SERIES["selic"][:2])
+    man = _Manifesto([{"url": url, "acesso": "2026-10-10", "baixado": "2026-10-22", "sha256": "x"}])
+    for hoje in ("2026-10-22", "2026-11-10"):
+        b = deb.montar(FIX, pub, EMISSORES, hoje=hoje, manifesto=man)
+        assert b["macro"]["selic"] == {"valor": 14.25, "data": "2026-10-02"}
+        sgs = next(f for f in b["fonte"] if f["nome"].startswith("Banco Central do Brasil — Sistema"))
+        assert sgs["acesso"] == "2026-10-22"
+
+
 def test_taxa_implausivel_sai_das_medias_e_vai_para_curadoria():
     """Leitor trocado (como faria a API interna): uma intenção com "1.067%" (erro de digitação) a mais."""
     def ler(path):
@@ -336,11 +395,11 @@ def test_fontes_do_bloco(bloco):
     assert len(corretoras) == 2
     btg, xp = corretoras
     # datas dos dados: tela BTG pela atualização do livro; a tela XP só traz a hora e usa a da BTG; negócios e intenções
-    # pelo horário de cada linha; acesso = dia em que o bloco foi gerado
+    # pelo horário de cada linha; acesso = dia em que as planilhas foram vistas pela primeira vez (aqui, o "hoje" do teste)
     assert btg["periodo"] == "tela de 21/10/2026 a 22/10/2026; negócios de 01/10/2026 a 05/10/2026"
     assert xp["periodo"] == "tela de 21/10/2026 a 22/10/2026; intenções de 01/10/2026 a 03/10/2026"
     assert "traz só a hora" in xp["nota"] and "traz só a hora" not in xp["periodo"]
-    assert btg["acesso"] == xp["acesso"] == dt.date.today().isoformat()
+    assert btg["acesso"] == xp["acesso"] == "2026-10-22"
     tesouro = next(f for f in fontes if "Tesouro" in f["nome"])
     assert "taxa de compra) interpolada pelo vencimento (não pela duration)" in tesouro["nota"]
 
@@ -351,7 +410,7 @@ def test_datas_nao_dependem_da_data_do_arquivo(tmp_path, bloco):
     for nome in ("telas.xlsx", "negocios.xlsx"):
         shutil.copy(FIX / nome, pasta / nome)
         os.utime(pasta / nome, (0, 0))                 # 01/01/1970
-    assert deb.montar(pasta, PUBLICO, EMISSORES)["fonte"] == bloco["fonte"]
+    assert deb.montar(pasta, PUBLICO, EMISSORES, hoje="2026-10-22", manifesto=_Manifesto(_downloads()))["fonte"] == bloco["fonte"]
 
 
 def test_baixar_sempre_renova_as_series_publicas(monkeypatch, tmp_path):
@@ -370,7 +429,7 @@ def test_baixar_sempre_renova_as_series_publicas(monkeypatch, tmp_path):
             self.items = []
 
         def add(self, *a, **k):
-            pass
+            return {}
 
         def save(self):
             pass

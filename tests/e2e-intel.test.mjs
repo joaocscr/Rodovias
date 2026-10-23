@@ -2238,7 +2238,13 @@ const fotoDeb = p => p.evaluate(() => {
 test('Debêntures: cartões com fonte, período e legenda; indicadores e curva vêm do bloco; sem NaN', async () => {
   await abreDeb();
   const b = await blocoDeb(page);
-  const ids = ['macro', 'ntnb', 'emissoes', 'kpis', 'dia-vol', 'dia-n', 'subsetor', 'emissor', 'ultimo', 'intencoes', 'incentivadas'];
+  // cartões presentes segundo o modelo: indicadores e curva só com dado; a série do RoadShow só se a base a traz
+  const ids = await page.evaluate(() => {
+    const b = window.INTEL.debentures;
+    return [DebenturesModel.macro(b).length && 'macro', DebenturesModel.curvaNtnb(b).length && 'ntnb', 'emissoes', 'kpis', 'dia-vol', 'dia-n', 'subsetor',
+      'emissor', 'ultimo', 'intencoes', DebenturesModel.serieIncentivadas(window.CONC.mercado) && 'incentivadas'].filter(Boolean);
+  });
+  assert.ok(ids.length >= 8, ids.join());
   assert.deepEqual(await page.$$eval('#page-debentures .ccard', cs => cs.map(c => c.id)), ids.map(i => 'card-d-' + i));
   for (const id of ids) {
     const c = page.locator('#card-d-' + id), txt = await c.textContent();
@@ -2250,19 +2256,21 @@ test('Debêntures: cartões com fonte, período e legenda; indicadores e curva v
   }
   // indicadores macro com a data de cada um, na ordem do modelo
   const macro = await page.evaluate(() => DebenturesModel.macro(window.INTEL.debentures).map(m => [m.valor, m.data]));
-  assert.equal(macro.length, 4);
   const tiles = await page.$$eval('#card-d-macro .kpi-tile', ts => ts.map(t => [t.querySelector('b').textContent, t.querySelector('span').textContent]));
   macro.forEach(([valor, data], i) => { assert.equal(tiles[i][0], valor); assert.ok(tiles[i][1].endsWith(data), `${tiles[i][1]} × ${data}`); });
-  assert.equal(macro[0][0], `${fmt2(b.macro.selic.valor)}% a.a.`);
-  for (const f of b.fonte.filter(x => /Banco Central/.test(x.nome))) assert.ok((await page.textContent('#card-d-macro')).includes(f.nome.split(' — ')[0]));
+  assert.equal(tiles.length, macro.length);
+  if (b.macro.selic) assert.equal(macro.find(m => m[0].endsWith('a.a.'))[0], `${fmt2(b.macro.selic.valor)}% a.a.`);
+  if (macro.length) for (const f of b.fonte.filter(x => /Banco Central/.test(x.nome))) assert.ok((await page.textContent('#card-d-macro')).includes(f.nome.split(' — ')[0]));
   // curva de NTN-B: uma linha por vencimento, com título e taxa; a data da curva no título
   const rows = await page.$$eval('#deb-ntnb tbody tr', trs => trs.map(tr => [...tr.children].map(td => td.textContent)));
-  const curva = [...b.macro.ntnb].sort((x, y) => (x.vencimento < y.vencimento ? -1 : 1));
+  const curva = await page.evaluate(() => DebenturesModel.curvaNtnb(window.INTEL.debentures));
   assert.deepEqual(rows.map(r => r[2]), curva.map(p => fmt2(p.taxa)));
   assert.deepEqual(rows.map(r => r[0]), curva.map(p => p.vencimento.split('-').reverse().join('/')));
-  assert.equal(await page.locator('#chart-d-ntnb-linha circle').count(), curva.length);
-  const dataCurva = curva.map(p => p.data).sort().pop().split('-').reverse().join('/');
-  assert.ok((await page.textContent('#titulo-d-ntnb')).endsWith(dataCurva));
+  if (curva.length) {
+    assert.equal(await page.locator('#chart-d-ntnb-linha circle').count(), curva.length);
+    const dataCurva = curva.map(p => p.data).sort().pop().split('-').reverse().join('/');
+    assert.ok((await page.textContent('#titulo-d-ntnb')).endsWith(dataCurva));
+  }
   // período dos negócios e a explicação do spread, em uma linha
   const per = `${b.secundario.periodo.de.split('-').reverse().join('/')} a ${b.secundario.periodo.ate.split('-').reverse().join('/')}`;
   assert.ok((await page.textContent('#card-d-kpis')).includes(per));
@@ -2441,7 +2449,7 @@ test('Debêntures: intenções à parte, por direção, dia e emissor, iguais ao
   const esperado = int.por_dia.flatMap(d => ['compra', 'venda'].map(x => [d, x])).filter(([d, x]) => (d.por_direcao[x] || {}).volume > 0)
     .map(([d, x]) => `${diaMes(d.data)} · ${x === 'compra' ? 'Compra' : 'Venda'}: ${fmt2(d.por_direcao[x].volume / 1e6)} R$ mi`);
   assert.deepEqual(dias, esperado);
-  assert.equal(await page.locator('#chart-d-int-emissor g.hrow').count(), 15);
+  assert.equal(await page.locator('#chart-d-int-emissor g.hrow').count(), Math.min(15, int.por_emissor.length));
   assert.ok((await page.textContent('#card-d-intencoes .sub')).includes('não são negócios fechados'));
   assert.equal(await page.locator('#card-d-intencoes .chart-legend').count(), 2);
 });

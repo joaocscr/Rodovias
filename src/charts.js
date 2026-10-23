@@ -7,6 +7,22 @@ const Charts = (() => {
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const num = v => typeof v === 'number' && isFinite(v);
 
+  // Largura estimada de um texto de 14 px (px): maiúsculas e números são mais largos que minúsculas; espaço e i/l/pontuação, mais estreitos.
+  const larg = t => [...String(t)].reduce((a, c) => a + (/[A-ZÀ-Ý0-9MW]/.test(c) ? 10.2 : /[ .,;:'il1!|()]/.test(c) ? 4.6 : 8.2), 0);
+  // Coluna dos rótulos de barras horizontais: a largura pedida (`pref`), ampliada até caber o rótulo mais longo e nunca
+  // acima de 55% da largura do gráfico (no celular sobra espaço para a barra). Rótulo que mesmo assim não cabe termina em
+  // "…", com o texto inteiro na dica (<title>) do próprio rótulo.
+  const maxLen = labels => Math.max(0, ...labels.map(larg));
+  const labelCol = (w, labels, pref) => Math.round(Math.min(Math.max(pref, maxLen(labels) + 8), w * 0.55));
+  const cutLabel = (t, L) => {
+    const s = String(t);
+    if (larg(s) <= L - 8) return s;
+    let out = '';
+    for (const c of s) { if (larg(out + c) > L - 8 - 8) break; out += c; }
+    return `${out.trimEnd()}…`;
+  };
+  const labelText = (t, L) => { const c = cutLabel(t, L); return c === String(t) ? esc(c) : `<title>${esc(t)}</title>${esc(c)}`; };
+
   function frame(w, h, body, aria, role = 'img') {
     return `<svg class="chart" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="${role}" aria-label="${esc(aria || '')}"` +
       ` font-family="Inter, sans-serif" font-size="${FONT}">${body}</svg>`;
@@ -50,7 +66,7 @@ const Charts = (() => {
     const L = 56, R = 16, T = 16, B = 40, pw = w - L - R, ph = h - T - B;
     const tk = ticks(Math.max(...vals, 0)), max = tk[tk.length - 1] || 1;
     const yOf = v => T + ph - (v / max) * ph, bw = pw / data.length;
-    const every = Math.ceil(data.length / Math.max(1, Math.floor(pw / 48)));
+    const every = Math.ceil(data.length / Math.max(1, Math.floor(pw / Math.max(48, maxLen(data.map(d => d.label)) + 8))));
     let body = yAxis(tk, L, w - R, yOf, fmt);
     data.forEach((d, i) => {
       const v = vals[i], x = L + i * bw + bw * 0.15, bh = T + ph - yOf(v);
@@ -68,7 +84,7 @@ const Charts = (() => {
     const w = o.width || 640, rh = 32, h = Math.max(rows.length * rh + 8, 48);
     if (!rows.length) return empty(w, 120);
     const fmt = o.format || (v => nf1.format(v)), unit = o.unit ? ' ' + o.unit : '';
-    const L = o.labelWidth || Math.min(240, w * 0.4), R = 104, pw = w - L - R;
+    const R = 104, L = labelCol(w, rows.map(r => r.label), o.labelWidth || Math.min(240, w * 0.4)), pw = Math.max(40, w - L - R);
     const max = Math.max(...rows.map(r => (num(r.value) ? r.value : 0)), 0) || 1;
     let body = '';
     rows.forEach((r, i) => {
@@ -80,7 +96,7 @@ const Charts = (() => {
       const attrs = link ? ` data-k="${esc(r.k)}" role="button" tabindex="0" aria-label="${esc(o.rowLabel ? o.rowLabel(r) : r.label)}"` : '';
       body += `<g class="hrow-tip${link ? ' hrow' : ''}"${attrs}><title>${tip}</title>` +
         `<rect class="hit${link ? ' hrow__bg' : ''}" x="0" y="${y}" width="${w}" height="${rh}" fill="${C.bright}" fill-opacity="0"/>` +
-        `<text x="${L - 8}" y="${y + 21}" text-anchor="end" fill="${C.spacial}">${esc(r.label)}</text>` +
+        `<text x="${L - 8}" y="${y + 21}" text-anchor="end" fill="${C.spacial}">${labelText(r.label, L)}</text>` +
         `<rect class="cbar" x="${L}" y="${y + 8}" width="${bw.toFixed(1)}" height="16" rx="2" fill="${r.alt ? C.bright : C.deep}">` +
         `<title>${tip}</title></rect>` +
         `<text x="${(L + bw + 8).toFixed(1)}" y="${y + 21}" fill="${C.grey}">${num(r.value) ? esc(fmt(r.value)) : '—'}</text></g>`;
@@ -153,8 +169,9 @@ const Charts = (() => {
     if (!all.length) return empty(w, h);
     const fy = o.format || (v => nf1.format(v)), unit = o.unit ? ' ' + o.unit : '';
     const fx = o.formatX || (x => String(x)), r = o.r || 4;
-    const L = 72, R = 16, T = 16, B = 40, pw = w - L - R, ph = h - T - B;
     const xs = all.map(p => p.x), x0 = Math.min(...xs), x1 = Math.max(...xs);
+    // margem direita: metade do último rótulo do eixo x, para não ser cortado na borda
+    const L = 72, R = Math.max(16, Math.ceil(larg(fx(x1)) / 2) + 2), T = 16, B = 40, pw = w - L - R, ph = h - T - B;
     // o.yMin: o eixo y começa nesse valor (ou no múltiplo do passo logo abaixo), em vez de zero; sem ele, o eixo parte de zero
     const ymax = Math.max(...all.map(p => p.y)), ty = num(o.yMin) && o.yMin < ymax ? ticksFrom(o.yMin, ymax) : ticks(ymax);
     const y0 = num(o.yMin) && o.yMin < ymax ? ty[0] : 0, my = ty[ty.length - 1] || 1;
@@ -183,7 +200,7 @@ const Charts = (() => {
     const sums = data.map(d => d.parts.reduce((a, v) => a + (num(v) ? v : 0), 0));
     const tk = ticks(Math.max(...sums, 0)), max = tk[tk.length - 1] || 1;
     const yOf = v => T + ph - (v / max) * ph, bw = pw / data.length;
-    const every = Math.ceil(data.length / Math.max(1, Math.floor(pw / 48)));
+    const every = Math.ceil(data.length / Math.max(1, Math.floor(pw / Math.max(48, maxLen(data.map(d => d.label)) + 8))));
     let body = yAxis(tk, L, w - R, yOf, fmt);
     data.forEach((d, i) => {
       let acc = 0;
@@ -206,11 +223,10 @@ const Charts = (() => {
     if (!data.length) return empty(w, 120);
     const fmt = o.format || (v => nf1.format(v)), unit = o.unit ? ' ' + o.unit : '', names = o.names || [];
     const colors = o.colors || [C.deep, C.bright, C.grey];
-    const L = o.labelWidth || Math.min(240, w * 0.4), R = o.valueWidth || 112, pw = Math.max(40, w - L - R);
+    const R = o.valueWidth || 112, L = labelCol(w, data.map(d => d.label), o.labelWidth || Math.min(240, w * 0.4)), pw = Math.max(40, w - L - R);
     const pos = v => (num(v) && v > 0 ? v : 0);
     const sums = data.map(d => d.parts.reduce((a, v) => a + pos(v), 0));
-    const max = Math.max(...sums, 0) || 1, maxCh = Math.max(4, Math.floor((L - 8) / 7.5));
-    const cut = s => (s.length > maxCh ? `${s.slice(0, maxCh - 1)}…` : s);
+    const max = Math.max(...sums, 0) || 1;
     const body = data.map((d, i) => {
       const y = 4 + i * rh, ty = y + rh / 2 + 5, label = String(d.label);
       let x = L, rects = '';
@@ -224,7 +240,7 @@ const Charts = (() => {
       const val = sums[i] > 0 ? fmt(sums[i]) : '—';
       const attrs = o.clickable ? ` data-k="${esc(d.k)}" role="button" tabindex="0" aria-label="${esc(`${label}: ${val}${unit}`)}"` : '';
       return `<g class="hrow"${attrs}><rect class="hrow__bg" x="0" y="${y}" width="${w}" height="${rh}" fill="${C.bright}" fill-opacity="0"/>` +
-        `<text x="${L - 8}" y="${ty}" text-anchor="end" fill="${C.spacial}">${esc(cut(label))}</text>${rects}` +
+        `<text x="${L - 8}" y="${ty}" text-anchor="end" fill="${C.spacial}">${labelText(label, L)}</text>${rects}` +
         `<text x="${(x + 8).toFixed(1)}" y="${ty}" fill="${C.grey}">${esc(val)}</text></g>`;
     }).join('');
     return frame(w, data.length * rh + 8, body, o.title, o.clickable ? 'group' : 'img');
@@ -310,7 +326,7 @@ const Charts = (() => {
     }).join('')}</div>`;
   }
 
-  const into = fn => (el, data, o = {}) => { el.innerHTML = fn(data, Object.assign({ width: Math.max(320, el.clientWidth || 640) }, o)); };
+  const into = fn => (el, data, o = {}) => { el.innerHTML = fn(data, Object.assign({ width: Math.max(280, el.clientWidth || 640) }, o)); };
 
   return { C, ticksFrom, barsSvg, hbarsSvg, hstackSvg, scatterSvg, linesSvg, stackedSvg, dotsSvg, timelineSvg, legendHtml,
     bars: into(barsSvg), hbars: into(hbarsSvg), scatter: into(scatterSvg), lines: into(linesSvg), stacked: into(stackedSvg), dots: into(dotsSvg) };

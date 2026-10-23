@@ -1,6 +1,6 @@
 {
   "roadshow": {
-    "nome": "Carteira de concessões do Ministério dos Transportes (RoadShow)",
+    "nome": "RoadShow (apresentação do Ministério dos Transportes a investidores)",
     "oQue": "Apresentação do Ministério dos Transportes a investidores sobre a carteira de concessões rodoviárias 2026–2027{edicao}. Dela vêm os contratos, os prazos, os investimentos previstos e o cadastro das concessões."
   },
   "snv": {
@@ -19,7 +19,7 @@
   },
   "pipeline": {
     "nome": "Projetos de concessão em andamento",
-    "oQue": "Carteira de projetos do Ministério dos Transportes, páginas da ANTT, dados abertos do Banco Nacional de Desenvolvimento Econômico e Social (BNDES), páginas de governos estaduais e, para o que ainda não tem documento oficial, imprensa especializada (não oficial).",
+    "oQue": "Documento “Carteira de Concessões Rodoviárias 2023–2027” do Ministério dos Transportes (outro documento, diferente do RoadShow), páginas da ANTT, dados abertos do Banco Nacional de Desenvolvimento Econômico e Social (BNDES), páginas de governos estaduais e, para o que ainda não tem documento oficial, imprensa especializada (não oficial).",
     "termos": [{"id": "bndes", "texto": "BNDES"}]
   },
   "trafego": {

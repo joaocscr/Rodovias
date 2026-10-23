@@ -66,7 +66,7 @@ const Fontes = (() => {
       <p class="page__src fontes-legenda" id="fontes-legenda">Tipo: <b>Medido</b>, contagem ou registro observado; <b>Modelado</b>, estimativa de modelo; <b>Cadastro</b>, registro de infraestrutura ou de contratos, sem número medido nem modelado; "—": fonte de apoio (carteira ou notícia), sem número próprio.</p>`
       : '<p class="empty">A lista de fontes dos dados (bloco fontes) não está neste arquivo.</p>';
     const base = d.base.length ? `<h2 class="fontes-h2" id="fontes-base">Bases do painel</h2>
-      <p class="page__src">A malha rodoviária federal (${Glossario.link('snv')}) e a carteira de concessões do Ministério dos Transportes (${Glossario.link('roadshow')}), sobre as quais o mapa e as fichas são montados.</p>
+      <p class="page__src">A malha rodoviária federal (${Glossario.link('snv')}) e o ${Glossario.link('roadshow', 'RoadShow')} (apresentação do Ministério dos Transportes a investidores, com o cadastro das concessões), sobre os quais o mapa e as fichas são montados.</p>
       ${tabela('fontes-base-table', d.base, [['Fonte', r => link(r.url, r.nome), 'wrap fontes-nome'], ['Período', r => esc(IM.fmtPeriodo(r.periodo)), 'wrap'],
         ['Acesso', r => esc(IM.fmtDia(r.acesso))], ['Licença', r => txt(r.licenca), 'wrap'], ['Nota', r => txt(r.nota), 'wrap fontes-nota-col']], r => ({ bloco: r.bloco }))}` : '';
     const indisp = d.indisponiveis.length ? `<h2 class="fontes-h2" id="fontes-indisp">Fontes procuradas e não obtidas</h2>

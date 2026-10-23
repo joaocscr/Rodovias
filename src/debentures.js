@@ -9,7 +9,7 @@ const Debentures = (() => {
   const nf0 = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
   const C = Charts.C;
   const WRAP = new Set(['emissor', 'grupo', 'coordenadores', 'rating', 'taxa_ipca', 'tipo', 'subsetor']);
-  const NOME_INDEXADOR = { 'IPCA+': 'IPCA+', 'DI+': 'CDI+', 'PRÉ': 'prefixados' };
+  const NOME_PAPEIS = { 'PRÉ': 'prefixados' };  // nos outros indexadores o papel leva o rótulo do indexador (DM.rotuloIndexador)
 
   let bloco = null, conc = null, built = false;
   const st = {
@@ -19,7 +19,7 @@ const Debentures = (() => {
     ultimo: { key: 'quando', dir: 'desc' },
   };
   const box = id => document.getElementById('chart-d-' + id);
-  const width = el => Math.max(320, (el && el.clientWidth) || 640);
+  const width = el => Math.max(280, (el && el.clientWidth) || 640);
 
   // Cartão: título, subtítulo (subHtml já escapado), legenda, conteúdo e fonte. `afetado`: cartão que muda com "ver somado";
   // ele ganha, no subtítulo, o rótulo do que está sendo mostrado (negócios fechados ou negócios + intenções).
@@ -30,8 +30,9 @@ const Debentures = (() => {
       ${o.legend || ''}<div class="chart-box" id="chart-d-${id}">${o.html || ''}</div>${o.foot || ''}
       ${o.note ? `<p class="src">${o.note}</p>` : ''}<p class="src">Fonte: ${esc(o.fonte || DM.DASH)}</p></article>`;
   }
-  const fonte = re => IM.fonteTipo(bloco, re);
-  const fontes = (...res) => [...new Set(res.map(fonte))].join('; ');
+  // linha "Fonte:" curta (quem forneceu e o período); nome completo, licença e nota de cada fonte estão na aba Fontes
+  const fonteCurta = o => DM.fonteCurta(bloco, o);
+  const CORRETORAS = ['BTG', 'XP'];
   const per = () => DM.periodoTexto(bloco.secundario && bloco.secundario.periodo);
   const tile = (id, valor, rotuloHtml, nota = '') => `<div class="kpi-tile" id="${id}"><b>${esc(valor)}</b><span>${rotuloHtml}</span>${nota ? `<small class="kpi-nota">${esc(nota)}</small>` : ''}</div>`;
   const legenda = (nome, cor) => Charts.legendHtml([[nome, cor]]);
@@ -48,7 +49,7 @@ const Debentures = (() => {
     }[x.id] || esc(x.rotulo));
     return card('macro', 'Juros e inflação de referência', 'Últimos valores publicados pelo Banco Central do Brasil; cada número traz a data a que se refere', { wide: true,
       html: `<div class="kpis">${m.map(x => tile('deb-macro-' + x.id, x.valor, `${link(x)} · ${esc(x.data)}`, x.explica)).join('')}</div>`,
-      fonte: fontes(/Sistema Gerenciador/, /Focus/) });
+      fonte: fonteCurta({ bcb: true }) });
   }
 
   function ntnbCard() {
@@ -59,7 +60,7 @@ const Debentures = (() => {
       legend: legenda('Taxa de compra (% ao ano)', C.deep),
       html: '<div id="chart-d-ntnb-linha"></div><div class="table-wrap table-wrap--static" id="deb-ntnb-tabela"></div>',
       note: `A ${Glossario.link('ntn-b', 'NTN-B')} é o título público federal que paga inflação (IPCA) mais uma taxa fixa, vendido a pessoas físicas pelo Tesouro Direto. Sua curva é a referência de juro real sem risco: o spread das debêntures IPCA+ é a taxa delas menos a da NTN-B de mesmo vencimento. “NTN-B Principal” é a versão sem juros semestrais (paga tudo no vencimento); entra onde não há NTN-B com juros no mesmo vencimento.`,
-      fonte: fonte(/Tesouro Nacional/) });
+      fonte: fonteCurta({ tesouro: true, curva: true }) });
   }
 
   function emissoesCard() {
@@ -68,10 +69,10 @@ const Debentures = (() => {
     return card('emissoes', 'Emissões de debêntures de rodovias e infraestrutura de transporte',
       `Um papel (série de debênture) por linha, de emissores de rodovias, ferrovias, portos e terminais, aeroportos, hidrovias e mobilidade urbana que aparecem nas telas das corretoras. Taxa na emissão conforme o ${Glossario.link('indexador', 'indexador')}; “incentivada” = benefício da Lei 12.431 (${Glossario.link('debenture-infraestrutura', 'debênture de infraestrutura')} é a de 2024); “${DM.DASH}” quando a fonte não traz o campo. Clique no cabeçalho para ordenar`, {
         wide: true,
-        note: `Nota de crédito (${Glossario.link('rating', 'rating')}) como informada na tela da corretora.${t.ocultas.length ? ` Colunas que a fonte não preenche em nenhum papel ficam ocultas (agora: ${esc(t.ocultas.join(' e '))}) e aparecem sozinhas quando uma fonte trouxer o dado.` : ''}`,
+        note: `Nota de crédito (${Glossario.link('rating', 'rating')}) como informada na tela da corretora.${t.colunas.some(c => c.k === 'coordenadores') ? ` Coordenadores: ${Glossario.link('coordenador', 'coordenadores da oferta')} da emissão.` : ''}${t.ocultas.length ? ` Colunas que a fonte não preenche em nenhum papel ficam ocultas (agora: ${esc(t.ocultas.join(' e '))}) e aparecem sozinhas quando uma fonte trouxer o dado.` : ''}`,
         legend: `<div class="toolbar"><label class="sub" for="deb-em-sub">Subsetor</label><select id="deb-em-sub"><option value="">Todos</option>${
           t.subsetores.map(s => `<option>${esc(s)}</option>`).join('')}</select><span class="page__src" id="deb-em-n"></span></div>`,
-        html: '<div id="deb-em-tabela"></div>', fonte: fontes(/BTG/, /XP/) });
+        html: '<div id="deb-em-tabela"></div>', fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'tela' }) });
   }
 
   // ---------- tabelas ordenáveis ----------
@@ -113,31 +114,31 @@ const Debentures = (() => {
     const sec = bloco.secundario;
     if (!sec) return '';
     const p = per();
-    const lead = `<p class="page__lead">O ${Glossario.link('mercado-secundario', 'mercado secundário')} é onde investidores negociam entre si debêntures já emitidas. Os dados vêm das telas das corretoras XP e BTG${p ? `, de ${esc(p)}` : ''}; aqui aparecem só os totais por dia, emissor e subsetor e o último negócio de cada papel. Um ${Glossario.link('negocio-intencao', 'negócio')} é uma operação fechada; uma intenção é um pedido de compra ou de venda, que pode não ter virado negócio. Taxas são ${Glossario.link('taxa-media-ponderada', 'médias ponderadas pelo volume')}, calculadas separadamente por indexador (IPCA+, CDI+ e prefixado não se misturam).</p>
-      <p class="page__lead deb-spread" id="deb-spread">Como o spread é calculado: ${Glossario.link('spread', 'spread')} = taxa do papel − taxa da NTN-B interpolada pelo vencimento (não pela ${Glossario.link('duration', 'duration')}), Tesouro Direto, taxa de compra; só para papéis ${Glossario.link('ipca-mais', 'IPCA+')}; “${DM.DASH}” quando não há curva no dia. O spread é dado em pontos percentuais (p.p.).${DM.notaCurva(bloco) ? ` ${esc(DM.notaCurva(bloco))}` : ''}</p>`;
+    const lead = `<p class="page__lead">O ${Glossario.link('mercado-secundario', 'mercado secundário')} é onde investidores negociam entre si debêntures já emitidas. Os dados vêm das telas das corretoras XP e BTG${p ? `, de ${esc(p)}` : ''}; aqui aparecem só os totais por dia, emissor e subsetor e o último negócio de cada papel. Um ${Glossario.link('negocio-intencao', 'negócio')} é uma operação fechada; uma intenção é um pedido de compra ou de venda, que pode não ter virado negócio. Taxas são ${Glossario.link('taxa-media-ponderada', 'médias ponderadas pelo volume')}, calculadas separadamente por indexador (${Glossario.link('ipca-mais', 'IPCA+')}, ${Glossario.link('di-mais', 'DI+')}, % do DI e ${Glossario.link('prefixado', 'prefixada')} não se misturam).</p>
+      <p class="page__lead deb-spread" id="deb-spread">Como o spread é calculado: ${Glossario.link('spread', 'spread')} = taxa do papel − taxa da NTN-B interpolada pelo vencimento (não pela ${Glossario.link('duration', 'duration')}), Tesouro Direto, taxa de compra; só para papéis IPCA+; “${DM.DASH}” quando não há curva no dia. O spread é dado em pontos percentuais (p.p.).${DM.notaCurva(bloco) ? ` ${esc(DM.notaCurva(bloco))}` : ''}</p>`;
     const controle = `<div class="deb-controle" id="deb-controle">
       <button type="button" role="switch" id="deb-somado" class="switch" aria-checked="false" aria-describedby="deb-somado-desc"><span class="switch__trilho" aria-hidden="true"><span class="switch__bola"></span></span><span class="switch__texto">Ver somado</span></button>
       <p class="deb-controle__desc" id="deb-somado-desc">Desligado, os cartões abaixo mostram só os negócios fechados e as intenções ficam à parte, no último cartão. Ligado, as intenções de compra e venda entram nos números e gráficos como se fossem negócios.</p>
       <p class="deb-controle__estado" id="deb-status" aria-live="polite"></p></div>`;
     const cards = [
-      card('kpis', 'Mercado secundário em números', `Totais de ${esc(p)} para debêntures de rodovias e infraestrutura de transporte`, { wide: true, afetado: true, html: '', fonte: fontes(/BTG/, /XP/, /Tesouro Nacional/) }),
+      card('kpis', 'Mercado secundário em números', `Totais de ${esc(p)} para debêntures de rodovias e infraestrutura de transporte`, { wide: true, afetado: true, html: '', fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'dados', tesouro: true }) }),
       card('dia-vol', 'Volume negociado por dia', 'Soma do valor financeiro de cada dia, em R$ milhões', { afetado: true,
-        legend: legenda('Volume do dia (R$ milhões)', C.deep), fonte: fontes(/BTG/, /XP/) }),
+        legend: legenda('Volume do dia (R$ milhões)', C.deep), fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'dados' }) }),
       card('dia-n', 'Número de negócios por dia', 'Quantidade registrada em cada dia', { afetado: true,
-        legend: legenda('Operações do dia', C.deep), fonte: fontes(/BTG/, /XP/) }),
+        legend: legenda('Operações do dia', C.deep), fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'dados' }) }),
       card('subsetor', 'Taxa média e spread sobre a NTN-B por subsetor', 'Média de cada subsetor (rodovias, ferrovias, portos e terminais, aeroportos, hidrovias, mobilidade urbana), só dos papéis IPCA+, ponderada pelo volume', { wide: true, afetado: true,
         html: `<div class="duo"><div><h4 class="duo__title">Taxa média (% ao ano, IPCA + taxa)</h4>${legenda('Taxa média IPCA+', C.deep)}<div id="chart-d-subsetor-taxa"></div></div>
           <div><h4 class="duo__title">Spread médio sobre a NTN-B (p.p.)</h4>${legenda('Spread médio IPCA+', C.bright)}<div id="chart-d-subsetor-spread"></div></div></div>`,
-        fonte: fontes(/BTG/, /XP/, /Tesouro Nacional/) }),
+        fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'dados', tesouro: true }) }),
       card('emissor', 'Taxa média e spread sobre a NTN-B por emissor', 'Uma linha por empresa emissora; taxa média por indexador e spread médio sobre a NTN-B (p.p.) dos papéis IPCA+. Clique no cabeçalho para ordenar', { wide: true, afetado: true,
-        html: '<div id="deb-emissor-tabela"></div>', fonte: fontes(/BTG/, /XP/, /Tesouro Nacional/) }),
+        html: '<div id="deb-emissor-tabela"></div>', fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'dados', tesouro: true }) }),
       card('ultimo', 'Último negócio de cada papel', 'Data, hora e taxa do registro mais recente de cada papel no período; o spread sobre a NTN-B (p.p.) só existe para papéis IPCA+ em dias com curva', { wide: true, afetado: true,
-        html: '<div id="deb-ultimo-tabela"></div>', fonte: fontes(/BTG/, /XP/, /Tesouro Nacional/) }),
+        html: '<div id="deb-ultimo-tabela"></div>', fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'dados', tesouro: true }) }),
       card('intencoes', 'Intenções de compra e venda, à parte dos negócios', `Pedidos de compra e de venda registrados na tela da corretora XP, de ${esc(p)}; não são negócios fechados. Com “ver somado” ligado eles também entram nos cartões acima`, { wide: true,
         html: `<div class="duo"><div><h4 class="duo__title">Por direção</h4><div id="chart-d-int-dir"></div></div>
           <div><h4 class="duo__title">Volume por dia (R$ milhões)</h4>${legendaCV}<div id="chart-d-int-dia"></div></div></div>
           <h4 class="duo__title">Os 15 emissores com mais intenções (R$ milhões)</h4>${legendaCV}<div id="chart-d-int-emissor"></div>`,
-        fonte: fonte(/XP/) }),
+        fonte: fonteCurta({ corretoras: ['XP'], periodo: 'intencoes' }) }),
     ].join('');
     return `<h2 class="resumo-h2" id="deb-h-secundario">Mercado secundário</h2>${lead}${controle}<div class="grid-cards">${cards}</div>`;
   }
@@ -152,7 +153,7 @@ const Debentures = (() => {
       tile('deb-k-taxa', k.taxaIpca == null ? DM.DASH : DM.taxaTexto('IPCA+', k.taxaIpca), 'taxa média dos papéis IPCA+, ponderada pelo volume'),
       tile('deb-k-spread', DM.fmtPp(k.spread), 'spread médio sobre a NTN-B (p.p.) dos papéis IPCA+, só em dias com curva'),
       ...Object.keys(k.taxa).filter(ix => ix !== 'IPCA+').sort().map(ix =>
-        tile('deb-k-taxa-' + ix.replace(/\W/g, ''), DM.taxaTexto(ix, k.taxa[ix]), `taxa média dos papéis ${NOME_INDEXADOR[ix] || ix}`)),
+        tile('deb-k-taxa-' + ix.replace(/\W/g, ''), DM.taxaTexto(ix, k.taxa[ix]), `taxa média dos papéis ${NOME_PAPEIS[ix] || DM.rotuloIndexador(ix)}`)),
     ];
     return `<div class="kpis">${tiles.join('')}</div>`;
   }

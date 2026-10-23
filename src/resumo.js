@@ -49,7 +49,7 @@ const Resumo = (() => {
     return `<section class="sobre" id="resumo-sobre" aria-labelledby="resumo-sobre-h">
       <h2 class="resumo-h2" id="resumo-sobre-h">Sobre este painel</h2>
       <h3 class="sobre__h">Para que serve</h3>
-      <p class="sobre__texto" id="sobre-serve">Reúne, num único arquivo que funciona sem internet, o que se sabe sobre as ${Glossario.link('concessao', 'concessões')} rodoviárias do Brasil: a malha de rodovias, a carteira de projetos e os contratos (${Glossario.link('roadshow')}), os ${Glossario.link('leilao', 'leilões')} e seus resultados, o tráfego, as cargas, o financiamento e as debêntures de infraestrutura de transporte. Cada número mostra de onde veio.</p>
+      <p class="sobre__texto" id="sobre-serve">Reúne, num único arquivo que funciona sem internet, o que se sabe sobre as ${Glossario.link('concessao', 'concessões')} rodoviárias do Brasil: a malha de rodovias, os projetos e os contratos de concessão (${Glossario.link('roadshow')}), os ${Glossario.link('leilao', 'leilões')} e seus resultados, o tráfego, as cargas, o financiamento e as debêntures de infraestrutura de transporte. Cada número mostra de onde veio.</p>
       <details class="sobre__det" id="sobre-fontes">
         <summary>De onde vêm as informações <span class="page__src">(${n} ${n === 1 ? 'fonte' : 'fontes'})</span></summary>
         <ul class="sobre__lista">${sobre.fontes.map(f => `<li data-fonte="${esc(f.id)}"><b>${nome(f)}.</b> ${f.oQue ? frase(f) : ''}</li>`).join('')}</ul>

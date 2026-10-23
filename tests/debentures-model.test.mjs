@@ -166,7 +166,7 @@ test('tabelaEmissoes: "—" onde a fonte não traz, incentivada sim/não, coorde
   assert.equal(cel(b, 'coordenadores'), 'X, Y');
   assert.equal(cel(a, 'volume_emitido'), 'R$ 450,00 mi');
   assert.equal(cel(a, 'taxa_emissao'), 'IPCA + 5,10%');
-  assert.equal(cel(b, 'taxa_emissao'), 'prefixada 13,50%');
+  assert.equal(cel(b, 'taxa_emissao'), 'Prefixada 13,50%');
   assert.equal(cel(a, 'vencimento'), '15/01/2030');
   assert.equal(cel(b, 'data_emissao'), '01/03/2020');
   assert.deepEqual(t.subsetores, ['ferrovias', 'rodovias']);
@@ -177,7 +177,7 @@ test('tabelaEmissores: uma taxa por indexador, spread só quando existe', () => 
   const t = D.tabelaEmissores(D.series(bloco, { somado: true }));
   const cel = (l, k) => t.colunas.find(c => c.k === k).fmt(l);
   const alfa = t.linhas.find(l => l.emissor === 'Alfa'), beta = t.linhas.find(l => l.emissor === 'Beta');
-  assert.equal(cel(alfa, 'taxa_ipca'), 'IPCA + 7,33%; CDI + 0,50%');
+  assert.equal(cel(alfa, 'taxa_ipca'), 'IPCA + 7,33%; DI + 0,50%');
   assert.equal(cel(alfa, 'spread_medio'), '1,70 p.p.');
   assert.equal(cel(beta, 'spread_medio'), '—');
   assert.equal(alfa.taxa_ipca, (8 * 1000 + 7 * 2000) / 3000);
@@ -204,7 +204,11 @@ test('formatação: volumes, percentuais e datas em pt-BR, "—" para vazio', ()
   assert.equal(D.fmtPp(1.2015), '1,20 p.p.');
   assert.equal(D.fmtData('2026-10-01'), '01/10/2026');
   assert.equal(D.fmtDiaMes('2026-10-01'), '01/10');
-  assert.equal(D.taxaMediaTexto({ 'PRÉ': 13.5, 'IPCA+': 7.7 }), 'IPCA + 7,70%; prefixada 13,50%');
+  assert.equal(D.taxaMediaTexto({ 'PRÉ': 13.5, 'IPCA+': 7.7 }), 'IPCA + 7,70%; Prefixada 13,50%');
+  // um vocabulário só para os indexadores; "% DI" é percentual do DI, não soma
+  assert.equal(D.taxaTexto('% DI', 105), '105,00% do DI');
+  assert.deepEqual(['IPCA+', 'DI+', '% DI', 'PRÉ', 'XYZ'].map(D.rotuloIndexador), ['IPCA+', 'DI+', '% do DI', 'Prefixada', 'XYZ']);
+  assert.equal(D.taxaMediaTexto({ '% DI': 105, 'DI+': 1.2 }), 'DI + 1,20%; 105,00% do DI');
   assert.equal(D.taxaMediaTexto({}), '—');
 });
 
@@ -245,4 +249,24 @@ test('cabeçalhos de spread dizem sobre o quê', () => {
   const s = D.series(bloco);
   assert.ok(D.tabelaEmissores(s).colunas.some(c => c.rotulo === 'Spread médio sobre a NTN-B (IPCA+)'));
   assert.ok(D.tabelaUltimo(s).colunas.some(c => c.rotulo === 'Spread sobre a NTN-B (IPCA+)'));
+});
+
+test('fonteCurta: quem forneceu e o período, sem tipo, licença nem nome completo', () => {
+  const b = {
+    fonte: [
+      { nome: 'BTG — tela de debêntures e negócios fechados no mercado secundário', periodo: 'tela de 21/10/2026 a 22/10/2026; negócios de 01/10/2026 a 05/10/2026', tipo: 'medido' },
+      { nome: 'XP — tela de debêntures e intenções de compra e venda', periodo: 'tela de 21/10/2026 a 22/10/2026; intenções de 01/10/2026 a 03/10/2026', tipo: 'medido' },
+      { nome: 'Banco Central do Brasil — Sistema Gerenciador de Séries Temporais (Selic, CDI e IPCA)', periodo: 'Selic meta: 02/10/2026' },
+      { nome: 'Tesouro Nacional — Taxas dos títulos ofertados pelo Tesouro Direto (NTN-B)', periodo: '01/10/2026 a 02/10/2026' },
+    ],
+    secundario: { periodo: { de: '2026-10-01', ate: '2026-10-05' } },
+    macro: { ntnb: [{ vencimento: '2030-08-15', taxa: 6.1, data: '2026-10-02' }] },
+  };
+  assert.equal(D.fonteCurta(b, { corretoras: ['BTG', 'XP'], periodo: 'dados' }), 'Corretoras BTG e XP, 01/10/2026 a 05/10/2026');
+  assert.equal(D.fonteCurta(b, { corretoras: ['BTG', 'XP'], periodo: 'dados', tesouro: true }), 'Corretoras BTG e XP, 01/10/2026 a 05/10/2026; Tesouro Nacional (curva das NTN-B)');
+  assert.equal(D.fonteCurta(b, { corretoras: ['XP'], periodo: 'intencoes' }), 'Corretora XP, intenções de 01/10/2026 a 03/10/2026');
+  assert.equal(D.fonteCurta(b, { corretoras: ['BTG', 'XP'], periodo: 'tela' }), 'Corretoras BTG e XP, telas de 21/10/2026 a 22/10/2026');
+  assert.equal(D.fonteCurta(b, { bcb: true }), 'Banco Central do Brasil');
+  assert.equal(D.fonteCurta(b, { tesouro: true, curva: true }), 'Tesouro Nacional, curva de 02/10/2026');
+  assert.equal(D.fonteCurta({}, { corretoras: ['XP'], bcb: true }), '—');
 });

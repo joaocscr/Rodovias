@@ -39,6 +39,9 @@ ACESSO_CURADO = {
     "vmda2025": "o arquivo vem do Google Drive do usuário: troque o zip em data/raw/trafego/vmda2025/ por uma versão nova "
                 "e rode `python scripts/atualizar.py --baixar --dominios vmda2025`",
 }
+# fonte de um bloco que o usuário fornece (não se renova por download): o que fazer quando o acesso passa de um ano
+ACESSO_CURADO_FONTE_DO_USUARIO = ("a data é a de quando a planilha das corretoras foi vista pela primeira vez: exporte planilhas "
+                                  "novas para data/raw/debentures/ e rode `python scripts/atualizar.py --dominios debentures`")
 # bloco de data/intel/ → domínio (script de scripts/intel/) que o gera, quando o nome difere
 DOMINIO_DO_BLOCO = {"municipios": "agro"}
 DIAS_FONTE_ANTIGA = 365
@@ -165,7 +168,8 @@ def _fonte_antiga(fontes, hoje):
         if d is None or chave in vistos or (hoje - d).days <= DIAS_FONTE_ANTIGA:
             continue
         vistos.add(chave)
-        o_que = ACESSO_CURADO.get(bloco) or (
+        o_que = ACESSO_CURADO_FONTE_DO_USUARIO if (bloco == "debentures" and "corretora" in (f.get("licenca") or "")) else None
+        o_que = o_que or ACESSO_CURADO.get(bloco) or (
             f"rode `python scripts/atualizar.py --renovar {DOMINIO_DO_BLOCO.get(bloco, bloco)}`; se nada mudar, a fonte não publicou dado novo ou o "
             "endereço mudou (veja a tabela de constantes por domínio no README)")
         out.append(("fonte_antiga", f"{f.get('nome')} ({bloco})",

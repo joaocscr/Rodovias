@@ -19,7 +19,7 @@ const Trafego = (() => {
 
   const tile = (id, value, label) => `<div class="kpi-tile" id="${id}"><b>${esc(value)}</b><span>${esc(label)}</span></div>`;
   const box = id => document.getElementById('chart-' + id);
-  const width = el => Math.max(320, (el && el.clientWidth) || 640);
+  const width = el => Math.max(280, (el && el.clientWidth) || 640);
   const ym = s => { const [y, m] = String(s).split('-').map(Number); return { y, m }; };
   const anosLabel = IM.anosLabel;
 
@@ -114,7 +114,7 @@ const Trafego = (() => {
     if (IM.vmdaOf(intel)) {
       out += card('t-taxa', 'As 15 BRs/UF com maior taxa de acidentes', `Acidentes por 10⁶ veíc·km, PRF ${anos} ÷ VMDa ${IM.vmdaOf(intel).ano}`,
         { wide: true, fonte: `${f}; ${fonte(intel.trafego, /VMDa/)}`,
-          note: 'Só trechos com VMDa (modelado) e BR/UF com pelo menos 10 km somados; trechos planejados no SNV ficam de fora. Acidentes medidos, exposição modelada.' });
+          noteHtml: `A taxa é por ${Glossario.link('veic-km', 'veículo-quilômetro')}. Só trechos com VMDa (modelado) e BR/UF com pelo menos 10 km somados; trechos planejados no SNV ficam de fora. Acidentes medidos, exposição modelada.` });
     }
     return out;
   }
