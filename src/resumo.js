@@ -10,6 +10,7 @@ const Resumo = (() => {
     trafego: 'Volume de tráfego, praças de pedágio, índice ABCR e acidentes',
     cargas: 'Produção agrícola, armazenagem, exportação, ferrovia, frete e carga nos trechos',
     mercado: 'Leilões, deságios, concorrência e grupos econômicos',
+    debentures: 'Emissões e mercado secundário de debêntures de rodovias e infraestrutura de transporte',
     regulatorio: 'Modelo regulatório, garantias, financiamento e otimizações contratuais',
     fontes: 'Documentos e bases de cada número, com data de acesso',
     glossario: 'O que significam os termos técnicos e de mercado usados no painel',

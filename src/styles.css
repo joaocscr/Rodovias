@@ -753,3 +753,18 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
   .cons-int { grid-template-columns: minmax(0, 1fr); }
   .cons-int__part { justify-content: flex-start; }
 }
+
+/* Aba Debêntures: chave "ver somado", rótulo do que é mostrado e linha de atalho no Mercado */
+.deb-controle { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 24px; align-items: center; margin: 0 0 24px; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--tint); max-width: 880px; }
+.deb-controle__desc, .deb-controle__estado { margin: 0; font-size: 14px; color: var(--color-light-grey); }
+.deb-controle__estado { grid-column: 1 / -1; color: var(--color-spacial-grey); }
+.switch { all: unset; display: inline-flex; align-items: center; gap: 12px; min-height: 44px; cursor: pointer; font-weight: 600; color: var(--color-deep-blue); }
+.switch:focus-visible { outline: 2px solid var(--color-bright-blue); outline-offset: 2px; border-radius: var(--radius-sm); }
+.switch__trilho { position: relative; flex: none; width: 44px; height: 24px; border-radius: 12px; background: var(--color-light-grey); transition: background var(--transition); }
+.switch__bola { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--color-snow-white); transition: transform var(--transition); }
+.switch[aria-checked="true"] .switch__trilho { background: var(--color-deep-blue); }
+.switch[aria-checked="true"] .switch__bola { transform: translateX(20px); }
+.deb-rotulo { font-weight: 600; color: var(--color-deep-blue); }
+.deb-spread { font-size: 14px; }
+.grid-linha { grid-column: 1 / -1; margin: 0; font-size: 14px; color: var(--color-light-grey); }
+@media (max-width: 900px) { .deb-controle { grid-template-columns: minmax(0, 1fr); } }

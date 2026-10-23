@@ -154,7 +154,7 @@ async function go(hash) {
 
 test('barra de abas (Resumo primeiro, Glossário por último) e Mapa ativa', async () => {
   await go('#mapa');
-  assert.deepEqual(await page.$$eval('#tabs a', as => as.map(a => a.textContent)), ['Resumo', 'Mapa', 'Projetos', 'Tráfego', 'Cargas', 'Mercado', 'Regulatório', 'Fontes', 'Glossário']);
+  assert.deepEqual(await page.$$eval('#tabs a', as => as.map(a => a.textContent)), ['Resumo', 'Mapa', 'Projetos', 'Tráfego', 'Cargas', 'Mercado', 'Debêntures', 'Regulatório', 'Fontes', 'Glossário']);
   assert.equal(await page.textContent('#tabs a.is-active'), 'Mapa');
 });
 
@@ -267,7 +267,7 @@ test('glossário: termo escondido por busca/categoria reaparece pela rota; id de
 
 test('glossário: os links das abas apontam só para termos que existem no arquivo embutido', async () => {
   const ausentes = [];
-  for (const h of ['#resumo', '#mapa', '#projetos', '#trafego', '#cargas', '#mercado', '#regulatorio']) {
+  for (const h of ['#resumo', '#mapa', '#projetos', '#trafego', '#cargas', '#mercado', '#debentures', '#regulatorio']) {
     await go(h);
     const ids = await page.$$eval(`[data-tab="${h.slice(1)}"] a.glossario-link, ${h === '#mapa' ? '#panel a.glossario-link' : '.nada'}`,
       as => [...new Set(as.map(a => decodeURIComponent(a.getAttribute('href').replace('#glossario/', ''))))]);
@@ -404,13 +404,13 @@ test('resumo: Sobre este painel mostra as fontes, a data-base e o acesso do mode
 });
 
 // Celular (390×844): nem o Resumo nem o mapa alargam a página (a barra de abas rola dentro do topo).
-test('celular: nenhuma aba (Resumo, mapa, Projetos, Tráfego, Cargas, Mercado, Regulatório, Fontes, Glossário) com rolagem horizontal da página', async () => {
+test('celular: nenhuma aba (Resumo, mapa, Projetos, Tráfego, Cargas, Mercado, Debêntures, Regulatório, Fontes, Glossário) com rolagem horizontal da página', async () => {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   await context.route('**/*', r => (/^(file|data):/.test(r.request().url()) ? r.continue() : r.abort()));
   const p = await context.newPage();
   await p.goto('file://' + HTML);
   await p.waitForSelector('#page-resumo .page__inner');
-  for (const h of ['#resumo', '#mapa', '#projetos', '#trafego', '#cargas', '#mercado', '#regulatorio', '#fontes', '#glossario', '#glossario/vmda']) {
+  for (const h of ['#resumo', '#mapa', '#projetos', '#trafego', '#cargas', '#mercado', '#debentures', '#regulatorio', '#fontes', '#glossario', '#glossario/vmda']) {
     await p.evaluate(x => { location.hash = x; }, h);
     await p.waitForFunction(x => Tabs.current().active === x.slice(1).split('/')[0], h);
     await p.waitForTimeout(100);
@@ -1269,10 +1269,10 @@ test('fechamento: "RoadShow: …" de nome só quando o grupo econômico difere',
   assert.ok((await partLinhas())[0].includes(`RoadShow: ${rs}`));
 });
 
-test('fechamento: Mercado tem ABDIB, debêntures, comparativos e pavimento com a página e sem NaN', async () => {
+test('fechamento: Mercado tem ABDIB, comparativos e pavimento com a página e sem NaN; a série de debêntures vai para a aba Debêntures', async () => {
   await go('#mercado');
   const m = await page.evaluate(() => window.CONC.mercado);
-  for (const id of ['abdib', 'debentures', 'comparativos', 'pavimento']) {
+  for (const id of ['abdib', 'comparativos', 'pavimento']) {
     const card = page.locator('#card-' + id);
     assert.equal(await card.count(), 1, id);
     const txt = await card.textContent();
@@ -1291,9 +1291,16 @@ test('fechamento: Mercado tem ABDIB, debêntures, comparativos e pavimento com a
   assert.equal(await page.locator('#chart-abdib rect.cbar').count(), 2 * ab.length);
   assert.equal(await page.locator('#chart-abdib rect.cbar title').first().textContent(),
     `${ab0.ano} (total impresso: R$ ${fmt(ab0.total)} bi) · Público: ${fmt(ab0.publico)} R$ bi`);
-  // debêntures: uma barra por ano
+  // debêntures: saiu do Mercado, que só traz a linha com o atalho para a aba Debêntures
+  assert.equal(await page.locator('#card-debentures').count(), 0);
+  assert.equal(await page.locator('#mercado-debentures-link a[href="#debentures"]').count(), 1);
+  assert.ok((await page.textContent('#mercado-debentures-link')).includes(`p. ${m.fontes.debentures}`));
+  await go('#debentures');
   const deb = m.debentures.serie;
-  assert.deepEqual(await page.locator('#chart-debentures rect.cbar title').allTextContents(), deb.map(x => `${x.ano}: ${fmt(x.valor)} R$ bi`));
+  assert.deepEqual(await page.locator('#chart-d-incentivadas rect.cbar title').allTextContents(), deb.map(x => `${x.ano}: ${fmt(x.valor)} R$ bi`));
+  assert.ok((await page.textContent('#card-d-incentivadas')).includes(`Fonte: RoadShow 2026-2027, p. ${m.fontes.debentures}`));
+  assert.ok((await page.locator('#card-d-incentivadas .chart-legend').count()) >= 1);
+  await go('#mercado');
   // pavimento: uma barra por estado, com o percentual
   assert.deepEqual(await page.locator('#chart-pavimento rect.cbar title').allTextContents(), m.pavimento.estados.map(e => `${e.estado}: ${fmt(e.aumento_pct)}%`));
   // comparativos: barras dos acumulados na unidade da primeira linha; tabela com todas as linhas e a variação impressa

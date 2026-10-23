@@ -191,8 +191,7 @@ const Mercado = (() => {
           legend: Charts.legendHtml([['Realizado', C.deep], ['Previsto', C.bright]]), foot: comparativosTable(m.comparativos) }) : ''}
         ${m.abdib ? card('abdib', 'Investimento em infraestrutura (ABDIB)', `${m.abdib.fonte_original}: toda a infraestrutura do país, não só rodovias. R$\u00a0bi por ano, ${periodoSerie(m.abdib.serie)}`, { key: 'abdib',
           legend: Charts.legendHtml([['Público', C.deep], ['Privado', C.bright]]) }) : ''}
-        ${m.debentures ? card('debentures', 'Debêntures incentivadas para rodovias', `Emissões por ano, ${periodoSerie(m.debentures.serie)}, em R$ bi ${m.debentures.precos}`, { key: 'debentures',
-          legend: Charts.legendHtml([['Emissões no ano', C.deep]]) }) : ''}
+        ${m.debentures ? `<p class="grid-linha" id="mercado-debentures-link">Emissões anuais de debêntures incentivadas para rodovias (RoadShow, ${esc(pages(m.fontes.debentures))}): veja na aba <a href="#debentures">Debêntures</a>.</p>` : ''}
         ${m.pavimento ? card('pavimento', 'Custo do transporte de cargas por estado do pavimento', `Aumento do custo operacional do transporte rodoviário de cargas conforme o estado do pavimento. Acréscimo médio no Brasil: ${nf1.format(m.pavimento.acrescimo_medio)}%`, { key: 'pavimento',
           src: `${roadshow('pavimento')} (${m.pavimento.fonte_original})`, legend: Charts.legendHtml([['Aumento do custo operacional', C.deep]]) }) : ''}
         ${card('diag', 'Concessões rodoviárias federais por ano', 'Contratos, extensão concedida (km), valor dos contratos e investimento executado acumulado (R$ bi); * = previsto', { key: 'diagnostico', wide: true,
@@ -243,9 +242,6 @@ const Mercado = (() => {
     if (m.abdib) {
       Charts.stacked(box('abdib'), m.abdib.serie.map(x => ({ label: String(x.ano), tip: `${x.ano} (total impresso: R$ ${nf1.format(x.total)} bi)`, parts: [x.publico, x.privado] })),
         { names: ['Público', 'Privado'], unit: 'R$ bi', format: v => nf1.format(v), title: 'Investimento em infraestrutura (ABDIB)' });
-    }
-    if (m.debentures) {
-      Charts.bars(box('debentures'), m.debentures.serie.map(x => ({ label: String(x.ano), value: x.valor })), { unit: 'R$ bi', format: v => nf1.format(v), title: 'Debêntures incentivadas para rodovias' });
     }
     if (m.pavimento) {
       Charts.hbars(box('pavimento'), m.pavimento.estados.map(e => ({ label: e.estado, value: e.aumento_pct })), { format: v => nf1.format(v) + '%', title: 'Estado do pavimento' });

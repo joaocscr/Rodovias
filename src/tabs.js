@@ -1,8 +1,8 @@
-// Abas (Resumo | Mapa | Projetos | Tráfego | Cargas | Mercado | Regulatório | Fontes | Glossário) e ficha, roteadas por #hash (funciona em file://).
+// Abas (Resumo | Mapa | Projetos | Tráfego | Cargas | Mercado | Debêntures | Regulatório | Fontes | Glossário) e ficha, roteadas por #hash (funciona em file://).
 // Resumo é a página inicial: hash vazio ou inválido abre o Resumo.
 const Tabs = (() => {
   const TABS = [['resumo', 'Resumo'], ['mapa', 'Mapa'], ['projetos', 'Projetos'], ['trafego', 'Tráfego'], ['cargas', 'Cargas'],
-    ['mercado', 'Mercado'], ['regulatorio', 'Regulatório'], ['fontes', 'Fontes'], ['glossario', 'Glossário']];
+    ['mercado', 'Mercado'], ['debentures', 'Debêntures'], ['regulatorio', 'Regulatório'], ['fontes', 'Fontes'], ['glossario', 'Glossário']];
   const inits = {}, argInits = {};
   const started = new Set();
   const INICIAL = 'resumo';

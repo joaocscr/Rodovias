@@ -13,6 +13,7 @@
   Tabs.on('trafego', () => Trafego.init(intel, snv));
   Tabs.on('cargas', () => Cargas.init(intel, snv));
   Tabs.on('mercado', () => Mercado.init(conc, intel));
+  Tabs.on('debentures', () => Debentures.init(conc, intel));
   Tabs.on('regulatorio', () => Regulatorio.init(conc));
   Tabs.on('fontes', () => Fontes.init(intel, conc, window.GLOSSARIO, window.FONTES_DESCRICAO));
   Tabs.on('glossario', () => Glossario.render());
