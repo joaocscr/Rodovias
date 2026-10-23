@@ -225,3 +225,24 @@ test('no bloco real, os totais por dia, emissor e subsetor fecham entre si, soma
   const puro = D.series(real), soma = D.series(real, { somado: true });
   assert.ok(soma.porDia.reduce((t, x) => t + x.volume, 0) > puro.porDia.reduce((t, x) => t + x.volume, 0));
 });
+
+test('tabelaEmissoes: coluna "—" em todos os papéis sai da tabela e volta quando a fonte preenche; "Incentivada" fica', () => {
+  const b = JSON.parse(JSON.stringify(bloco));
+  b.emissoes.forEach(e => { e.data_emissao = null; e.coordenadores = null; e.incentivada = null; });
+  const t = D.tabelaEmissoes(b);
+  const ks = t.colunas.map(c => c.k);
+  assert.ok(!ks.includes('data_emissao') && !ks.includes('coordenadores'));
+  assert.ok(ks.includes('incentivada'), 'fixa');
+  assert.deepEqual(t.ocultas, ['Data de emissão', 'Coordenadores']);
+  b.emissoes[1].coordenadores = ['X'];
+  const t2 = D.tabelaEmissoes(b);
+  assert.ok(t2.colunas.some(c => c.k === 'coordenadores'));
+  assert.deepEqual(t2.ocultas, ['Data de emissão']);
+  assert.deepEqual(D.tabelaEmissoes({}).ocultas, []);
+});
+
+test('cabeçalhos de spread dizem sobre o quê', () => {
+  const s = D.series(bloco);
+  assert.ok(D.tabelaEmissores(s).colunas.some(c => c.rotulo === 'Spread médio sobre a NTN-B (IPCA+)'));
+  assert.ok(D.tabelaUltimo(s).colunas.some(c => c.rotulo === 'Spread sobre a NTN-B (IPCA+)'));
+});

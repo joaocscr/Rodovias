@@ -58,7 +58,12 @@ const ResumoModel = (() => {
     // entre fontes, para não parecer uma série contínua.
     if (!b.anos.length) return ps.join('; ');
     const de = Math.min(...b.anos), ate = Math.max(...b.anos);
-    return de === ate ? String(de) : `varia por fonte (de ${de} a ${ate})`;
+    if (de !== ate) return `varia por fonte (de ${de} a ${ate})`;
+    // Fontes do mesmo ano: com datas dd/mm/aaaa nos períodos, vale da mais antiga à mais recente (só o ano esconderia que
+    // são poucos dias de dado); sem duas datas diferentes, o ano.
+    const iso = d => d.split('/').reverse().join('-');
+    const datas = unicos(ps.flatMap(p => p.match(/\b\d{2}\/\d{2}\/\d{4}\b/g) || []).map(iso)).sort();
+    return datas.length >= 2 ? faixa(IM.fmtDia(datas[0]), IM.fmtDia(datas[datas.length - 1])) : String(de);
   }
 
   // A descrição pode terminar com "{edicao}", trocado por ", " + a edição do RoadShow (CONC.edicaoRoadshow); sem edição, some.

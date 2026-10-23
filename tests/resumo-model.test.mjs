@@ -123,3 +123,15 @@ test('toda fonte embutida em data/intel/fontes.json tem descrição curada em da
     assert.doesNotMatch(JSON.stringify(f), /undefined|NaN|\{edicao\}/);
   }
 });
+
+test('bloco com várias fontes do mesmo ano: da data mais antiga à mais recente dos períodos, em dd/mm/aaaa', () => {
+  const d = { deb: { nome: 'Debêntures', oQue: 'x' } };
+  const dataBase = periodos => ResumoModel.sobrePainel({}, { fontes: { fontes: periodos.map((p, i) => ({ bloco: 'deb', nome: `F${i}`, periodo: p, acesso: '2026-10-22' })) } }, d).fontes[0].dataBase;
+  assert.equal(dataBase(['tela de 21/10/2026 a 22/10/2026; negócios de 01/10/2026 a 05/10/2026', 'Selic meta: 22/10/2026; CDI: 21/10/2026; IPCA 12 meses: 09/2026', '16/10/2026', '01/10/2026 a 15/10/2026']),
+    '01/10/2026 a 22/10/2026');
+  // uma só data em todos os períodos, ou períodos sem dia: continua o ano
+  assert.equal(dataBase(['22/10/2026', 'tela de 22/10/2026']), '2026');
+  assert.equal(dataBase(['2026-09/2026-10', '09/2026']), '2026');
+  // anos diferentes: a variação entre fontes, como antes
+  assert.equal(dataBase(['01/10/2025 a 05/10/2025', '22/10/2026']), 'varia por fonte (de 2025 a 2026)');
+});

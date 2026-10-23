@@ -338,8 +338,8 @@ def test_fontes_do_bloco(bloco):
     # datas dos dados: tela BTG pela atualização do livro; a tela XP só traz a hora e usa a da BTG; negócios e intenções
     # pelo horário de cada linha; acesso = dia em que o bloco foi gerado
     assert btg["periodo"] == "tela de 21/10/2026 a 22/10/2026; negócios de 01/10/2026 a 05/10/2026"
-    assert xp["periodo"].startswith("tela de 21/10/2026 a 22/10/2026 (a tela XP traz só a hora")
-    assert xp["periodo"].endswith("intenções de 01/10/2026 a 03/10/2026")
+    assert xp["periodo"] == "tela de 21/10/2026 a 22/10/2026; intenções de 01/10/2026 a 03/10/2026"
+    assert "traz só a hora" in xp["nota"] and "traz só a hora" not in xp["periodo"]
     assert btg["acesso"] == xp["acesso"] == dt.date.today().isoformat()
     tesouro = next(f for f in fontes if "Tesouro" in f["nome"])
     assert "taxa de compra) interpolada pelo vencimento (não pela duration)" in tesouro["nota"]

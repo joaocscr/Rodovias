@@ -186,14 +186,18 @@ const DebenturesModel = (() => {
     { k: 'volume_emitido', rotulo: 'Volume emitido', num: true, fmt: l => fmtVolume(l.volume_emitido) },
     { k: 'data_emissao', rotulo: 'Data de emissão', num: true, fmt: l => fmtData(l.data_emissao) },
     { k: 'coordenadores', rotulo: 'Coordenadores', fmt: l => txt(l.coordenadores) },
-    { k: 'incentivada', rotulo: 'Incentivada (Lei 12.431)', fmt: l => (l.incentivada === true ? 'Sim' : l.incentivada === false ? 'Não' : DASH) },
+    { k: 'incentivada', rotulo: 'Incentivada (Lei 12.431)', fixa: true, fmt: l => (l.incentivada === true ? 'Sim' : l.incentivada === false ? 'Não' : DASH) },
     { k: 'rating', rotulo: 'Nota de crédito (rating)', fmt: l => txt(l.rating) },
   ];
-  // Emissões de emissores de rodovias e infraestrutura de transporte, uma linha por papel. Campo que a fonte não traz fica "—".
+  // Emissões de emissores de rodovias e infraestrutura de transporte, uma linha por papel. Campo que a fonte não traz num papel
+  // fica "—"; coluna que a fonte não preenche em nenhum papel sai da tabela (e é listada em `ocultas`), e volta sozinha
+  // quando uma fonte passar a trazer o dado. "Incentivada" (fixa) fica sempre.
   function tabelaEmissoes(bloco) {
     const linhas = ((bloco && bloco.emissoes) || []).map(e => Object.assign({}, e, {
       coordenadores: Array.isArray(e.coordenadores) ? (e.coordenadores.join(', ') || null) : (e.coordenadores || null) }));
-    return { colunas: COLUNAS_EMISSOES, linhas, subsetores: [...new Set(linhas.map(l => l.subsetor).filter(Boolean))].sort(collator.compare) };
+    const vazia = c => !c.fixa && linhas.length > 0 && linhas.every(l => c.fmt(l) === DASH);
+    return { colunas: COLUNAS_EMISSOES.filter(c => !vazia(c)), ocultas: COLUNAS_EMISSOES.filter(vazia).map(c => c.rotulo), linhas,
+      subsetores: [...new Set(linhas.map(l => l.subsetor).filter(Boolean))].sort(collator.compare) };
   }
 
   const colunasEmissores = somado => [
@@ -202,7 +206,7 @@ const DebenturesModel = (() => {
     { k: 'volume', rotulo: 'Volume', num: true, fmt: l => fmtVolume(l.volume) },
     { k: 'n', rotulo: somado ? 'Negócios + intenções' : 'Negócios', num: true, fmt: l => fmtInt(l.n) },
     { k: 'taxa_ipca', rotulo: 'Taxa média', fmt: l => taxaMediaTexto(l.taxa_media) },
-    { k: 'spread_medio', rotulo: 'Spread médio (IPCA+)', num: true, fmt: l => fmtPp(l.spread_medio) },
+    { k: 'spread_medio', rotulo: 'Spread médio sobre a NTN-B (IPCA+)', num: true, fmt: l => fmtPp(l.spread_medio) },
   ];
   // Taxa média e spread por emissor, do que series() devolve.
   function tabelaEmissores(s) {
@@ -218,7 +222,7 @@ const DebenturesModel = (() => {
     { k: 'vencimento', rotulo: 'Vencimento', num: true, fmt: l => fmtData(l.vencimento) },
     { k: 'quando', rotulo: 'Data e hora', num: true, fmt: l => `${fmtData(l.data)}${l.hora ? ` ${l.hora}` : ''}` },
     { k: 'taxa', rotulo: 'Taxa', num: true, fmt: l => taxaTexto(l.indexador, l.taxa) },
-    { k: 'spread', rotulo: 'Spread (IPCA+)', num: true, fmt: l => fmtPp(l.spread) },
+    { k: 'spread', rotulo: 'Spread sobre a NTN-B (IPCA+)', num: true, fmt: l => fmtPp(l.spread) },
     { k: 'tipo', rotulo: 'Tipo', fmt: l => l.tipo },
   ];
   // Último negócio de cada papel (ou último registro, se somado), do que series() devolve.

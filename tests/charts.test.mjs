@@ -293,3 +293,26 @@ test('hbarsSvg clicável: linha com k vira botão acessível; linha sem k (ex.: 
   assert.ok(!/data-k|role="button"|tabindex/.test(comum));
   assert.match(comum, /role="img"/);
 });
+
+test('linesSvg: yMin faz o eixo y começar acima de zero e espalha os pontos; sem yMin nada muda', () => {
+  const s = [{ name: 'Curva', points: [{ x: 2029, y: 6.77 }, { x: 2040, y: 6.75 }, { x: 2055, y: 6.71 }, { x: 2060, y: 6.83 }] }];
+  const eixo = svg => [...svg.matchAll(/<text [^>]*text-anchor="end"[^>]*>([^<]*)<\/text>/g)].map(m => m[1]);
+  const cys = svg => [...svg.matchAll(/<circle [^>]*cy="([\d.]+)"/g)].map(m => +m[1]);
+  const sem = Charts.linesSvg(s, {}), com = Charts.linesSvg(s, { yMin: 6.7 });
+  assert.equal(Charts.linesSvg(s, { yMin: undefined }), sem, 'sem yMin é o mesmo desenho de antes');
+  assert.equal(eixo(sem)[0], '0');
+  const marcas = eixo(com).map(t => Number(t.replace(',', '.')));
+  assert.ok(marcas[0] > 6 && marcas[0] <= 6.7, `primeira marca ${marcas[0]}`);
+  assert.ok(marcas[marcas.length - 1] >= 6.83);
+  const alturaSem = Math.max(...cys(sem)) - Math.min(...cys(sem)), alturaCom = Math.max(...cys(com)) - Math.min(...cys(com));
+  assert.ok(alturaCom > 10 * alturaSem, `com yMin as diferenças aparecem (${alturaCom} × ${alturaSem})`);
+  // o maior valor fica na marca mais alta do eixo e nenhum ponto sai da área do gráfico
+  assert.ok(cys(com).every(y => y >= 16 - 1e-6 && y <= 280 - 40 + 1e-6));
+  assert.deepEqual(Charts.linesSvg(s, { yMin: 99 }), sem, 'yMin acima dos dados é ignorado');
+});
+
+test('ticksFrom: marcas entre o mínimo e o máximo, a primeira no múltiplo do passo abaixo do mínimo', () => {
+  assert.deepEqual(Charts.ticksFrom(6.7, 6.83), [6.7, 6.75, 6.8, 6.85]);
+  assert.deepEqual(Charts.ticksFrom(6.71, 6.83), [6.7, 6.75, 6.8, 6.85]);
+  assert.deepEqual(Charts.ticksFrom(5, 5), [5]);
+});

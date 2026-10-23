@@ -13,13 +13,25 @@ const Charts = (() => {
   }
   const empty = (w, h) => frame(w, h, `<text x="${w / 2}" y="${h / 2}" text-anchor="middle" fill="${C.grey}">Sem dados</text>`, 'Sem dados');
 
+  const niceStep = (range, n) => {
+    const raw = range / n, p = Math.pow(10, Math.floor(Math.log10(raw)));
+    return [1, 2, 2.5, 5, 10].map(m => m * p).find(s => s >= raw);
+  };
   function ticks(max, n = 4) {
     if (!(max > 0)) return [0];
-    const raw = max / n, p = Math.pow(10, Math.floor(Math.log10(raw)));
-    const step = [1, 2, 2.5, 5, 10].map(m => m * p).find(s => s >= raw);
+    const step = niceStep(max, n);
     const out = [];
     for (let v = 0; v <= max + step * 0.001; v += step) out.push(+v.toFixed(10));
     if (out[out.length - 1] < max) out.push(out[out.length - 1] + step);
+    return out;
+  }
+  // Marcas do eixo y entre `min` e `max` (eixo que não começa em zero): a primeira é o múltiplo do passo logo abaixo de min.
+  function ticksFrom(min, max, n = 4) {
+    if (!(max > min)) return [min];
+    const step = niceStep(max - min, n), v0 = +(Math.floor(min / step + 1e-9) * step).toFixed(10);
+    const out = [];
+    for (let v = v0; v <= max + step * 0.001; v += step) out.push(+v.toFixed(10));
+    if (out[out.length - 1] < max) out.push(+(out[out.length - 1] + step).toFixed(10));
     return out;
   }
 
@@ -143,8 +155,10 @@ const Charts = (() => {
     const fx = o.formatX || (x => String(x)), r = o.r || 4;
     const L = 72, R = 16, T = 16, B = 40, pw = w - L - R, ph = h - T - B;
     const xs = all.map(p => p.x), x0 = Math.min(...xs), x1 = Math.max(...xs);
-    const ty = ticks(Math.max(...all.map(p => p.y))), my = ty[ty.length - 1] || 1;
-    const xOf = v => L + (x1 === x0 ? pw / 2 : ((v - x0) / (x1 - x0)) * pw), yOf = v => T + ph - (v / my) * ph;
+    // o.yMin: o eixo y começa nesse valor (ou no múltiplo do passo logo abaixo), em vez de zero; sem ele, o eixo parte de zero
+    const ymax = Math.max(...all.map(p => p.y)), ty = num(o.yMin) && o.yMin < ymax ? ticksFrom(o.yMin, ymax) : ticks(ymax);
+    const y0 = num(o.yMin) && o.yMin < ymax ? ty[0] : 0, my = ty[ty.length - 1] || 1;
+    const xOf = v => L + (x1 === x0 ? pw / 2 : ((v - x0) / (x1 - x0)) * pw), yOf = v => T + ph - ((v - y0) / ((my - y0) || 1)) * ph;
     let body = yAxis(ty, L, w - R, yOf, fy);
     // o.stepX: passo dos rótulos do eixo x (ex.: meses em fração de ano); padrão = inteiro, até ~8 rótulos
     const step = o.stepX > 0 ? o.stepX : Math.max(1, Math.ceil((x1 - x0) / 8));
@@ -298,7 +312,7 @@ const Charts = (() => {
 
   const into = fn => (el, data, o = {}) => { el.innerHTML = fn(data, Object.assign({ width: Math.max(320, el.clientWidth || 640) }, o)); };
 
-  return { C, barsSvg, hbarsSvg, hstackSvg, scatterSvg, linesSvg, stackedSvg, dotsSvg, timelineSvg, legendHtml,
+  return { C, ticksFrom, barsSvg, hbarsSvg, hstackSvg, scatterSvg, linesSvg, stackedSvg, dotsSvg, timelineSvg, legendHtml,
     bars: into(barsSvg), hbars: into(hbarsSvg), scatter: into(scatterSvg), lines: into(linesSvg), stacked: into(stackedSvg), dots: into(dotsSvg) };
 })();
 

@@ -24,7 +24,7 @@ const Debentures = (() => {
   // Cartão: título, subtítulo (subHtml já escapado), legenda, conteúdo e fonte. `afetado`: cartão que muda com "ver somado";
   // ele ganha, no subtítulo, o rótulo do que está sendo mostrado (negócios fechados ou negócios + intenções).
   function card(id, title, subHtml, o = {}) {
-    const rotulo = o.afetado ? ` <span class="deb-rotulo">${esc(DM.series(bloco, { somado: st.somado }).rotulo)}</span>` : '';
+    const rotulo = o.afetado ? ` <span class="deb-rotulo">${esc(st.somado ? DM.ROTULO_SOMADO : DM.ROTULO_NEGOCIOS)}</span>` : '';
     return `<article class="ccard${o.wide ? ' ccard--wide' : ''}${o.afetado ? ' ccard--afetado' : ''}" id="card-d-${id}"${o.afetado ? ' data-afetado="1"' : ''}>
       <h3 id="titulo-d-${id}">${esc(title)}</h3>${subHtml || rotulo ? `<p class="sub">${subHtml || ''}${o.afetado ? `${subHtml ? ' · ' : ''}Mostrando:${rotulo}` : ''}</p>` : ''}
       ${o.legend || ''}<div class="chart-box" id="chart-d-${id}">${o.html || ''}</div>${o.foot || ''}
@@ -55,10 +55,10 @@ const Debentures = (() => {
     const pts = DM.curvaNtnb(bloco);
     if (!pts.length) return '';
     const dataCurva = DM.fmtData(DM.curvaAte(bloco));
-    return card('ntnb', `Taxa das NTN-B por vencimento, em ${dataCurva}`, '', { wide: true,
+    return card('ntnb', `Taxa das NTN-B por vencimento, em ${dataCurva}`, 'Taxa de compra do Tesouro Direto, em % ao ano, por ano de vencimento; o eixo vertical não começa em zero', { wide: true,
       legend: legenda('Taxa de compra (% ao ano)', C.deep),
       html: '<div id="chart-d-ntnb-linha"></div><div class="table-wrap table-wrap--static" id="deb-ntnb-tabela"></div>',
-      note: `A ${Glossario.link('ntn-b', 'NTN-B')} é o título público federal que paga inflação (IPCA) mais uma taxa fixa, vendido a pessoas físicas pelo Tesouro Direto. Sua curva é a referência de juro real sem risco: o spread das debêntures IPCA+ é a taxa delas menos a da NTN-B de mesmo vencimento.`,
+      note: `A ${Glossario.link('ntn-b', 'NTN-B')} é o título público federal que paga inflação (IPCA) mais uma taxa fixa, vendido a pessoas físicas pelo Tesouro Direto. Sua curva é a referência de juro real sem risco: o spread das debêntures IPCA+ é a taxa delas menos a da NTN-B de mesmo vencimento. “NTN-B Principal” é a versão sem juros semestrais (paga tudo no vencimento); entra onde não há NTN-B com juros no mesmo vencimento.`,
       fonte: fonte(/Tesouro Nacional/) });
   }
 
@@ -66,9 +66,9 @@ const Debentures = (() => {
     const t = DM.tabelaEmissoes(bloco);
     if (!t.linhas.length) return '';
     return card('emissoes', 'Emissões de debêntures de rodovias e infraestrutura de transporte',
-      `Um papel (série de debênture) por linha, de emissores de rodovias, ferrovias, portos e terminais, aeroportos, hidrovias e metrô que aparecem nas telas das corretoras. Taxa na emissão conforme o ${Glossario.link('indexador', 'indexador')}; “incentivada” = benefício da Lei 12.431 (${Glossario.link('debenture-infraestrutura', 'debênture de infraestrutura')} é a de 2024); “${DM.DASH}” quando a fonte não traz o campo. Clique no cabeçalho para ordenar`, {
+      `Um papel (série de debênture) por linha, de emissores de rodovias, ferrovias, portos e terminais, aeroportos, hidrovias e mobilidade urbana que aparecem nas telas das corretoras. Taxa na emissão conforme o ${Glossario.link('indexador', 'indexador')}; “incentivada” = benefício da Lei 12.431 (${Glossario.link('debenture-infraestrutura', 'debênture de infraestrutura')} é a de 2024); “${DM.DASH}” quando a fonte não traz o campo. Clique no cabeçalho para ordenar`, {
         wide: true,
-        note: `Nota de crédito (${Glossario.link('rating', 'rating')}) como informada na tela da corretora; data de emissão e coordenadores não constam das telas.`,
+        note: `Nota de crédito (${Glossario.link('rating', 'rating')}) como informada na tela da corretora.${t.ocultas.length ? ` Colunas que a fonte não preenche em nenhum papel ficam ocultas (agora: ${esc(t.ocultas.join(' e '))}) e aparecem sozinhas quando uma fonte trouxer o dado.` : ''}`,
         legend: `<div class="toolbar"><label class="sub" for="deb-em-sub">Subsetor</label><select id="deb-em-sub"><option value="">Todos</option>${
           t.subsetores.map(s => `<option>${esc(s)}</option>`).join('')}</select><span class="page__src" id="deb-em-n"></span></div>`,
         html: '<div id="deb-em-tabela"></div>', fonte: fontes(/BTG/, /XP/) });
@@ -113,27 +113,27 @@ const Debentures = (() => {
     const sec = bloco.secundario;
     if (!sec) return '';
     const p = per();
-    const lead = `<p class="page__lead">O ${Glossario.link('mercado-secundario', 'mercado secundário')} é onde investidores negociam entre si debêntures já emitidas. Os dados vêm de telas e planilhas de corretoras (XP e BTG)${p ? `, de ${esc(p)}` : ''}; aqui aparecem só os totais por dia, emissor e subsetor e o último negócio de cada papel. Um ${Glossario.link('negocio-intencao', 'negócio')} é uma operação fechada; uma intenção é um pedido de compra ou de venda, que pode não ter virado negócio. Taxas são ${Glossario.link('taxa-media-ponderada', 'médias ponderadas pelo volume')}, calculadas separadamente por indexador (IPCA+, CDI+ e prefixado não se misturam).</p>
-      <p class="page__lead deb-spread" id="deb-spread">Como o spread é calculado: ${Glossario.link('spread', 'spread')} = taxa do papel − taxa da NTN-B interpolada pelo vencimento (não pela ${Glossario.link('duration', 'duration')}), Tesouro Direto, taxa de compra; só para papéis ${Glossario.link('ipca-mais', 'IPCA+')}; “${DM.DASH}” quando não há curva no dia.${DM.notaCurva(bloco) ? ` ${esc(DM.notaCurva(bloco))}` : ''}</p>`;
+    const lead = `<p class="page__lead">O ${Glossario.link('mercado-secundario', 'mercado secundário')} é onde investidores negociam entre si debêntures já emitidas. Os dados vêm das telas das corretoras XP e BTG${p ? `, de ${esc(p)}` : ''}; aqui aparecem só os totais por dia, emissor e subsetor e o último negócio de cada papel. Um ${Glossario.link('negocio-intencao', 'negócio')} é uma operação fechada; uma intenção é um pedido de compra ou de venda, que pode não ter virado negócio. Taxas são ${Glossario.link('taxa-media-ponderada', 'médias ponderadas pelo volume')}, calculadas separadamente por indexador (IPCA+, CDI+ e prefixado não se misturam).</p>
+      <p class="page__lead deb-spread" id="deb-spread">Como o spread é calculado: ${Glossario.link('spread', 'spread')} = taxa do papel − taxa da NTN-B interpolada pelo vencimento (não pela ${Glossario.link('duration', 'duration')}), Tesouro Direto, taxa de compra; só para papéis ${Glossario.link('ipca-mais', 'IPCA+')}; “${DM.DASH}” quando não há curva no dia. O spread é dado em pontos percentuais (p.p.).${DM.notaCurva(bloco) ? ` ${esc(DM.notaCurva(bloco))}` : ''}</p>`;
     const controle = `<div class="deb-controle" id="deb-controle">
       <button type="button" role="switch" id="deb-somado" class="switch" aria-checked="false" aria-describedby="deb-somado-desc"><span class="switch__trilho" aria-hidden="true"><span class="switch__bola"></span></span><span class="switch__texto">Ver somado</span></button>
       <p class="deb-controle__desc" id="deb-somado-desc">Desligado, os cartões abaixo mostram só os negócios fechados e as intenções ficam à parte, no último cartão. Ligado, as intenções de compra e venda entram nos números e gráficos como se fossem negócios.</p>
       <p class="deb-controle__estado" id="deb-status" aria-live="polite"></p></div>`;
     const cards = [
       card('kpis', 'Mercado secundário em números', `Totais de ${esc(p)} para debêntures de rodovias e infraestrutura de transporte`, { wide: true, afetado: true, html: '', fonte: fontes(/BTG/, /XP/, /Tesouro Nacional/) }),
-      card('dia-vol', 'Volume negociado por dia', 'Soma do valor financeiro das operações de cada dia, em R$ milhões', { afetado: true,
+      card('dia-vol', 'Volume negociado por dia', 'Soma do valor financeiro de cada dia, em R$ milhões', { afetado: true,
         legend: legenda('Volume do dia (R$ milhões)', C.deep), fonte: fontes(/BTG/, /XP/) }),
-      card('dia-n', 'Número de operações por dia', 'Quantas operações foram registradas em cada dia', { afetado: true,
+      card('dia-n', 'Número de negócios por dia', 'Quantidade registrada em cada dia', { afetado: true,
         legend: legenda('Operações do dia', C.deep), fonte: fontes(/BTG/, /XP/) }),
-      card('subsetor', 'Taxa média e spread por subsetor', 'Média de cada subsetor (rodovias, ferrovias, portos e terminais, aeroportos, hidrovias, metrô), só dos papéis IPCA+, ponderada pelo volume', { wide: true, afetado: true,
+      card('subsetor', 'Taxa média e spread sobre a NTN-B por subsetor', 'Média de cada subsetor (rodovias, ferrovias, portos e terminais, aeroportos, hidrovias, mobilidade urbana), só dos papéis IPCA+, ponderada pelo volume', { wide: true, afetado: true,
         html: `<div class="duo"><div><h4 class="duo__title">Taxa média (% ao ano, IPCA + taxa)</h4>${legenda('Taxa média IPCA+', C.deep)}<div id="chart-d-subsetor-taxa"></div></div>
-          <div><h4 class="duo__title">Spread médio sobre a NTN-B (pontos percentuais)</h4>${legenda('Spread médio IPCA+', C.bright)}<div id="chart-d-subsetor-spread"></div></div></div>`,
+          <div><h4 class="duo__title">Spread médio sobre a NTN-B (p.p.)</h4>${legenda('Spread médio IPCA+', C.bright)}<div id="chart-d-subsetor-spread"></div></div></div>`,
         fonte: fontes(/BTG/, /XP/, /Tesouro Nacional/) }),
-      card('emissor', 'Taxa média e spread por emissor', 'Uma linha por empresa emissora; taxa média por indexador e spread médio dos papéis IPCA+. Clique no cabeçalho para ordenar', { wide: true, afetado: true,
+      card('emissor', 'Taxa média e spread sobre a NTN-B por emissor', 'Uma linha por empresa emissora; taxa média por indexador e spread médio sobre a NTN-B (p.p.) dos papéis IPCA+. Clique no cabeçalho para ordenar', { wide: true, afetado: true,
         html: '<div id="deb-emissor-tabela"></div>', fonte: fontes(/BTG/, /XP/, /Tesouro Nacional/) }),
-      card('ultimo', 'Último negócio de cada papel', 'Data, hora e taxa do registro mais recente de cada papel no período; o spread só existe para papéis IPCA+ em dias com curva da NTN-B', { wide: true, afetado: true,
+      card('ultimo', 'Último negócio de cada papel', 'Data, hora e taxa do registro mais recente de cada papel no período; o spread sobre a NTN-B (p.p.) só existe para papéis IPCA+ em dias com curva', { wide: true, afetado: true,
         html: '<div id="deb-ultimo-tabela"></div>', fonte: fontes(/BTG/, /XP/, /Tesouro Nacional/) }),
-      card('intencoes', 'Intenções de compra e venda, à parte dos negócios', `Pedidos de compra e de venda registrados na tela da corretora XP em ${esc(p)}; não são negócios fechados. Com “ver somado” ligado eles também entram nos cartões acima`, { wide: true,
+      card('intencoes', 'Intenções de compra e venda, à parte dos negócios', `Pedidos de compra e de venda registrados na tela da corretora XP, de ${esc(p)}; não são negócios fechados. Com “ver somado” ligado eles também entram nos cartões acima`, { wide: true,
         html: `<div class="duo"><div><h4 class="duo__title">Por direção</h4><div id="chart-d-int-dir"></div></div>
           <div><h4 class="duo__title">Volume por dia (R$ milhões)</h4>${legendaCV}<div id="chart-d-int-dia"></div></div></div>
           <h4 class="duo__title">Os 15 emissores com mais intenções (R$ milhões)</h4>${legendaCV}<div id="chart-d-int-emissor"></div>`,
@@ -147,10 +147,10 @@ const Debentures = (() => {
     const tiles = [
       tile('deb-k-volume', DM.fmtVolume(k.volume), `volume financeiro de ${op}`),
       tile('deb-k-n', DM.fmtInt(k.n), `número de ${op}`),
-      tile('deb-k-papeis', DM.fmtInt(k.papeis), 'papéis com operação no período'),
-      tile('deb-k-emissores', DM.fmtInt(k.emissores), 'emissores com operação no período'),
-      tile('deb-k-taxa', DM.taxaIpca({ taxa_media: k.taxa }) == null ? DM.DASH : DM.taxaTexto('IPCA+', k.taxaIpca), 'taxa média dos papéis IPCA+, ponderada pelo volume'),
-      tile('deb-k-spread', DM.fmtPp(k.spread), 'spread médio dos papéis IPCA+ (só dias com curva da NTN-B)'),
+      tile('deb-k-papeis', DM.fmtInt(k.papeis), `papéis com ${k.somado ? 'negócio ou intenção' : 'negócio'} no período`),
+      tile('deb-k-emissores', DM.fmtInt(k.emissores), `emissores com ${k.somado ? 'negócio ou intenção' : 'negócio'} no período`),
+      tile('deb-k-taxa', k.taxaIpca == null ? DM.DASH : DM.taxaTexto('IPCA+', k.taxaIpca), 'taxa média dos papéis IPCA+, ponderada pelo volume'),
+      tile('deb-k-spread', DM.fmtPp(k.spread), 'spread médio sobre a NTN-B (p.p.) dos papéis IPCA+, só em dias com curva'),
       ...Object.keys(k.taxa).filter(ix => ix !== 'IPCA+').sort().map(ix =>
         tile('deb-k-taxa-' + ix.replace(/\W/g, ''), DM.taxaTexto(ix, k.taxa[ix]), `taxa média dos papéis ${NOME_INDEXADOR[ix] || ix}`)),
     ];
@@ -158,15 +158,25 @@ const Debentures = (() => {
   }
 
   const fmtMi = v => nf2.format(v);
+  const serie = () => DM.series(bloco, { somado: st.somado });
+  // o arquivo CSV de quem soma as intenções leva "-somado" no nome, para não se confundir com o dos negócios
+  const csvNome = base => (st.somado ? `${base}-somado` : base);
+  function desenhaEmissores() {
+    document.getElementById('deb-emissor-tabela').innerHTML = tabela('deb-emissores', csvNome('debentures-por-emissor'), DM.tabelaEmissores(serie()), st.emissores);
+  }
+  function desenhaUltimo() {
+    document.getElementById('deb-ultimo-tabela').innerHTML = tabela('deb-ultimo', csvNome('debentures-ultimo-por-papel'), DM.tabelaUltimo(serie()), st.ultimo);
+  }
   function desenhaMercado() {
-    const s = DM.series(bloco, { somado: st.somado }), k = DM.kpis(bloco, { somado: st.somado });
+    const s = serie(), k = DM.kpis(bloco, { somado: st.somado });
     const op = st.somado ? 'negócios + intenções' : 'negócios';
     // tudo o que depende da opção muda junto: rótulo de cada cartão, título do número de operações, números e gráficos
     document.querySelectorAll('#page-debentures .deb-rotulo').forEach(e => { e.textContent = s.rotulo; });
     const sw = document.getElementById('deb-somado');
     sw.setAttribute('aria-checked', String(st.somado));
     document.getElementById('deb-status').innerHTML = `Mostrando: <b>${esc(s.rotulo)}</b>`;
-    document.getElementById('titulo-d-dia-n').textContent = `Número de ${st.somado ? 'negócios + intenções' : 'negócios'} por dia`;
+    document.getElementById('titulo-d-dia-n').textContent = `Número de ${op} por dia`;
+    document.getElementById('titulo-d-ultimo').textContent = st.somado ? 'Último negócio ou intenção de cada papel' : 'Último negócio de cada papel';
     box('kpis').innerHTML = kpisHtml(k);
     Charts.bars(box('dia-vol'), s.porDia.map(d => ({ label: DM.fmtDiaMes(d.data), value: d.volume / 1e6 })),
       { unit: 'R$ mi', format: fmtMi, title: `Volume por dia, ${s.rotulo}` });
@@ -177,14 +187,14 @@ const Debentures = (() => {
     taxa.innerHTML = Charts.hbarsSvg(sub(DM.taxaIpca), { width: width(taxa), labelWidth: 150, format: v => `${nf2.format(v)}%`, title: 'Taxa média IPCA+ por subsetor' });
     spread.innerHTML = Charts.hbarsSvg(s.porSubsetor.map(l => ({ label: l.subsetor, value: l.spread_medio, alt: true, detail: `${DM.fmtVolume(l.volume_spread)} com spread` })),
       { width: width(spread), labelWidth: 150, format: v => `${nf2.format(v)} p.p.`, title: 'Spread médio por subsetor' });
-    document.getElementById('deb-emissor-tabela').innerHTML = tabela('deb-emissores', 'debentures-por-emissor', DM.tabelaEmissores(s), st.emissores);
-    document.getElementById('deb-ultimo-tabela').innerHTML = tabela('deb-ultimo', 'debentures-ultimo-por-papel', DM.tabelaUltimo(s), st.ultimo);
+    desenhaEmissores();
+    desenhaUltimo();
   }
 
   function desenhaIntencoes() {
     const i = DM.intencoes(bloco);
     const dir = document.getElementById('chart-d-int-dir');
-    dir.innerHTML = `<table class="grid grid--static" id="deb-int-direcao" data-csv-name="debentures-intencoes-por-direcao"><thead><tr><th>Direção</th><th class="num">Volume</th><th class="num">Intenções</th><th>Taxa média</th><th class="num">Spread médio (IPCA+)</th></tr></thead><tbody>${
+    dir.innerHTML = `<table class="grid grid--static" id="deb-int-direcao" data-csv-name="debentures-intencoes-por-direcao"><thead><tr><th>Direção</th><th class="num">Volume</th><th class="num">Intenções</th><th>Taxa média</th><th class="num">Spread médio sobre a NTN-B (IPCA+)</th></tr></thead><tbody>${
       i.porDirecao.map(d => `<tr class="is-static"><td>${d.direcao === 'compra' ? 'Compra' : 'Venda'}</td><td class="num">${esc(DM.fmtVolume(d.volume))}</td><td class="num">${esc(DM.fmtInt(d.n))}</td>
         <td class="wrap">${esc(DM.taxaMediaTexto(d.taxa_media))}</td><td class="num">${esc(DM.fmtPp(d.spread_medio))}</td></tr>`).join('')}</tbody></table>`;
     const dia = document.getElementById('chart-d-int-dia');
@@ -217,8 +227,10 @@ const Debentures = (() => {
   function desenhaNtnb() {
     const pts = DM.curvaNtnb(bloco), el = document.getElementById('chart-d-ntnb-linha');
     if (!el) return;
+    const ys = pts.map(p => p.taxa), min = Math.min(...ys), max = Math.max(...ys);
     el.innerHTML = Charts.linesSvg([{ name: 'NTN-B', points: pts.map(p => ({ x: Number(p.vencimento.slice(0, 4)), y: p.taxa })) }],
-      { width: width(el), unit: '% ao ano', format: v => nf2.format(v), formatX: x => String(x), title: 'Taxa das NTN-B por ano de vencimento' });
+      { width: width(el), unit: '% ao ano', format: v => nf2.format(v), formatX: x => String(x), stepX: width(el) >= 560 ? 3 : 6, yMin: min - (max - min) * 0.2,
+        title: 'Taxa das NTN-B por ano de vencimento (eixo vertical não começa em zero)' });
     document.getElementById('deb-ntnb-tabela').innerHTML = `<table class="grid grid--static" id="deb-ntnb" data-csv-name="debentures-curva-ntnb"><thead><tr><th>Vencimento</th><th>Título</th><th class="num">Taxa de compra (% ao ano)</th><th class="num">Data da taxa</th></tr></thead><tbody>${
       pts.map(p => `<tr class="is-static"><td>${esc(DM.fmtData(p.vencimento))}</td><td>${esc(p.titulo || DM.DASH)}</td><td class="num">${esc(nf2.format(p.taxa))}</td><td class="num">${esc(DM.fmtData(p.data))}</td></tr>`).join('')}</tbody></table>`;
   }
@@ -228,7 +240,7 @@ const Debentures = (() => {
     const el = document.getElementById('page-debentures');
     const temBloco = !!(bloco && (bloco.emissoes || bloco.secundario || bloco.macro));
     const rs = roadshowCard();
-    const lead = `<p class="page__lead">${Glossario.link('debenture', 'Debêntures')} são títulos de dívida que empresas emitem para se financiar. Esta aba reúne as de concessionárias de rodovias e de outras infraestruturas de transporte (ferrovias, portos e terminais, aeroportos, hidrovias e metrô): o cenário de juros, as emissões, o que se negocia entre investidores e as emissões ${Glossario.link('debenture-incentivada', 'incentivadas')} para rodovias. Passe o mouse sobre os gráficos para ver os valores exatos.</p>`;
+    const lead = `<p class="page__lead">${Glossario.link('debenture', 'Debêntures')} são títulos de dívida que empresas emitem para se financiar. Esta aba reúne as de concessionárias de rodovias e de outras infraestruturas de transporte (ferrovias, portos e terminais, aeroportos, hidrovias e mobilidade urbana sobre trilhos, isto é, metrô e trens): o cenário de juros, as emissões, o que se negocia entre investidores e as emissões ${Glossario.link('debenture-incentivada', 'incentivadas')} para rodovias. Os dados de emissões e de negociação vêm das <b>telas</b> das corretoras XP e BTG: as listas de debêntures, com taxas e negócios, que elas publicam para os clientes, aqui recebidas em planilhas. Passe o mouse sobre os gráficos para ver os valores exatos.</p>`;
     let corpo = '';
     if (temBloco) {
       const macro = [macroCard(), ntnbCard()].join('');
@@ -252,8 +264,8 @@ const Debentures = (() => {
     if (document.getElementById('deb-somado')) {
       desenhaMercado();
       desenhaIntencoes();
-      ordenavel(document.getElementById('deb-emissor-tabela'), st.emissores, () => { document.getElementById('deb-emissor-tabela').innerHTML = tabela('deb-emissores', 'debentures-por-emissor', DM.tabelaEmissores(DM.series(bloco, { somado: st.somado })), st.emissores); }, TEXTO_EMISSORES);
-      ordenavel(document.getElementById('deb-ultimo-tabela'), st.ultimo, () => { document.getElementById('deb-ultimo-tabela').innerHTML = tabela('deb-ultimo', 'debentures-ultimo-por-papel', DM.tabelaUltimo(DM.series(bloco, { somado: st.somado })), st.ultimo); }, TEXTO_ULTIMO);
+      ordenavel(document.getElementById('deb-emissor-tabela'), st.emissores, desenhaEmissores, TEXTO_EMISSORES);
+      ordenavel(document.getElementById('deb-ultimo-tabela'), st.ultimo, desenhaUltimo, TEXTO_ULTIMO);
       document.getElementById('deb-somado').addEventListener('click', () => { st.somado = !st.somado; desenhaMercado(); });
     }
     desenhaIncentivadas();

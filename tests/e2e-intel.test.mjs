@@ -2230,7 +2230,7 @@ const fotoDeb = p => p.evaluate(() => {
     rotulos: [...document.querySelectorAll('#page-debentures [data-afetado]')].map(c => `${c.id}|${c.querySelector('.deb-rotulo').textContent}`),
     corpo: Object.fromEntries(['kpis', 'dia-vol', 'dia-n', 'subsetor', 'emissor', 'ultimo'].map(id => [id, document.getElementById('chart-d-' + id).innerHTML])),
     kpis: t('#chart-d-kpis .kpi-tile'), volTitulos: t('#chart-d-dia-vol rect.cbar title'), nTitulos: t('#chart-d-dia-n rect.cbar title'),
-    tituloN: t('#titulo-d-dia-n')[0], taxaSub: t('#chart-d-subsetor-taxa g.hrow-tip > title'), spreadSub: t('#chart-d-subsetor-spread g.hrow-tip > title'),
+    tituloN: t('#titulo-d-dia-n')[0], tituloUltimo: t('#titulo-d-ultimo')[0], taxaSub: t('#chart-d-subsetor-taxa g.hrow-tip > title'), spreadSub: t('#chart-d-subsetor-spread g.hrow-tip > title'),
     emissor: t('#deb-emissores tbody tr'), ultimo: t('#deb-ultimo tbody tr'), cabEmissor: t('#deb-emissores thead th'),
     fixos: ['card-d-intencoes', 'card-d-emissoes', 'card-d-macro', 'card-d-ntnb', 'card-d-incentivadas'].map(id => document.getElementById(id).innerHTML) };
 });
@@ -2275,6 +2275,24 @@ test('Debêntures: cartões com fonte, período e legenda; indicadores e curva v
     'negocio-intencao', 'taxa-media-ponderada', 'rating', 'indexador']) assert.ok(gl.includes(t), t);
   assert.deepEqual(await page.evaluate(l => l.filter(i => !window.GLOSSARIO.some(e => e.id === i)), gl), []);
   assert.equal(new Set(gl).size, gl.length, 'um link por termo');
+  // clareza: "tela" é definida na abertura; sem notas de ingestão repetidas; spread sempre dito "sobre a NTN-B"; p.p. explicado
+  const aba = limpa(await page.textContent('#page-debentures'));
+  assert.match(await page.textContent('#page-debentures .page__lead'), /telas<\/b>|telas das corretoras XP e BTG: as listas de debêntures/);
+  assert.doesNotMatch(aba, /traz só a hora|fornecidos pelo usuário|enviad[oa] pelo usuário/);
+  assert.match(aba, /pontos percentuais \(p\.p\.\)/);
+  const cabSpread = await page.$$eval('#page-debentures th, #page-debentures h3, #page-debentures h4', es => es.map(e => e.textContent).filter(t => /pread/.test(t)));
+  assert.ok(cabSpread.length >= 5);
+  assert.ok(cabSpread.every(t => /NTN-B/.test(t)), cabSpread.join(' | '));
+  assert.doesNotMatch(aba, /\bmetrô\)?[,.]? (e|ou) mobilidade|, metrô\)/);
+  // curva de NTN-B: o eixo não começa em zero e traz a nota sobre isso
+  const eixo = await page.$$eval('#chart-d-ntnb-linha svg text[text-anchor="end"]', ts => ts.map(t => Number(t.textContent.replace(',', '.'))));
+  assert.ok(eixo[0] > 0 && eixo.length >= 3, eixo.join());
+  assert.ok((await page.textContent('#card-d-ntnb .sub')).includes('não começa em zero'));
+  // Resumo: a data-base do bloco é um intervalo de datas, não só o ano
+  await goTab(page, '#resumo');
+  await page.evaluate(() => document.querySelectorAll('#resumo-sobre details').forEach(d => { d.open = true; }));
+  assert.match(await page.textContent('#sobre-table tr[data-fonte="debentures"] td:nth-child(2)'), /^\d{2}\/\d{2}\/\d{4} a \d{2}\/\d{2}\/\d{4}$/);
+  await goTab(page, '#debentures');
   // a aba não mostra nenhuma linha de negócio ou intenção: só agregados e o último de cada papel
   assert.ok(await page.locator('#deb-ultimo tbody tr').count() <= b.secundario.ultimo_por_ticker.length);
 });
@@ -2284,13 +2302,16 @@ test('Debêntures: tabela de emissões ordenável, com "—" onde a fonte não t
   const b = await blocoDeb(page);
   const linhas = () => page.$$eval('#deb-emissoes tbody tr', trs => trs.map(tr => [...tr.children].map(td => td.textContent)));
   const cab = await page.$$eval('#deb-emissoes thead th', ths => ths.map(t => t.textContent.replace(/\s[↑↓]$/, '')));
-  for (const c of ['Papel', 'Emissor', 'Subsetor', 'Indexador', 'Taxa na emissão', 'Vencimento', 'Volume emitido', 'Data de emissão', 'Coordenadores', 'Incentivada (Lei 12.431)']) assert.ok(cab.includes(c), c);
+  for (const c of ['Papel', 'Emissor', 'Subsetor', 'Indexador', 'Taxa na emissão', 'Vencimento', 'Volume emitido', 'Incentivada (Lei 12.431)']) assert.ok(cab.includes(c), c);
+  // coluna que a fonte não preenche em nenhum papel fica oculta (e dita na nota); a que tem algum dado aparece
+  const ocultas = await page.evaluate(() => DebenturesModel.tabelaEmissoes(window.INTEL.debentures).ocultas);
+  assert.deepEqual(ocultas, ['Data de emissão', 'Coordenadores'].filter(c => !b.emissoes.some(e => e[c === 'Coordenadores' ? 'coordenadores' : 'data_emissao'] && e[c === 'Coordenadores' ? 'coordenadores' : 'data_emissao'].length)));
+  for (const c of ocultas) { assert.ok(!cab.includes(c), c); assert.ok((await page.textContent('#card-d-emissoes')).includes(c)); }
   let r = await linhas();
   assert.equal(r.length, b.emissoes.length);
   assert.equal(await page.textContent('#deb-em-n'), `${b.emissoes.length} de ${b.emissoes.length} papéis`);
   const col = n => cab.indexOf(n);
   // campo ausente da fonte: "—"
-  assert.equal(r.filter(x => x[col('Data de emissão')] === '—').length, b.emissoes.filter(e => !e.data_emissao).length);
   assert.equal(r.filter(x => x[col('Volume emitido')] === '—').length, b.emissoes.filter(e => e.volume_emitido == null).length);
   assert.equal(r.filter(x => x[col('Incentivada (Lei 12.431)')] === 'Sim').length, b.emissoes.filter(e => e.incentivada === true).length);
   // ordenar por volume emitido: o primeiro é o maior e os sem volume ficam no fim
@@ -2324,6 +2345,7 @@ test('Debêntures: números do mercado secundário batem com o modelo, com e sem
   const neg = b.secundario.negocios, int = b.secundario.intencoes;
   const ant = await fotoDeb(page);
   assert.equal(ant.aria, 'false');
+  assert.equal(ant.tituloUltimo, 'Último negócio de cada papel');
   assert.equal(ant.status, 'Mostrando: negócios fechados');
   // sem somar: um título por dia, direto do bloco
   assert.deepEqual(ant.volTitulos, neg.por_dia.map(d => `${diaMes(d.data)}: ${fmt2(d.volume / 1e6)} R$ mi`));
@@ -2347,6 +2369,10 @@ test('Debêntures: números do mercado secundário batem com o modelo, com e sem
   assert.deepEqual(som.volTitulos, dias.map(d => `${diaMes(d)}: ${fmt2(soma(d, 'volume') / 1e6)} R$ mi`));
   assert.deepEqual(som.nTitulos, dias.map(d => `${diaMes(d)}: ${soma(d, 'n')} negócios + intenções`));
   assert.equal(som.tituloN, 'Número de negócios + intenções por dia');
+  assert.equal(som.tituloUltimo, 'Último negócio ou intenção de cada papel');
+  // o CSV de quem soma leva "-somado" no nome
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.locator('.csv-btn:has(+ .table-wrap #deb-ultimo)').click()]);
+  assert.match(dl.suggestedFilename(), /^debentures-ultimo-por-papel-somado-\d{4}-\d{2}-\d{2}\.csv$/);
   const todas = [...neg.por_dia, ...int.por_dia];
   assert.ok(som.kpis[4].startsWith(`IPCA + ${fmt2(recombina(todas, 'IPCA+'))}%`), som.kpis[4]);
   assert.equal(som.kpis[1], `${(neg.por_dia.concat(int.por_dia).reduce((t, d) => t + d.n, 0)).toLocaleString('pt-BR')}número de negócios + intenções`);

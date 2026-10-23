@@ -49,7 +49,7 @@ const Resumo = (() => {
     return `<section class="sobre" id="resumo-sobre" aria-labelledby="resumo-sobre-h">
       <h2 class="resumo-h2" id="resumo-sobre-h">Sobre este painel</h2>
       <h3 class="sobre__h">Para que serve</h3>
-      <p class="sobre__texto" id="sobre-serve">Reúne, num único arquivo que funciona sem internet, o que se sabe sobre as ${Glossario.link('concessao', 'concessões')} rodoviárias do Brasil: a malha de rodovias, a carteira de projetos e os contratos (${Glossario.link('roadshow')}), os ${Glossario.link('leilao', 'leilões')} e seus resultados, o tráfego, as cargas e o financiamento. Cada número mostra de onde veio.</p>
+      <p class="sobre__texto" id="sobre-serve">Reúne, num único arquivo que funciona sem internet, o que se sabe sobre as ${Glossario.link('concessao', 'concessões')} rodoviárias do Brasil: a malha de rodovias, a carteira de projetos e os contratos (${Glossario.link('roadshow')}), os ${Glossario.link('leilao', 'leilões')} e seus resultados, o tráfego, as cargas, o financiamento e as debêntures de infraestrutura de transporte. Cada número mostra de onde veio.</p>
       <details class="sobre__det" id="sobre-fontes">
         <summary>De onde vêm as informações <span class="page__src">(${n} ${n === 1 ? 'fonte' : 'fontes'})</span></summary>
         <ul class="sobre__lista">${sobre.fontes.map(f => `<li data-fonte="${esc(f.id)}"><b>${nome(f)}.</b> ${f.oQue ? frase(f) : ''}</li>`).join('')}</ul>
@@ -59,7 +59,7 @@ const Resumo = (() => {
         <div class="table-wrap table-wrap--static"><table class="grid grid--static sobre-table" id="sobre-table" data-csv-name="sobre-painel">
           <thead><tr><th>Informação</th><th>Data-base</th><th>Acesso</th></tr></thead>
           <tbody>${sobre.fontes.map(f => `<tr data-fonte="${esc(f.id)}"><td>${esc(f.nome)}</td><td>${esc(f.dataBase)}</td><td>${esc(f.acesso)}</td></tr>`).join('')}</tbody></table></div>
-        <p class="page__src" id="sobre-legenda">Data-base: período a que os números se referem. Quando o bloco reúne várias fontes, "varia por fonte (de AAAA a AAAA)" indica só o menor e o maior ano entre elas, não uma série contínua; o período exato de cada fonte está na aba <a href="#fontes">Fontes</a>. Acesso: dia em que o arquivo foi baixado da fonte; o dado pode ter sido atualizado na origem depois disso. Link e licença de cada fonte também estão na aba Fontes.</p>
+        <p class="page__src" id="sobre-legenda">Data-base: período a que os números se referem. Quando o bloco reúne várias fontes, "varia por fonte (de AAAA a AAAA)" indica só o menor e o maior ano entre elas, não uma série contínua; quando todas são do mesmo ano e trazem datas, vale da mais antiga à mais recente entre elas; o período exato de cada fonte está na aba <a href="#fontes">Fontes</a>. Acesso: dia em que o arquivo foi baixado da fonte; o dado pode ter sido atualizado na origem depois disso. Link e licença de cada fonte também estão na aba Fontes.</p>
       </details>
     </section>`;
   }

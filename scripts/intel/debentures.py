@@ -359,16 +359,17 @@ def _fontes(telas, mov, macro, curvas, dias_usados):
     hoje = dt.date.today().isoformat()
     tela_btg = _intervalo(t["data"] for t in telas if t["origem"] == "BTG")
     tela_xp = _intervalo(t["data"] for t in telas if t["origem"] == "XP")
-    if not tela_xp:  # a tela XP traz só a hora da atualização
-        tela_xp = f"{tela_btg} (a tela XP traz só a hora; vale a data da tela BTG)" if tela_btg else "sem data na planilha"
+    xp_sem_data = not tela_xp  # a tela XP traz só a hora da atualização: vale a data da tela BTG (dito na nota da fonte)
+    if xp_sem_data:
+        tela_xp = tela_btg or "sem data na planilha"
     tela_btg = tela_btg or "sem data na planilha"
     neg = _intervalo(n["data"] for n in mov["negocios"])
     inten = _intervalo(i["data"] for i in mov["intencoes"])
-    usuario = "Planilha exportada da plataforma da corretora e enviada pelo usuário; não há endereço público para estes dados."
+    usuario = "Planilha exportada da plataforma da corretora e fornecida ao projeto; não há endereço público para estes dados."
     out = [
         {"nome": "BTG — tela de debêntures e negócios fechados no mercado secundário", "url": "https://www.btgpactual.com/",
          "periodo": f"tela de {tela_btg}; negócios de {neg}" if neg else f"tela de {tela_btg}", "acesso": hoje,
-         "licenca": "Dados de corretora, fornecidos pelo usuário; uso restrito", "tipo": "medido",
+         "licenca": "Dados de corretora, fornecidos ao projeto; uso restrito", "tipo": "medido",
          "nota": usuario + " Da tela vêm emissor, setor, indexador, taxa de emissão, vencimento, volume emitido e se a "
                  "debênture é incentivada. O universo são os emissores de transporte classificados à mão a partir do "
                  "setor Transporte da tela e dos nomes que aparecem nas planilhas (a tela põe algumas concessionárias "
@@ -377,10 +378,11 @@ def _fontes(telas, mov, macro, curvas, dias_usados):
                  "não nas médias."},
         {"nome": "XP — tela de debêntures e intenções de compra e venda", "url": "https://www.xpi.com.br/",
          "periodo": f"tela de {tela_xp}; intenções de {inten}" if inten else f"tela de {tela_xp}",
-         "acesso": hoje, "licenca": "Dados de corretora, fornecidos pelo usuário; uso restrito", "tipo": "medido",
+         "acesso": hoje, "licenca": "Dados de corretora, fornecidos ao projeto; uso restrito", "tipo": "medido",
          "nota": usuario + " Da tela vêm a taxa de emissão e a nota de crédito (rating). As intenções são pedidos de "
                  "compra ou venda, não negócios realizados: ficam à parte, somadas por direção, dia, emissor e "
-                 "segmento, com o último pedido de cada papel."},
+                 "segmento, com o último pedido de cada papel."
+                 + (" A tela da XP traz só a hora da atualização, não a data; vale a data da tela da BTG." if xp_sem_data else "")},
     ]
     sgs = [k for k in SERIES if macro.get(k)]
     if sgs:
