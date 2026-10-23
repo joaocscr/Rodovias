@@ -237,12 +237,42 @@ test('tabelaEmissoes: coluna "—" em todos os papéis sai da tabela e volta qua
   const ks = t.colunas.map(c => c.k);
   assert.ok(!ks.includes('data_emissao') && !ks.includes('coordenador_lider'));
   assert.ok(ks.includes('incentivada'), 'fixa');
-  assert.deepEqual(t.ocultas, ['Data de emissão', 'Coordenadores']);
+  assert.deepEqual(t.ocultas, ['Data de emissão', 'Coordenador líder']);
   b.emissoes[1].coordenador_lider = 'X';
   const t2 = D.tabelaEmissoes(b);
   assert.ok(t2.colunas.some(c => c.k === 'coordenador_lider'));
   assert.deepEqual(t2.ocultas, ['Data de emissão']);
   assert.deepEqual(D.tabelaEmissoes({}).ocultas, []);
+});
+
+// Três subsetores: duas rodovias, uma ferrovia, um porto (os "outros transportes" são todo subsetor diferente de rodovias).
+const tres = [
+  { ticker: 'A1', subsetor: 'rodovias', incentivada: true }, { ticker: 'A2', subsetor: 'rodovias', incentivada: true },
+  { ticker: 'B1', subsetor: 'ferrovias', incentivada: true }, { ticker: 'C1', subsetor: 'portos e terminais', incentivada: true },
+];
+
+test('contagemSubsetor: todos, rodovias e outros transportes', () => {
+  assert.deepEqual(D.contagemSubsetor(tres), { todos: 4, rodovias: 2, outros: 2 });
+  assert.deepEqual(D.contagemSubsetor([]), { todos: 0, rodovias: 0, outros: 0 });
+  assert.deepEqual(D.contagemSubsetor(undefined), { todos: 0, rodovias: 0, outros: 0 });
+});
+
+test('filtrarSubsetor: só rodovias, só os outros, ou todos; não altera a lista de entrada', () => {
+  assert.deepEqual(D.filtrarSubsetor(tres, 'rodovias').map(l => l.ticker), ['A1', 'A2']);
+  assert.deepEqual(D.filtrarSubsetor(tres, 'outros').map(l => l.ticker), ['B1', 'C1']);
+  assert.deepEqual(D.filtrarSubsetor(tres, 'todos').map(l => l.ticker), ['A1', 'A2', 'B1', 'C1']);
+  assert.equal(D.filtrarSubsetor(tres, 'xyz').length, 4, 'filtro desconhecido = todos');
+  assert.equal(tres.length, 4);
+  const c = D.contagemSubsetor(tres);
+  for (const f of ['todos', 'rodovias', 'outros']) assert.equal(D.filtrarSubsetor(tres, f).length, c[f]);
+});
+
+test('notaIncentivadas: só incentivadas, ou quantas há de cada tipo', () => {
+  assert.equal(D.notaIncentivadas(tres), 'Somente debêntures incentivadas (Lei 12.431): as telas recebidas são de debêntures isentas.');
+  const mista = [...tres, { ticker: 'D1', subsetor: 'rodovias', incentivada: false }, { ticker: 'D2', subsetor: 'rodovias', incentivada: false }];
+  assert.equal(D.notaIncentivadas(mista), '4 incentivadas (Lei 12.431) e 2 não incentivadas');
+  assert.equal(D.notaIncentivadas(bloco.emissoes), '1 incentivadas (Lei 12.431) e 1 não incentivadas');
+  assert.equal(D.notaIncentivadas([]), '');
 });
 
 test('cabeçalhos de spread dizem sobre o quê', () => {

@@ -180,7 +180,7 @@ button, input { font: inherit; color: inherit; }
   transition: background var(--transition), border-color var(--transition);
 }
 .chip:hover { border-color: var(--color-bright-blue); background: var(--tint); }
-.chip[aria-pressed="true"] { background: var(--color-deep-blue); border-color: var(--color-deep-blue); color: var(--color-snow-white); }
+.chip[aria-pressed="true"], .chip[role="radio"][aria-checked="true"] { background: var(--color-deep-blue); border-color: var(--color-deep-blue); color: var(--color-snow-white); }
 .checks { display: flex; flex-direction: column; }
 .checks--grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0 8px; }
 .check {
@@ -766,5 +766,6 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 .switch[aria-checked="true"] .switch__bola { transform: translateX(20px); }
 .deb-rotulo { font-weight: 600; color: var(--color-deep-blue); }
 .deb-spread { font-size: 14px; }
+.deb-nota { margin: 0 0 8px; font-size: 14px; color: var(--color-spacial-grey); }
 .grid-linha { grid-column: 1 / -1; margin: 0; font-size: 14px; color: var(--color-light-grey); }
 @media (max-width: 900px) { .deb-controle { grid-template-columns: minmax(0, 1fr); } }

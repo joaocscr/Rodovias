@@ -9,12 +9,13 @@ const Debentures = (() => {
   const nf0 = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
   const C = Charts.C;
   const WRAP = new Set(['emissor', 'grupo', 'coordenador_lider', 'rating', 'taxa_ipca', 'tipo', 'subsetor']);
+  const FILTROS = [['todos', 'Todos'], ['rodovias', 'Rodovias'], ['outros', 'Outros transportes']];  // ids de DM.FILTROS_SUBSETOR
   const NOME_PAPEIS = { 'PRÉ': 'prefixados' };  // nos outros indexadores o papel leva o rótulo do indexador (DM.rotuloIndexador)
 
   let bloco = null, conc = null, built = false;
   const st = {
     somado: false,
-    emissoes: { key: 'emissor', dir: 'asc', subsetor: '' },
+    emissoes: { key: 'emissor', dir: 'asc', filtro: 'todos' },
     emissores: { key: 'volume', dir: 'desc' },
     ultimo: { key: 'quando', dir: 'desc' },
   };
@@ -69,9 +70,12 @@ const Debentures = (() => {
     return card('emissoes', 'Emissões de debêntures de rodovias e infraestrutura de transporte',
       `Um papel (série de debênture) por linha, de emissores de rodovias, ferrovias, portos e terminais, aeroportos, hidrovias e mobilidade urbana que aparecem nas telas das corretoras. Taxa na emissão conforme o ${Glossario.link('indexador', 'indexador')}; “incentivada” = benefício da Lei 12.431 (${Glossario.link('debenture-infraestrutura', 'debênture de infraestrutura')} é a de 2024); “${DM.DASH}” quando a fonte não traz o campo. Clique no cabeçalho para ordenar`, {
         wide: true,
-        note: `Nota de crédito (${Glossario.link('rating', 'rating')}) como informada na tela da corretora.${t.colunas.some(c => c.k === 'coordenador_lider') ? ` Coordenadores: ${Glossario.link('coordenador', 'coordenadores da oferta')} da emissão.` : ''}${t.ocultas.length ? ` Colunas que a fonte não preenche em nenhum papel ficam ocultas (agora: ${esc(t.ocultas.join(' e '))}) e aparecem sozinhas quando uma fonte trouxer o dado.` : ''}`,
-        legend: `<div class="toolbar"><label class="sub" for="deb-em-sub">Subsetor</label><select id="deb-em-sub"><option value="">Todos</option>${
-          t.subsetores.map(s => `<option>${esc(s)}</option>`).join('')}</select><span class="page__src" id="deb-em-n"></span></div>`,
+        note: `Nota de crédito (${Glossario.link('rating', 'rating')}) como informada na tela da corretora.${t.colunas.some(c => c.k === 'coordenador_lider') ? ` Coordenador líder: ${Glossario.link('coordenador', 'coordenador')} que lidera a oferta da emissão.` : ''}${t.ocultas.length ? ` Colunas que a fonte não preenche em nenhum papel ficam ocultas (agora: ${esc(t.ocultas.join(' e '))}) e aparecem sozinhas quando uma fonte trouxer o dado.` : ''}`,
+        legend: `<p class="deb-nota" id="deb-em-incentivadas">${esc(DM.notaIncentivadas(t.linhas))}</p>
+          <div class="toolbar"><span class="sub" id="deb-em-sub-rotulo">Subsetor</span>
+          <div class="chips" role="radiogroup" id="deb-em-sub" aria-labelledby="deb-em-sub-rotulo">${
+            FILTROS.map(([id, rotulo]) => `<button type="button" class="chip" role="radio" data-filtro="${id}" id="deb-em-sub-${id}" aria-checked="false" tabindex="-1">${rotulo} (${nf0.format(DM.contagemSubsetor(t.linhas)[id])})</button>`).join('')}</div>
+          <span class="page__src" id="deb-em-n" aria-live="polite"></span></div>`,
         html: '<div id="deb-em-tabela"></div>', fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'tela' }) });
   }
 
@@ -103,10 +107,34 @@ const Debentures = (() => {
   const TEXTO_ULTIMO = new Set(['ticker', 'emissor', 'subsetor', 'indexador', 'tipo']);
 
   function desenhaEmissoes() {
-    const t = DM.tabelaEmissoes(bloco);
-    const todas = t.linhas, mostra = Object.assign({}, t, { linhas: todas.filter(l => !st.emissoes.subsetor || l.subsetor === st.emissoes.subsetor) });
-    document.getElementById('deb-em-tabela').innerHTML = tabela('deb-emissoes', 'debentures-emissoes', mostra, st.emissoes);
-    document.getElementById('deb-em-n').textContent = `${nf0.format(mostra.linhas.length)} de ${nf0.format(todas.length)} papéis`;
+    const t = DM.tabelaEmissoes(bloco), f = st.emissoes.filtro;
+    const mostra = Object.assign({}, t, { linhas: DM.filtrarSubsetor(t.linhas, f) });
+    // o arquivo CSV leva o filtro no nome para não se confundir com o da tabela inteira
+    document.getElementById('deb-em-tabela').innerHTML = tabela('deb-emissoes', f === 'todos' ? 'debentures-emissoes' : `debentures-emissoes-${f}`, mostra, st.emissoes);
+    document.querySelectorAll('#deb-em-sub [role="radio"]').forEach(b => {
+      const on = b.dataset.filtro === f;
+      b.setAttribute('aria-checked', String(on));
+      b.tabIndex = on ? 0 : -1;
+    });
+    document.getElementById('deb-em-n').textContent = `${nf0.format(mostra.linhas.length)} de ${nf0.format(t.linhas.length)} papéis`;
+  }
+
+  // Grupo de botões de rádio (setas movem e escolhem; só o escolhido entra na ordem do Tab).
+  function filtroSubsetor() {
+    const grupo = document.getElementById('deb-em-sub');
+    const escolhe = id => { st.emissoes.filtro = id; desenhaEmissoes(); };
+    grupo.addEventListener('click', ev => {
+      const b = ev.target.closest('[data-filtro]');
+      if (b) escolhe(b.dataset.filtro);
+    });
+    grupo.addEventListener('keydown', ev => {
+      const passo = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[ev.key];
+      if (!passo) return;
+      ev.preventDefault();
+      const ids = FILTROS.map(f => f[0]), i = ids.indexOf(st.emissoes.filtro), novo = ids[(i + passo + ids.length) % ids.length];
+      escolhe(novo);
+      document.getElementById('deb-em-sub-' + novo).focus();
+    });
   }
 
   // ---------- mercado secundário ----------
@@ -260,7 +288,7 @@ const Debentures = (() => {
     if (document.getElementById('deb-em-tabela')) {
       desenhaEmissoes();
       ordenavel(document.getElementById('deb-em-tabela'), st.emissoes, desenhaEmissoes, TEXTO_EMISSOES);
-      document.getElementById('deb-em-sub').addEventListener('change', ev => { st.emissoes.subsetor = ev.target.value; desenhaEmissoes(); });
+      filtroSubsetor();
     }
     if (document.getElementById('deb-somado')) {
       desenhaMercado();

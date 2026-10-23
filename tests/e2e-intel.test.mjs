@@ -2313,7 +2313,7 @@ test('Debêntures: tabela de emissões ordenável, com "—" onde a fonte não t
   for (const c of ['Papel', 'Emissor', 'Subsetor', 'Indexador', 'Taxa na emissão', 'Vencimento', 'Volume emitido', 'Incentivada (Lei 12.431)']) assert.ok(cab.includes(c), c);
   // coluna que a fonte não preenche em nenhum papel fica oculta (e dita na nota); a que tem algum dado aparece
   const ocultas = await page.evaluate(() => DebenturesModel.tabelaEmissoes(window.INTEL.debentures).ocultas);
-  assert.deepEqual(ocultas, ['Data de emissão', 'Coordenadores'].filter(c => !b.emissoes.some(e => e[c === 'Coordenadores' ? 'coordenador_lider' : 'data_emissao'])));
+  assert.deepEqual(ocultas, ['Data de emissão', 'Coordenador líder'].filter(c => !b.emissoes.some(e => e[c === 'Coordenador líder' ? 'coordenador_lider' : 'data_emissao'])));
   for (const c of ocultas) { assert.ok(!cab.includes(c), c); assert.ok((await page.textContent('#card-d-emissoes')).includes(c)); }
   let r = await linhas();
   assert.equal(r.length, b.emissoes.length);
@@ -2331,20 +2331,81 @@ test('Debêntures: tabela de emissões ordenável, com "—" onde a fonte não t
   assert.equal(r[r.length - 1][col('Volume emitido')], '—');
   await page.click('#deb-emissoes [data-sort="volume_emitido"]');
   assert.equal(await page.getAttribute('#deb-emissoes th[aria-sort]', 'aria-sort'), 'ascending');
-  // filtro por subsetor
-  const sub = b.emissoes[0].subsetor;
-  await page.selectOption('#deb-em-sub', sub);
-  const n = b.emissoes.filter(e => e.subsetor === sub).length;
-  assert.equal((await linhas()).length, n);
-  assert.equal(await page.textContent('#deb-em-n'), `${n} de ${b.emissoes.length} papéis`);
-  // CSV: o que está na tela (linhas filtradas e ordenadas), com cabeçalho
+  // CSV: o que está na tela, com cabeçalho (o filtro de subsetor tem teste próprio, abaixo)
   const [download] = await Promise.all([page.waitForEvent('download'), page.locator('.csv-btn:has(+ .table-wrap #deb-emissoes)').click()]);
   assert.match(download.suggestedFilename(), /^debentures-emissoes-\d{4}-\d{2}-\d{2}\.csv$/);
   const csv = fs.readFileSync(await download.path(), 'utf8').split('\r\n');
-  assert.equal(csv.length, n + 1);
+  assert.equal(csv.length, b.emissoes.length + 1);
   assert.ok(csv[0].includes('"Papel";"Emissor"'));
-  await page.selectOption('#deb-em-sub', '');
-  assert.equal((await linhas()).length, b.emissoes.length);
+});
+
+test('Debêntures: filtro de subsetor e CSV, nota de incentivadas e datas de emissão', async () => {
+  await abreDeb();
+  const b = await blocoDeb(page);
+  const linhas = () => page.$$eval('#deb-emissoes tbody tr', trs => trs.map(tr => [...tr.children].map(td => td.textContent)));
+  const cab = () => page.$$eval('#deb-emissoes thead th', ths => ths.map(t => t.textContent.replace(/\s[↑↓]$/, '')));
+  const m = await page.evaluate(() => {
+    const e = window.INTEL.debentures.emissoes, D = DebenturesModel;
+    return { c: D.contagemSubsetor(e), nota: D.notaIncentivadas(e), rod: D.filtrarSubsetor(e, 'rodovias').map(x => x.ticker), outros: D.filtrarSubsetor(e, 'outros').map(x => x.ticker) };
+  });
+  // grupo de botões acessível, com a contagem do modelo em cada rótulo
+  assert.equal(await page.getAttribute('#deb-em-sub', 'role'), 'radiogroup');
+  const rotulos = await page.$$eval('#deb-em-sub [role="radio"]', bs => bs.map(x => x.textContent));
+  assert.deepEqual(rotulos, [`Todos (${m.c.todos})`, `Rodovias (${m.c.rodovias})`, `Outros transportes (${m.c.outros})`]);
+  assert.equal(m.c.todos, b.emissoes.length);
+  assert.equal(await page.getAttribute('#deb-em-sub-todos', 'aria-checked'), 'true');
+  assert.equal(m.c.rodovias + m.c.outros, m.c.todos);
+  // a nota fica acima da tabela e é a do modelo
+  assert.equal(limpa(await page.textContent('#deb-em-incentivadas')), m.nota);
+  assert.ok(await page.evaluate(() => document.getElementById('deb-em-incentivadas').compareDocumentPosition(document.getElementById('deb-emissoes')) & Node.DOCUMENT_POSITION_FOLLOWING));
+  // datas de emissão em dd/mm/aaaa (a coluna sai sozinha se a fonte não traz nenhuma)
+  const c0 = await cab(), iData = c0.indexOf('Data de emissão');
+  if (b.emissoes.some(e => e.data_emissao)) {
+    assert.ok(iData >= 0);
+    for (const r of await linhas()) assert.match(r[iData], /^(\d{2}\/\d{2}\/\d{4}|—)$/);
+    const esperadas = b.emissoes.filter(e => e.data_emissao).map(e => e.data_emissao.split('-').reverse().join('/')).sort();
+    assert.deepEqual((await linhas()).map(r => r[iData]).filter(x => x !== '—').sort(), esperadas);
+  }
+  assert.ok(!c0.includes('Coordenadores'));
+  const iSub = c0.indexOf('Subsetor');
+  // cada botão: linhas na tela = modelo, CSV com o mesmo número de linhas e o filtro no nome do arquivo
+  for (const [id, filtro, tickers] of [['rodovias', 'rodovias', m.rod], ['outros', 'outros', m.outros], ['todos', 'todos', null]]) {
+    await page.click('#deb-em-sub-' + id);
+    assert.equal(await page.getAttribute('#deb-em-sub-' + id, 'aria-checked'), 'true');
+    assert.equal(await page.locator('#deb-em-sub [aria-checked="true"]').count(), 1);
+    const r = await linhas(), esperado = m.c[filtro];
+    assert.equal(r.length, esperado);
+    assert.equal(await page.textContent('#deb-em-n'), `${esperado} de ${m.c.todos} papéis`);
+    if (filtro === 'rodovias') assert.ok(r.every(x => x[iSub] === 'rodovias'));
+    if (filtro === 'outros') assert.ok(r.every(x => x[iSub] !== 'rodovias'));
+    if (tickers) assert.deepEqual(r.map(x => x[c0.indexOf('Papel')]).sort(), [...tickers].sort());
+    const [dl] = await Promise.all([page.waitForEvent('download'), page.locator('.csv-btn:has(+ .table-wrap #deb-emissoes)').click()]);
+    assert.match(dl.suggestedFilename(), new RegExp(`^debentures-emissoes${filtro === 'todos' ? '' : '-' + filtro}-\\d{4}-\\d{2}-\\d{2}\\.csv$`));
+    const csv = fs.readFileSync(await dl.path(), 'utf8').split('\r\n');
+    assert.equal(csv.length, esperado + 1);
+  }
+  // teclado: seta para a direita escolhe o botão seguinte
+  await page.focus('#deb-em-sub-todos');
+  await page.keyboard.press('ArrowRight');
+  assert.equal(await page.getAttribute('#deb-em-sub-rodovias', 'aria-checked'), 'true');
+  assert.equal(await page.evaluate(() => document.activeElement.id), 'deb-em-sub-rodovias');
+  await page.click('#deb-em-sub-todos');
+  assert.equal((await linhas()).length, m.c.todos);
+  // celular 390 px: o filtro e a tabela não alargam a página
+  const errs = [], ext = [];
+  const p = await openPage(errs, ext, null, { width: 390, height: 844 });
+  await goTab(p, '#debentures');
+  await p.click('#deb-em-sub-rodovias');
+  const w = await p.evaluate(() => {
+    const pg = document.querySelector('.page:not([hidden])');
+    return { sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, aba: pg.scrollWidth - pg.clientWidth,
+      pw: Math.max(...[...pg.querySelectorAll('*')].filter(e => !e.closest('.table-wrap, .chart-box')).map(e => e.scrollWidth - e.clientWidth)) };
+  });
+  assert.ok(w.sw <= w.cw && w.aba <= 0 && w.pw <= 0, JSON.stringify(w));
+  assert.equal(await p.locator('#deb-emissoes tbody tr').count(), m.c.rodovias);
+  assert.deepEqual(errs, []);
+  assert.deepEqual(ext, []);
+  await p.context().close();
 });
 
 test('Debêntures: números do mercado secundário batem com o modelo, com e sem somar', async () => {

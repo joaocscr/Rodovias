@@ -209,7 +209,7 @@ const DebenturesModel = (() => {
     { k: 'vencimento', rotulo: 'Vencimento', num: true, fmt: l => fmtData(l.vencimento) },
     { k: 'volume_emitido', rotulo: 'Volume emitido', num: true, fmt: l => fmtVolume(l.volume_emitido) },
     { k: 'data_emissao', rotulo: 'Data de emissão', num: true, fmt: l => fmtData(l.data_emissao) },
-    { k: 'coordenador_lider', rotulo: 'Coordenadores', fmt: l => txt(l.coordenador_lider) },
+    { k: 'coordenador_lider', rotulo: 'Coordenador líder', fmt: l => txt(l.coordenador_lider) },
     { k: 'incentivada', rotulo: 'Incentivada (Lei 12.431)', fixa: true, fmt: l => (l.incentivada === true ? 'Sim' : l.incentivada === false ? 'Não' : DASH) },
     { k: 'rating', rotulo: 'Nota de crédito (rating)', fmt: l => txt(l.rating) },
   ];
@@ -221,6 +221,26 @@ const DebenturesModel = (() => {
     const vazia = c => !c.fixa && linhas.length > 0 && linhas.every(l => c.fmt(l) === DASH);
     return { colunas: COLUNAS_EMISSOES.filter(c => !vazia(c)), ocultas: COLUNAS_EMISSOES.filter(vazia).map(c => c.rotulo), linhas,
       subsetores: [...new Set(linhas.map(l => l.subsetor).filter(Boolean))].sort(collator.compare) };
+  }
+
+  // Filtro de subsetor da tabela de emissões: "outros" é todo subsetor diferente de rodovias.
+  const FILTROS_SUBSETOR = ['todos', 'rodovias', 'outros'];
+  const ehRodovia = l => l.subsetor === 'rodovias';
+  function contagemSubsetor(emissoes) {
+    const ls = emissoes || [], rodovias = ls.filter(ehRodovia).length;
+    return { todos: ls.length, rodovias, outros: ls.length - rodovias };
+  }
+  function filtrarSubsetor(emissoes, filtro = 'todos') {
+    const ls = emissoes || [];
+    return filtro === 'rodovias' ? ls.filter(ehRodovia) : filtro === 'outros' ? ls.filter(l => !ehRodovia(l)) : [...ls];
+  }
+  // Indicação acima da tabela: a frase muda sozinha se aparecer uma emissão não incentivada.
+  function notaIncentivadas(emissoes) {
+    const ls = emissoes || [], inc = ls.filter(l => l.incentivada === true).length;
+    if (!ls.length) return '';
+    return inc === ls.length
+      ? 'Somente debêntures incentivadas (Lei 12.431): as telas recebidas são de debêntures isentas.'
+      : `${inc} incentivadas (Lei 12.431) e ${ls.length - inc} não incentivadas`;
   }
 
   const colunasEmissores = somado => [
@@ -260,7 +280,7 @@ const DebenturesModel = (() => {
   }
 
   return { ROTULO_NEGOCIOS, ROTULO_SOMADO, DASH, mediaDe, somaLinha, mesclar, series, kpis, intencoes, macro, curvaNtnb, curvaAte, notaCurva, periodoTexto, fonteCurta,
-    tabelaEmissoes, tabelaEmissores, tabelaUltimo, serieIncentivadas, taxaIpca, taxaTexto, taxaMediaTexto, rotuloIndexador,
+    FILTROS_SUBSETOR, contagemSubsetor, filtrarSubsetor, notaIncentivadas, tabelaEmissoes, tabelaEmissores, tabelaUltimo, serieIncentivadas, taxaIpca, taxaTexto, taxaMediaTexto, rotuloIndexador,
     fmtPct, fmtPp, fmtInt, fmtVolume, fmtData, fmtDiaMes };
 })();
 
