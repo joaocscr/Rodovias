@@ -71,7 +71,7 @@ Cada cartão traz a fonte e o período tirados dos dados, e os termos novos ganh
 - **Fontes e Resumo:** os blocos novos (`ida`, `idex` e o cadastro SND dentro de `debentures`) aparecem sozinhos, porque as duas abas leem os blocos embutidos. As descrições em linguagem simples ficam em `data/fontes_descricao.json`.
 
 ## 4. Atualização
-- **Novo domínio em `scripts/atualizar.py`:** `indices_debentures` (IDA e IDEX), depois de `debentures`. Com `--baixar`, ele baixa o cadastro SND e os dias novos do IDA.
+- **Novos domínios em `scripts/atualizar.py`:** `ida` e `idex`, depois de `debentures`. Com `--baixar`, o comando baixa o cadastro SND (domínio `debentures`) e os dias novos do IDA.
 - **IDEX:** basta salvar a planilha e o relatório novos em `data/raw/idex/` e rodar o comando.
 - **Novos itens de curadoria:**
   - papel sem cadastro SND;
