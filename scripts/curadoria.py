@@ -27,6 +27,7 @@ TIPOS = {
     "taxa_fora_do_intervalo": "Taxas de debêntures fora do intervalo plausível (fora das médias)",
     "linha_sem_data": "Linhas das planilhas de debêntures sem data legível (fora dos totais)",
     "ida_dias_com_falha": "Dias do IDA (ANBIMA) que não foram baixados (faltam na série)",
+    "ida_desatualizado": "IDA (ANBIMA) com o último dia muito antes do fim dos dados de debêntures",
     "ida_sem_papeis": "IDA sem a lista de papéis de transporte (taxa indicativa dos papéis fica de fora)",
     "idex_arquivo_antigo": "Planilha do IDEX-Infra com o último dia muito antes dos dados de debêntures",
     "idex_relatorio_ilegivel": "Relatórios mensais do IDEX-Infra que não puderam ser lidos",
@@ -53,6 +54,7 @@ ACESSO_CURADO_FONTE_DO_USUARIO = ("a data é a de quando a planilha das corretor
 # bloco de data/intel/ → domínio (script de scripts/intel/) que o gera, quando o nome difere
 DOMINIO_DO_BLOCO = {"municipios": "agro"}
 DIAS_FONTE_ANTIGA = 365
+DIAS_UTEIS_IDA_ANTIGO = 10  # último dia do IDA × data do bloco de debêntures (dias úteis, sem contar feriados)
 DIAS_IDEX_ANTIGO = 45  # último dia da planilha do IDEX × data do bloco de debêntures
 # o que conta como registro em cada bloco: caminhos (a.b) de listas — conta os valores preenchidos — ou de dicionários
 # — conta as chaves. Bloco fora daqui: listas de primeiro nível e `linhas` dos sub-blocos (sem `fonte`).
@@ -270,10 +272,28 @@ def _debentures(bloco):
     return out
 
 
-def _ida(bloco):
-    """Pendências do bloco do IDA (scripts/intel/ida.py): dias úteis recentes que nem o cache nem o histórico têm (o
-    `fetch` não conseguiu baixar, ou ainda não pediu), por índice, e a falta da lista de papéis de transporte."""
+def _dias_uteis_apos(de, ate):
+    """Segundas a sextas em (de, ate]; os feriados contam como dia útil (a conta é só um limite de atraso)."""
+    return sum(1 for k in range(1, (ate - de).days + 1) if (de + dt.timedelta(days=k)).weekday() < 5)
+
+
+def _ida(bloco, debentures=None):
+    """Pendências do bloco do IDA (scripts/intel/ida.py): último dia do IDA muito antes do fim dos dados de debêntures
+    (a janela do bloco acompanha o último dia com dado, então uma queda longa do site não deixa outra pista), dias úteis
+    recentes que nem o cache nem o histórico têm (o `fetch` não conseguiu baixar, ou ainda não pediu), por índice, e a
+    falta da lista de papéis de transporte."""
     pend = (bloco or {}).get("pendencias") or {}
+    desatualizado = []
+    ultimos = [(i.get("ultimo") or {}).get("data") for i in ((bloco or {}).get("indices") or {}).values()]
+    ultimo = max((u for u in ultimos if _data(u)), default=None)
+    ate = (((debentures or {}).get("secundario") or {}).get("periodo") or {}).get("ate")
+    if ultimo and _data(ate) and _dias_uteis_apos(_data(ultimo), _data(ate)) > DIAS_UTEIS_IDA_ANTIGO:
+        n = _dias_uteis_apos(_data(ultimo), _data(ate))
+        desatualizado = [("ida_desatualizado", "Série do IDA",
+                          f"o último dia do IDA é {_fmt(ultimo)}, {n} dias úteis antes do fim dos dados de debêntures "
+                          f"({_fmt(ate)}): a série do IDA ficou para trás (o site da ANBIMA pode ter ficado fora do ar ou "
+                          "respondido \"muitas requisições\" por muito tempo); rode `python scripts/atualizar.py --baixar "
+                          "--dominios ida` quando o site responder")]
     dias = pend.get("dias_sem_download") or []
     por_indice = {}
     for d in dias:
@@ -282,7 +302,7 @@ def _ida(bloco):
                   "data/intel/debentures.json não existe ou não se lê, então o bloco do IDA ficou sem os papéis de transporte "
                   "(`papeis` vazio); gere as debêntures antes e rode `python scripts/atualizar.py --dominios debentures,ida`")
                  ] if pend.get("sem_lista_de_papeis") else []
-    return sem_lista + [("ida_dias_com_falha", ind,
+    return desatualizado + sem_lista + [("ida_dias_com_falha", ind,
              f"{len(datas)} dia(s) útil(eis) recente(s) sem resultado no histórico nem no cache ({', '.join(_fmt(d) for d in datas[:6])}"
              f"{', …' if len(datas) > 6 else ''}): a série fica sem esses pontos; rode "
              "`python scripts/atualizar.py --baixar --dominios ida` (o site da ANBIMA responde \"muitas requisições\" "
@@ -330,7 +350,7 @@ def itens(conc_aplicado, intel, verif, hoje=None):
     brutos = (_pipeline_atrasado(lista, rotulo, hoje, ents_federais) + _leilao_sem_verificacao(conc_aplicado, lista, verif, hoje)
               + _estado_vencido(conc_aplicado, hoje) + _pipeline_nao_verificado(lista) + _fonte_antiga(intel.get("fontes") or {}, hoje)
               + _nome_sem_grupo(conc_aplicado, verif) + _consorcios(conc_aplicado) + _debentures(intel.get("debentures"))
-              + _ida(intel.get("ida")) + _idex(intel.get("idex"), intel.get("debentures")))
+              + _ida(intel.get("ida"), intel.get("debentures")) + _idex(intel.get("idex"), intel.get("debentures")))
     ordem = {t: k for k, t in enumerate(TIPOS)}
     brutos.sort(key=lambda x: (ordem[x[0]], x[1]))
     return [{"tipo": t, "item": i, "motivo": m} for t, i, m in brutos]

@@ -64,7 +64,7 @@ ESPERAS = (5, 30)             # entre as 3 tentativas de cada pedido (o site res
 SALVAR_A_CADA = 40
 DIAS_ROTINA = 10              # além dos dias novos, a rotina repete os últimos 10 dias úteis (o que falhou ou ainda não saiu)
 SEMANAS_VAZIAS = 4            # o site só guarda os resultados recentes: depois de 4 semanas seguidas sem nenhum, para de recuar
-FALHAS_SEGUIDAS = 6           # pedidos seguidos que falham: o site está fora do ar, o índice fica para a próxima vez
+FALHAS_SEGUIDAS = 3           # pedidos seguidos que falham: o site está fora do ar, o resto (outros índices e a carteira) fica para a próxima vez
 BUSCA_PAPEIS = (INFRA, "IPCA", "GERAL")   # carteiras onde se procura a taxa indicativa dos papéis de transporte
 CAMPOS_INDICE = ("numero_indice", "var_dia", "var_mes", "var_ano", "var_12m", "var_24m", "duration_du", "valor_mercado")
 
@@ -319,8 +319,8 @@ def fetch(force=False, consultar=_consultar, hoje=None, pausa=PAUSA, dormir=time
     o relógio, porque aqui o que importa é o que já foi publicado). Na amostra completa as semanas são percorridas da mais
     recente para a mais antiga e a volta termina depois de `SEMANAS_VAZIAS` semanas seguidas sem resultado nenhum (o site
     só guarda os dias recentes). Pedido que falha em 3 tentativas não derruba os outros: o dia fica de fora do cache e a curadoria avisa;
-    `FALHAS_SEGUIDAS` pedidos assim, um depois do outro, encerram o índice (site fora do ar). Devolve o número de
-    pedidos feitos."""
+    `FALHAS_SEGUIDAS` pedidos assim, um depois do outro, dão o site como fora do ar: o índice e os que faltam ficam para
+    a próxima vez (sem rede, não se gasta o tempo das tentativas de cada índice). Devolve o número de pedidos feitos."""
     pasta = Path(pasta)
     hoje = _data(hoje) if hoje else dt.date.today()
     cache = _ler_cache(pasta)
@@ -373,8 +373,11 @@ def fetch(force=False, consultar=_consultar, hoje=None, pausa=PAUSA, dormir=time
             log(f"IDA: {pedidos[0]} pedidos")
         return valor
 
+    fora_do_ar = False
     for ind in indices:
         cache.setdefault(ind, {})
+        if fora_do_ar:
+            continue
         seguidas[0] = 0
         try:
             ultimo = max(set(_dias_com_dado(cache[ind])) | set(_dias_com_dado(hist.get(ind) or {})), default=None)
@@ -400,8 +403,9 @@ def fetch(force=False, consultar=_consultar, hoje=None, pausa=PAUSA, dormir=time
                 for d in sorted({*ultimos_dias_uteis(hoje, DIAS_ROTINA), *[x for x in novos if x.weekday() < 5]}):
                     pedir(ind, d)
         except _SiteForaDoAr:
-            print(f"AVISO: IDA {ind}: o site não respondeu a {FALHAS_SEGUIDAS} pedidos seguidos; o resto fica para a "
-                  "próxima vez", file=sys.stderr)
+            fora_do_ar = True
+            print(f"AVISO: IDA {ind}: o site não respondeu a {FALHAS_SEGUIDAS} pedidos seguidos; o resto (inclusive os outros "
+                  "índices) fica para a próxima vez", file=sys.stderr)
         # dia sem resultado depois do último com resultado ainda pode não ter sido publicado: não fica no cache
         ultimo_dado = max(set(_dias_com_dado(cache[ind])) | set(_dias_com_dado(hist.get(ind) or {})), default="")
         for iso in [i for i, v in cache[ind].items() if v == SEM_DADO and i > ultimo_dado]:
@@ -415,7 +419,7 @@ def fetch(force=False, consultar=_consultar, hoje=None, pausa=PAUSA, dormir=time
         alvo = pasta / f"carteira_{ind}_{dias[-1]}.csv"
         if ultimo_bruto.get(ind, ("",))[0] == dias[-1]:
             alvo.write_bytes(ultimo_bruto[ind][1])
-        elif not alvo.exists():
+        elif not alvo.exists() and not fora_do_ar:
             try:
                 bruto = consultar(ind, dias[-1])
                 dormir(pausa)

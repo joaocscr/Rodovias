@@ -69,7 +69,7 @@
   },
   "idex": {
     "nome": "IDEX-Infra (índice de debêntures de infraestrutura)",
-    "oQue": "Arquivos da IDEX Analytics fornecidos ao projeto: a planilha de dados, com o spread sobre a NTN-B e a duration de cada debênture do IDEX-Infra por dia, e o relatório mensal, com o retorno mensal do IDEX-Infra Geral e do Core. O painel guarda só médias diárias e o spread das debêntures de transporte.",
-    "termos": [{"id": "idex-infra", "texto": "IDEX-Infra"}]
+    "oQue": "Arquivos da IDEX Analytics fornecidos ao projeto: a planilha de dados, com o spread sobre a NTN-B (em pontos-base) e a duration de cada debênture do IDEX-Infra por dia, e o relatório mensal, com o retorno mensal do IDEX-Infra Geral e do Core. O painel guarda só médias diárias e o spread das debêntures de transporte.",
+    "termos": [{"id": "idex-infra", "texto": "IDEX-Infra"}, {"id": "ponto-base", "texto": "pontos-base"}]
   }
 }

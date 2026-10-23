@@ -298,6 +298,21 @@ def test_build_le_so_o_cache(tmp_path, monkeypatch):
     assert set(doc["indices"]) == {ida.INFRA, "IPCA"}
 
 
+def test_ida_desatualizado_vai_para_a_curadoria_apos_10_dias_uteis():
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import curadoria
+    bloco = {"indices": {ida.INFRA: {"ultimo": {"data": "2026-10-09"}}, "IPCA": {"ultimo": {"data": "2026-10-08"}}}}
+    deb = lambda ate: {"secundario": {"periodo": {"de": "2026-09-01", "ate": ate}}}  # noqa: E731
+    hoje = dt.date(2026, 10, 30)
+    achar = lambda ate: [i for i in curadoria.itens({}, {"ida": bloco, "debentures": deb(ate)}, {}, hoje)  # noqa: E731
+                         if i["tipo"] == "ida_desatualizado"]
+    assert achar("2026-10-23") == []   # sexta 09/10 → sexta 23/10: 10 dias úteis, ainda vale
+    (item,) = achar("2026-10-26")      # 11 dias úteis
+    assert item["item"] == "Série do IDA" and "09/10/2026" in item["motivo"] and "26/10/2026" in item["motivo"]
+    assert "11 dias úteis" in item["motivo"] and "--baixar --dominios ida" in item["motivo"]
+    assert [i for i in curadoria.itens({}, {"ida": bloco}, {}, hoje) if i["tipo"] == "ida_desatualizado"] == []  # sem debêntures
+
+
 def test_dias_sem_download_vao_para_a_curadoria():
     sys.path.insert(0, str(ROOT / "scripts"))
     import curadoria
@@ -332,15 +347,17 @@ def test_site_so_guarda_dias_recentes_a_volta_para_sozinha(tmp_path):
     assert {"2026-10-23", "2026-10-26"} <= {d for _, d in chamadas} <= ultimos | {"2026-10-23", "2026-10-26"}
 
 
-def test_site_fora_do_ar_encerra_o_indice(tmp_path, capsys):
+def test_site_fora_do_ar_encerra_o_indice_e_nao_tenta_os_outros(tmp_path, capsys):
     chamadas = []
 
     def fora(indice, iso):
         chamadas.append(iso)
         raise RuntimeError("curl: (7) falha de conexão")
     rodar(tmp_path, "2026-10-22", consultar=fora)
-    assert len(chamadas) == ida.FALHAS_SEGUIDAS * 3 * 2                 # 3 tentativas por pedido, 2 índices
-    assert "não respondeu" in capsys.readouterr().err
+    assert ida.FALHAS_SEGUIDAS == 3
+    assert len(chamadas) == ida.FALHAS_SEGUIDAS * 3                     # 3 tentativas por pedido; o segundo índice nem é tentado
+    err = capsys.readouterr().err
+    assert "não respondeu" in err and err.count("o site não respondeu") == 1
     assert cache_de(tmp_path) == {ida.INFRA: {}, "IPCA": {}}
 
 

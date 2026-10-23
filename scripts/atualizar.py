@@ -35,6 +35,7 @@ import curadoria  # noqa: E402
 ROOT = Path(__file__).resolve().parent.parent
 INTEL = ROOT / "data" / "intel"
 MANIFESTO = ROOT / "data" / "manifest"
+INDICES = ROOT / "data" / "indices"  # históricos versionados (IDA e IDEX), gravados pelos builds junto dos blocos
 BASE = ROOT / "data" / "base"
 ROADSHOW = ROOT / "data" / "roadshow"
 SAIDA = ROOT / "data" / "atualizacao.md"
@@ -171,12 +172,12 @@ def _restaura(pastas, antes):
             p.write_bytes(conteudo)
 
 
-def executar(passos, intel_dir=INTEL, baixar=False, log=print, manifest_dir=MANIFESTO, critico=False):
+def executar(passos, intel_dir=INTEL, baixar=False, log=print, manifest_dir=MANIFESTO, critico=False, indices_dir=INDICES):
     """Roda cada passo; um passo pulado ou que falha não interrompe os seguintes e tem os JSON de `intel_dir` e o
-    manifesto (`manifest_dir`) restaurados. `baixar`: True/False, ou o conjunto dos passos que baixam (para eles,
+    manifesto (`manifest_dir`) e os históricos de `indices_dir` restaurados. `baixar`: True/False, ou o conjunto dos passos que baixam (para eles,
     arquivo ausente é falha). `critico` (o HTML): nunca é pulado; qualquer resultado que não seja ok é falha, sem a
     dica de --baixar. Devolve [{passo, estado ('ok' | 'pulado' | 'falhou'), detalhe}]."""
-    out, pastas = [], (intel_dir, manifest_dir)
+    out, pastas = [], (intel_dir, manifest_dir, indices_dir)
     for nome, rodar in passos:
         log(f"== {nome}")
         baixou = baixar if isinstance(baixar, bool) else nome in baixar
@@ -280,7 +281,7 @@ SEM_NOVIDADE = "renovado: nenhum arquivo mudou (a fonte não publicou dado novo 
 
 def atualizar(dominios=ORDEM, baixar=False, html=True, hoje=None, intel_dir=INTEL, saida=SAIDA, renovar=(),
               manifest_dir=MANIFESTO, importar=importlib.import_module, validar=validar_camada, construir=construir_html,
-              fontes=fontes_bloco, anterior=versao_anterior, log=print):
+              fontes=fontes_bloco, anterior=versao_anterior, log=print, indices_dir=INDICES):
     """Roda a atualização e escreve o relatório em `saida`; devolve o código de saída (0, ou 1 se a validação ou o
     HTML falharem). `renovar`: domínios baixados de novo (fetch com force). As funções injetáveis existem para os
     testes."""
@@ -290,7 +291,7 @@ def atualizar(dominios=ORDEM, baixar=False, html=True, hoje=None, intel_dir=INTE
     shas_antes = {d: _shas(manifest_dir, d) for d in renovar}
     baixam = set(ORDEM) if baixar else renovar
     passos = executar(passos_dominios(dominios, baixar, importar, renovar, manifest_dir) + [("fontes_bloco", fontes)],
-                      intel_dir, baixam, log, manifest_dir)
+                      intel_dir, baixam, log, manifest_dir, indices_dir=indices_dir)
     sem_novidade = []
     for p in passos:
         d = p["passo"]
@@ -310,7 +311,7 @@ def atualizar(dominios=ORDEM, baixar=False, html=True, hoje=None, intel_dir=INTE
     elif not html:
         passos.append({"passo": PASSO_HTML, "estado": "pulado", "detalhe": "--sem-html"})
     else:
-        (r,) = executar([(PASSO_HTML, construir)], intel_dir, False, log, None, critico=True)
+        (r,) = executar([(PASSO_HTML, construir)], intel_dir, False, log, None, critico=True, indices_dir=None)
         if r["estado"] != "ok":  # o HTML nunca é "pulado": qualquer resultado que não seja ok é falha
             r["detalhe"] = f"o HTML não foi gerado: {r['detalhe']}"
             log(f"ERRO: {r['detalhe']}")

@@ -285,3 +285,110 @@ def test_ficha_artesp_autoban():
 def test_kmz_tracado_rodoanel_oeste():
     linhas = estaduais.kmz_linhas(RAW / "artesp" / "dl" / "l24.kmz")
     assert linhas and all(len(l) >= 2 for l in linhas)
+
+
+# ---------------- fichas da ARTESP: bloqueio do site ----------------
+
+PAGINA_BLOQUEIO = "<html><body><p>Request unsuccessful. Incapsula incident ID: 0000</p></body></html>"
+FICHA_BOA = ("<html><body><h1>Topo e base</h1><p>Lote 99 - Teste</p><p>Empresa Controladora: Grupo Teste</p>"
+             "<p>Início da Concessão: 01/2020</p><p>Prazo da Concessão: 30 anos</p>"
+             "<p>Principais Rodovias:</p><p>SP 999 - Teste - Do km 1,0 ao km 11,0</p></body></html>")
+
+
+def _servidor(respostas):
+    """`baixar` falso: devolve em sequência o conteúdo de `respostas` (None = o curl falha); registra os pedidos."""
+    pedidos = []
+
+    def baixar(url, dest, tries=5, timeout=600, extra=(), force=False):
+        pedidos.append(url)
+        r = respostas[min(len(pedidos), len(respostas)) - 1]
+        if r is None:
+            raise RuntimeError("falha ao baixar")
+        Path(dest).parent.mkdir(parents=True, exist_ok=True)
+        Path(dest).write_text(r, encoding="utf-8")
+        return Path(dest)
+    return baixar, pedidos
+
+
+def test_ficha_so_vale_com_o_marcador_e_tenta_de_novo_com_pausas_maiores(tmp_path):
+    dest = tmp_path / "fichas" / "x.html"
+    baixar, pedidos = _servidor([PAGINA_BLOQUEIO, None, FICHA_BOA])
+    pausas = []
+    assert estaduais.baixar_ficha("https://exemplo/x", dest, baixar=baixar, dormir=pausas.append) is True
+    assert pausas == [10, 30] and len(pedidos) == 3
+    assert estaduais.parse_ficha_artesp(dest)["km"] is None and "SP-999" in estaduais.parse_ficha_artesp(dest)["rods"]
+    assert not list(dest.parent.glob("*.novo"))
+
+
+def test_ficha_bloqueada_mantem_o_arquivo_anterior(tmp_path):
+    dest = tmp_path / "x.html"
+    dest.write_text(FICHA_BOA, encoding="utf-8")
+    baixar, pedidos = _servidor([PAGINA_BLOQUEIO])
+    pausas = []
+    assert estaduais.baixar_ficha("https://exemplo/x", dest, baixar=baixar, dormir=pausas.append) is False
+    assert pausas == [10, 30, 60] and len(pedidos) == 4
+    assert dest.read_text(encoding="utf-8") == FICHA_BOA
+    assert list(tmp_path.iterdir()) == [dest]
+    sem_anterior = tmp_path / "y.html"
+    assert estaduais.baixar_ficha("https://exemplo/y", sem_anterior, baixar=_servidor([None])[0], dormir=lambda s: None) is False
+    assert not sem_anterior.exists()
+
+
+@pytest.fixture
+def fetch_falso(tmp_path, monkeypatch):
+    """estaduais.fetch com a rede, o manifesto e a pasta de entrada trocados; as fichas vêm de `servidor['ficha']`."""
+    servidor = {"ficha": PAGINA_BLOQUEIO, "pedidos": []}
+
+    def baixar(url, dest, tries=5, timeout=600, extra=(), force=False):
+        dest = Path(dest)
+        if dest.exists() and dest.stat().st_size and not force:
+            return dest
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        if url.startswith(estaduais.ARTESP_FICHA.format("")):
+            servidor["pedidos"].append(url)
+            dest.write_text(servidor["ficha"], encoding="utf-8")
+        else:
+            dest.write_text("[]" if "json" in url or "wp-json" in url else "x", encoding="utf-8")
+        return dest
+
+    class Manifesto:
+        def __init__(self, dominio): self.items = []
+        def add(self, url, path, *a, **k): self.items.append(Path(path).name)
+        def save(self): pass
+
+    monkeypatch.setattr(estaduais, "DIR", tmp_path / "estaduais")
+    monkeypatch.setattr(estaduais, "PAGES", tmp_path / "estaduais" / "pages")
+    monkeypatch.setattr(estaduais, "SP", estaduais.SP[:2])
+    monkeypatch.setattr(estaduais, "ARTESP_KMZ", {})
+    monkeypatch.setattr(estaduais, "_fetch", baixar)
+    monkeypatch.setattr(estaduais, "Manifest", Manifesto)
+    monkeypatch.setattr(estaduais.time, "sleep", lambda s: None)
+    return servidor
+
+
+def test_fetch_falha_alto_quando_a_ficha_so_vem_bloqueada(fetch_falso):
+    with pytest.raises(RuntimeError, match="fichas ARTESP sem conteúdo válido.*autoban.*tebe"):
+        estaduais.fetch()
+    assert not list((estaduais.DIR / "artesp" / "fichas").glob("*")), "a página de bloqueio não fica no lugar da ficha"
+    assert len(fetch_falso["pedidos"]) == 8  # 2 fichas × (1 + 3 tentativas)
+
+
+def test_fetch_com_ficha_boa_aceita_e_nao_rebaixa(fetch_falso):
+    fetch_falso["ficha"] = FICHA_BOA
+    m = estaduais.fetch()
+    assert {"autoban.html", "tebe.html"} <= set(m.items)
+    n = len(fetch_falso["pedidos"])
+    estaduais.fetch()  # as fichas válidas ficam; o marcador é a prova
+    assert len(fetch_falso["pedidos"]) == n
+
+
+def test_build_nao_trata_ficha_ilegivel_como_vazia(tmp_path, monkeypatch):
+    fichas = tmp_path / "estaduais" / "artesp" / "fichas"
+    fichas.mkdir(parents=True)
+    monkeypatch.setattr(estaduais, "DIR", tmp_path / "estaduais")
+    assert len(estaduais._entidades_sp({}, "2026-10-23")) == len(estaduais.SP)  # sem arquivo nenhum: segue como antes
+    (fichas / "autoban.html").write_text(PAGINA_BLOQUEIO, encoding="utf-8")
+    (fichas / "tebe.html").write_text(FICHA_BOA, encoding="utf-8")
+    with pytest.raises(ValueError, match=r"fichas ARTESP ilegíveis.*autoban") as e:
+        estaduais._entidades_sp({}, "2026-10-23")
+    assert "tebe" not in str(e.value)
