@@ -1,4 +1,4 @@
-# Atualização dos dados — 22/10/2026
+# Atualização dos dados — 23/10/2026
 
 Gerado por `python scripts/atualizar.py` (sem --baixar). Diferenças em relação à versão de `data/intel/` no último commit do git.
 
@@ -29,9 +29,9 @@ Registros: itens das coleções principais de cada bloco (valores preenchidos); 
 | agro | 5.571 | 5.571 | 210,5 | 210,5 | não |
 | antt | 1.938 | 1.938 | 399,2 | 399,2 | não |
 | carga | 4.312 | 4.312 | 141,3 | 141,3 | não |
-| debentures | — | 236 | — | 91,2 | novo |
+| debentures | 236 | 236 | 91,2 | 91,2 | não |
 | estaduais | 16.238 | 16.238 | 2.949,8 | 2.949,8 | não |
-| fontes | 49 | 54 | 24,5 | 28,0 | sim (+3,4 KB) |
+| fontes | 54 | 54 | 28,0 | 28,0 | não |
 | multimodal | 3.188 | 3.188 | 413,9 | 413,9 | não |
 | municipios | 5.571 | 5.571 | 1.687,6 | 1.687,6 | não |
 | pipeline | 64 | 64 | 42,9 | 42,9 | não |
