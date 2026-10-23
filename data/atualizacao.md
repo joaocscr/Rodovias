@@ -22,8 +22,8 @@ Registros: itens das coleções principais de cada bloco (valores preenchidos); 
 | carga | 4.312 | 4.312 | 141,3 | 141,3 | não |
 | debentures | 236 | 236 | 96,3 | 96,3 | não |
 | estaduais | 16.238 | 16.238 | 2.949,8 | 2.949,8 | não |
-| fontes | 55 | 56 | 28,7 | 29,7 | sim (+1,0 KB) |
-| ida | — | 99 | — | 10,7 | novo |
+| fontes | 56 | 56 | 29,7 | 30,0 | sim (+261 bytes) |
+| ida | 99 | 99 | 10,7 | 11,0 | sim (+261 bytes) |
 | multimodal | 3.188 | 3.188 | 413,9 | 413,9 | não |
 | municipios | 5.571 | 5.571 | 1.687,6 | 1.687,6 | não |
 | pipeline | 64 | 64 | 42,9 | 42,9 | não |
