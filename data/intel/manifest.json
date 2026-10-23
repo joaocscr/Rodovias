@@ -1,6 +1,6 @@
 {
- "arquivos": 277,
- "bytes": 1364864974,
+ "arquivos": 279,
+ "bytes": 1366406538,
  "itens": [
   {
    "dominio": "agro",
@@ -2734,6 +2734,28 @@
    "sha256": "63ecab0d9062897b55d24fd44d247407271b4e41ecdd82884cc1e357b58fdb22",
    "periodo": "22/10/2026",
    "licenca": "Consulta pública do site da ANBIMA; a página não declara licença de reuso",
+   "acesso": "2026-10-23"
+  },
+  {
+   "dominio": "idex",
+   "descricao": "Relatório mensal do IDEX-Infra, fornecido ao projeto",
+   "url": "",
+   "arquivo": "data/raw/idex/idex-infra-relatorio-mensal-2026-07.pdf",
+   "bytes": 475117,
+   "sha256": "466ee3174448ccd93728a15cb5538c3ac39b39744e88441c86fa5d659d2578e4",
+   "periodo": "01/2024 a 06/2026",
+   "licenca": "Dados da IDEX Analytics fornecidos ao projeto; os termos de uso pedem autorização para reproduzir os índices",
+   "acesso": "2026-10-23"
+  },
+  {
+   "dominio": "idex",
+   "descricao": "Planilha de dados do IDEX-Infra, fornecida ao projeto",
+   "url": "",
+   "arquivo": "data/raw/idex/idex_infra_geral_datafile.xlsx",
+   "bytes": 1066447,
+   "sha256": "f61207e0544fe975703d9b3281bd90edc2b183464250595a61a0a74058d829bc",
+   "periodo": "22/09/2026 a 22/10/2026",
+   "licenca": "Dados da IDEX Analytics fornecidos ao projeto; os termos de uso pedem autorização para reproduzir os índices",
    "acesso": "2026-10-23"
   },
   {

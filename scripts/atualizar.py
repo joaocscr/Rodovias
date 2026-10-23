@@ -42,11 +42,12 @@ HTML = ROOT / "mapa-rodovias.html"
 PDF_ROADSHOW = ROOT / "data" / "raw" / "roadshow.pdf"
 # vmda2025 lê a malha estadual (estaduais.json); pipeline confere `ent` contra conc.json e estaduais.json; debentures lê
 # as planilhas do usuário (data/raw/debentures/*.xlsx) e baixa as séries públicas; ida lê os papéis de debentures.json e a
-# curva das NTN-B baixada por debentures
-ORDEM = ("trafego", "antt", "carga", "agro", "multimodal", "pipeline", "debentures", "ida", "estaduais", "vmda2025",
-         "rotas")
-# o zip do VMDa 2025 vem do Drive do usuário: não há o que baixar de novo
-RENOVAVEIS = tuple(d for d in ORDEM if d != "vmda2025")
+# curva das NTN-B baixada por debentures; idex lê os arquivos do IDEX-Infra salvos pelo usuário (data/raw/idex/)
+ORDEM = ("trafego", "antt", "carga", "agro", "multimodal", "pipeline", "debentures", "ida", "idex", "estaduais",
+         "vmda2025", "rotas")
+# o zip do VMDa 2025 vem do Drive do usuário e os arquivos do IDEX-Infra também: não há o que baixar de novo
+SO_DO_USUARIO = ("vmda2025", "idex")
+RENOVAVEIS = tuple(d for d in ORDEM if d not in SO_DO_USUARIO)
 PASSO_HTML = "build.py (HTML)"
 
 
@@ -128,6 +129,9 @@ def passos_dominios(dominios, baixar, importar=importlib.import_module, renovar=
             elif d == "debentures" and not m.planilhas():
                 raise Pular(f"faltam as planilhas de telas e negócios em {_rel(m.PASTA)}/ (arquivos do usuário; ver "
                             "README, \"Debêntures\"); debentures.json ficou como estava")
+            elif d == "idex" and not any(m.arquivos().values()):
+                raise Pular(f"faltam os arquivos do IDEX-Infra em {_rel(m.PASTA)}/ (a planilha de dados *datafile*.xlsx e o "
+                            "relatório mensal em PDF, arquivos do usuário; ver README); idex.json ficou como estava")
             elif d in renovar:
                 renova(d, m)
                 return
@@ -359,6 +363,9 @@ def main(argv=None):
         renovar = lista(args.renovar) or [d for d in dominios if d in RENOVAVEIS]
         if "vmda2025" in renovar:
             ap.error("vmda2025 vem do Google Drive do usuário: troque o zip em data/raw/trafego/vmda2025/ e rode sem "
+                     "--renovar")
+        if "idex" in renovar:
+            ap.error("idex vem de arquivos do usuário: salve a planilha e o relatório novos em data/raw/idex/ e rode sem "
                      "--renovar")
         ruins = [d for d in renovar if d not in ORDEM]
         if ruins:

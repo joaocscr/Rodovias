@@ -1,12 +1,23 @@
 # Atualização dos dados — 23/10/2026
 
-Gerado por `python scripts/atualizar.py` (--baixar, --dominios ida). Diferenças em relação à versão de `data/intel/` no último commit do git.
+Gerado por `python scripts/atualizar.py` (sem --baixar). Diferenças em relação à versão de `data/intel/` no último commit do git.
 
 ## Passos
 
 | Passo | Resultado | Detalhe |
 |---|---|---|
+| trafego | pulado | arquivo ausente: data/raw/trafego/infrasa/vmda2023_data.json (baixe com `--baixar`) |
+| antt | ok |  |
+| carga | pulado | arquivo ausente: data/raw/graos/multimodal/pnl2035_cenario_base.zip (baixe com `--baixar`) |
+| agro | pulado | arquivo ausente: data/raw/graos/malha/ibge_municipios.json (baixe com `--baixar`) |
+| multimodal | ok |  |
+| pipeline | ok |  |
+| debentures | ok |  |
 | ida | ok |  |
+| idex | ok |  |
+| estaduais | pulado | arquivo ausente: data/raw/estaduais/abcr/api_conc.json (baixe com `--baixar`) |
+| vmda2025 | pulado | falta data/raw/trafego/vmda2025/vgeo_vmda2025.zip (shapefile do Google Drive do usuário; ver README, "Atualizar os dados"); vmda2025.json ficou como estava |
+| rotas | pulado | arquivo ausente: data/raw/rotas/apresentacao_rotas_2026-07-01.pdf (baixe com `--baixar`) |
 | fontes_bloco | ok |  |
 | validação da verificação | ok |  |
 | build.py (HTML) | ok |  |
@@ -22,8 +33,9 @@ Registros: itens das coleções principais de cada bloco (valores preenchidos); 
 | carga | 4.312 | 4.312 | 141,3 | 141,3 | não |
 | debentures | 236 | 236 | 96,3 | 96,3 | não |
 | estaduais | 16.238 | 16.238 | 2.949,8 | 2.949,8 | não |
-| fontes | 56 | 56 | 29,7 | 30,0 | sim (+261 bytes) |
-| ida | 99 | 99 | 10,7 | 11,0 | sim (+261 bytes) |
+| fontes | 56 | 57 | 30,0 | 31,0 | sim (+1,0 KB) |
+| ida | 99 | 99 | 11,0 | 11,0 | não |
+| idex | — | 116 | — | 9,7 | novo |
 | multimodal | 3.188 | 3.188 | 413,9 | 413,9 | não |
 | municipios | 5.571 | 5.571 | 1.687,6 | 1.687,6 | não |
 | pipeline | 64 | 64 | 42,9 | 42,9 | não |
@@ -33,7 +45,7 @@ Registros: itens das coleções principais de cada bloco (valores preenchidos); 
 
 ## Curadoria manual
 
-20 itens. Cada um diz o arquivo a editar; depois rode de novo o comando.
+21 itens. Cada um diz o arquivo a editar; depois rode de novo o comando.
 
 ### Pipeline com data passada ainda como previsto (1)
 
@@ -75,3 +87,7 @@ Registros: itens das coleções principais de cada bloco (valores preenchidos); 
 
 - **COMT11 (negócios BTG)** — taxa de 60,00% (IPCA+) em 2 linha(s) da planilha, provável erro de digitação: ficou fora da taxa média e do spread, mas conta no volume e no número; confira com a corretora e, se for o caso, corrija a planilha em data/raw/debentures/ e rode de novo
 - **VBRR11 (intenções XP)** — taxa de 1.067,00% (IPCA+) em 1 linha(s) da planilha, provável erro de digitação: ficou fora da taxa média e do spread, mas conta no volume e no número; confira com a corretora e, se for o caso, corrija a planilha em data/raw/debentures/ e rode de novo
+
+### Retornos mensais do IDEX-Infra que não fecham com o acumulado do ano impresso (1)
+
+- **Idex-Infra Geral, 2026** — os retornos mensais de 2026 compõem 2,24%, mas o relatório (data/raw/idex/idex-infra-relatorio-mensal-2026-07.pdf) imprime 1,54% de acumulado no ano (tolerância de 0,05 ponto percentual): provável erro de digitação no relatório; confira com a IDEX Analytics. Os retornos mensais são usados como estão e o acumulado de 12 meses sai do produto deles
