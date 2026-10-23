@@ -28,7 +28,6 @@ const UI = (() => {
   const fmtKmNum = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const F = Model.FIELD, T = Model.T, I_FIS = 15, I_EST = 14, I_UL = 8;
 
-  const ANOS = [2023, 2024, 2025, 2026, 2027];
   let snv, index, filters, showAllUf = false, refreshTimer = null;
   let conc, states, concFilters, intel = null;
   const IM = IntelModel;
@@ -253,7 +252,7 @@ const UI = (() => {
     return group('estado', 'Estado da concessão', `<div class="checks">${conc.estados.map(s => check('estado', s.key, s.label, concStyleSwatch(s.key, 24))).join('')}</div>`) +
       group('ent', 'Projeto / contrato', `<div class="checks check-list">${ents.map(({ e, i }) => check('ent', i, e.nome, '', `${e.nome} ${e.nome_contrato || ''}`)).join('')}</div>`,
         '<input class="mini-input" type="search" data-finder="ent" placeholder="Filtrar projetos" aria-label="Filtrar lista de projetos">') +
-      group('ano', 'Ano do programa', `<div class="checks">${ANOS.map(a => check('ano', a, String(a))).join('')}</div>`);
+      group('ano', 'Ano do programa', `<div class="checks">${ConcModel.anosPrograma(conc).map(a => check('ano', a, String(a))).join('')}</div>`);
   }
 
   function syncChecks() {
@@ -315,7 +314,7 @@ const UI = (() => {
       <h2 class="section-title">Números da seleção</h2>
       <div class="kpi"><span class="kpi__value" id="kpi-km">${Model.fmtKm(a.km)}</span>
         <span class="kpi__sub" id="kpi-n">${fmtInt.format(a.n)} ${a.n === 1 ? 'trecho' : 'trechos'}</span></div>
-      <p class="note">Extensão oficial do SNV. Trechos coincidentes entre BRs contados uma vez.</p>
+      <p class="note">Extensão oficial do ${Glossario.link('snv')}. Trechos coincidentes entre BRs contados uma vez (${Glossario.link('trecho-fisico', 'trecho físico')}).</p>
       ${intelStats(a.intel)}
       <h3 class="section-title">Por estado da concessão</h3>${concBars(a.porEstado, a.km)}
       <h3 class="section-title">Por situação</h3>${bars(a.porSituacao, 'situacao')}
@@ -333,7 +332,7 @@ const UI = (() => {
     if (t) t.addEventListener('click', () => { showAllUf = !showAllUf; renderStats(a); });
   }
 
-  // ---------- Camadas de inteligência (v3) ----------
+  // ---------- Camadas de inteligência ----------
   const vmdaOf = () => IM.vmdaOf(intel), acidOf = () => IM.acidOf(intel), cargaOf = () => IM.cargaOf(intel);
   const prfRef = () => { const a = acidOf(); const y = a && IM.anosLabel(a.anos); return y ? `PRF ${y}` : 'PRF'; };
   const pnlRef = () => { const c = cargaOf(); return c ? `${c.cenario || 'PNL 2035'} ${c.ano_base}` : 'PNL 2035'; };
@@ -371,7 +370,8 @@ const UI = (() => {
   //   "uso restrito (área urbana)" quando o modelo marca o trecho como não simulável.
   // - VMDa 2023 (leves/pesados): leves, pesados, total e % pesados; o veíc·km fica aqui só sem o bloco 2025.
   // - Acidentes (PRF): por ano, por km e por 10⁶ veíc·km (taxa sobre o VMDa 2023). Carga: modelo PNL.
-  // Trecho planejado (superfície PLA): os grupos VMDa 2025, VMDa 2023 e Acidentes vêm marcados "trecho planejado no SNV".
+  // Trecho planejado (superfície PLA): os grupos VMDa 2025, VMDa 2023 e Acidentes vêm marcados "trecho planejado no SNV" e,
+  // se algum deles tem valor, uma nota no fim explica de onde vêm os números.
   function intelBlock(j) {
     const vm = vmdaOf(), v25 = IM.v25Of(intel), ac = acidOf(), ca = cargaOf(), f = IM.fisIntel(intel, snv, j);
     const pla = IM.fisSup(snv, j) === 'PLA' ? '<span class="tag-nv">trecho planejado no SNV</span>' : '';
@@ -413,11 +413,18 @@ const UI = (() => {
       ]);
     }
     if (!groups.length) return '';
-    return `<div class="card__intel"><h3 class="section-title">Tráfego e segurança</h3><dl class="card__grid">${groups.join('')}</dl></div>`;
+    // VMDa e PRF associam o código e o km da BR planejada à estrada que já existe no traçado (scripts/intel/trafego.py, vmda2025.py)
+    const plaNota = pla && [f.t25, f.tot, f.acidAno].some(v => v != null)
+      ? '<dd class="card__flag" data-pla="1">Trecho planejado: a rodovia federal ainda não foi implantada aqui. Os números de tráfego ' +
+        'e de acidentes são da estrada que já existe nesse traçado (em geral estadual), que o modelo de tráfego e a PRF associam a esta BR.</dd>'
+      : '';
+    return `<div class="card__intel"><h3 class="section-title">Tráfego e segurança</h3><dl class="card__grid">${groups.join('')}${plaNota}</dl></div>`;
   }
 
-  // ---------- Camadas de sobreposição (v3, Task 10) ----------
-  const LAYERS_NOTE = 'Medido: praças, SATs (ANTT), PAM, Estoques. Modelado: VMDa, carga PNL.';
+  // ---------- Camadas de sobreposição ----------
+  // Texto com links para o glossário na primeira menção de cada termo desta aba
+  const layersNote = () => `Medido: ${Glossario.link('praca-de-pedagio', 'praças')} e contadores de tráfego (${Glossario.link('sat', 'SAT')}) da ANTT, ${Glossario.link('pam', 'PAM')}, Estoques. ` +
+    `Modelado: ${Glossario.link('vmda', 'VMDa')}, carga ${Glossario.link('pnl', 'PNL')}.`;
   const PROD_LABEL = { soja: 'Soja', milho1: 'Milho 1ª safra', milho2: 'Milho 2ª safra', cana: 'Cana-de-açúcar', algodao: 'Algodão', trigo: 'Trigo', cafe: 'Café' };
 
   function renderLayers() {
@@ -436,7 +443,7 @@ const UI = (() => {
     const check = (d, sw, label, n) => `<label class="check" title="${esc(d.title)}"><input type="checkbox" data-layer="${d.key}" aria-describedby="layer-src-${d.key}">${sw}` +
       `<span>${esc(label)}</span><span class="muted">${esc(n)}</span></label><span class="visually-hidden" id="layer-src-${d.key}">Fonte: ${esc(d.title)}</span>`;
     const checks = avail.map(d => check(d, layerSwatch(d.key), d.label, fmtInt.format(d.n)) + sub(d)).join('');
-    // Rotas de Integração (v3.1): grupo próprio; ligar enquadra a América do Sul e mostra a legenda da camada.
+    // Rotas de Integração: grupo próprio; ligar enquadra a América do Sul e mostra a legenda da camada.
     const rotas = rot ? `<fieldset class="fundo rotas-group"><legend class="fundo__title">${esc(rot.label)}</legend>
         ${check(rot, rotasSwatch(), 'Rotas e países vizinhos', fmtInt.format(rot.n))}
         <p class="note layers__note">${esc(IM.rotasNota(IM.rotasOf(intel)))}</p></fieldset>` : '';
@@ -452,7 +459,7 @@ const UI = (() => {
           ${checks ? `<div class="checks">${checks}</div>` : '<p class="empty">Sem camadas neste arquivo.</p>'}
           ${rotas}
           ${fundo}
-          <p class="note layers__note">${esc(LAYERS_NOTE)}</p>
+          <p class="note layers__note">${layersNote()}</p>
         </div></details>`;
     sec.addEventListener('change', e => {
       const t = e.target;
@@ -494,20 +501,33 @@ const UI = (() => {
 
   // Ao fim do enquadramento das rotas: se um rótulo direto de rota caiu sob a legenda das rotas (mapa estreito, p. ex.
   // 1366 × 768, onde o zoom mínimo deixa a Rota 4 na altura da legenda), a legenda começa recolhida; o leitor pode abri-la.
-  function fitRotasLegend() {
+  // reavaliar (mudança do tamanho da janela): mede de novo com a legenda aberta e abre ou recolhe; se o leitor já abriu ou
+  // recolheu a legenda com a mão, a escolha dele fica.
+  function fitRotasLegend(reavaliar = false) {
     const el = document.getElementById('rotas-legend'), det = el && el.querySelector('details');
-    if (!det || el.hidden || !det.open || !Layers.isOn('rotas')) return;
+    if (!det || el.hidden || !Layers.isOn('rotas') || !el.getClientRects().length) return;
+    if (reavaliar ? el.dataset.manual === '1' : !det.open) return;
+    det.open = true;  // a medida vale para a legenda aberta (troca síncrona: não chega a ser desenhada)
     const b = el.getBoundingClientRect();
     const sob = [...document.querySelectorAll('.leaflet-tooltip.rota-label')].some(l => {
       const r = l.getBoundingClientRect();
       return r.left < b.right && b.left < r.right && r.top < b.bottom && b.top < r.bottom;
     });
-    if (sob) det.open = false;
+    det.open = !sob;
+  }
+
+  // Mudança do tamanho da janela: reavalia o recolhimento da legenda das rotas quando o redimensionamento para (200 ms).
+  let resizeTimer = 0;
+  function onResize() {
+    clearTimeout(resizeTimer);
+    // espera também o quadro em que o Leaflet reposiciona os rótulos no novo tamanho do mapa
+    resizeTimer = setTimeout(() => requestAnimationFrame(() => fitRotasLegend(true)), 200);
   }
 
   function renderRotasLegend() {
     const el = leftLegend('rotas-legend', 'rotas-legend'), R = IM.rotasOf(intel);
     el.hidden = !(R && Layers.isOn('rotas'));
+    delete el.dataset.manual;
     if (el.hidden) { el.innerHTML = ''; return; }
     const rows = R.rotas.map((r, i) => `<button type="button" class="legend__row legend__btn" data-rota="${i}" title="Abrir o cartão da ${esc(IM.rotaTitulo(r))}">` +
       `${rotaSwatch(r.id)}<span>${esc(IM.rotaTitulo(r))}</span></button>`).join('');
@@ -520,6 +540,8 @@ const UI = (() => {
       <div class="legend__body">${rows}${extras ? `<div class="legend__sep"></div>${extras}` : ''}
       <p class="legend__note" title="Fonte: ${esc(fonte)}">${esc(IM.rotasNota(R))}</p></div></details>`;
     el.querySelectorAll('[data-rota]').forEach(b => b.addEventListener('click', () => Layers.open('rotas', Number(b.dataset.rota))));
+    // clique (ou Enter/Espaço) no título: escolha do leitor, que a mudança de tamanho da janela não desfaz
+    el.querySelector('summary').addEventListener('click', () => { el.dataset.manual = '1'; });
   }
 
   function renderFundoLegend() {
@@ -600,15 +622,16 @@ const UI = (() => {
     const r = Layers.rowsOf(key)[i];
     if (!r) return;
     if (key === 'pracas') {
+      const aP = IM.anoPracas(intel);
       showCard(r.nome, `Praça de pedágio · ${rodUf(r)}${kmFmt(r.km) ? ` · km ${kmFmt(r.km)}` : ''}`,
         `<div class="card__badges"><span class="badge">Contagem medida · ANTT</span></div>
         ${grid([
-          ['VMD 2025', IM.fmtVmd(r.vmd)], ['Leves', IM.fmtVmd(r.leves)], ['Pesados', IM.fmtVmd(r.pesados)], ['Motos', IM.fmtVmd(r.moto)],
+          [IM.comAno('VMD', aP), IM.fmtVmd(r.vmd)], ['Leves', IM.fmtVmd(r.leves)], ['Pesados', IM.fmtVmd(r.pesados)], ['Motos', IM.fmtVmd(r.moto)],
           ['% pesados', IM.fmtPct(pctOf(r.pesados, r.vmd))], ['Eixos médios do comercial', IM.has(r.eixos) ? IM.fmtDec(r.eixos, 1) : null],
-          ['Receita 2025', IM.fmtBRL(r.receita)], ['Meses com dado em 2025', IM.has(r.meses) ? String(r.meses) : null],
+          [IM.comAno('Receita', aP), IM.fmtBRL(r.receita)], [`Meses com dado${aP != null ? ` em ${aP}` : ''}`, IM.has(r.meses) ? String(r.meses) : null],
         ])}${pointConc(r.ent, r.conc)}${pracaChart(i)}`, r.fis);
     } else if (key === 'sats') {
-      showCard(`SAT ${r.id}`, `Equipamento de contagem · ${rodUf(r)}`,
+      showCard(`SAT ${r.id}`, `Contador de tráfego · ${rodUf(r)}`,
         `<div class="card__badges"><span class="badge">Contagem medida · ANTT</span></div>
         ${grid([
           ['VMD', IM.fmtVmd(r.vmd)], ['% pesados', IM.fmtPct(r.pes)], ['% motos', IM.fmtPct(r.moto)],
@@ -616,7 +639,7 @@ const UI = (() => {
         ])}${pointConc(r.ent, r.conc)}`, r.fis);
     } else if (key === 'obras') {
       const km = kmFmt(r.km_i) ? `km ${kmFmt(r.km_i)}${kmFmt(r.km_f) && r.km_f !== r.km_i ? `–${kmFmt(r.km_f)}` : ''}` : null;
-      showCard(r.descricao || r.tipo || 'Obra', `Obra ANTT · ${rodUf(r)}`,
+      showCard(r.descricao || r.tipo || 'Obra', `Obra na concessão federal · ${rodUf(r)}`,
         `${grid([
           ['Tipo', r.tipo], ['Localização', km], ['Ano', IM.has(r.ano) ? String(r.ano) : null],
           ['Previsto', IM.fmtPct(r.previsto)], ['Executado', IM.fmtPct(r.executado)],
@@ -627,7 +650,8 @@ const UI = (() => {
       openRota(r);
     } else if (key === 'portos') {
       showCard(r.nome, `${r.tipoLabel || r.tipo} · ${r.uf || '—'}`,
-        `${grid([['Tipo', r.tipoLabel || r.tipo], ['Tipo ANTAQ', r.tipoLabel && Model.normalize(r.tipoLabel) !== Model.normalize(r.tipo) ? r.tipo : null], ['UF', r.uf]])}
+        `${grid([['Tipo', r.tipoLabel || r.tipo], ['UF', r.uf],
+          ['Localização', r.aprox ? 'aproximada (centro do município do cadastro; o ponto da ANTAQ estava fora da UF)' : null]])}
         <p class="card__src card__pad">ANTAQ, instalações portuárias</p>`, null);
     }
   }
@@ -649,6 +673,7 @@ const UI = (() => {
 
   // Cartão de uma Rota de Integração Sul-Americana (MPO): o traçado no mapa é esquemático.
   function openRota(r) {
+    const ap = IM.rotasDocs(intel && intel.rotas).apresentacao;
     const join = a => (Array.isArray(a) && a.length ? a.join(', ') : null);
     const list = (title, items) => (Array.isArray(items) && items.length
       ? `<div class="card__intel"><h3 class="section-title">${esc(title)}</h3><ul class="flist">${items.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>` : '');
@@ -660,7 +685,7 @@ const UI = (() => {
       ${r.descricao ? `<p class="card__desc">${esc(r.descricao)}</p>` : ''}
       ${grid([['Países', join(r.paises)], ['UFs', join(r.ufs)], ['Situação', r.previsao], ['Rodovias', join(r.rodovias)]])}
       ${cidades}${list('Hidrovias', r.hidrovias)}${list('Obras e projetos', r.obras)}
-      <p class="card__src card__pad card__aviso">Traçado esquemático: linhas do mapa da apresentação do MPO de 01/07/2026, georreferenciadas por cidades; não é o eixo das vias.</p>${link}`, null);
+      <p class="card__src card__pad card__aviso">Traçado esquemático: linhas do mapa da apresentação do MPO${ap ? ` de ${esc(ap)}` : ''}, georreferenciadas por cidades; não é o eixo das vias.</p>${link}`, null);
   }
 
   function openMun(id) {
@@ -689,7 +714,7 @@ const UI = (() => {
     }
     if (!items.length) return '';
     return `<div class="card__meas"><h3 class="section-title">Medições no trecho</h3><ul class="meas-list">${items.join('')}</ul>
-      <p class="card__src">VMD medido 2025 · ANTT</p></div>`;
+      <p class="card__src">${IM.comAno('VMD medido', IM.anoPracas(intel))} · ANTT</p></div>`;
   }
 
   function scheduleRefresh(delay = 30) {
@@ -776,7 +801,8 @@ const UI = (() => {
       const e = conc.entidades[i];
       const chave = ConcModel.dataChave(e);
       return `<div class="conc-item"><span class="conc-item__name">${concStyleSwatch(e.estado, 24)} ${esc(e.nome)}
-        <span class="conc-item__sub">${esc(concLabel(e.estado))}${chave ? ` · ${e.estado === 'vigente' ? 'assinatura' : 'leilão'} ${esc(ConcModel.fmtData(chave))}` : ''}</span></span>
+        <span class="conc-item__sub">${esc(concLabel(e.estado))}${chave ? ` · ${e.estado === 'vigente' ? 'assinatura' : 'leilão'} ${esc(ConcModel.fmtData(chave))}` : ''}</span>
+        <span class="conc-item__sub" data-pista-resumo="${esc(e.id)}">Pista da concessão: ${esc(ConcModel.pistaLinha(ConcModel.pistaSNV(conc, snv, i)))}</span></span>
         <a class="btn" href="#ficha/${esc(e.id)}">Ver ficha</a></div>`;
     }).join('') : `<div class="conc-item"><span class="conc-item__name">${concStyleSwatch(st, 24)} ${esc(concLabel(st))}</span></div>`;
     return `<div class="card__conc"><h3 class="section-title">Concessão</h3>${body}</div>`;
@@ -836,9 +862,9 @@ const UI = (() => {
         ? conc.estados.map(x => `<div class="legend__row">${concStyleSwatch(x.key)}<span>${esc(x.label)}</span></div>`).join('')
         : LEGEND_ITEMS.map(([sit, label]) => `<div class="legend__row">${styleSwatch(sit)}<span>${label}</span></div>`).join('') +
           `<div class="legend__sep"></div><div class="legend__row">${haloSwatch()}<span>Concessão federal</span></div>`;
-      items += `<div class="legend__src">Fonte: DNIT · SNV ${esc(snv.versao)}${mode === 'concessoes' ? ` · RoadShow ${esc(conc.versaoRoadshow)}` : ''}</div>`;
+      items += `<div class="legend__src">Fonte: DNIT · SNV ${esc(snv.versao)}${mode === 'concessoes' ? ` · RoadShow 2026-2027 (${esc(conc.edicaoRoadshow)})` : ''}</div>`;
     }
-    $('#legend').innerHTML = `<h2 class="section-title">Cor das rodovias</h2>
+    $('#legend').innerHTML = `<h2 class="section-title">Cor das rodovias federais</h2>
       <div class="mode-switch" role="radiogroup" aria-label="Cor das rodovias">${MODE_LIST.map(([k, label]) =>
         `<button type="button" role="radio" data-mode="${k}" aria-checked="${mode === k}" tabindex="${mode === k ? 0 : -1}">${label}</button>`).join('')}</div>
       <h2 class="section-title">Legenda</h2>${items}`;
@@ -902,6 +928,7 @@ const UI = (() => {
       if (key === 'estaduais' && QUANT_MODES.includes(MapView.colorMode())) renderLegend();
     });
     syncEstTrafego();
+    window.addEventListener('resize', onResize);
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape' && !$('#card').hidden) closeCard();
     });

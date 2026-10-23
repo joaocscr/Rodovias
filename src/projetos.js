@@ -1,5 +1,5 @@
 // Aba Projetos: comparador ordenável de contratos e projetos do RoadShow, com totais e estudos pós-2027.
-// v3: concessões estaduais no comparador (coluna e filtro Esfera) e seção Pipeline (INTEL.pipeline).
+// Concessões estaduais no comparador (coluna e filtro Esfera) e seção Pipeline (INTEL.pipeline).
 const Projetos = (() => {
   const nf1 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const nf2 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -11,10 +11,10 @@ const Projetos = (() => {
 
   // [chave, rótulo, formato, numérica?]
   const BASE_COLS = [
-    ['nome', 'Nome', null, false], ['brsUfs', 'BRs/UFs', null, false], ['estado', 'Estado', 'estado', false],
-    ['dataChave', 'Data-chave', 'data', false], ['km', 'km', 'km', true], ['capex', 'Capex (R$ bi)', 'bi', true],
+    ['nome', 'Nome', null, false], ['brsUfs', 'BRs/UFs', null, false], ['estado', 'Estado da concessão', 'estado', false],
+    ['dataChave', 'Leilão ou assinatura', 'data', false], ['km', 'km', 'km', true], ['capex', 'Capex (R$ bi)', 'bi', true],
     ['opex', 'Opex (R$ bi)', 'bi', true], ['dataBase', 'Data-base', null, false], ['capexKm', 'Capex/km (R$ mi)', 'mi', true],
-    ['wacc', 'WACC', 'pct', true], ['tkm', 'TKM (R$/km)', 'tkm', true], ['desagio', 'Deságio', 'pct', true],
+    ['wacc', 'WACC', 'pct', true], ['tkm', 'TKM (R$/km)', 'tkm', true], ['desagio', 'Deságio', 'pct', true], ['desagioOrigem', 'Fonte do deságio', null, false],
     ['participantes', 'Participantes', 'int', true], ['vencedor', 'Vencedor', null, false],
   ];
   const FICHA_COLS = [
@@ -108,12 +108,15 @@ const Projetos = (() => {
       </div>
       <div class="toolbar"><div class="chips">${conc.estados.filter(s => !['snv', 'pos2027', 'nenhum'].includes(s.key))
         .concat(IM.EST_ESTADOS.filter(s => rows.some(r => r.estado === s.key))).map(s => chip('estado', s.key, s.label)).join('')}</div>
-        <div class="chips">${[2023, 2024, 2025, 2026, 2027].map(a => chip('ano', a, String(a))).join('')}</div></div>`;
+        <div class="chips">${ConcModel.anosPrograma(conc).map(a => chip('ano', a, String(a))).join('')}</div></div>`;
   }
 
   function estudos() {
+    // quantidade e páginas vêm do dado (conc.estudos[].pagina)
+    const pp = [...new Set(conc.estudos.map(s => s.pagina).filter(Number.isFinite))].sort((a, b) => a - b);
+    const ref = pp.length ? ` (${pp.length > 1 ? 'pp.' : 'p.'} ${pp.join(', ')})` : '';
     return `<h2 class="page__title" style="font-size:22px;margin-top:40px">Estudos pós-2027</h2>
-      <p class="page__lead">27 estudos contratados, só com BRs e UFs no RoadShow (p. 121). No mapa, aparecem como a BR inteira na UF.</p>
+      <p class="page__lead" id="estudos-lead">${conc.estudos.length} ${conc.estudos.length === 1 ? 'estudo contratado' : 'estudos contratados'} para futuras concessões rodoviárias federais; o RoadShow${ref} só informa as BRs e UFs. No mapa, aparecem como a BR inteira na UF.</p>
       <ul class="timeline" id="estudos-list">${conc.estudos.map((s, i) => `<li>BR-${esc(s.brs.join('/'))}/${esc(s.ufs.join('/'))}${s.possivel_2027 ? ' · <b>possível 2027</b>' : ''}
         <button type="button" class="link-btn" data-estudo="${i}" ${s.fis.length ? '' : 'disabled'}>ver no mapa</button></li>`).join('')}</ul>`;
   }
@@ -125,14 +128,15 @@ const Projetos = (() => {
     const acesso = (intel.pipeline.fonte || []).map(f => f && f.acesso).filter(Boolean).sort().pop();
     return `<section id="pipeline" class="pipeline">
       <h2 class="page__title" style="font-size:22px;margin-top:40px">Pipeline</h2>
-      <p class="page__lead">Próximos passos de concessões federais e estaduais (estudo, consulta pública, TCU/TCE, edital, leilão), por data prevista; sem data no fim.
+      <p class="page__lead">Próximos passos de concessões rodoviárias federais e estaduais (estudo, consulta pública, ${Glossario.link('tcu', 'TCU')}/TCE, edital, leilão), por data prevista; sem data no fim.
         Itens com a etiqueta “não verificado” vêm de uma única fonte secundária. Clique numa linha com ficha (federal ou estadual) para abri-la; “Observação” abre o detalhe do item.</p>
+      <article class="ccard ccard--wide pipeline__tl" id="pipe-timeline" hidden></article>
       <div class="toolbar">
         <select id="pipe-esfera" aria-label="Filtrar pipeline por esfera"><option value="">Todas as esferas</option><option value="federal">Federal</option><option value="estadual">Estadual</option></select>
         <span class="page__src" id="pipe-n"></span>
       </div>
       <div class="chips" id="pipe-counts" aria-label="Status (clique para filtrar)"></div>
-      <div class="table-wrap"><table class="grid" id="pipe-table"></table></div>
+      <div class="table-wrap"><table class="grid" id="pipe-table" data-csv-name="pipeline"></table></div>
       ${fontes.length ? `<p class="page__src">Fonte: ${esc(fontes.join('; '))}${acesso ? ` · acesso ${esc(ConcModel.fmtData(acesso))}` : ''}.</p>` : ''}
     </section>`;
   }
@@ -160,6 +164,31 @@ const Projetos = (() => {
     document.getElementById('pipe-n').textContent = `${nf0.format(list.length)} de ${nf0.format(pipe.length)}`;
   }
 
+  // Linha do tempo de editais e leilões (cartão do Pipeline): não depende dos filtros da tabela. Cores = tokens de status do pipeline.
+  function renderTimeline() {
+    const card = document.getElementById('pipe-timeline');
+    if (!card) return;
+    const res = IM.linhaDoTempoResumo(conc, intel && intel.pipeline);
+    if (!res.rows.length) return;
+    const { de, ate } = res.anos;
+    const anos = de === ate ? String(de) : `${de}–${ate}`;
+    const usados = [...new Set((intel.pipeline.status || []).map(x => x.key).concat(res.rows.map(r => r.status)))].filter(k => res.rows.some(r => r.status === k));
+    const cor = k => PIPE_STATUS[k] || Charts.C.deep;
+    const semData = res.semData
+      ? `${nf0.format(res.semData)} ${res.semData === 1 ? 'item do pipeline sem data de leilão não aparece' : 'itens do pipeline sem data de leilão não aparecem'} aqui.` : '';
+    card.hidden = false;
+    card.innerHTML = `<h3>Linha do tempo: editais e leilões ${anos}</h3>
+      <p class="sub">Um projeto por linha, em ordem de leilão. A linha liga o edital ao leilão; sem data de edital, só o leilão aparece. Data só com o mês fica no meio do mês e leva “(mês)”. Clique no nome para abrir a ficha.${res.rows.some(r => r.verificado === false) ? ' “(não verificado)”: data só de imprensa, não oficial.' : ''}</p>
+      ${Charts.legendHtml(usados.map(k => ({ label: IM.statusLabel(intel, k), color: cor(k), shape: 'diamondFill' })))}
+      ${Charts.legendHtml([{ label: 'Edital', color: Charts.C.spacial, shape: 'circle' }, { label: 'Leilão', color: Charts.C.spacial, shape: 'diamondFill' }])}
+      <div class="chart-box" id="pipe-timeline-chart"></div>
+      ${semData ? `<p class="src" id="pipe-timeline-fora">${semData}</p>` : ''}`;
+    const box = document.getElementById('pipe-timeline-chart');
+    const linhas = res.rows.map(r => Object.assign({}, r, { k: r.ent && Ficha.exists(r.ent) ? r.ent : null }));
+    box.innerHTML = Charts.timelineSvg(linhas, { width: Math.max(640, box.clientWidth || 720), de: res.de, ate: res.ate, colors: PIPE_STATUS, clickable: true,
+      formatDate: ConcModel.fmtData, statusLabel: k => IM.statusLabel(intel, k), title: `Linha do tempo de editais e leilões ${anos}` });
+  }
+
   const estudoLabel = s => `Estudo pós-2027 BR-${s.brs.join('/')}/${s.ufs.join('/')}`;
 
   function init(data, intelData = null) {
@@ -170,16 +199,19 @@ const Projetos = (() => {
     hasEst = est.length > 0;
     rows = ConcModel.comparatorRows(conc).map(r => Object.assign(r, { esfera: 'federal' })).concat(est);
     pipe = IM.pipelineRows(intel);
+    const anos = ConcModel.anosPrograma(conc), base = ConcModel.dataBaseComum(conc);
     const el = document.getElementById('page-projetos');
     el.innerHTML = `<div class="page__inner">
       <h1 class="page__title">Projetos e contratos</h1>
-      <p class="page__lead">Contratos vigentes e projetos do programa 2023–2027${hasEst ? ', e concessões rodoviárias estaduais' : ''}. Capex e opex na base comparável (tabelas em dez/2024 quando existirem; senão, a data-base da ficha, indicada na coluna). Clique numa linha para abrir a ficha.</p>
+      <p class="page__lead">Concessões rodoviárias federais${anos.length ? ` (contratos e programa ${anos[0]}–${anos[anos.length - 1]})` : ''}${hasEst ? ' e estaduais' : ''}; ${Glossario.link('capex', 'capex')} e ${Glossario.link('opex')} em R$ bi. Cada linha abre a ficha.</p>
       ${toolbar()}
-      <div class="table-wrap"><table class="grid" id="proj-table"></table></div>
+      <div class="table-wrap"><table class="grid" id="proj-table" data-csv-name="projetos-comparador"></table></div>
+      <p class="page__src" id="proj-nota">Programa: carteira federal de concessões rodoviárias do Ministério dos Transportes${anos.length ? ` (${anos[0]}–${anos[anos.length - 1]})` : ''}. Capex e opex na base comparável (tabelas${base ? ` em ${esc(base)}` : ''} quando existirem; senão, a ${Glossario.link('data-base', 'data-base')} da ficha, indicada na coluna). "Leilão ou assinatura": data de assinatura nos contratos federais ${anos.length ? `anteriores a ${anos[0]}` : 'anteriores ao programa'}${hasEst ? ' e nas concessões estaduais' : ''}; data do leilão nos demais. Siglas das colunas: ${Glossario.link('wacc', 'WACC')} (custo de capital do projeto) e ${Glossario.link('tkm', 'TKM')} (tarifa por quilômetro); nas colunas opcionais, ${Glossario.link('vpl', 'VPL')} (valor presente da receita), ${Glossario.link('veq', 'VEQ')} (veículos equivalentes por dia nas praças) e os pórticos do pedágio ${Glossario.link('free-flow', 'free flow')}.</p>
       ${pipelineSection()}
       ${estudos()}</div>`;
     renderTable();
     renderPipeline();
+    renderTimeline();
 
     el.addEventListener('click', ev => {
       const sort = ev.target.closest('[data-sort]');
@@ -199,6 +231,8 @@ const Projetos = (() => {
         renderPipeline();
         return;
       }
+      const tl = ev.target.closest('#pipe-timeline .hrow[data-k]');
+      if (tl) { Tabs.go('#ficha/' + tl.dataset.k); return; }
       if (ev.target.closest('#pipe-table a') || ev.target.closest('#pipe-table details')) return;
       const pr = ev.target.closest('#pipe-table tbody tr[data-ent]');
       if (pr) { Tabs.go('#ficha/' + pr.dataset.ent); return; }
@@ -231,7 +265,9 @@ const Projetos = (() => {
     el.addEventListener('keydown', ev => {
       if (ev.key !== 'Enter' || ev.target.closest('a') || ev.target.closest('summary')) return;
       const tr = ev.target.closest('tbody tr[data-id]'), pr = ev.target.closest('#pipe-table tbody tr[data-ent]');
-      if (tr) Tabs.go('#ficha/' + tr.dataset.id);
+      const tl = ev.target.closest('#pipe-timeline .hrow[data-k]');
+      if (tl) Tabs.go('#ficha/' + tl.dataset.k);
+      else if (tr) Tabs.go('#ficha/' + tr.dataset.id);
       else if (pr) Tabs.go('#ficha/' + pr.dataset.ent);
     });
     // "toggle" não borbulha: captura para lembrar quais observações estão abertas

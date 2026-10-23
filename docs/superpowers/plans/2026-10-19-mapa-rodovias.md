@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Gerar `mapa-rodovias.html`, um arquivo único e offline com o mapa interativo dos 7.673 trechos do SNV 202607A sobre as UFs, com busca, filtros e painel de números, no design system Galapagos.
+**Goal:** Gerar `mapa-rodovias.html`, um arquivo único e offline com o mapa interativo dos 7.673 trechos do SNV 202607A sobre as UFs, com busca, filtros e painel de números, com a paleta base institucional.
 
 **Architecture:** Um pipeline Python (`scripts/`) lê o shapefile, agrupa os trechos coincidentes em trechos físicos, simplifica e quantiza as geometrias e injeta dados + JS + CSS + fontes + Leaflet num template, gerando um HTML autocontido. No navegador, um módulo JS puro (`src/model.js`, testado com `node --test`) faz filtro, agregação e busca. `src/map.js` desenha com Leaflet em canvas e `src/ui.js` monta o painel. Um teste Playwright abre o HTML via `file://` com a rede bloqueada.
 
@@ -14,7 +14,7 @@
 
 - Arquivo final único `mapa-rodovias.html` na raiz do repositório, **≤ 15 MB** (ideal 5–8 MB); zero requisições de rede em runtime (sem CDN, Google Fonts ou tiles).
 - Cores: exclusivamente `#183C80` (Deep Blue), `#0071BB` (Bright Blue), `#231F20` (Spacial Grey), `#525254` (Light Grey), `#F7F7F8` (Snow White), com opacidade como único recurso extra. Exceção: os tons de cinza das UFs e das bordas são derivados por opacidade do Light Grey sobre o Snow White.
-- Tokens CSS no `:root` exatamente como na skill Galapagos (`--color-deep-blue` … `--transition: 150ms ease-in-out`). Grid 8 px; texto ≥ 14 px; animações 150–300 ms ease-in-out; títulos `'Gadugi', 'Hind', 'Inter', sans-serif`; corpo Inter (woff2 embutido); ícones Material Symbols Outlined como SVG inline.
+- Tokens CSS no `:root` da paleta base institucional (`--color-deep-blue` … `--transition: 150ms ease-in-out`). Grid 8 px; texto ≥ 14 px; animações 150–300 ms ease-in-out; títulos `'Gadugi', 'Hind', 'Inter', sans-serif`; corpo Inter (woff2 embutido); ícones Material Symbols Outlined como SVG inline.
 - Formato numérico brasileiro: `131.085,2 km`.
 - Regra de soma: cada trecho físico conta uma vez, sempre (spec §3.4). Total sem filtros = **131.085,2 km** em **7.591** trechos físicos (7.673 registros; 77 grupos coincidentes; soma bruta 131.690,7 km).
 - O dado bruto (`data/raw/`) fica no `.gitignore`. `data/ufs.geojson`, `vendor/` e o HTML gerado são commitados.
@@ -40,7 +40,7 @@ scripts/fetch_assets.py       baixa uma vez: malha UF IBGE → data/ufs.geojson;
 scripts/snv.py                leitura, agrupamento, simplificação e encode dos trechos (lógica pura)
 scripts/build.py              CLI: monta o HTML final a partir de snv.py + assets + src/
 src/template.html             esqueleto com placeholders /*__CSS__*/ /*__DATA__*/ /*__JS__*/
-src/styles.css                tokens Galapagos + layout
+src/styles.css                tokens da paleta base + layout
 src/model.js                  filtro/agregação/busca (puro, sem DOM)
 src/styles-map.js             tabela situação → estilo de linha
 src/map.js                    Leaflet: UFs, rótulos, trechos, hover, seleção

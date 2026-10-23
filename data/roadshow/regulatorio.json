@@ -493,8 +493,8 @@
       "Aprovação do Plano de Outorga pelo MT (Portaria MT nº 995/2023).",
       "Análise do controle externo (TCU): fiscalização prévia da desestatização.",
       "Publicação do Edital (ANTT), em português e inglês.",
-      "Leilão na B3: menor valor da tarifa, com aporte a partir de 18% de deságio.",
-      "Assinatura do Contrato (MT + ANTT) e início das obras."
+      "Leilão na B3 (MT + ANTT): menor valor da tarifa, com aporte a partir de 18% de deságio.",
+      "Assinatura do Contrato e início das obras."
      ]
     },
     {
@@ -701,6 +701,250 @@
    "relicitacao": false,
    "status": "na ANTT",
    "pagina": 33
+  }
+ ],
+ "diagramas": [
+  {
+   "id": "fluxo-projeto",
+   "secao": "estruturadores",
+   "titulo": "Fluxo de um projeto de concessão de rodovias",
+   "origem": "adaptado",
+   "pagina_figura": 61,
+   "descricao": "Dez etapas, da identificação do trecho ao início das obras, com o responsável por cada uma. Depois do leilão, deságio acima de 18% exige aporte de recursos vinculados; sem isso, o fluxo segue direto para a assinatura do contrato.",
+   "paginas": [
+    61,
+    65,
+    73
+   ],
+   "etapas": [
+    {
+     "id": "identificacao",
+     "titulo": "Identificação da potencialidade do trecho",
+     "responsavel": "MT + Infra S.A.",
+     "detalhe": "Planejamento ministerial (solicitação e definição dos trechos a estudar) e identificação de gargalo logístico."
+    },
+    {
+     "id": "previabilidade",
+     "titulo": "Elaboração de pré-viabilidade",
+     "responsavel": "MT + Estruturador",
+     "detalhe": "Subsídios essenciais para a decisão do MT sobre a conveniência e a oportunidade da concessão."
+    },
+    {
+     "id": "viabilidade",
+     "titulo": "Estudos de viabilidade técnica e financeira",
+     "responsavel": "MT + Estruturador",
+     "detalhe": "Modelo econômico-financeiro, estudos de engenharia, minutas de contrato, edital e PER; aprovação do estudo pelo MT."
+    },
+    {
+     "id": "audiencia",
+     "titulo": "Audiência pública",
+     "responsavel": "ANTT",
+     "detalhe": "Aberta aos interessados, para tornar o projeto público e colher sugestões e contribuições aos estudos e documentos."
+    },
+    {
+     "id": "plano",
+     "titulo": "Aprovação do Plano de Outorga (Portaria MT nº 995/2023)",
+     "responsavel": "MT",
+     "detalhe": "Consolida as diretrizes da política de outorga, a modalidade operacional e as condições de desestatização do projeto."
+    },
+    {
+     "id": "tcu",
+     "titulo": "Análise do controle externo",
+     "responsavel": "TCU",
+     "detalhe": "Fiscalização prévia da desestatização, com mais segurança jurídica."
+    },
+    {
+     "id": "edital",
+     "titulo": "Publicação do edital",
+     "responsavel": "ANTT",
+     "detalhe": "Estabelece os requisitos de participação em condições iguais; publicado em português e inglês."
+    },
+    {
+     "id": "leilao",
+     "titulo": "Leilão na B3",
+     "responsavel": "MT + ANTT",
+     "detalhe": "Modalidade: menor valor da tarifa. Critério de julgamento: menor tarifa, com previsão de aporte a partir de 18% de deságio (p. 61)."
+    },
+    {
+     "id": "assinatura",
+     "titulo": "Assinatura do contrato",
+     "responsavel": null,
+     "detalhe": ""
+    },
+    {
+     "id": "obras",
+     "titulo": "Início das obras",
+     "responsavel": null,
+     "detalhe": ""
+    }
+   ],
+   "decisao": {
+    "apos": "leilao",
+    "para": "assinatura",
+    "pergunta": "Deságio acima de 18%?",
+    "sim": "Aporte de Recursos Vinculados",
+    "sim_detalhe": "Exigido para deságios agressivos (pp. 65 e 73)",
+    "rotulo_sim": "sim",
+    "rotulo_nao": "não"
+   },
+   "redacoes": [
+    {
+     "pagina": 61,
+     "texto": "previsão de aporte no projeto a partir de 18% de deságio"
+    },
+    {
+     "pagina": 65,
+     "texto": "deságios agressivos (maiores do que 18%)"
+    },
+    {
+     "pagina": 73,
+     "texto": "Aporte de Recursos Vinculados (acima de 18% de deságio)"
+    }
+   ],
+   "nota": "O RoadShow usa duas redações para o limite do aporte: “a partir de 18%” na p. 61 e “maiores do que 18%” / “acima de 18%” nas pp. 65 e 73. O diagrama segue as pp. 65 e 73; pela redação da p. 61, um deságio de exatamente 18% também exigiria aporte. O losango de decisão e os ramos “sim” e “não” foram acrescentados por nós: a p. 73 sustenta o aporte antes da assinatura do contrato; o ramo “não → assinatura” é leitura nossa.",
+   "legenda": {
+    "etapa": "Etapa, com o responsável",
+    "decisao": "Decisão pelo resultado do leilão",
+    "aporte": "Aporte de recursos vinculados",
+    "seta": "Sequência"
+   }
+  },
+  {
+   "id": "fluxo-financiamento",
+   "secao": "financiamento",
+   "titulo": "Fluxo de financiamento de uma concessão",
+   "origem": "esquema",
+   "descricao": "Esquema montado com o texto das pp. 73 a 77: de onde vêm os recursos da concessionária (capital dos acionistas, BNDES e debêntures), para onde vão (investimentos e aporte de recursos vinculados) e as garantias que ela presta.",
+   "paginas": [
+    73,
+    75,
+    77
+   ],
+   "nos": [
+    {
+     "id": "acionistas",
+     "tipo": "fonte",
+     "titulo": "Acionistas: capital social mínimo",
+     "linhas": [
+      "Máximo entre 15% do fluxo de caixa (FCFF) negativo projetado e a necessidade de caixa dos 2 primeiros anos",
+      "50% integralizado na primeira parcela"
+     ],
+     "pagina": 73
+    },
+    {
+     "id": "bndes",
+     "tipo": "fonte",
+     "titulo": "BNDES (AINFRA/DECRO)",
+     "linhas": [
+      "Finem, debêntures em ofertas públicas, garantia e subcrédito backstop",
+      "Até 100% dos investimentos financiáveis, limitado a 80% dos investimentos totais",
+      "Prazo de até 34 anos"
+     ],
+     "pagina": 75
+    },
+    {
+     "id": "debentures",
+     "tipo": "fonte",
+     "titulo": "Mercado de capitais: debêntures",
+     "linhas": [
+      "Incentivadas: isenção de IRPF e IRPJ de 15% para o comprador",
+      "De infraestrutura: dedução de 130% da remuneração para o emissor",
+      "Emissão sem aprovação prévia do MT"
+     ],
+     "pagina": 77
+    },
+    {
+     "id": "spe",
+     "tipo": "concessionaria",
+     "titulo": "Concessionária (SPE)",
+     "linhas": [],
+     "pagina": null
+    },
+    {
+     "id": "investimentos",
+     "tipo": "destino",
+     "titulo": "Investimentos da concessão",
+     "linhas": [
+      "Obras e serviços do Programa de Exploração da Rodovia (PER), com desembolsos conforme o progresso"
+     ],
+     "pagina": 75
+    },
+    {
+     "id": "aporte",
+     "tipo": "destino",
+     "titulo": "Aporte de Recursos Vinculados",
+     "linhas": [
+      "Exigido com deságio acima de 18%",
+      "Captação líquida de terceiros para o aporte antes da assinatura reduz o capital social, até 50% do aporte"
+     ],
+     "pagina": 73
+    },
+    {
+     "id": "garantias_pc",
+     "tipo": "garantia",
+     "titulo": "Garantias ao Poder Concedente",
+     "linhas": [
+      "Proposta: 1% do VPL (receita)",
+      "Execução: 5% do VPL até concluir as obras de ampliação e nos 2 últimos anos; 2,5% no restante"
+     ],
+     "pagina": 73
+    },
+    {
+     "id": "garantias_bndes",
+     "tipo": "garantia",
+     "titulo": "Garantias ao BNDES",
+     "linhas": [
+      "Ações da SPE e direitos emergentes da concessão",
+      "Pré-completion: garantias adicionais se houver riscos não mitigados"
+     ],
+     "pagina": 75
+    }
+   ],
+   "arestas": [
+    {
+     "de": "acionistas",
+     "para": "spe",
+     "tipo": "recursos"
+    },
+    {
+     "de": "bndes",
+     "para": "spe",
+     "tipo": "recursos"
+    },
+    {
+     "de": "debentures",
+     "para": "spe",
+     "tipo": "recursos"
+    },
+    {
+     "de": "spe",
+     "para": "investimentos",
+     "tipo": "recursos"
+    },
+    {
+     "de": "spe",
+     "para": "aporte",
+     "tipo": "recursos"
+    },
+    {
+     "de": "spe",
+     "para": "garantias_pc",
+     "tipo": "garantia"
+    },
+    {
+     "de": "spe",
+     "para": "garantias_bndes",
+     "tipo": "garantia"
+    }
+   ],
+   "legenda": {
+    "fonte": "Fonte de recursos",
+    "concessionaria": "Concessionária",
+    "destino": "Uso dos recursos",
+    "garantia": "Garantia prestada (seta tracejada)",
+    "recursos": "Fluxo de recursos"
+   },
+   "nota": "Esquema montado a partir do texto das pp. 73 a 77; não é uma figura do RoadShow. A disposição em fontes, concessionária, usos e garantias é leitura do texto."
   }
  ]
 }

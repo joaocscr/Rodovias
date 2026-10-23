@@ -1,4 +1,4 @@
-// Camadas de inteligência (v3): métricas por físico, classes de cor, agregados, geometria municipal e formatos. Puro: sem DOM.
+// Camadas de inteligência: métricas por físico, classes de cor, agregados, geometria municipal e formatos. Puro: sem DOM.
 const IntelModel = (() => {
   const DASH = '—';
   const NF = {};
@@ -17,7 +17,7 @@ const IntelModel = (() => {
   const acidOf = intel => (intel && intel.trafego && intel.trafego.acidentes) || null;
   // Carga só conta como presente com o array GSA (é ele que vira métrica, agregado e cartão).
   const cargaOf = intel => (intel && intel.carga && intel.carga.gsa ? intel.carga : null);
-  // VMDa 2025 (v3.1, DNIT, modelado): total e sentidos por físico, total por linha da malha estadual; sem leves/pesados.
+  // VMDa 2025 (DNIT, modelado): total e sentidos por físico, total por linha da malha estadual; sem leves/pesados.
   // Só conta como presente com o array fis.t. Sem ele, Tráfego e veíc·km voltam ao VMDa 2023 (leves + pesados).
   const v25Of = intel => (intel && intel.vmda2025 && intel.vmda2025.fis && Array.isArray(intel.vmda2025.fis.t) ? intel.vmda2025 : null);
   // Total do VMDa 2025 (federal e estadual, mesma regra): 0 = sem dado, como no build do bloco (volume zero fica sem valor).
@@ -110,13 +110,24 @@ const IntelModel = (() => {
     return c;
   }
 
+  // Registro principal do físico j (o primeiro de `r`; os demais são BRs coincidentes), ou null.
+  function fisRec(snv, j) {
+    const f = snv && snv.fis && snv.fis[j];
+    return f && f.r && snv.trechos ? (snv.trechos[f.r[0]] || null) : null;
+  }
+
   // Superfície do registro principal do físico j ('PAV', 'N_PAV', 'PLA'); sem dicionário = null.
   const I_SUP = 5; // posição de Model.FIELD.superficie no registro de SNV.trechos
   function fisSup(snv, j) {
-    const d = snv && snv.dict && snv.dict.superficie, f = snv && snv.fis && snv.fis[j];
-    if (!d || !f || !f.r || !snv.trechos) return null;
-    const t = snv.trechos[f.r[0]];
-    return t ? (d[t[I_SUP]] ?? null) : null;
+    const d = snv && snv.dict && snv.dict.superficie, t = fisRec(snv, j);
+    return d && t ? (d[t[I_SUP]] ?? null) : null;
+  }
+
+  // Situação (texto do SNV, ex.: 'Duplicada') do registro principal do físico j; sem dicionário = null.
+  const I_SIT = 4; // posição de Model.FIELD.situacao
+  function fisSit(snv, j) {
+    const d = snv && snv.dict && snv.dict.situacao, t = fisRec(snv, j);
+    return d && t ? (d[t[I_SIT]] ?? null) : null;
   }
 
   // Volume total do físico j usado no Tráfego e no veíc·km: VMDa 2025 quando o bloco existe (0 = sem dado), senão
@@ -327,10 +338,15 @@ const IntelModel = (() => {
     return Math.min(wmax, Math.max(wmin, wmax * v / vmax));
   }
 
-  // Tipos ANTAQ mostrados na camada "Portos e ETCs" (os demais ficam de fora).
+  // Tipos ANTAQ mostrados na camada "Portos e ETCs" (os demais ficam de fora), com o rótulo em português da interface:
+  // por extenso, sigla entre parênteses quando o setor a usa. PORTO_FORMA: marcador no mapa (portos organizados e públicos
+  // em quadrado; terminais e estações em círculo).
   const PORTO_TIPOS = {
-    'Porto Organizado': 'Porto Organizado', 'Terminal de uso privado': 'TUP',
-    'Estação de transbordo de cargas': 'ETC', 'Porto Público': 'Porto público',
+    'Porto Organizado': 'Porto organizado', 'Porto Público': 'Porto público',
+    'Terminal de uso privado': 'Terminal de uso privado (TUP)', 'Estação de transbordo de cargas': 'Estação de transbordo de cargas (ETC)',
+  };
+  const PORTO_FORMA = {
+    'Porto Organizado': 'quadrado', 'Porto Público': 'quadrado', 'Terminal de uso privado': 'circulo', 'Estação de transbordo de cargas': 'circulo',
   };
   const portoTipo = t => (t != null && Object.prototype.hasOwnProperty.call(PORTO_TIPOS, t) ? PORTO_TIPOS[t] : null);
 
@@ -440,7 +456,7 @@ const IntelModel = (() => {
     return f ? `${f.nome}${f.periodo ? ` · ${f.periodo}` : ''}` : DASH;
   }
 
-  // ---------- Rotas de Integração Sul-Americana (v3.1, MPO; traçado esquemático) ----------
+  // ---------- Rotas de Integração Sul-Americana (MPO; traçado esquemático) ----------
   const ROTA_TIPOS = ['rota', 'hidrovia', 'cabotagem', 'pavimentacao', 'estudo'];
   const rotasOf = intel => (intel && intel.rotas && Array.isArray(intel.rotas.rotas) && intel.rotas.rotas.length
     && Array.isArray(intel.rotas.linhas) ? intel.rotas : null);
@@ -491,10 +507,12 @@ const IntelModel = (() => {
     return best ? [best[0], best[1]] : null;
   }
 
-  // Posição do rótulo de um país fora das linhas das rotas. O rótulo é uma caixa de meia-largura hw e meia-altura hh (graus);
-  // se a caixa no polo de inacessibilidade (p.label) já não toca nenhuma linha, fica ali; senão, procura numa grade de passo
-  // `passo` dentro do país o ponto livre mais próximo do original; sem ponto livre, o de maior folga. [lat, lng] ou null.
-  function paisLabelPoint(p, lines, { hw = 3, hh = 0.9, passo = 0.25 } = {}) {
+  // Posição do rótulo de um país fora das linhas das rotas e dos rótulos já colocados. O rótulo é uma caixa de meia-largura hw e
+  // meia-altura hh (graus); `ocupados` são as caixas dos rótulos vizinhos já colocados ({lat, lng, hw, hh}; ex.: SR antes de GF),
+  // comparadas com `caixa` ({hw, hh}; padrão, a mesma hw × hh), que pode ser maior para valer também em zoom menor.
+  // Se a caixa no polo de inacessibilidade (p.label) não toca nenhuma linha nem rótulo, fica ali; senão, procura numa grade de
+  // passo `passo` dentro do país o ponto livre mais próximo do original; sem ponto livre, o de maior folga. [lat, lng] ou null.
+  function paisLabelPoint(p, lines, { hw = 3, hh = 0.9, passo = 0.25, ocupados = [], caixa = { hw, hh } } = {}) {
     if (!p || !Array.isArray(p.label)) return null;
     const rings = paisAneis(p), orig = [p.label[1], p.label[0]];
     const [s, w, n, e] = ringsBBox(rings);
@@ -508,8 +526,11 @@ const IntelModel = (() => {
         segs.push([ax / hw, ay / hh, bx / hw, by / hh]);
       }
     }
+    // folga (>= 1 = caixa livre): a menor entre a das linhas e a dos rótulos já colocados; a de um rótulo é a separação no eixo
+    // mais afastado, em unidades da soma das meias-caixas (contínua, para que, sem ponto livre, o escolhido fique o mais longe possível)
     const folga = (lat, lng) => {
       let m = Infinity;
+      for (const o of ocupados) m = Math.min(m, Math.max(Math.abs(lng - o.lng) / (caixa.hw + o.hw), Math.abs(lat - o.lat) / (caixa.hh + o.hh)));
       const x = lng / hw, y = lat / hh;
       for (const g of segs) { const d = distToSegment(x, y, g[0], g[1], g[2], g[3]); if (d < m) m = d; }
       return m;
@@ -628,6 +649,49 @@ const IntelModel = (() => {
 
   const pipelineDe = (intel, id) => pipelineRows(intel).filter(i => i.ent === id);
 
+  // ---------- Linha do tempo de editais e leilões (Pipeline, aba Projetos) ----------
+  // Leilões do ano `desde` em diante (padrão: o ano corrente, no relógio de quem abre o arquivo). Datas "AAAA-MM-DD" ou
+  // "AAAA-MM" (mês sem dia); ano sozinho ou texto não são datas.
+  // No pipeline, data_prevista é a data do leilão, salvo nestes status (aí é a assinatura do contrato).
+  const TL_STATUS_ASSINATURA = new Set(['leiloado', 'contrato']);
+  const tlData = s => {
+    const m = typeof s === 'string' && /^(\d{4})-(\d{2})(-(\d{2}))?$/.exec(s);
+    if (!m || +m[2] < 1 || +m[2] > 12 || (m[4] && (+m[4] < 1 || +m[4] > 31))) return null;
+    return s;
+  };
+  // Dia usado para ordenar; mês sem dia = meio do mês (como é desenhado).
+  const tlChave = s => (s.length === 7 ? `${s}-15` : s);
+  const tlAno = s => +s.slice(0, 4);
+
+  // Linhas da linha do tempo + o que ficou de fora. Leilão: da entidade (ficha), senão do cronograma, senão a data prevista do
+  // pipeline (itens sem ficha, como os estaduais). Edital: da entidade, senão do cronograma. Sem data de leilão: fora e contado
+  // em semData; leilão anterior a `desde`: fora do recorte (não conta).
+  function linhaDoTempoResumo(conc, pipeline, desde = new Date().getFullYear()) {
+    const itens = Array.isArray(pipeline) ? pipeline : pipeline && Array.isArray(pipeline.itens) ? pipeline.itens : [];
+    const ents = new Map((conc && Array.isArray(conc.entidades) ? conc.entidades : []).map(e => [e.id, e]));
+    const out = [];
+    let semData = 0;
+    for (const i of itens) {
+      const e = i.ent ? ents.get(i.ent) : null;
+      const marco = nome => {
+        const m = e && Array.isArray(e.cronograma) ? e.cronograma.find(x => x && x.marco === nome) : null;
+        return m ? tlData(m.data) : null;
+      };
+      const leilao = tlData(e && e.leilao) || marco('Leilão') || (TL_STATUS_ASSINATURA.has(i.status) ? null : tlData(i.data_prevista));
+      if (!leilao) { semData++; continue; }
+      if (tlAno(leilao) < desde) continue;
+      out.push({ nome: i.nome, id: i.id, ent: i.ent || null, edital: tlData(e && e.edital) || marco('Edital'), leilao, status: i.status,
+        verificado: i.verificado !== false }); // false: item só de imprensa (não oficial)
+    }
+    out.sort((a, b) => (tlChave(a.leilao) < tlChave(b.leilao) ? -1 : tlChave(a.leilao) > tlChave(b.leilao) ? 1
+      : String(a.nome).localeCompare(String(b.nome), 'pt-BR')));
+    const anosL = out.map(r => tlAno(r.leilao)), anosTodos = anosL.concat(out.filter(r => r.edital).map(r => tlAno(r.edital)));
+    return { rows: out, semData,
+      anos: out.length ? { de: Math.min(...anosL), ate: Math.max(...anosL) } : null,
+      de: out.length ? Math.min(...anosTodos) : null, ate: out.length ? Math.max(...anosTodos) : null };
+  }
+  const linhaDoTempo = (conc, pipeline, desde) => linhaDoTempoResumo(conc, pipeline, desde).rows;
+
   // Qualidade do recorte de concessão estadual: o mesmo rótulo no cartão do mapa e na ficha.
   const QUALIDADE_RECORTE = { ok: 'Recorte ok', aproximado: 'Recorte aproximado', nao_mapeado: 'Não mapeado' };
   const qualidadeRecorte = q => (q == null || q === '' ? DASH : QUALIDADE_RECORTE[q] || String(q));
@@ -677,10 +741,18 @@ const IntelModel = (() => {
     return `${f.nome}${f.periodo ? ` · ${fmtPeriodo(f.periodo)}` : ''}${tipo ? ` · ${tipo}` : ''}`;
   }
 
-  // Período de fonte em pt-BR: cada "AAAA-MM" (mês válido, isolado) vira "mmm/aaaa"; "2010-2025" e datas ficam como estão.
+  // Período de fonte em pt-BR. Intervalo ISO "início/fim" (cada lado AAAA-MM ou AAAA-MM-DD) vira "início a fim"; "AAAA-AAAA-MM"
+  // (ano até um mês) vira "AAAA a mmm/aaaa"; "AAAA-MM-DD" vira dd/mm/aaaa; "AAAA-MM" (mês válido, isolado) vira "mmm/aaaa".
+  // Anos ("2010-2025"), safras ("2024/2025") e datas já em dd/mm/aaaa ficam como estão.
+  const ISO_MES = '\\d{4}-(?:0[1-9]|1[0-2])', ISO_DIA = `${ISO_MES}-(?:0[1-9]|[12]\\d|3[01])`;
+  const RE_INTERVALO = new RegExp(`\\b(${ISO_DIA}|${ISO_MES})/(${ISO_DIA}|${ISO_MES})\\b`, 'g');
   function fmtPeriodo(p) {
     if (p == null || p === '') return DASH;
-    return String(p).replace(/\b(\d{4})-(0[1-9]|1[0-2])\b/g, (_, y, m) => monthLabel(`${y}-${m}`));
+    return String(p)
+      .replace(RE_INTERVALO, '$1 a $2')
+      .replace(new RegExp(`\\b(\\d{4})-(${ISO_MES})\\b(?!-)`, 'g'), '$1 a $2')
+      .replace(/\b(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])\b(?!-)/g, (_, y, m, d) => `${d}/${m}/${y}`)
+      .replace(/\b(\d{4})-(0[1-9]|1[0-2])\b(?!-)/g, (_, y, m) => monthLabel(`${y}-${m}`));
   }
 
   // t -> Mt com 2 casas; valor positivo que arredondaria para 0,00 vira "< 0,01".
@@ -688,7 +760,19 @@ const IntelModel = (() => {
 
   const pracasRows = intel => rows(anttOf(intel) && anttOf(intel).pracas).map((p, i) => Object.assign(p, { i }));
 
-  // KPIs da aba Tráfego: praças com contagem 2025 (VMD > 0), VMD somado, % pesados ponderado pelo VMD,
+  // Ano do VMD e da receita das praças (antt.pracas.ano); rótulos da interface usam este ano, nunca um digitado.
+  const anoPracas = intel => { const p = anttOf(intel) && anttOf(intel).pracas; return p && Number.isFinite(p.ano) ? p.ano : null; };
+  // Documentos do MPO nas fontes do bloco rotas: data da apresentação (traçado) e anos dos relatórios (descrições).
+  function rotasDocs(rotas) {
+    const f = (rotas && Array.isArray(rotas.fonte)) ? rotas.fonte : [];
+    const ap = f.find(x => /Apresentação/.test(x.nome || ''));
+    return { apresentacao: (ap && ap.periodo) || null,
+      relatorios: f.filter(x => /Relatório/.test(x.nome || '') && x.periodo).map(x => String(x.periodo)).sort() };
+  }
+  // "VMD 2025" com o ano; sem ano, só "VMD".
+  const comAno = (txt, ano) => (ano != null ? `${txt} ${ano}` : txt);
+
+  // KPIs da aba Tráfego: praças com contagem no ano das praças (VMD > 0), VMD somado, % pesados ponderado pelo VMD,
   // veíc·km/dia do VMDa em toda a malha federal (anoVkm: 2025 ou, sem o bloco, 2023), veíc·km/dia 2025 da malha estadual
   // (Σ total × extensão; kmEst = km com estimativa de kmEstTotal) e médias anuais da PRF. Bloco ausente = null.
   function trafegoKpis(intel, snv) {
@@ -894,12 +978,6 @@ const IntelModel = (() => {
     return /^\d{4}-\d{2}$/.test(String(s)) ? monthLabel(s) : String(s);
   }
 
-  function fontesData(intel) {
-    const f = intel && intel.fontes;
-    if (!f || !Array.isArray(f.fontes)) return null;
-    return { fontes: f.fontes, indisponiveis: Array.isArray(f.indisponiveis) ? f.indisponiveis : [], base: Array.isArray(f.base) ? f.base : [] };
-  }
-
   // Escolhe a unidade depois de arredondar: 999.600 t vira "1,0 Mt", não "1.000 mil t".
   const round = (v, d) => Math.round(v * 10 ** d) / 10 ** d;
   function scaled(x, units) {
@@ -921,17 +999,17 @@ const IntelModel = (() => {
   const fmtVkm = x => scaled(x, [[1, 0, '', ' veíc·km/dia'], [1e6, 1, '', ' mi veíc·km/dia'], [1e9, 1, '', ' bi veíc·km/dia']]);
   const fmtTkm = x => scaled(x, [[1, 0, '', ' t·km/ano'], [1e6, 1, '', ' mi t·km/ano'], [1e9, 1, '', ' bi t·km/ano'], [1e12, 1, '', ' tri t·km/ano']]);
 
-  return { MODES, has, sumNullable, nAnos, vmdaOf, v25Of, acidOf, cargaOf, fisSup, estTrafego,
+  return { MODES, has, sumNullable, nAnos, vmdaOf, v25Of, acidOf, cargaOf, fisSup, fisSit, estTrafego,
     rows, metricArray, quantileBreaks, classOf, aggregateIntel, fisIntel, taxaAcidentes, pointsOfFis, decodeTopo,
-    rodLabel, decodeLine, estConcLines, distToSegment, pointRadius, lineWeight, PORTO_TIPOS, portoTipo, monthLabel, mesX, xMes, fmtMesX, anosLabel,
+    rodLabel, decodeLine, estConcLines, distToSegment, pointRadius, lineWeight, PORTO_TIPOS, PORTO_FORMA, portoTipo, monthLabel, mesX, xMes, fmtMesX, anosLabel,
     FUNDOS, PRODUTOS, fundoFonte, fundoValues,
     fundoClasses, munInfo, pointInRings, ringsBBox, fonteRef,
     ROTA_TIPOS, rotasOf, rotaTitulo, rotaLinhas, paisAneis, rotasBounds, rotasNota, rotaLabelAnchor, paisLabel, paisLabelPoint,
-    anttCapa, anttAnteriores, anttSeries, pracasDe, obrasResumo, pipelineRows, filterPipeline, pipelineCounts, statusLabel, pipelineDe,
+    anttCapa, anttAnteriores, anttSeries, pracasDe, obrasResumo, linhaDoTempo, linhaDoTempoResumo, anoPracas, comAno, rotasDocs, pipelineRows, filterPipeline, pipelineCounts, statusLabel, pipelineDe,
     EST_ESTADOS, QUALIDADE_RECORTE, qualidadeRecorte, estaduaisRows, byEsfera, estIndex, trechosLabel,
     trafegoKpis, pracasRanking, pracasSerie, abcrSazonal, acidentesPorUf, taxaPorBrUf,
     cargasKpis, producaoPorUf, topMunicipios, exportProdutos, exportPorUrf, exportMatriz, siadePares, fretesRows, suspeitosNoFim, cargaTop,
-    fmtDia, fontesData, fonteTipo, fmtPeriodo, fmtMt,
+    fmtDia, fonteTipo, fmtPeriodo, fmtMt,
     fmtInt, fmtDec, fmtVmd, fmtT, fmtPct, fmtBRL, fmtVkm, fmtTkm };
 })();
 

@@ -6,13 +6,16 @@ Gera data/intel/multimodal.json a partir de data/raw/graos/ (recon: memo graos �
   simplificados (Douglas-Peucker 0,002°), codificados com `snvbase.encode_line`.
 - portos: ANTAQ instalações portuárias (06/05/2025), só Brasil; o .dbf está em latin1 (o .cpg diz UTF-8); latitude e
   longitude em texto com "°" (sem texto → ponto do shape). UF: campo `estado`; senão o código `BRuuNNN`; senão o
-  município mais próximo.
+  município mais próximo. Ponto a mais de 200 km da UF do registro está errado na fonte (ex.: Keppel Fels, Niterói, com
+  o ponto do shape em Corumbá): vai para o centro do município do cadastro (`idcidade`), marcado `aprox`.
 - siade: ANTT SIADE produção origem-destino 2025 (ponto = milhar, latin1), soja, milho, farelo de soja, açúcar e
   fertilizantes, somados por (origem, destino, produto), pares ≥ 50.000 t. Coordenadas das estações pela tabela do
   GeoPackage IBGE Logística dos Transportes 2024 (ferroviário detalhado), por nome normalizado + UF; senão pela sede
   do município homônimo.
 - exportacao: Comex Stat EXP_2025 (base bruta), kg por SH4 × UF × URF × via, SH4 de grãos e agro (memo §4).
 - fretes: CONAB Boletim Logístico set/2026 (dados de ago/2026), extraído do PDF para conab/fretes_boletim_set2026.csv.
+  Duas falhas de texto do boletim são corrigidas na montagem (`rota_frete`): origem sem "(UF)" colada ao destino
+  ("RIBEIRÃO PRETO SANTOS (SP)") e UF trocada no destino de mesmo nome da origem ("RIO VERDE (RO) - PLATAFORMA").
 
 Uso: python scripts/intel/multimodal.py [fetch|build|all]
 """
@@ -82,6 +85,7 @@ SIMPLIFICA_FERRO = 0.002
 UFS = {"AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI",
        "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"}
 MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
+PORTO_MAX_KM_UF = 200  # ponto de porto além disto da UF do registro é erro da fonte (pontos no mar ficam a < 80 km)
 MINUSC = {"da", "de", "do", "das", "dos", "e"}
 
 
@@ -146,6 +150,48 @@ def _municipios():
     return {(norm_nome(n), u): (n, c) for n, u, c in zip(m["nomes"], m["uf"], m["centro"])}, m
 
 
+def _ufs_geo():
+    """Sigla → polígono da UF (data/ufs.geojson, o mesmo do mapa)."""
+    from shapely.geometry import shape
+    g = json.loads((ROOT / "data" / "ufs.geojson").read_text(encoding="utf-8"))
+    return {f["properties"]["sigla"]: shape(f["geometry"]) for f in g["features"]}
+
+
+def _centros(m):
+    """Código IBGE do município → [lon, lat] do centro (municipios.json)."""
+    return dict(zip(m["ids"], m["centro"]))
+
+
+def ponto_porto(lon, lat, uf, idcidade, ufs, centros):
+    """(lon, lat, aprox) de uma instalação da ANTAQ. Ponto a mais de PORTO_MAX_KM_UF da UF do próprio registro (`uf`)
+    está errado na fonte: vai para o centro do município do cadastro (`idcidade`) com aprox=True; sem município, sem
+    ponto (None, None). UF desconhecida ou ponto dentro/perto da UF: como veio."""
+    from shapely.geometry import Point
+    if uf not in ufs or ufs[uf].distance(Point(lon, lat)) * 111 <= PORTO_MAX_KM_UF:
+        return lon, lat, False
+    c = centros.get(str(idcidade or "").strip())
+    return (c[0], c[1], True) if c else (None, None, False)
+
+
+def rota_frete(origem, destino, atribuicao, mun):
+    """Corrige duas falhas de texto do boletim CONAB numa rota ('NOME (UF)' do CSV) → (origem, destino, atribuição):
+    - destino que é a junção de dois municípios da UF ("RIBEIRÃO PRETO SANTOS (SP)"): a origem da linha (sem "(UF)" no
+      PDF) colou no destino; origem = 1º município, destino = 2º, atribuição 'ok' (a origem está na própria linha);
+    - destino com o nome do município de origem e uma UF onde esse município não existe ("RIO VERDE (RO) - PLATAFORMA
+      FERROVIÁRIA" sob "RIO VERDE (GO)"): vale a UF da origem."""
+    nome, uf = split_uf(destino)
+    base = nome.split(" - ")[0]
+    k = norm_nome(base)
+    if uf and nome_colado(k, uf, mun):
+        for i in range(3, len(k) - 2):
+            if (k[:i], uf) in mun and (k[i:], uf) in mun:
+                return f"{mun[(k[:i], uf)][0]} ({uf})", f"{mun[(k[i:], uf)][0]} ({uf})", "ok"
+    nome_o, uf_o = split_uf(origem)
+    if uf and uf_o and uf != uf_o and (k, uf) not in mun and (k, uf_o) in mun and k == norm_nome(nome_o.split(" - ")[0]):
+        return origem, re.sub(rf"\({uf}\)", f"({uf_o})", destino, count=1), atribuicao
+    return origem, destino, atribuicao
+
+
 # ---------- blocos ----------
 
 def build_ferrovias():
@@ -174,6 +220,7 @@ def build_ferrovias():
 
 def build_portos():
     _, m = _municipios()
+    ufs, centros = _ufs_geo(), _centros(m)
     rd = _zip_shapefile(RAW / "multimodal" / "antaq_instalacoes.zip", "latin1")
     out = []
     for sr in rd.iterShapeRecords():
@@ -187,12 +234,19 @@ def build_portos():
         if uf not in UFS:
             mc = re.fullmatch(r"BR([A-Z]{2})\d{3}", r["cdi_tuaria"].strip())
             uf = mc.group(1) if mc and mc.group(1) in UFS else None
+        lon, lat, aprox = ponto_porto(lon, lat, uf, r["idcidade"], ufs, centros)
+        if lat is None:
+            print(f"porto sem ponto confiável, fora do mapa: {r['nome']} ({uf})")
+            continue
         if uf is None:  # município mais próximo
             k = min(range(len(m["centro"])),
                     key=lambda i: (m["centro"][i][0] - lon) ** 2 + (m["centro"][i][1] - lat) ** 2)
             uf = m["uf"][k]
         nome = re.sub(r"\s+", " ", r["nome"].replace("\xa0", " ")).strip()
-        out.append({"nome": nome, "tipo": r["tipo"].strip(), "uf": uf, "lat": round(lat, 5), "lon": round(lon, 5)})
+        p = {"nome": nome, "tipo": r["tipo"].strip(), "uf": uf, "lat": round(lat, 5), "lon": round(lon, 5)}
+        if aprox:
+            p["aprox"] = True
+        out.append(p)
     out.sort(key=lambda p: (p["uf"], p["nome"]))
     return out
 
@@ -324,12 +378,12 @@ def build_fretes():
     with open(FRETES_CSV, encoding="utf-8", newline="") as f:
         for r in csv.DictReader(f):
             meses.add(r["mes3"])
-            o, uo = lugar(r["origem"])
-            de, ud = lugar(r["destino"])
+            origem, destino, atrib = rota_frete(r["origem"], r["destino"], r["atribuicao_origem"], mun)
+            o, uo = lugar(origem)
+            de, ud = lugar(destino)
             km = int(r["km"]) if r["km"].strip().isdigit() else None
-            (no, co), (nd, cd) = sede(r["origem"]), sede(r["destino"])
+            (no, co), (nd, cd) = sede(origem), sede(destino)
             reta = distancia_reta(co, cd) if co and cd else None
-            atrib = r["atribuicao_origem"]
             if any(nome_colado(n, u, mun) for n, u in ((no, uo), (nd, ud))):
                 atrib = "aprox"
             qual = qualidade_frete(atrib, km_suspeito(km, reta, mesma=no == nd))
@@ -410,19 +464,20 @@ def _cacert_serpro():
     return dest
 
 
-def fetch():
+def fetch(force=False):
+    """Baixa o que falta (com `force`, baixa tudo de novo e refaz os derivados) e registra no manifesto."""
     m = Manifest("multimodal")
     for url, rel, desc, periodo, comex in ARQUIVOS:
         dest = RAW / rel
-        extra = () if dest.exists() or not comex else ("--cacert", str(_cacert_serpro()))
-        baixar(url, dest, extra=extra)
+        extra = () if (dest.exists() and not force) or not comex else ("--cacert", str(_cacert_serpro()))
+        baixar(url, dest, extra=extra, force=force)
         m.add(url, dest, desc, periodo=periodo, licenca=LIC_GOV)
-    if not GPKG_FERR.exists():
+    if force or not GPKG_FERR.exists():
         with zipfile.ZipFile(RAW / "logistica" / "detalhados" / "Fluxos_Ferroviarios.zip") as z:
             (n,) = [n for n in z.namelist() if n.endswith(".gpkg")]
             GPKG_FERR.parent.mkdir(parents=True, exist_ok=True)
             GPKG_FERR.write_bytes(z.read(n))
-    if not FRETES_CSV.exists():
+    if force or not FRETES_CSV.exists():
         extrair_fretes(FRETES_PDF, FRETES_CSV)
     m.add(ARQUIVOS[7][0], FRETES_CSV, "CONAB — fretes extraídos do Boletim Logístico set/2026 (derivado do PDF)",
           periodo="ago/2026", licenca=LIC_GOV)

@@ -93,14 +93,15 @@ def _ok_html(path, marca):
         return False
 
 
-def fetch():
-    """Baixa o que falta em data/raw/estaduais/ e registra tudo no manifesto (não rebaixa o que existe)."""
+def fetch(force=False):
+    """Baixa o que falta em data/raw/estaduais/ e registra tudo no manifesto (não rebaixa o que existe; com `force`,
+    baixa tudo de novo)."""
     m = Manifest("estaduais")
     off = 0
     while True:  # Infra S.A.: páginas de 2000 feições até a última incompleta
         dest = PAGES / f"p_{off:06d}.geojson"
         url = INFRA_URL.format(off=off)
-        _fetch(url, dest, timeout=300)
+        _fetch(url, dest, timeout=300, force=force)
         m.add(url, dest, f"Infra S.A. Hosted/Rodovias_Estaduais, feições {off}–{off + 1999} (GeoJSON, EPSG:4326)",
               periodo="CIDE 2021 / Base DNIT 2002", licenca="Dado público federal (Infra S.A.)")
         n = dest.read_text(encoding="utf-8").count('"geometry":')
@@ -109,13 +110,13 @@ def fetch():
         off += 2000
     for lote, rid in ARTESP_KMZ.items():
         url = ARTESP_RES.format(rid, f"{lote}.kmz")
-        dest = _fetch(url, DIR / "artesp" / "dl" / f"{lote}.kmz")
+        dest = _fetch(url, DIR / "artesp" / "dl" / f"{lote}.kmz", force=force)
         m.add(url, dest, f"ARTESP — KMZ do lote {lote[1:]} (CKAN malha-rodoviaria)", periodo="2026",
               licenca="CC-BY (portal de dados abertos da ARTESP)")
     for slug, *_ in SP:
         dest = DIR / "artesp" / "fichas" / f"{slug}.html"
         url = ARTESP_FICHA.format(slug)
-        if not _ok_html(dest, "Topo e base"):
+        if force or not _ok_html(dest, "Topo e base"):
             dest.unlink(missing_ok=True)
             _fetch(url, dest, extra=("-A", CHROME_UA))   # Incapsula exige UA de navegador e pausa entre pedidos
             time.sleep(3)
@@ -123,19 +124,19 @@ def fetch():
     for url, dest, desc in ((AGERGS_XLSX, DIR / "agergs" / "trechos-rsm-e-csg.xlsx", "AGERGS — trechos SRE RSC-287 e Bloco 3"),
                             (AGERGS_PAGE, DIR / "agergs" / "rodovias-concedidas.html", "AGERGS — rodovias concedidas"),
                             (AGER_MT, DIR / "mt" / "ager_rodovias_pedagiadas.html", "Ager-MT — rodovias pedagiadas")):
-        _fetch(url, dest, extra=("-A", CHROME_UA))
+        _fetch(url, dest, extra=("-A", CHROME_UA), force=force)
         m.add(url, dest, desc, periodo="2026", licenca="Página pública do regulador estadual")
     accept = ("-H", "Accept: text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8")
-    api = _fetch(ABCR_API, DIR / "abcr" / "api_conc.json", extra=accept)
+    api = _fetch(ABCR_API, DIR / "abcr" / "api_conc.json", extra=accept, force=force)
     m.add(ABCR_API, api, "ABCR — lista de fichas de concessionárias (API WordPress)", periodo="2026",
           licenca="Página pública ABCR")
     for t in ("atuacao", "categoria", "estado"):
-        dest = _fetch(ABCR_TAX.format(t), DIR / "abcr" / f"tax_{t}.json", extra=accept)
+        dest = _fetch(ABCR_TAX.format(t), DIR / "abcr" / f"tax_{t}.json", extra=accept, force=force)
         m.add(ABCR_TAX.format(t), dest, f"ABCR — taxonomia {t}", periodo="2026", licenca="Página pública ABCR")
     for e in json.loads(api.read_text(encoding="utf-8")):
         dest = DIR / "abcr" / "fichas" / f"{e['slug']}.html"
-        if not dest.exists():
-            _fetch(e["link"], dest, extra=accept)
+        if force or not dest.exists():
+            _fetch(e["link"], dest, extra=accept, force=force)
             time.sleep(1)
         m.add(e["link"], dest, f"ABCR — ficha {e['slug']}", periodo="2026", licenca="Página pública ABCR")
     m.save()

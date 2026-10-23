@@ -11,14 +11,15 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from roadshow import build_conc, cobertura_markdown  # noqa: E402
+from roadshow import build_conc, cobertura_markdown, conc_da_base  # noqa: E402
 from snv import build_payload, check_group_consistency, group_physical, load_records  # noqa: E402
+from verificacao import aplicar, carregar, carregar_aliases, carregar_consorcios, relatorio_markdown, validar  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 MAX_BYTES = 15_000_000
-JS_FILES = ["vendor/leaflet/leaflet.js", "src/model.js", "src/conc-model.js", "src/intel-model.js", "src/styles-map.js", "src/charts.js", "src/map.js", "src/layers.js",
-            "src/ficha.js", "src/projetos.js", "src/trafego.js", "src/cargas.js", "src/mercado.js", "src/regulatorio.js", "src/fontes.js",
-            "src/ui.js", "src/tabs.js", "src/main.js"]
+JS_FILES = ["vendor/leaflet/leaflet.js", "src/model.js", "src/conc-model.js", "src/leiloes-model.js", "src/mercado-model.js", "src/debentures-model.js", "src/intel-model.js", "src/resumo-model.js", "src/styles-map.js", "src/charts.js", "src/map.js", "src/layers.js",
+            "src/selo.js", "src/glossario.js", "src/ficha.js", "src/resumo.js", "src/projetos.js", "src/trafego.js", "src/cargas.js", "src/consorcios.js", "src/mercado.js", "src/debentures.js", "src/regulatorio.js", "src/fontes-model.js", "src/fontes.js",
+            "src/csv.js", "src/ui.js", "src/tabs.js", "src/main.js"]
 ROADSHOW = ROOT / "data" / "roadshow"
 BASE = ROOT / "data" / "base"
 INTEL = ROOT / "data" / "intel"
@@ -58,22 +59,33 @@ def assemble(payload, conc, intel, out):
     css = "\n".join([font_faces(), leaflet_css(), (ROOT / "src" / "styles.css").read_text(encoding="utf-8")])
     js = "\n;\n".join((ROOT / p).read_text(encoding="utf-8") for p in JS_FILES if (ROOT / p).exists())
     dump = lambda o: json.dumps(o, ensure_ascii=False, separators=(",", ":"))  # noqa: E731
-    data = f"window.SNV={dump(payload)};\nwindow.CONC={dump(conc)};\nwindow.INTEL={dump(intel)};"
+    glossario = json.loads((ROOT / "data" / "glossario.json").read_text(encoding="utf-8"))
+    fontes_descricao = json.loads((ROOT / "data" / "fontes_descricao.json").read_text(encoding="utf-8"))
+    data = (f"window.SNV={dump(payload)};\nwindow.CONC={dump(conc)};\nwindow.INTEL={dump(intel)};\nwindow.GLOSSARIO={dump(glossario)};"
+            f"\nwindow.FONTES_DESCRICAO={dump(fontes_descricao)};")
 
     html = (ROOT / "src" / "template.html").read_text(encoding="utf-8")
-    html = html.replace("{{VERSAO}}", payload["versao"])
+    html = html.replace("{{VERSAO}}", payload["versao"]).replace("{{EDICAO}}", conc.get("edicaoRoadshow") or "")
     for key, value in [("CSS", css), ("DATA", script_safe(data)), ("JS", script_safe(js))]:
         html = html.replace(f"/*__{key}__*/", value)
     Path(out).write_text(html, encoding="utf-8")
     return Path(out).stat().st_size
 
 
+# partes de um bloco que servem só ao relatório de curadoria (scripts/curadoria.py, que lê data/intel/ direto) e não
+# vão para o HTML
+SO_CURADORIA = {"debentures": ("pendencias",)}
+
+
 def load_intel(intel_dir=INTEL):
-    """Lê data/intel/<bloco>.json (exceto o manifesto) em {bloco: dados}."""
+    """Lê data/intel/<bloco>.json (exceto o manifesto) em {bloco: dados}, sem as partes de SO_CURADORIA."""
     intel = {}
     for p in sorted(Path(intel_dir).glob("*.json")):
         if p.stem != "manifest":
-            intel[p.stem] = json.loads(p.read_text(encoding="utf-8"))
+            dados = json.loads(p.read_text(encoding="utf-8"))
+            for k in SO_CURADORIA.get(p.stem, ()):
+                dados.pop(k, None)
+            intel[p.stem] = dados
     return intel
 
 
@@ -89,10 +101,32 @@ def relatorio_intel(intel):
     return total
 
 
-def build_from_base(base_dir, out, intel=None):
-    """Build sem o shapefile: SNV e CONC congelados em data/base/ (gerados pelo modo --shp)."""
+def camada_verificacao(conc):
+    """Valida e aplica data/roadshow/verificacao.json sobre `conc` (sem mutá-lo); grava verificacao.md e imprime a
+    cobertura. Sai com erro se a camada não validar."""
+    verif, aliases, consorcios = carregar(), carregar_aliases(), carregar_consorcios()
+    erros = validar(verif, conc, aliases, consorcios)
+    if erros:
+        sys.exit("Falha na verificação dos leilões:\n" + "\n".join(erros))
+    conc = aplicar(conc, verif, aliases, consorcios)
+    (ROADSHOW / "verificacao.md").write_text(relatorio_markdown(verif, conc), encoding="utf-8")
+    c = conc["verificacao"]["cobertura"]
+    print(f"verificação: {c['leiloes']} leilões verificados + {c['so_edital']} entradas só com edital | oficial {c['oficial']} | roadshow {c['roadshow']} | "
+          f"imprensa {c['imprensa']} | não localizado {c['nao_localizado']} | não se aplica {c['nao_se_aplica']}")
+    return conc
+
+
+def build_from_base(base_dir, out, intel=None, roadshow_dir=ROADSHOW):
+    """Build sem o shapefile: SNV e CONC congelados em data/base/ (gerados pelo modo --shp); `mercado`, `regulatorio`
+    e os campos curados das entidades e dos estudos vêm sempre dos JSON de data/roadshow/ (roadshow.conc_da_base). Só
+    o recorte no SNV fica da base: entidade nova ou removida faz o build parar e pedir --shp."""
     payload = json.loads((Path(base_dir) / "snv.json").read_text(encoding="utf-8"))
-    conc = json.loads((Path(base_dir) / "conc.json").read_text(encoding="utf-8"))
+    base = json.loads((Path(base_dir) / "conc.json").read_text(encoding="utf-8"))
+    try:
+        conc = conc_da_base(base, roadshow_dir, payload)
+    except ValueError as e:
+        sys.exit(f"Falha: {e}")
+    conc = camada_verificacao(conc)
     intel = load_intel() if intel is None else intel
     size = assemble(payload, conc, intel, out)
     print(f"base: SNV {payload['versao']} ({len(payload['trechos'])} registros, {len(payload['fis'])} físicos) | "
@@ -125,6 +159,7 @@ def build(shp, out, tol, rascunho=False):
     BASE.mkdir(parents=True, exist_ok=True)
     for name, obj in [("snv.json", payload), ("conc.json", conc)]:
         (BASE / name).write_text(json.dumps(obj, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    conc = camada_verificacao(conc)  # a base fica como transcrição do RoadShow; a camada só vai para o HTML
     intel = load_intel()
     size = assemble(payload, conc, intel, out)
     print(f"registros: {len(records)} | trechos físicos: {len(groups)}")

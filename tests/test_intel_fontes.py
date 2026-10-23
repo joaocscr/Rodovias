@@ -155,3 +155,30 @@ def test_notas_das_fontes_em_linguagem_clara(fontes):
 def test_periodo_em_formato_pt_br(fontes):
     for f in fontes["fontes"] + fontes["base"]:
         assert not re.search(r"\d{4}-\d{2}", f["periodo"]), f["periodo"]
+
+
+
+def test_manifesto_mantem_o_acesso_quando_o_arquivo_nao_mudou(tmp_path, monkeypatch):
+    """Arquivo baixado de novo com o mesmo conteúdo não ganha data de acesso nova (senão a fonte parece atual)."""
+    from intel import fontes
+    import datetime as dt
+    monkeypatch.setattr(fontes, "ROOT", tmp_path)
+    monkeypatch.setattr(fontes, "MANIFEST_DIR", tmp_path / "manifest")
+    arq = tmp_path / "data" / "x.csv"
+    arq.parent.mkdir(parents=True)
+    arq.write_text("a", encoding="utf-8")
+
+    class Dia(dt.date):
+        atual = dt.date(2026, 1, 1)
+
+        @classmethod
+        def today(cls):
+            return cls.atual
+    monkeypatch.setattr(fontes.dt, "date", Dia)
+    m = fontes.Manifest("teste")
+    assert m.add("https://x", arq, "x")["acesso"] == "2026-01-01"
+    Dia.atual = dt.date(2026, 6, 1)
+    assert m.add("https://x", arq, "x")["acesso"] == "2026-01-01"   # mesmo SHA-256: a data fica
+    arq.write_text("b", encoding="utf-8")
+    assert m.add("https://x", arq, "x")["acesso"] == "2026-06-01"   # conteúdo novo: data nova
+    assert len(m.items) == 1

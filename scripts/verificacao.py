@@ -1,0 +1,700 @@
+"""Camada de verificação dos leilões: valores de campos de leilão conferidos em fonte, aplicados sobre a base congelada.
+
+`data/roadshow/verificacao.json` guarda, por leilão, os campos verificados (valor + fontes), notas e proponentes
+inabilitados; `data/roadshow/grupos_alias.json` liga nomes impressos/verificados a grupos econômicos. `entidades.json`,
+`mercado.json` e `data/base/conc.json` continuam sendo a transcrição do RoadShow: a camada só é aplicada no build
+(`build.py`) e no pipeline (`intel/pipeline.py`).
+
+Hierarquia do valor exibido: `oficial` > `roadshow` > `imprensa`. O valor do RoadShow que deixa de ser exibido fica
+registrado (em `verif[campo].roadshow` e, na entidade, como alternativa da divergência com a página).
+
+`data/roadshow/consorcios.json` guarda a composição dos consórcios (integrantes, grupo e participação de cada um); as
+fontes dele são as mesmas de `verificacao.json` (um só registro de fontes). Aplicado como `conc.consorcios`.
+"""
+import copy
+import datetime as dt
+import json
+import re
+from pathlib import Path
+from urllib.parse import urlparse
+
+ROOT = Path(__file__).resolve().parent.parent
+ROADSHOW = ROOT / "data" / "roadshow"
+
+CAMPOS = ("leilao", "grupo_vencedor", "desagio", "assinatura", "assinatura_aditivo", "inicio_operacao",
+          "tarifa_teto", "tarifa_vencedora", "prazo_anos", "edital")
+CAMPOS_DATA = ("leilao", "assinatura", "assinatura_aditivo", "inicio_operacao", "edital")
+# datas que o RoadShow dá só com o mês (cronograma): aceitam também AAAA-MM
+CAMPOS_DATA_MES = ("edital",)
+# campos que só existem na entidade (a linha de participantes e a de concorrentes não têm edital)
+CAMPOS_SO_ENT = ("edital",)
+# campos anteriores ao leilão: uma entrada só com eles (a data do edital do cronograma) não verifica o resultado
+CAMPOS_PRE_LEILAO = ("edital",)
+MESES = ("jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez")
+CAMPOS_NUM = ("desagio", "prazo_anos")
+# tarifas levam unidade e data-base ("R$ 4,083 por praça (jul/2007)"): texto livre não vazio
+CAMPOS_TEXTO = ("grupo_vencedor", "tarifa_teto", "tarifa_vencedora")
+# campo da camada → chave na linha de mercado.participantes (os demais têm o mesmo nome)
+PART_KEY = {"grupo_vencedor": "vencedor", "desagio": "desagio_vencedor", "leilao": "data"}
+# campo da camada → chave na linha de mercado.concorrentes_desagio (só o deságio existe ali)
+CONC_KEY = {"desagio": "desagio"}
+DOMINIOS_OFICIAIS = ("gov.br", "b3.com.br", "jus.br", "leg.br", "imprensaoficial.com.br")
+TIPOS = ("oficial", "roadshow", "imprensa")
+ROTULO = {"oficial": "oficial", "roadshow": "RoadShow", "imprensa": "imprensa (não oficial)"}
+# deságio de leilão julgado por outorga: o critério não se aplica (valor null, com a fonte que explica o critério)
+NAO_SE_APLICA = "não se aplica (leilão por outorga)"
+CHAVES_FONTE = ("id", "tipo", "orgao", "titulo", "data", "url", "pagina", "acesso", "trecho")
+# campos obrigatórios por tipo de fonte (além de `tipo`)
+EXIGIDOS = {"oficial": ("orgao", "url", "acesso"), "roadshow": ("pagina",),
+            "imprensa": ("orgao", "data", "url", "acesso")}
+MOTIVOS = ("mesmo nome", "troca de nome", "grafia", "razão social do grupo", "consórcio liderado por")
+RE_DATA_FONTE = re.compile(r"\d{4}(-\d{2}(-\d{2})?)?")
+
+
+def carregar(path=ROADSHOW / "verificacao.json"):
+    return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def carregar_aliases(path=ROADSHOW / "grupos_alias.json"):
+    return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def carregar_consorcios(path=ROADSHOW / "consorcios.json"):
+    return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def tipo_campo(fontes):
+    """Tipo do valor pela fonte mais forte: oficial > roadshow > imprensa; None sem fontes (não localizado)."""
+    tipos = {f["tipo"] for f in fontes}
+    return next((t for t in TIPOS if t in tipos), None)
+
+
+# ---------- validação ----------
+
+def _dominio_oficial(url):
+    if not isinstance(url, str):
+        return False
+    u = urlparse(url)
+    host = u.hostname or ""
+    return u.scheme in ("http", "https") and any(
+        host == d or host.endswith("." + d) for d in DOMINIOS_OFICIAIS)
+
+
+def _data_iso(v):
+    if not isinstance(v, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", v):
+        return False
+    try:
+        dt.date.fromisoformat(v)
+    except ValueError:
+        return False
+    return True
+
+
+def _mes_iso(v):
+    return isinstance(v, str) and re.fullmatch(r"\d{4}-(0[1-9]|1[0-2])", v) is not None
+
+
+def _url_http(url):
+    """URL http(s) com host: `http:` e `https://` sem endereço não levam a lugar nenhum."""
+    try:
+        u = urlparse(url)
+        return u.scheme.lower() in ("http", "https") and bool(u.hostname)
+    except (ValueError, AttributeError):
+        return False
+
+
+def _inteiro(v):
+    return isinstance(v, int) and not isinstance(v, bool)
+
+
+def _erros_fonte(fid, f):
+    tipo = f.get("tipo") if isinstance(f, dict) else None
+    if tipo not in TIPOS:
+        return [f"fonte {fid}: tipo {tipo!r} fora de {TIPOS}"]
+    erros = [f"fonte {fid} ({tipo}): falta {k}" for k in EXIGIDOS[tipo] if f.get(k) in (None, "")]
+    if f.get("url") and not (isinstance(f["url"], str) and _url_http(f["url"])):
+        erros.append(f"fonte {fid} ({tipo}): URL {f['url']!r} precisa ser http ou https, com endereço")
+    elif tipo == "oficial" and f.get("url") and not _dominio_oficial(f["url"]):
+        erros.append(f"fonte {fid} (oficial): URL {f['url']} fora dos domínios oficiais {DOMINIOS_OFICIAIS}")
+    if tipo == "roadshow" and f.get("pagina") is not None and not (
+            isinstance(f["pagina"], int) and not isinstance(f["pagina"], bool) and f["pagina"] > 0):
+        erros.append(f"fonte {fid} (roadshow): página {f['pagina']!r} inválida")
+    for k in ("data", "acesso"):
+        if f.get(k) and not RE_DATA_FONTE.fullmatch(str(f[k])):
+            erros.append(f"fonte {fid}: {k} {f[k]!r} fora do formato AAAA, AAAA-MM ou AAAA-MM-DD")
+    return erros
+
+
+def _erros_valor(campo, v):
+    if campo in CAMPOS_DATA and not (_data_iso(v) or (campo in CAMPOS_DATA_MES and _mes_iso(v))):
+        return f"{campo} deve ser data AAAA-MM-DD{' ou AAAA-MM' if campo in CAMPOS_DATA_MES else ''}, veio {v!r}"
+    if campo in CAMPOS_NUM and (isinstance(v, bool) or not isinstance(v, (int, float))):
+        return f"{campo} deve ser número, veio {v!r}"
+    if campo in CAMPOS_TEXTO and (not isinstance(v, str) or not v.strip()):
+        return f"{campo} deve ser texto não vazio, veio {v!r}"
+    return None
+
+
+def _erros_refs(chave, onde, ids, fontes, exige=True):
+    if not isinstance(ids, list) or (exige and not ids):
+        return [f"{chave}: {onde} sem fonte"]
+    return [f"{chave}: {onde} cita fonte não declarada {fid!r}" for fid in ids if fid not in fontes]
+
+
+def _erros_alternativas(chave, campo, c, fontes):
+    """`alternativas`: valores de outras fontes que divergem do exibido (não exibidos), cada um com fonte declarada."""
+    if "alternativas" not in c:
+        return []
+    alts = c["alternativas"]
+    if not isinstance(alts, list) or not all(isinstance(a, dict) for a in alts):
+        return [f"{chave}.{campo}: alternativas deve ser lista de {{valor, fontes}}, veio {alts!r}"]
+    erros = []
+    for i, a in enumerate(alts):
+        onde = f"{campo} alternativa #{i}"
+        e = _erros_valor(campo, a.get("valor"))
+        if e:
+            erros.append(f"{chave}.{onde}: {e}")
+        elif a.get("valor") == c.get("valor"):
+            erros.append(f"{chave}.{onde}: igual ao valor exibido ({a['valor']!r})")
+        erros += _erros_refs(chave, onde, a.get("fontes"), fontes)
+    return erros
+
+
+def _linhas(conc, nome):
+    return (conc.get("mercado") or {}).get(nome) or []
+
+
+def _ligacoes(l):
+    """(identidade do alvo, mapa campo→chave na linha) para cada ligação do leilão."""
+    lig = []
+    if "ent" in l:
+        lig.append((("ent", l["ent"]), {c: c for c in CAMPOS}))
+    if "participantes" in l:
+        p = l["participantes"] or {}
+        lig.append((("participantes", p.get("ano"), p.get("lote")),
+                    {c: PART_KEY.get(c, c) for c in CAMPOS if c not in CAMPOS_SO_ENT}))
+    if "concorrentes" in l:
+        lig.append((("concorrentes", l["concorrentes"]), CONC_KEY))
+    return lig
+
+
+def _erros_aliases(aliases, fontes):
+    erros, vistos = [], {}
+    for i, a in enumerate(aliases.get("aliases", [])):
+        nome, grupo = a.get("nome"), a.get("grupo")
+        if not nome or not grupo:
+            erros.append(f"grupos_alias #{i}: nome e grupo são obrigatórios ({a!r})")
+            continue
+        if a.get("motivo") not in MOTIVOS:
+            erros.append(f"grupos_alias {nome!r}: motivo {a.get('motivo')!r} fora de {MOTIVOS}")
+        if "fontes" in a:  # opcional: evidência da junção, ids de verificacao.json
+            erros += _erros_refs(f"grupos_alias {nome!r}", "junção", a["fontes"], fontes)
+        if nome in vistos and vistos[nome] != grupo:
+            erros.append(f"grupos_alias {nome!r}: ligado a dois grupos ({vistos[nome]!r} e {grupo!r})")
+        vistos.setdefault(nome, grupo)
+    return erros
+
+
+def validar(verif, conc, aliases=None, consorcios=None):
+    """Confere a camada contra a base: fontes completas, ligações que casam, campos e valores válidos e, com
+    `aliases`, grupo econômico para cada vencedor verificado e para todo nome que o ranking conta (participantes já
+    com a camada aplicada). Com `consorcios` (consorcios.json), confere também a base de consórcios contra as fontes
+    e contra a camada de leilões já aplicada. Devolve as mensagens de erro (lista vazia = válido)."""
+    erros = []
+    if verif.get("versao") != 1:
+        erros.append(f"verificacao.json: versao {verif.get('versao')!r}, esperada 1")
+    fontes = verif.get("fontes") or {}
+    for fid, f in fontes.items():
+        erros += _erros_fonte(fid, f)
+
+    ents = {e["id"] for e in conc.get("entidades", [])}
+    part = _linhas(conc, "participantes")
+    concs = _linhas(conc, "concorrentes_desagio")
+    nomes_alias = {a.get("nome") for a in (aliases or {}).get("aliases", [])}
+    chaves, donos = set(), {}
+    for l in verif.get("leiloes", []):
+        chave = l.get("chave")
+        if not chave:
+            erros.append(f"leilão sem chave: {l!r}")
+            continue
+        if chave in chaves:
+            erros.append(f"{chave}: chave repetida")
+        chaves.add(chave)
+
+        if not any(k in l for k in ("ent", "participantes", "concorrentes")):
+            erros.append(f"{chave}: sem ligação (ent, participantes ou concorrentes)")
+        # ligação malformada vira erro e sai de `lv`: as conferências abaixo supõem tipos certos (e hasheáveis)
+        lv = dict(l)
+        if "ent" in l and not isinstance(l["ent"], str):
+            erros.append(f"{chave}: ent deve ser o id (texto) de uma entidade, veio {l['ent']!r}")
+            del lv["ent"]
+        elif "ent" in l and l["ent"] not in ents:
+            erros.append(f"{chave}: entidade {l['ent']!r} não existe em conc.json")
+        if "participantes" in l:
+            p = l["participantes"]
+            if not (isinstance(p, dict) and _inteiro(p.get("ano")) and isinstance(p.get("lote"), str)):
+                erros.append(f"{chave}: participantes deve ser {{ano (número), lote (texto)}}, veio {p!r}")
+                del lv["participantes"]
+            else:
+                n = sum(1 for r in part if r.get("ano") == p["ano"] and r.get("lote") == p["lote"])
+                if n != 1:
+                    erros.append(f"{chave}: participantes {p!r} casa {n} linhas (esperada exatamente 1)")
+        if "concorrentes" in l:
+            if not isinstance(l["concorrentes"], str):
+                erros.append(f"{chave}: concorrentes deve ser o nome (texto) do leilão, veio {l['concorrentes']!r}")
+                del lv["concorrentes"]
+            else:
+                n = sum(1 for r in concs if r.get("leilao") == l["concorrentes"])
+                if n != 1:
+                    erros.append(f"{chave}: concorrentes {l['concorrentes']!r} casa {n} linhas (esperada exatamente 1)")
+        # um alvo por leilão: um segundo leilão leria o valor já trocado como original do RoadShow
+        ligacoes = _ligacoes(lv)
+        for alvo, _ in ligacoes:
+            if alvo in donos:
+                erros.append(f"{chave}: {alvo[0]} {alvo[1:]!r} já ligado ao leilão {donos[alvo]!r}")
+            else:
+                donos[alvo] = chave
+
+        campos = l.get("campos") or {}
+        if not isinstance(campos, dict):
+            erros.append(f"{chave}: campos deve ser dicionário campo → valor, veio {campos!r}")
+            campos = {}
+        for campo, c in campos.items():
+            if campo not in CAMPOS:
+                erros.append(f"{chave}: campo {campo!r} fora dos campos de leilão {CAMPOS}")
+                continue
+            if not isinstance(c, dict):
+                erros.append(f"{chave}.{campo}: deve ser {{valor, fontes}}, veio {c!r}")
+                continue
+            if ligacoes and not any(campo in mapa for _, mapa in ligacoes):
+                erros.append(f"{chave}: campo {campo!r} não tem onde ser aplicado nas ligações "
+                             f"{[a[0] for a, _ in ligacoes]}")
+            lim = c.get("limitado_pelo_edital")
+            if "limitado_pelo_edital" in c and (campo != "desagio" or not isinstance(lim, bool)):
+                erros.append(f"{chave}.{campo}: limitado_pelo_edital só vale em desagio e deve ser true/false, "
+                             f"veio {lim!r}")
+            erros += _erros_alternativas(chave, campo, c, fontes)
+            if "alternativas" in c and "ent" not in l:  # só a entidade guarda divergências
+                erros.append(f"{chave}.{campo}: alternativas exigem ligação com entidade (ent)")
+            if "nao_se_aplica" in c:
+                nsa = c["nao_se_aplica"]
+                if campo != "desagio" or nsa is not True or c.get("nao_localizado") or c.get("valor") is not None:
+                    erros.append(f"{chave}.{campo}: nao_se_aplica só vale em desagio, como true, com valor null e "
+                                 f"sem nao_localizado (veio {nsa!r}, valor {c.get('valor')!r})")
+                    continue
+                erros += _erros_refs(chave, f"{campo} (nao_se_aplica)", c.get("fontes"), fontes)
+                continue
+            if c.get("nao_localizado"):
+                if c.get("valor") is not None:
+                    erros.append(f"{chave}.{campo}: não localizado deve ter valor null, veio {c['valor']!r}")
+                erros += _erros_refs(chave, campo, c.get("fontes", []), fontes, exige=False)
+                continue
+            if "valor" not in c or c["valor"] is None:
+                erros.append(f"{chave}.{campo}: sem valor (use nao_localizado: true)")
+            else:
+                e = _erros_valor(campo, c["valor"])
+                if e:
+                    erros.append(f"{chave}.{campo}: {e}")
+            erros += _erros_refs(chave, campo, c.get("fontes"), fontes)
+            if (aliases is not None and campo == "grupo_vencedor" and isinstance(c.get("valor"), str)
+                    and c["valor"] and c["valor"] not in nomes_alias):
+                erros.append(f"{chave}: vencedor {c['valor']!r} sem grupo em grupos_alias.json")
+
+        notas, inabs = l.get("notas") or [], l.get("inabilitados") or []
+        if not isinstance(notas, list) or not all(isinstance(n, dict) for n in notas):
+            erros.append(f"{chave}: notas deve ser lista de {{texto, fontes}}, veio {notas!r}")
+            notas = []
+        if not isinstance(inabs, list) or not all(isinstance(i, dict) for i in inabs):
+            erros.append(f"{chave}: inabilitados deve ser lista de {{grupo, desagio, data, fontes}}, veio {inabs!r}")
+            inabs = []
+        for i, nota in enumerate(notas):
+            if not nota.get("texto"):
+                erros.append(f"{chave}: nota #{i} sem texto")
+            erros += _erros_refs(chave, f"nota #{i}", nota.get("fontes"), fontes)
+        for i, inab in enumerate(inabs):
+            if not inab.get("grupo"):
+                erros.append(f"{chave}: inabilitado #{i} sem grupo")
+            if inab.get("data") is not None and not _data_iso(inab["data"]):
+                erros.append(f"{chave}: inabilitado #{i} com data {inab['data']!r} fora de AAAA-MM-DD")
+            erros += _erros_refs(chave, f"inabilitado #{i}", inab.get("fontes"), fontes)
+
+    if aliases is not None:
+        erros += _erros_aliases(aliases, fontes)
+    if not erros:  # `aplicar` supõe a camada válida; com erros, as conferências sobre o valor exibido ficam para a próxima rodada
+        aplicado = aplicar(conc, verif, aliases or {"aliases": []})
+        erros += _erros_sequencia(aplicado)
+        if aliases is not None:
+            faltam = [n for n in nomes_do_ranking(aplicado) if n not in nomes_alias]
+            erros += [f"participantes: nome {n!r} sem grupo em grupos_alias.json" for n in faltam]
+        if consorcios is not None:
+            erros += validar_consorcios(consorcios, fontes, aplicado)
+    elif consorcios is not None:  # com a camada inválida só dá para conferir o que não depende do valor exibido
+        erros += validar_consorcios(consorcios, fontes, None)
+    return erros
+
+
+# ---------- consórcios ----------
+
+TOLERANCIA_SOMA = 0.01
+
+
+def _numero(v):
+    return isinstance(v, (int, float)) and not isinstance(v, bool)
+
+
+def _nomes_da_linha(r):
+    """Nomes de proponentes de uma linha de `mercado.participantes` (vencedor, demais e inabilitados)."""
+    return ({r.get("vencedor")} | {o.get("grupo") for o in r.get("outros") or []}
+            | {i.get("grupo") for i in r.get("inabilitados") or []})
+
+
+def _erros_integrantes(onde, c):
+    ints = c.get("integrantes")
+    if not isinstance(ints, list):
+        return [f"{onde}: integrantes deve ser lista"]
+    if not ints:
+        return [] if c.get("nota") else [f"{onde}: sem integrantes exige nota (composição não localizada)"]
+    erros, vistos = [], set()
+    for i, it in enumerate(ints):
+        if not isinstance(it, dict):
+            erros.append(f"{onde}: integrante #{i} deve ser dicionário")
+            continue
+        for k in ("nome", "grupo"):
+            if not isinstance(it.get(k), str) or not it[k].strip():
+                erros.append(f"{onde}: integrante #{i} sem {k}")
+        if it.get("nome") in vistos:
+            erros.append(f"{onde}: integrante {it['nome']!r} repetido")
+        vistos.add(it.get("nome"))
+        p = it.get("participacao")
+        if p is not None and not (_numero(p) and 0 < p <= 100):
+            erros.append(f"{onde}: participação de {it.get('nome')!r} deve ser número entre 0 e 100, ou null "
+                         f"(não informada), veio {p!r}")
+        if not isinstance(it.get("lider"), bool):
+            erros.append(f"{onde}: integrante {it.get('nome')!r} precisa de lider (true/false)")
+        if "nota" in it and not (isinstance(it["nota"], str) and it["nota"].strip()):
+            erros.append(f"{onde}: nota de {it.get('nome')!r} deve ser texto não vazio")
+    ps = [it.get("participacao") for it in ints if isinstance(it, dict)]
+    informadas = [p for p in ps if _numero(p)]
+    if not erros and informadas:
+        soma = sum(informadas)
+        if len(informadas) == len(ps) and round(abs(soma - 100), 6) > TOLERANCIA_SOMA:  # 3 × 33,33 = 99,99
+            erros.append(f"{onde}: soma das participações {soma:g} diferente de 100")
+        elif len(informadas) < len(ps) and round(soma - 100, 6) > TOLERANCIA_SOMA:
+            erros.append(f"{onde}: soma das participações informadas ({soma:g}) passa de 100")
+    return erros
+
+
+def validar_consorcios(consorcios, fontes, conc_aplicado):
+    """Confere `consorcios.json`: todo consórcio com fonte declarada (`fontes` de verificacao.json), integrantes
+    válidos (soma das participações = 100 quando todas informadas), um registro por (nome, ano, lote) e, com
+    `conc_aplicado` (CONC com a camada de verificação), nome igual a um proponente do mesmo leilão — ou marcado
+    `fora_da_camada` quando só as atas o trazem — e `venceu` coerente com o vencedor do leilão."""
+    if not isinstance(consorcios, dict) or consorcios.get("versao") != 1 or not isinstance(
+            consorcios.get("consorcios"), list):
+        return ["consorcios.json: esperado {versao: 1, consorcios: [...]}"]
+    linhas = {}
+    for r in _linhas(conc_aplicado, "participantes") if conc_aplicado is not None else []:
+        linhas.setdefault((r.get("ano"), r.get("lote")), []).append(r)
+    erros, chaves = [], set()
+    for k, c in enumerate(consorcios["consorcios"]):
+        if not isinstance(c, dict):
+            erros.append(f"consórcio #{k}: deve ser dicionário")
+            continue
+        onde = f"consórcio {c.get('nome')!r} ({c.get('lote')}, {c.get('ano')})"
+        if not isinstance(c.get("nome"), str) or not c["nome"].strip():
+            erros.append(f"consórcio #{k}: sem nome")
+        if not _inteiro(c.get("ano")) or not isinstance(c.get("lote"), str) or not c["lote"]:
+            erros.append(f"{onde}: ano (número) e lote (texto) são obrigatórios")
+            continue
+        if not isinstance(c.get("venceu"), bool):
+            erros.append(f"{onde}: venceu deve ser true/false")
+        for marca in ("fora_da_camada", "fora_da_ata"):
+            if marca in c and not isinstance(c[marca], bool):
+                erros.append(f"{onde}: {marca} deve ser true/false")
+        if "nota" in c and not (isinstance(c["nota"], str) and c["nota"].strip()):
+            erros.append(f"{onde}: nota deve ser texto não vazio")
+        # Fora da camada só com a ata que o traz: a marca não pode servir para calar uma grafia errada.
+        if c.get("fora_da_camada") and not (c.get("nota") and any(
+                (fontes.get(f) or {}).get("tipo") == "oficial" for f in c.get("fontes") or [])):
+            erros.append(f"{onde}: fora_da_camada exige nota e ao menos uma fonte oficial (a ata que traz o nome)")
+        chave = (c["nome"], c["ano"], c["lote"])
+        if chave in chaves:
+            erros.append(f"{onde}: repetido")
+        chaves.add(chave)
+        erros += _erros_refs(onde, "consórcio", c.get("fontes"), fontes)
+        erros += _erros_integrantes(onde, c)
+        if conc_aplicado is None:
+            continue
+        rs = linhas.get((c["ano"], c["lote"]), [])
+        if len(rs) != 1:
+            erros.append(f"{onde}: leilão ({c['ano']}, {c['lote']!r}) casa {len(rs)} linhas em participantes "
+                         "(esperada exatamente 1)")
+            continue
+        casa = c["nome"] in _nomes_da_linha(rs[0])
+        if c.get("fora_da_camada") and casa:
+            erros.append(f"{onde}: marcado fora_da_camada, mas o nome já consta dos proponentes do leilão: "
+                         "tire a marca")
+        elif not c.get("fora_da_camada") and not casa:
+            erros.append(f"{onde}: o nome não casa com nenhum proponente do leilão (vencedor, outros ou "
+                         "inabilitados); acerte a grafia ou marque fora_da_camada com a nota da fonte")
+        if c.get("venceu") is not (c["nome"] == rs[0].get("vencedor")):
+            erros.append(f"{onde}: venceu={c.get('venceu')} não confere com o vencedor do leilão "
+                         f"({rs[0].get('vencedor')!r})")
+    return erros
+
+
+def aplicar_consorcios(consorcios, fontes):
+    """Lista de consórcios com as fontes resolvidas (supõe `validar_consorcios` sem erros)."""
+    return [{**copy.deepcopy(c), "fontes": [_fonte(fid, fontes) for fid in c["fontes"]]}
+            for c in consorcios["consorcios"]]
+
+
+def _erros_sequencia(conc_aplicado):
+    """Edital não pode ser posterior ao leilão (valores exibidos, já com a camada). Com 'AAAA-MM' em um dos dois,
+    compara no mês: edital e leilão no mesmo mês é válido."""
+    erros = []
+    for e in conc_aplicado.get("entidades", []):
+        ed, le = e.get("edital"), e.get("leilao")
+        if not (_data_iso(ed) or _mes_iso(ed)) or not (_data_iso(le) or _mes_iso(le)):
+            continue
+        n = 7 if 7 in (len(ed), len(le)) else 10
+        if ed[:n] > le[:n]:
+            erros.append(f"{e.get('id')}: edital ({_fmt('edital', ed)}) depois do leilão ({_fmt('leilao', le)})")
+    return erros
+
+
+# ---------- aplicação ----------
+
+def _fonte(fid, fontes):
+    f = fontes[fid]
+    return {k: (fid if k == "id" else f.get(k)) for k in CHAVES_FONTE}
+
+
+def _pagina(e, campo):
+    """Página do RoadShow do campo na entidade (`fontes` pode ser número ou lista: vale o primeiro número)."""
+    p = (e.get("fontes") or {}).get(campo)
+    if isinstance(p, list):
+        p = next((x for x in p if isinstance(x, (int, float)) and not isinstance(x, bool)), None)
+    return p if isinstance(p, (int, float)) and not isinstance(p, bool) else None
+
+
+def _fmt(campo, v):
+    if isinstance(v, str) and _data_iso(v):
+        a, m, d = v.split("-")
+        return f"{d}/{m}/{a}"
+    if isinstance(v, str) and _mes_iso(v):
+        return f"{MESES[int(v[5:]) - 1]}/{v[:4]}"
+    if isinstance(v, (int, float)) and not isinstance(v, bool):
+        if campo not in CAMPOS_NUM:  # tarifa e texto não se arredondam nem levam unidade: o valor como veio
+            return str(v).replace(".", ",")
+        s = f"{v:.2f}".replace(".", ",") if isinstance(v, float) else str(v)
+        return s + {"desagio": "%", "prazo_anos": " anos"}.get(campo, "")
+    return str(v)
+
+
+def _sem_valor(v):
+    """Alternativa que o RoadShow imprime sem valor ("-" ou vazio): fica registrada, mas não entra na nota."""
+    return v is None or str(v).strip() in ("", "-")
+
+
+def _sufixo(tipo, nao_se_aplica=False):
+    if nao_se_aplica:
+        return NAO_SE_APLICA + "."
+    return "não localizado em fonte oficial." if tipo is None else f"exibido o valor de fonte {ROTULO[tipo]}."
+
+
+def _divergencia(e, campo, original, valor, tipo, nao_se_aplica=False):
+    """Registra na entidade o valor do RoadShow que deixou de ser exibido (sem duplicar o novo valor exibido)."""
+    divs = e.setdefault("divergencias", [])
+    alt_rs = {"valor": original, "pagina": _pagina(e, campo)}
+    d = next((x for x in divs if x.get("campo") == campo), None)
+    sufixo = _sufixo(tipo, nao_se_aplica)
+    if d is None:
+        divs.append({"campo": campo, "exibido": valor, "alternativas": [alt_rs],
+                     "nota": f"RoadShow imprime {_fmt(campo, original)}; {sufixo}"})
+        return
+    resto = [a for a in d.get("alternativas", []) if a.get("valor") != valor and a.get("valor") != original]
+    d["exibido"] = valor
+    d["alternativas"] = [alt_rs] + resto
+    impressos = [_fmt(campo, a["valor"]) + (f" (p. {a['pagina']})" if a.get("pagina") is not None else "")
+                 for a in d["alternativas"] if not _sem_valor(a.get("valor"))]
+    lista = impressos[0] if len(impressos) == 1 else ", ".join(impressos[:-1]) + " e " + impressos[-1]
+    d["nota"] = f"RoadShow imprime {lista}; {sufixo}"
+
+
+def _quem(f):
+    """(órgão ou veículo, data dd/mm/aaaa ou None) de uma fonte: quem dá um valor alternativo."""
+    nome = f.get("orgao") or (f"RoadShow, p. {f['pagina']}" if f.get("tipo") == "roadshow" else f.get("titulo") or "")
+    return nome, (_fmt("leilao", f["data"]) if f.get("data") else None)
+
+
+def _alternativas_declaradas(e, campo, c, fontes, tipo):
+    """Valores de outras fontes que divergem do exibido: entram na divergência do campo (criada se faltar)."""
+    divs = e.setdefault("divergencias", [])
+    d = next((x for x in divs if x.get("campo") == campo), None)
+    frases = []
+    for a in c["alternativas"]:
+        quem = [_quem(fontes[fid]) for fid in a["fontes"]]
+        frases.append(" e ".join(n + (f" ({dt})" if dt else "") for n, dt in quem) + f" informa {_fmt(campo, a['valor'])}")
+        alt = {"valor": a["valor"], "fonte": "; ".join(n + (f", {dt}" if dt else "") for n, dt in quem)}
+        if d is None:
+            d = {"campo": campo, "exibido": e.get(campo), "alternativas": [], "nota": ""}
+            divs.append(d)
+        if alt not in d["alternativas"]:
+            d["alternativas"].append(alt)
+    texto = "; ".join(frases)
+    d["nota"] = (f"{d['nota']} {texto[0].upper() + texto[1:]}." if d["nota"]
+                 else f"{texto}; {_sufixo(tipo, bool(c.get('nao_se_aplica')))}")
+
+
+def _aplicar_campo(alvo, chave, campo, c, fontes, entidade):
+    sem_valor = c.get("nao_localizado") or c.get("nao_se_aplica")
+    valor = None if sem_valor else c["valor"]
+    fs = [_fonte(fid, fontes) for fid in c.get("fontes", [])]
+    tipo = None if sem_valor else tipo_campo(fs)
+    original = alvo.get(chave)
+    mudou = original != valor
+    if mudou:
+        alvo[chave] = valor
+        if entidade and original is not None:
+            _divergencia(alvo, campo, original, valor, tipo, bool(c.get("nao_se_aplica")))
+    if entidade and c.get("alternativas"):
+        _alternativas_declaradas(alvo, campo, c, fontes, tipo)
+    info = alvo.setdefault("verif", {})[campo] = {
+        "tipo": tipo, "nao_localizado": bool(c.get("nao_localizado")), "nao_se_aplica": bool(c.get("nao_se_aplica")),
+        "fontes": fs, "roadshow": original if mudou else None}
+    if campo == "desagio":  # critério híbrido: deságio no teto do edital, desempate por outorga
+        info["limitado_pelo_edital"] = bool(c.get("limitado_pelo_edital"))
+
+
+def _alvos(conc, l):
+    """(linha, mapa campo→chave, é entidade) para cada ligação do leilão."""
+    alvos = []
+    for alvo, mapa in _ligacoes(l):
+        if alvo[0] == "ent":
+            r = next(x for x in conc["entidades"] if x["id"] == alvo[1])
+        elif alvo[0] == "participantes":
+            r = next(x for x in conc["mercado"]["participantes"] if (x["ano"], x["lote"]) == alvo[1:])
+        else:
+            r = next(x for x in conc["mercado"]["concorrentes_desagio"] if x["leilao"] == alvo[1])
+        alvos.append((r, mapa, alvo[0] == "ent"))
+    return alvos
+
+
+def aplicar(conc, verif, aliases, consorcios=None):
+    """Cópia de `conc` com a camada aplicada (supõe `validar` sem erros). Cada linha ligada ganha `verif`,
+    `notas_verif` e `inabilitados`; `conc.verificacao` resume fontes e cobertura; `conc.grupos_alias` leva os aliases
+    (com as fontes da junção resolvidas); com `consorcios`, `conc.consorcios` leva a base de consórcios (fontes
+    resolvidas)."""
+    out = copy.deepcopy(conc)
+    fontes = verif.get("fontes") or {}
+    for l in verif.get("leiloes", []):
+        notas = [{"texto": n["texto"], "fontes": [_fonte(fid, fontes) for fid in n["fontes"]]}
+                 for n in l.get("notas") or []]
+        inabs = [{"grupo": i["grupo"], "desagio": i.get("desagio"), "data": i.get("data"),
+                  "fontes": [_fonte(fid, fontes) for fid in i["fontes"]]} for i in l.get("inabilitados") or []]
+        for alvo, chaves, entidade in _alvos(out, l):
+            alvo.setdefault("verif", {})
+            for campo, c in (l.get("campos") or {}).items():
+                if campo in chaves:
+                    _aplicar_campo(alvo, chaves[campo], campo, c, fontes, entidade)
+            alvo.setdefault("notas_verif", []).extend(copy.deepcopy(notas))
+            alvo.setdefault("inabilitados", []).extend(copy.deepcopy(inabs))
+    ordem = {t: i for i, t in enumerate(TIPOS)}
+    lista = sorted((_fonte(fid, fontes) for fid in fontes),
+                   key=lambda f: (ordem.get(f["tipo"], len(TIPOS)), f["orgao"] or "", f["id"]))
+    out["verificacao"] = {"fontes": lista, "cobertura": cobertura(verif)}
+    out["grupos_alias"] = [{**copy.deepcopy(a), "fontes": [_fonte(fid, fontes) for fid in a["fontes"]]}
+                           if "fontes" in a else copy.deepcopy(a) for a in aliases.get("aliases", [])]
+    if consorcios is not None:
+        out["consorcios"] = aplicar_consorcios(consorcios, fontes)
+    return out
+
+
+def nomes_do_ranking(conc_aplicado):
+    """Nomes que o ranking de grupos conta, já com a camada aplicada: vencedor exibido, demais proponentes e
+    inabilitados de cada linha de `mercado.participantes` (ordenados, sem repetição)."""
+    nomes = set()
+    for r in _linhas(conc_aplicado, "participantes"):
+        nomes.add(r.get("vencedor"))
+        nomes.update(o.get("grupo") for o in r.get("outros") or [])
+        nomes.update(i.get("grupo") for i in r.get("inabilitados") or [])
+    return sorted(n for n in nomes if isinstance(n, str) and n)
+
+
+def tem_resultado(l):
+    """A entrada verifica o resultado do leilão: tem algum campo além dos anteriores ao leilão (CAMPOS_PRE_LEILAO —
+    leilão, vencedor, deságio, assinatura…). Uma entrada só com a data do edital não conta."""
+    return bool(set(l.get("campos") or {}) - set(CAMPOS_PRE_LEILAO))
+
+
+def cobertura(verif):
+    """Contagem de leilões verificados (entradas com resultado, `tem_resultado`) e, à parte, das entradas só com a data
+    do edital; de campos verificados por tipo da fonte mais forte, de campos não localizados e, à parte, dos que não
+    se aplicam (deságio de leilão por outorga)."""
+    fontes = verif.get("fontes") or {}
+    leiloes = verif.get("leiloes", [])
+    com = sum(tem_resultado(l) for l in leiloes)
+    cont = {"leiloes": com, "so_edital": len(leiloes) - com, "oficial": 0, "roadshow": 0, "imprensa": 0,
+            "nao_localizado": 0, "nao_se_aplica": 0}
+    for l in verif.get("leiloes", []):
+        for c in (l.get("campos") or {}).values():
+            if c.get("nao_se_aplica"):
+                cont["nao_se_aplica"] += 1
+                continue
+            tipo = None if c.get("nao_localizado") else tipo_campo([fontes[fid] for fid in c.get("fontes", [])])
+            cont[tipo or "nao_localizado"] += 1
+    return cont
+
+
+# ---------- relatório ----------
+
+def _md(v):
+    return "—" if v is None else str(v).replace("|", "\\|")
+
+
+def relatorio_markdown(verif, conc_aplicado):
+    """Relatório de cobertura (data/roadshow/verificacao.md): totais por tipo e, por leilão, cada campo verificado."""
+    cob = cobertura(verif)
+    linhas = [
+        "# Verificação dos leilões",
+        "",
+        "Gerado por `scripts/build.py` a partir de `data/roadshow/verificacao.json`. Hierarquia do valor exibido: "
+        "oficial > RoadShow > imprensa (não oficial).",
+        "",
+        "## Cobertura",
+        "",
+        "| Leilões verificados | Entradas só com edital | Campos oficial | Campos RoadShow | Campos imprensa | "
+        "Não localizados | Não se aplica |",
+        "|---:|---:|---:|---:|---:|---:|---:|",
+        f"| {cob['leiloes']} | {cob['so_edital']} | {cob['oficial']} | {cob['roadshow']} | {cob['imprensa']} | {cob['nao_localizado']} | "
+        f"{cob['nao_se_aplica']} |",
+        "",
+        "## Campos verificados",
+        "",
+    ]
+    if not verif.get("leiloes"):
+        return "\n".join(linhas + ["Nenhum leilão verificado ainda.", ""])
+    linhas += ["| Leilão | Campo | Exibido | Origem | RoadShow (quando difere) | Fontes |",
+               "|---|---|---|---|---|---|"]
+    for l in verif["leiloes"]:
+        alvos = _alvos(conc_aplicado, l)
+        for campo, c in (l.get("campos") or {}).items():
+            alvo, chaves = next(((a, k) for a, k, _ in alvos if campo in k), (None, None))
+            info = ((alvo or {}).get("verif") or {}).get(campo) or {}
+            exibido = alvo.get(chaves[campo]) if alvo is not None else c.get("valor")
+            origem = (NAO_SE_APLICA if c.get("nao_se_aplica") else "não localizado" if c.get("nao_localizado")
+                      else ROTULO.get(info.get("tipo"), "—"))
+            rs = info.get("roadshow")
+            linhas.append(f"| {_md(l['chave'])} | {campo} | {_md(None if exibido is None else _fmt(campo, exibido))} | "
+                          f"{origem} | {_md(None if rs is None else _fmt(campo, rs))} | "
+                          f"{_md(', '.join(c.get('fontes', [])) or None)} |")
+    notas = [(l["chave"], n["texto"]) for l in verif["leiloes"] for n in l.get("notas") or []]
+    inabs = [(l["chave"], i) for l in verif["leiloes"] for i in l.get("inabilitados") or []]
+    if notas:
+        linhas += ["", "## Notas", ""] + [f"- **{k}**: {t}" for k, t in notas]
+    if inabs:
+        linhas += ["", "## Inabilitados", ""] + [
+            f"- **{k}**: {i['grupo']} ({_fmt('desagio', i['desagio']) if i.get('desagio') is not None else '—'}), "
+            f"inabilitado em {_fmt('leilao', i['data']) if i.get('data') else '—'}" for k, i in inabs]
+    return "\n".join(linhas + [""])

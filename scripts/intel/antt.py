@@ -304,33 +304,34 @@ def sat_files():
     return sorted((RAW / "sat").glob("*mensal_consolidado.csv"))
 
 
-def fetch():
+def fetch(force=False):
+    """Baixa o que falta (com `force`, baixa tudo de novo, inclusive a lista de capas) e registra no manifesto."""
     man = Manifest("antt")
     for slug in DATASETS:
         dest = RAW / "ckan" / f"{slug}.json"
-        fetch_url(CKAN + slug, dest)
+        fetch_url(CKAN + slug, dest, force=force)
         man.add(CKAN + slug, dest, f"Metadados CKAN: {slug}", licenca=LICENCA)
     for pasta, slug, fname, desc, periodo in ARQUIVOS:
         url = _resource_url(ckan_meta(slug), fname)
         if url is None:
             raise RuntimeError(f"recurso {fname} não está em {slug}")
-        man.add(url, fetch_url(url, RAW / pasta / fname), desc, periodo, LICENCA)
+        man.add(url, fetch_url(url, RAW / pasta / fname, force=force), desc, periodo, LICENCA)
     meta = ckan_meta(SAT_SLUG)
     sat_res = [r for r in meta["resources"] if (r.get("url") or "").endswith("mensal_consolidado.csv")]
     for r in sat_res:
         base = r["url"].rsplit("/", 1)[-1]
         fname = base if base != "volume-sat-_mensal_consolidado.csv" else f"{r['id']}_{base}"
-        man.add(r["url"], fetch_url(r["url"], RAW / "sat" / fname), "Volume nos SATs (mensal consolidado)",
+        man.add(r["url"], fetch_url(r["url"], RAW / "sat" / fname, force=force), "Volume nos SATs (mensal consolidado)",
                 "2022-2026", LICENCA)
     lista = RAW / "capas" / "lista.html"
-    fetch_url(GOVBR, lista)
+    fetch_url(GOVBR, lista, force=force)
     man.add(GOVBR, lista, "Lista de concessões (gov.br/antt)")
     urls = RAW / "capas" / "capas_urls.txt"
-    if not urls.exists():
+    if force or not urls.exists():
         urls.write_text("\n".join(capa_urls_from_list(lista.read_text(encoding="utf-8"))) + "\n", encoding="utf-8")
     for u in urls.read_text(encoding="utf-8").split():
         dest = RAW / "capas" / (u.split("/lista-de-concessoes/")[1].replace("/", "__") + ".html")
-        man.add(u, fetch_url(u, dest), "Capa da concessão (gov.br/antt)")
+        man.add(u, fetch_url(u, dest, force=force), "Capa da concessão (gov.br/antt)")
     man.save()
     return man
 
@@ -462,6 +463,8 @@ def build_series():
 
 # ============================================================ praças
 
+PRACAS_ANO = 2025  # ano do VMD e da receita por praça (vai para o bloco: a interface rotula com ele)
+
 def _load_volumes():
     import pandas as pd
     L = []
@@ -546,7 +549,7 @@ def build_pracas():
         if c not in mon:
             mon[c] = 0.0
     com = V[V.cls == "p"]
-    y25 = com[com.ym.str[:4] == "2025"]
+    y25 = com[com.ym.str[:4] == str(PRACAS_ANO)]
     eix = (y25.eixos * y25.v).groupby(y25.g).sum() / y25.v.groupby(y25.g).sum()
 
     # --- receita 2025 → grupo (nome; senão coordenada a ≤ 1 km na mesma concessionária)
@@ -577,22 +580,22 @@ def build_pracas():
         fis = None
         if br and br.startswith("BR") and g["lat"] is not None:
             fis, _ = S.snap(g["lon"], g["lat"], max_m=SNAP_M, br=br)
-        m25 = [ym for ym in MESES if ym[:4] == "2025" and (k, ym) in mon.index]
-        vmd = leves = pes = moto = eixos = None
+        m25 = [ym for ym in MESES if ym[:4] == str(PRACAS_ANO) and (k, ym) in mon.index]
+        vmd = leves = pes = moto = eixos = meses25 = None
         if m25:
             dd = sum(days(ym) for ym in m25)
             tl, tm, tp = (sum(mon.loc[(k, ym), c] for ym in m25) for c in "lmp")
-            leves, moto, pes = round(tl / dd), round(tm / dd), round(tp / dd)
-            vmd = round((tl + tm + tp) / dd)
-            eixos = round(float(eix[k]), 1) if k in eix.index and eix[k] == eix[k] else None
+            vmd, leves, pes, moto, meses25 = vmd_2025(tl, tm, tp, dd, len(m25))
+            if vmd is not None:
+                eixos = round(float(eix[k]), 1) if k in eix.index and eix[k] == eix[k] else None
         receita = int(round(rec[k])) if rec.get(k) else None
         linhas.append([g["nome"], g["ent"], g["conc"], br, g["uf"] or None, ci(g["km"]), r5(g["lat"]), r5(g["lon"]),
-                       None if fis is None else int(fis), vmd, leves, pes, moto, eixos, receita, len(m25) or None])
+                       None if fis is None else int(fis), vmd, leves, pes, moto, eixos, receita, meses25])
         sl.append([round((mon.loc[(k, ym), "l"] + mon.loc[(k, ym), "m"]) / days(ym)) if (k, ym) in mon.index
                    else None for ym in MESES])
         sp.append([round(mon.loc[(k, ym), "p"] / days(ym)) if (k, ym) in mon.index else None for ym in MESES])
         ncad.append(len(g["cids"]))
-    return {"tipo": "medido",
+    return {"tipo": "medido", "ano": PRACAS_ANO,
             "campos": ["nome", "ent", "conc", "br", "uf", "km", "lat", "lon", "fis", "vmd", "leves", "pesados", "moto",
                        "eixos", "receita", "meses"],
             "linhas": linhas, "n_cadastro": ncad, "serie_meses": MESES, "serie_l": sl, "serie_p": sp}
@@ -603,6 +606,17 @@ def build_pracas():
 SAT_ANO = 2025
 SAT_JANELA = ("2025-09", "2026-08")  # últimos 12 meses publicados: reserva para SATs com < 6 meses em 2025
 SAT_MIN_MESES, SAT_MAX_NI, SAT_MIN_VMD = 6, 0.30, 100
+
+
+def vmd_2025(leves, moto, pesados, dias, meses):
+    """Totais de 2025 de uma praça (leves, motos, pesados) nos `dias` dos `meses` com registro → (vmd, leves, pesados,
+    moto, meses) por dia, arredondados. VMD que arredonda para 0 (menos de 1 veículo/dia, ex.: praça em início de
+    operação com 9 veículos no mês) ou sem dias não é contagem: tudo None (como o VMDa 0 em trafego.py), para a praça
+    aparecer "sem dado" e não com VMD 0."""
+    vmd = round((leves + moto + pesados) / dias) if dias else 0
+    if vmd < 1:
+        return None, None, None, None, None
+    return vmd, round(leves / dias), round(pesados / dias), round(moto / dias), meses
 
 
 def sat_periodo(meses):

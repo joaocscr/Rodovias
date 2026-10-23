@@ -1,0 +1,65 @@
+{
+  "roadshow": {
+    "nome": "RoadShow (apresentação do Ministério dos Transportes a investidores)",
+    "oQue": "Apresentação do Ministério dos Transportes a investidores sobre a carteira de concessões rodoviárias 2026–2027{edicao}. Dela vêm os contratos, os prazos, os investimentos previstos e o cadastro das concessões."
+  },
+  "snv": {
+    "nome": "Malha rodoviária federal (SNV)",
+    "oQue": "Cadastro oficial das rodovias federais mantido pelo Departamento Nacional de Infraestrutura de Transportes (DNIT): cada trecho com sua BR, UF, extensão, situação e tipo de administração. É a base do mapa.",
+    "termos": [{"id": "dnit", "texto": "DNIT"}]
+  },
+  "verificacao": {
+    "nome": "Conferência dos leilões",
+    "oQue": "Atas, editais, avisos e notícias usados para conferir data, vencedor, deságio e tarifas de cada leilão. Vale o documento de órgão público quando existe; depois o RoadShow; por último a imprensa, sempre marcada como não oficial."
+  },
+  "antt": {
+    "nome": "Concessões e pedágios (ANTT)",
+    "oQue": "Dados abertos da Agência Nacional de Transportes Terrestres: praças de pedágio, veículos que passam em cada uma, receitas, investimentos e as páginas das concessões rodoviárias.",
+    "termo": "antt"
+  },
+  "pipeline": {
+    "nome": "Projetos de concessão em andamento",
+    "oQue": "Documento “Carteira de Concessões Rodoviárias 2023–2027” do Ministério dos Transportes (outro documento, diferente do RoadShow), páginas da ANTT, dados abertos do Banco Nacional de Desenvolvimento Econômico e Social (BNDES), páginas de governos estaduais e, para o que ainda não tem documento oficial, imprensa especializada (não oficial).",
+    "termos": [{"id": "bndes", "texto": "BNDES"}]
+  },
+  "trafego": {
+    "nome": "Tráfego, acidentes e fluxo pedagiado",
+    "oQue": "Volume diário de veículos por trecho, estimado por modelo pela Infra S.A. (empresa pública federal de planejamento e estruturação de transportes, vinculada ao Ministério dos Transportes) e pelo DNIT; acidentes registrados pela Polícia Rodoviária Federal (PRF); e o índice de fluxo de veículos nas praças de pedágio da associação das concessionárias (ABCR).",
+    "termos": [{"id": "infra-sa", "texto": "Infra S.A."}, {"id": "prf", "texto": "PRF"}, {"id": "indice-abcr", "texto": "índice de fluxo de veículos nas praças de pedágio"}]
+  },
+  "vmda2025": {
+    "nome": "Volume diário de veículos 2025 (DNIT)",
+    "oQue": "Estimativa do DNIT, por modelo, de quantos veículos passam por dia em cada trecho da malha federal.",
+    "termo": "vmda"
+  },
+  "carga": {
+    "nome": "Carga estimada nos trechos (PNL)",
+    "oQue": "Estimativa de modelo, não medição: quanta carga a Infra S.A. calcula que passa por cada trecho, no cenário-base do Plano Nacional de Logística (PNL).",
+    "termo": "pnl"
+  },
+  "agro": {
+    "nome": "Produção agrícola e armazenagem (IBGE)",
+    "oQue": "Quanto cada município produz das principais lavouras e a capacidade de armazéns, segundo o Instituto Brasileiro de Geografia e Estatística (IBGE)."
+  },
+  "multimodal": {
+    "nome": "Ferrovias, portos, exportações e boletim logístico",
+    "oQue": "Malha ferroviária, instalações portuárias, produção de carga das ferrovias (ANTT), fluxos de carga ferroviária do IBGE, exportações do Comex Stat (Ministério do Desenvolvimento, Indústria, Comércio e Serviços) e o boletim logístico da Companhia Nacional de Abastecimento (Conab)."
+  },
+  "municipios": {
+    "nome": "Malha municipal (IBGE)",
+    "oQue": "Contornos dos municípios brasileiros, usados para localizar a produção e os trechos no mapa."
+  },
+  "estaduais": {
+    "nome": "Rodovias e concessões estaduais",
+    "oQue": "Malha rodoviária dos estados (Infra S.A.) e fichas das concessões estaduais, publicadas pelos reguladores dos estados que aparecem no painel e pela ABCR."
+  },
+  "rotas": {
+    "nome": "Rotas de Integração Sul-Americana",
+    "oQue": "Apresentação e relatórios do Ministério do Planejamento e Orçamento (MPO) sobre as cinco rotas que ligam o Brasil aos países vizinhos e aos portos do Pacífico e do Caribe, com o traçado esquemático delas; contornos dos países do Natural Earth."
+  },
+  "debentures": {
+    "nome": "Debêntures de infraestrutura de transporte",
+    "oQue": "Planilhas das corretoras XP e BTG (telas de debêntures e negócios): negócios fechados (BTG) e intenções de compra e venda (XP) no mercado secundário. Também Selic, CDI, IPCA e a expectativa do Boletim Focus, do Banco Central do Brasil, e as taxas das NTN-B do Tesouro Nacional, base do spread.",
+    "termos": [{"id": "debenture", "texto": "debêntures"}, {"id": "mercado-secundario", "texto": "mercado secundário"}, {"id": "selic", "texto": "Selic"}, {"id": "cdi", "texto": "CDI"}, {"id": "ipca", "texto": "IPCA"}, {"id": "focus", "texto": "Boletim Focus"}, {"id": "ntn-b", "texto": "NTN-B"}, {"id": "spread", "texto": "spread"}]
+  }
+}

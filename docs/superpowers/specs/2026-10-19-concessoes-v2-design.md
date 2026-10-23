@@ -7,7 +7,7 @@ Nova fonte: **RoadShow 2026-2027**, Ministério dos Transportes / SNTR, v40, atu
 
 Transformar o mapa da malha federal num **ambiente de estudo das concessões rodoviárias federais**, com tudo o que o RoadShow traz de mercado, ligado aos trechos do mapa. Usos (todos, segundo o usuário): escolher quais leilões estudar a fundo, comparar retornos e indicadores entre projetos, acompanhar mercado e concorrência.
 
-Continua valendo da v1: arquivo HTML único, offline, design system Galapagos estrito (só as 5 cores, 8 px, texto ≥ 14 px), foco em desktop, só em português.
+Continua valendo da v1: arquivo HTML único, offline, paleta base institucional estrita (só as 5 cores, 8 px, texto ≥ 14 px), foco em desktop, só em português.
 
 ## 2. Metas, não-metas, anti-metas
 

@@ -8,6 +8,7 @@ import pytest
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 from intel import pipeline  # noqa: E402
+from verificacao import aplicar, carregar, carregar_aliases  # noqa: E402
 
 STATUS = ["estudo", "consulta_publica", "tcu", "edital", "leilao_agendado", "leiloado", "contrato", "suspenso",
           "cancelado"]
@@ -24,7 +25,10 @@ def blk():
 
 @pytest.fixture(scope="module")
 def conc():
-    return json.loads((ROOT / "data" / "base" / "conc.json").read_text(encoding="utf-8"))
+    """CONC como no build: base congelada + JSON curados de data/roadshow/ (entidades relidas de entidades.json)."""
+    from roadshow import conc_da_base
+    ler = lambda n: json.loads((ROOT / "data" / "base" / n).read_text(encoding="utf-8"))  # noqa: E731
+    return conc_da_base(ler("conc.json"), ROOT / "data" / "roadshow", ler("snv.json"))
 
 
 def test_status_so_da_lista_do_contrato(blk):
@@ -121,7 +125,8 @@ def test_polo_goiania_presente(blk):
 def test_status_revisados(blk):
     por_id = {i["id"]: i for i in blk["itens"]}
     assert por_id["mg-lote8-vetor-norte"]["status"] == "suspenso"
-    assert por_id["fed-rota-dos-sertoes"]["status"] == "leiloado"
+    # contrato assinado em 29/09/2026 (extrato no DOU; camada de verificação)
+    assert por_id["fed-rota-dos-sertoes"]["status"] == "contrato"
     # audiência suspensa não é projeto suspenso
     demais = por_id["mt-fase2-demais"]
     assert demais["status"] == "consulta_publica" and "suspensa (imprensa)" in demais["obs"]
@@ -148,7 +153,17 @@ def test_carteira_por_extenso(blk):
     for i in blk["itens"]:
         for k in ("fonte_data", "obs", "nome"):
             assert not re.search(r"\b(carteira|Cronograma) MT\b|MT v40", i[k]), (i["id"], k, i[k])
-    assert any("carteira do Ministério dos Transportes" in i["fonte_data"] for i in blk["itens"])
+    assert any("carteira do Ministério dos Transportes" in i["fonte_data"] or
+               "carteira de concessões do Ministério dos Transportes" in i["fonte_data"] for i in blk["itens"])
+
+
+def test_carteira_sem_jargao_de_versao(blk):
+    """A versão da carteira aparece como texto claro ("versão de 14/10/2026"), nunca como "v40" nem "no MT"."""
+    textos = [(i["id"], k, i[k]) for i in blk["itens"] for k in ("fonte_data", "obs", "nome")]
+    textos += [("fonte", "nome", f["nome"]) for f in blk["fonte"]] + [("fonte", "nota", f.get("nota", "")) for f in blk["fonte"]]
+    for t in textos:
+        assert not re.search(r"\bv\d{2}\b|\b(no|do) MT\b", t[2]), t
+    assert any("versão de 14/10/2026" in i["fonte_data"] for i in blk["itens"])
 
 
 def test_obs_sem_linguagem_de_processo(blk):
@@ -159,8 +174,9 @@ def test_obs_sem_linguagem_de_processo(blk):
 
 
 def test_data_prevista_com_ent_segue_conc(blk, conc):
-    """Com `ent`, a data segue conc.json: leilão (agendado/estudo/tcu/consulta/edital), assinatura (leiloado/contrato)."""
-    E = {e["id"]: e for e in conc["entidades"]}
+    """Com `ent`, a data segue conc.json com a camada de verificação aplicada (como em `pipeline.montar`): leilão
+    (agendado/estudo/tcu/consulta/edital), assinatura (leiloado/contrato)."""
+    E = {e["id"]: e for e in aplicar(conc, carregar(), carregar_aliases())["entidades"]}
     n = 0
     for i in blk["itens"]:
         if i["ent"] is None or i["ent"] not in E:
@@ -215,3 +231,30 @@ def test_validacao_rejeita_status_e_ent_invalidos():
         pipeline.item_de_linha(est, {"rota-arco-norte"}, 27)
     with pytest.raises(ValueError):
         pipeline.item_de_linha({**est, "esfera": "federal"}, {"rota-arco-norte"}, 27, {"rs-x"})
+
+
+def test_montar_falha_com_camada_de_verificacao_invalida(monkeypatch):
+    """O pipeline valida a camada de verificação antes de aplicá-la, como o build."""
+    ruim = {"versao": 1, "fontes": {}, "leiloes": [{"chave": "x", "ent": "nao-existe", "campos": {}}]}
+    monkeypatch.setattr(pipeline, "carregar", lambda: ruim)
+    with pytest.raises(SystemExit) as exc:
+        pipeline.montar()
+    assert "Falha na verificação dos leilões" in str(exc.value) and "nao-existe" in str(exc.value)
+
+
+
+def test_data_editada_em_entidades_json_chega_ao_pipeline(tmp_path):
+    """O pipeline usa as mesmas entidades do HTML: a data de leilão editada em entidades.json muda o item ligado."""
+    d = tmp_path / "roadshow"
+    d.mkdir()
+    for p in (ROOT / "data" / "roadshow").glob("*.json"):
+        (d / p.name).write_text(p.read_text(encoding="utf-8"), encoding="utf-8")
+    item = next(i for i in pipeline.montar()["itens"] if i["ent"] == "rota-do-pequi")
+    assert item["status"] == "leilao_agendado"
+    ents = json.loads((d / "entidades.json").read_text(encoding="utf-8"))
+    e = next(x for x in ents if x["id"] == "rota-do-pequi")
+    assert e["leilao"] == item["data_prevista"]
+    e["leilao"] = "2027-02-15"
+    (d / "entidades.json").write_text(json.dumps(ents, ensure_ascii=False), encoding="utf-8")
+    novo = next(i for i in pipeline.montar(roadshow_dir=d)["itens"] if i["ent"] == "rota-do-pequi")
+    assert novo["data_prevista"] == "2027-02-15"

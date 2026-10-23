@@ -14,13 +14,13 @@ const Cargas = (() => {
 
   function card(id, title, sub, o = {}) {
     return `<article class="ccard${o.wide ? ' ccard--wide' : ''}" id="card-${id}">
-      <h3>${esc(title)}</h3>${sub ? `<p class="sub">${esc(sub)}</p>` : ''}
+      <h3>${esc(title)}</h3>${o.subHtml ? `<p class="sub">${o.subHtml}</p>` : sub ? `<p class="sub">${esc(sub)}</p>` : ''}
       ${o.legend || ''}<div class="chart-box" id="chart-${id}">${o.html || ''}</div>
-      ${o.note ? `<p class="src">${esc(o.note)}</p>` : ''}<p class="src">Fonte: ${esc(o.fonte || '—')}</p></article>`;
+      ${o.noteHtml ? `<p class="src">${o.noteHtml}</p>` : o.note ? `<p class="src">${esc(o.note)}</p>` : ''}<p class="src">Fonte: ${esc(o.fonte || '—')}</p></article>`;
   }
   const tile = (id, value, label) => `<div class="kpi-tile" id="${id}"><b>${esc(value)}</b><span>${esc(label)}</span></div>`;
   const box = id => document.getElementById('chart-' + id);
-  const width = el => Math.max(320, (el && el.clientWidth) || 640);
+  const width = el => Math.max(280, (el && el.clientWidth) || 640);
   const agro = () => intel.agro || null, mm = () => intel.multimodal || null;
   const pam = () => fonte(agro(), /PAM/), est = () => fonte(agro(), /Estoques/);
 
@@ -69,7 +69,7 @@ const Cargas = (() => {
     if (k.expMilho != null) tiles.push(tile('kpi-exp-milho', IM.fmtT(k.expMilho), `de milho exportado em ${e.ano} (Comex Stat)`));
     if (!tiles.length) return '';
     const f = [a && pam(), a && a.armazenagem && est(), e && fonte(mm(), /Comex/)].filter(Boolean);
-    return card('c-kpis', 'Cargas agrícolas em números', 'Produção, armazenagem e exportação, todas medidas', { wide: true, html: `<div class="kpis">${tiles.join('')}</div>`, fonte: f.join('; ') });
+    return card('c-kpis', 'Cargas agrícolas em números', 'Produção, armazenagem e exportação no Brasil, todas medidas', { wide: true, html: `<div class="kpis">${tiles.join('')}</div>`, fonte: f.join('; ') });
   }
 
   function prodCard() {
@@ -86,7 +86,8 @@ const Cargas = (() => {
 
   function siadeCard() {
     if (!IM.siadePares(intel, GRAOS, 1).length) return '';
-    return card('c-siade', 'Fluxos ferroviários de grãos', 'Os 15 maiores pares origem → destino de soja e milho, toneladas úteis no ano',
+    const f = (mm().fonte || []).find(x => /SIADE/.test(x.nome)), per = f && f.periodo ? `, ${IM.fmtPeriodo(f.periodo)}` : '';
+    return card('c-siade', `Fluxos ferroviários de grãos${per}`, 'Os 15 maiores pares origem → destino de soja e milho nas ferrovias, em toneladas úteis no ano',
       { legend: Charts.legendHtml([['Soja', Charts.C.deep], ['Milho', Charts.C.bright]]), fonte: fonte(mm(), /SIADE/),
         note: 'Pares por estação ferroviária; açúcar, farelo de soja e fertilizantes ficam de fora.' });
   }
@@ -96,7 +97,7 @@ const Cargas = (() => {
     if (!prods.length) return '';
     if (!sh4 || !prods.some(p => p.sh4 === sh4)) sh4 = (prods.find(p => p.sh4 === '1201') || prods[0]).sh4;
     const e = mm().exportacao;
-    return card('c-exp', `Exportação ${e.ano} por URF de despacho`, 'As 12 maiores unidades da Receita no despacho do produto escolhido, e de onde vem a mercadoria', {
+    return card('c-exp', `Exportação de ${e.ano} por unidade da Receita Federal de despacho (URF)`, 'As 12 maiores unidades da Receita no despacho do produto escolhido, e de onde vem a mercadoria', {
       wide: true, fonte: fonte(mm(), /Comex/), note: 'A URF é a unidade da Receita onde a exportação foi despachada, não necessariamente o ponto de saída rodoviário; UF = origem da mercadoria.',
       legend: `<div class="toolbar"><label class="sub" for="exp-sh4">Produto</label><select id="exp-sh4">${prods.map(p =>
         `<option value="${esc(p.sh4)}"${p.sh4 === sh4 ? ' selected' : ''}>${esc(p.nome)} (SH4 ${esc(p.sh4)})</option>`).join('')}</select></div>`,
@@ -107,21 +108,22 @@ const Cargas = (() => {
     const r = IM.fretesRows(intel);
     if (!r.length) return '';
     const ufs = [...new Set(r.map(x => x.uf_o).filter(Boolean))].sort();
-    return card('c-fretes', `Fretes rodoviários de grãos, ${mm().fretes.mes}`, 'Clique no cabeçalho para ordenar; R$/t·km = R$/t ÷ distância', {
+    return card('c-fretes', `Fretes rodoviários de grãos, ${mm().fretes.mes}`, 'Rotas pesquisadas pela CONAB, em R$ por tonelada; clique no cabeçalho para ordenar; R$/t·km = R$/t ÷ distância', {
       wide: true, fonte: fonte(mm(), /CONAB/),
       note: '"Origem aproximada": no boletim, a origem vem numa célula mesclada e foi atribuída por proximidade. ' +
         '"Distância suspeita na fonte": o km do boletim é menor que 0,9 vez ou maior que 3 vezes a linha reta entre as sedes dos municípios ' +
         '(ou origem e destino são o mesmo município); nessas rotas o R$/t·km não é calculado e elas ficam no fim da tabela.',
       legend: `<div class="toolbar"><label class="sub" for="frete-uf">UF de origem</label><select id="frete-uf"><option value="">Todas</option>${ufs.map(u => `<option>${esc(u)}</option>`).join('')}</select>
         <span class="page__src" id="frete-n"></span></div>`,
-      html: '<div class="table-wrap" style="max-height:480px"><table class="grid" id="frete-table"></table></div>' });
+      html: '<div class="table-wrap" style="max-height:480px"><table class="grid" id="frete-table" data-csv-name="fretes"></table></div>' });
   }
 
   function cargaCard() {
     const c = IM.cargaOf(intel);
     if (!c || !IM.cargaTop(intel, snv, 1).length) return '';
-    return card('c-pnl', 'Trechos com maior carga agrícola', `Os 15 trechos físicos com mais granel sólido agrícola por ano (${c.cenario || 'PNL 2035'}, ano-base ${c.ano_base}); clique para ver no mapa`,
-      { wide: true, fonte: fonte(c, /PNL/), note: 'Estimativa de modelo de alocação em rede, não contagem.' });
+    return card('c-pnl', 'Trechos de rodovias federais com maior carga agrícola', null,
+      { subHtml: `Os 15 ${Glossario.link('trecho-fisico', 'trechos físicos')} com mais granel sólido agrícola por ano (${esc(c.cenario || 'PNL 2035')}, ano-base ${esc(c.ano_base)}); clique para ver no mapa`,
+        wide: true, fonte: fonte(c, /PNL/), note: 'Estimativa de modelo de alocação em rede, não contagem.' });
   }
 
   // ---------- Desenho ----------
@@ -133,7 +135,7 @@ const Cargas = (() => {
       { width: width(bars), labelWidth: 280, names: [nome], colors: [Charts.C.deep], format: v => IM.fmtT(v), title: `Exportação de ${nome} por URF` });
     bars.dataset.sh4 = sh4;
     const m = IM.exportMatriz(intel, sh4, 10, 8);
-    mat.innerHTML = `<table class="grid grid--static"><thead><tr><th>UF</th>${m.urfs.map(u => `<th class="num">${esc(u)}</th>`).join('')}</tr></thead><tbody>${
+    mat.innerHTML = `<table class="grid grid--static" data-csv-name="cargas-matriz-uf-urf"><thead><tr><th>UF</th>${m.urfs.map(u => `<th class="num">${esc(u)}</th>`).join('')}</tr></thead><tbody>${
       m.ufs.map((uf, a) => `<tr><td>${esc(uf)}</td>${m.m[a].map(v => `<td class="num">${IM.fmtMt(v)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
   }
 
@@ -155,7 +157,7 @@ const Cargas = (() => {
     const el = box('c-pnl');
     if (!el) return;
     const list = IM.cargaTop(intel, snv, 15), max = list.length ? list[0].gsa : 1;
-    el.innerHTML = `<div class="table-wrap table-wrap--static"><table class="grid grid--static grid--rows" id="pnl-table"><thead><tr><th>BR/UF</th><th>Trecho (início → fim)</th><th class="num">Carga agrícola por ano</th><th><span class="visually-hidden">Proporção</span></th></tr></thead><tbody>${
+    el.innerHTML = `<div class="table-wrap table-wrap--static"><table class="grid grid--static grid--rows" id="pnl-table" data-csv-name="cargas-pnl"><thead><tr><th>BR/UF</th><th>Trecho (início → fim)</th><th class="num">Carga agrícola por ano</th><th><span class="visually-hidden">Proporção</span></th></tr></thead><tbody>${
       list.map(r => `<tr tabindex="0" data-k="${r.j}" title="Ver no mapa"><td class="name">${esc(r.br)}/${esc(r.uf)}</td><td class="wrap">${esc(r.ini)} → ${esc(r.fim)}</td>
         <td class="num">${IM.fmtT(r.gsa)}</td><td class="bar-cell"><span style="width:${(r.gsa / max * 100).toFixed(1)}%"></span></td></tr>`).join('')}</tbody></table></div>`;
     onRows(el, openFis);
@@ -206,7 +208,7 @@ const Cargas = (() => {
     const cards = [kpisCard(), prodCard(), munCard(), siadeCard(), expCard(), fretesCard(), cargaCard()].join('');
     el.innerHTML = `<div class="page__inner">
       <h1 class="page__title">Cargas agrícolas e logística</h1>
-      <p class="page__lead">Onde se produz (IBGE PAM e Estoques), por onde se exporta (Comex Stat), o que vai de trem (SIADE), quanto custa o frete rodoviário (CONAB) e quais trechos federais carregam mais grãos segundo o modelo do PNL. Cada cartão diz a fonte, o período e se o dado é medido ou modelado.</p>
+      <p class="page__lead">Onde se produz (IBGE ${Glossario.link('pam', 'PAM')} e Estoques), por onde se exporta (Comex Stat), o que vai de trem (SIADE), quanto custa o frete rodoviário (CONAB) e quais trechos federais carregam mais grãos segundo o modelo do ${Glossario.link('pnl', 'PNL')}. Cada cartão diz a fonte, o período e se o dado é ${Glossario.link('medido-modelado', 'medido ou modelado')}.</p>
       ${cards ? `<div class="grid-cards">${cards}</div>` : '<p class="empty">Os dados de cargas (blocos agro, multimodal e carga) não estão neste arquivo.</p>'}</div>`;
     if (cards) draw();
   }

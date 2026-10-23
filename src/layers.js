@@ -1,5 +1,5 @@
-// Camadas de sobreposição do mapa (v3): estaduais, praças, SATs, obras, ferrovias, portos/ETCs, fluxos SIADE, fundo municipal
-// e (v3.1) Rotas de Integração Sul-Americana (países vizinhos, linhas das 5 rotas com rótulo direto, hidrovias, cabotagem).
+// Camadas de sobreposição do mapa: estaduais, praças, SATs, obras, ferrovias, portos/ETCs, fluxos SIADE, fundo municipal
+// e Rotas de Integração Sul-Americana (países vizinhos, linhas das 5 rotas com rótulo direto, hidrovias, cabotagem).
 // Cada camada tem pane e renderer canvas próprios e só é construída quando ligada pela 1ª vez. Os panes não recebem eventos:
 // o clique em ponto e em concessão estadual é resolvido aqui por distância em pixels (antes de chegar ao canvas das rodovias)
 // e o clique em município pelo evento de clique do mapa quando nenhuma rodovia foi atingida.
@@ -14,13 +14,14 @@ const Layers = (() => {
   // Rótulo de país: o dado guarda o polo de inacessibilidade; no mapa, o rótulo vai para o ponto livre mais próximo das linhas
   // das rotas (IntelModel.paisLabelPoint), com a caixa do texto medida no zoom do enquadramento (≈ 11,4 px por grau no zoom 4).
   // Mantida fixa: medir no zoom real de telas menores (3,5, ≈ 8 px/°) aumenta a caixa e empurra Bolívia, Colômbia e Guiana para
-  // cima dos rótulos vizinhos (paisLabelPoint não evita outros rótulos); nessas telas a legenda das rotas começa recolhida (ui.js).
+  // cima dos rótulos de rota; nessas telas a legenda das rotas começa recolhida (ui.js). Entre rótulos de país (ex.: SR e GF),
+  // a caixa vale no zoom mínimo: os já colocados são evitados também em telas menores.
   const PX_GRAU = 11.4, pais_hw = t => (t.length * 4.3 + 6) / PX_GRAU, PAIS_HH = 12 / PX_GRAU;
   const LADO_DIR = { n: ['top', [0, -8]], s: ['bottom', [0, 8]], e: ['right', [8, 0]], w: ['left', [-8, 0]],
     nw: ['left', [-8, -8]], sw: ['left', [-8, 8]], ne: ['right', [8, -8]], se: ['right', [8, 8]] };
   const POINT_KEYS = ['pracas', 'portos', 'sats', 'obras']; // de cima para baixo (prioridade do clique)
   const HIT_PAD = 3, LINE_TOL = 5;
-  // Malha estadual no modo Tráfego (v3.1): linhas com VMDa 2025 na rampa e nas classes do modo (quebras da malha federal),
+  // Malha estadual no modo Tráfego: linhas com VMDa 2025 na rampa e nas classes do modo (quebras da malha federal),
   // com espessura × EST_TRAF.weightFactor (0,55) da federal na mesma classe; sem dado em EST_NONE, cinza fino contínuo (o
   // "sem dado" federal é tracejado). Os dois estilos ficam em styles-map.js (docs/paleta.md).
   let map = null, intel = null, trafBreaks = null;
@@ -44,20 +45,23 @@ const Layers = (() => {
       fonte: () => `${IM.fonteRef(est().fonte, /./)} · concessões estaduais em magenta com halo (ARTESP, AGERGS e demais agências)` +
         (IM.estTrafego(intel) ? ` · no modo Tráfego, coloridas pelo VMDa ${IM.estTrafego(intel).ano} (DNIT, modelado)` : '') },
     { key: 'pracas', label: 'Praças de pedágio', has: () => !!antt('pracas'), n: () => rowsOf('pracas').filter(hasLatLng).length,
-      fonte: () => `${fonteAntt(/Praças de pedágio/)} · VMD 2025, contagem medida; círculo ∝ √VMD` },
-    { key: 'sats', label: 'SATs', has: () => !!antt('sats'), n: () => rowsOf('sats').filter(hasLatLng).length,
+      fonte: () => `${fonteAntt(/Praças de pedágio/)} · ${IM.comAno('VMD', IM.anoPracas(intel))}, contagem medida; círculo ∝ √VMD` },
+    { key: 'sats', label: 'Contadores de tráfego (SAT)', has: () => !!antt('sats'), n: () => rowsOf('sats').filter(hasLatLng).length,
       fonte: () => `${fonteAntt(/SAT/)} · contagem medida nos equipamentos de contagem` },
-    { key: 'obras', label: 'Obras ANTT', has: () => !!antt('obras'), n: () => rowsOf('obras').filter(hasLatLng).length,
+    { key: 'obras', label: 'Obras nas concessões federais', has: () => !!antt('obras'), n: () => rowsOf('obras').filter(hasLatLng).length,
       fonte: () => `${fonteAntt(/Acompanhamento/)} · obras com localização` },
     { key: 'ferrovias', label: 'Ferrovias em operação', has: () => ferrovias().length > 0, n: () => ferrovias().length,
       fonte: () => fonteMm(/BaseFerro|Ferro/) },
-    { key: 'portos', label: 'Portos e ETCs', has: () => !!mm('portos'), n: () => shownPortos().length,
-      fonte: () => `${fonteMm(/ANTAQ/)} · Porto Organizado, Porto público, TUP e ETC` },
+    { key: 'portos', label: 'Portos e terminais', has: () => !!mm('portos'), n: () => shownPortos().length,
+      fonte: () => `${fonteMm(/ANTAQ/)} · ${Object.values(IM.PORTO_TIPOS).join(', ').replace(/, ([^,]*)$/, ' e $1')}` },
     { key: 'siade', label: 'Fluxos ferroviários de grãos', has: () => !!(mm('siade') && mm('siade').length), n: () => mm('siade').length,
       fonte: () => `${fonteMm(/SIADE/)} · origem → destino, espessura ∝ toneladas` },
     { key: 'rotas', label: 'Rotas de Integração Sul-Americana', has: () => !!rotas(), n: () => rotas().rotas.length,
-      fonte: () => `${IM.fonteRef(rotas().fonte, /Apresentação/)} · traçado esquemático e obras (slides da apresentação de 01/07/2026); ` +
-        'descrição das rotas dos relatórios 2024 e 2025 do MPO' },
+      fonte: () => {
+        const d = IM.rotasDocs(rotas()), rel = d.relatorios.join(', ').replace(/, ([^,]*)$/, ' e $1');
+        return `${IM.fonteRef(rotas().fonte, /Apresentação/)} · traçado esquemático e obras (slides da apresentação${d.apresentacao ? ` de ${d.apresentacao}` : ''}); ` +
+          `descrição das rotas ${d.relatorios.length > 1 ? 'dos relatórios' : 'do relatório'}${rel ? ` ${rel}` : ''} do MPO`;
+      } },
   ];
   const def = key => DEFS.find(d => d.key === key) || null;
   const hasLatLng = r => finite(r.lat) && finite(r.lon);
@@ -115,7 +119,8 @@ const Layers = (() => {
         m = L.circleMarker(ll, { renderer: rend, interactive: false, radius: rad, stroke: false, fillColor: st.fillColor, fillOpacity: st.fillOpacity });
       } else {
         rad = st.radius;
-        const Ctor = PORTO_QUADRADO.has(r.tipoLabel) ? SquareMarker : L.CircleMarker;
+        // forma do marcador pelo dicionário de tipos (IntelModel.PORTO_FORMA): portos em quadrado, terminais e estações em círculo
+        const Ctor = IM.PORTO_FORMA[r.tipo] === 'quadrado' ? SquareMarker : L.CircleMarker;
         m = new Ctor(ll, { renderer: rend, interactive: false, radius: rad, fillColor: st.fillColor, fillOpacity: st.fillOpacity, color: st.color, weight: st.weight });
       }
       group.addLayer(m);
@@ -246,19 +251,30 @@ const Layers = (() => {
   // trechos em pavimentação e em estudos por cima; rótulo direto "Rota N · Nome" (texto na cor de texto, amostra na cor da rota).
   function buildRotas() {
     const R = rotas(), group = L.layerGroup(), ls = IM.rotaLinhas(R), rend = renderer('rotas');
-    const P = ROTAS_PAIS, rp = renderer('paises'), todasLinhas = ls.map(l => l.ll);
+    const P = ROTAS_PAIS, rp = renderer('paises'), todasLinhas = ls.map(l => l.ll), ocupados = [];
+    const escMin = PX_GRAU / (256 * 2 ** map.getMinZoom() / 360);  // px por grau no zoom 4 ÷ no zoom mínimo
+    const comRotulo = [];
     for (const p of R.paises || []) {
       const rings = IM.paisAneis(p);
       if (!rings.length) continue;
       group.addLayer(L.polygon(rings.map(r => [r]), { renderer: rp, interactive: false, color: P.color, weight: P.weight, opacity: P.opacity,
         fillColor: P.fillColor, fillOpacity: P.fillOpacity, smoothFactor: 1 }));
       if (Array.isArray(p.label)) {
-        const t = document.createElement('span');
-        t.textContent = IM.paisLabel(p);
-        const at = IM.paisLabelPoint(p, todasLinhas, { hw: pais_hw(t.textContent), hh: PAIS_HH });
-        group.addLayer(L.tooltip({ permanent: true, direction: 'center', className: 'uf-label pais-label', pane: 'l-paisLabels', interactive: false })
-          .setLatLng(at).setContent(t));
+        const [s, w, n, e] = IM.ringsBBox(rings);
+        comRotulo.push({ p, area: (n - s) * (e - w) });
       }
+    }
+    // Rótulos fora das linhas das rotas e dos rótulos de país já colocados. Os países menores escolhem primeiro (têm menos
+    // lugares livres): nas Guianas, a Guiana Francesa e o Suriname ficam no lugar e a Guiana se afasta. Entre rótulos, a caixa
+    // vale no zoom mínimo do mapa (em graus, maior que a medida no zoom 4).
+    for (const { p } of comRotulo.sort((a, b) => a.area - b.area)) {
+      const t = document.createElement('span');
+      t.textContent = IM.paisLabel(p);
+      const hw = pais_hw(t.textContent), caixa = { hw: hw * escMin, hh: PAIS_HH * escMin };
+      const at = IM.paisLabelPoint(p, todasLinhas, { hw, hh: PAIS_HH, ocupados, caixa });
+      if (at) ocupados.push({ lat: at[0], lng: at[1], hw: caixa.hw, hh: caixa.hh });
+      group.addLayer(L.tooltip({ permanent: true, direction: 'center', className: 'uf-label pais-label', pane: 'l-paisLabels', interactive: false })
+        .setLatLng(at).setContent(t));
     }
     const lines = (tipo, rota) => ls.filter(l => l.tipo === tipo && (rota === undefined || l.rota === rota)).map(l => l.ll);
     const extra = tipo => {

@@ -1,0 +1,10 @@
+{
+ "nota": "Classificação de exemplo para os testes (emissores inventados).",
+ "emissores": [
+  {"nome": "Emissora Teste Rodovias", "subsetor": "rodovias", "grupo": "Grupo Teste",
+   "nomes": ["EMISSORA TESTE RODOVIAS S.A.", "TESTE RODOVIAS"]},
+  {"nome": "Ferrovia Exemplo", "subsetor": "ferrovias", "grupo": null,
+   "nomes": ["FERROVIA EXEMPLO S/A", "FERROVIA EXEMPLO"]}
+ ],
+ "fora_do_universo": ["LOCADORA FICTICIA"]
+}

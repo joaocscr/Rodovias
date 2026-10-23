@@ -29,14 +29,28 @@ async function openPage(errs, ext, transform, viewport = { width: 1440, height: 
   const p = await context.newPage();
   p.on('pageerror', e => errs.push(e.message));
   p.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
-  await p.goto('file://' + HTML);
+  await p.goto('file://' + HTML + '#mapa');  // a página inicial é o Resumo; estes testes partem do mapa
   await p.waitForSelector('#kpi-km');
   return p;
 }
 
+// Anos e períodos dos blocos, lidos do INTEL da página: os rótulos da tela seguem o dado, e o teste também (os valores
+// conferidos estão em tests/test_dados_conferidos.py). v25: VMDa do DNIT (bloco vmda2025); v23: VMDa da Infra S.A.
+// (trafego); pnl: ano-base do PNL; pracas: ano do VMD das praças da ANTT; pam/arm: IBGE PAM e Estoques.
+let A;
+const anosDe = p => p.evaluate(() => {
+  const I = window.INTEL, IM = IntelModel;
+  return { v25: I.vmda2025 && I.vmda2025.ano, v23: I.trafego.vmda.ano, pnl: I.carga.ano_base, pracas: I.antt.pracas.ano, pam: I.agro.ano,
+    arm: I.agro.armazenagem.periodo, perPracas: I.antt.fonte.find(f => /Praças de pedágio/.test(f.nome)).periodo,
+    mes0: IM.monthLabel(I.antt.pracas.serie_meses[0]), abcr0: IM.monthLabel(I.trafego.abcr.meses[0]),
+    agendado: window.CONC.estados.find(x => x.key === 'agendado2026').label,
+    notaRotas: IM.rotasNota(I.rotas), apresentacao: IM.rotasDocs(I.rotas).apresentacao };
+});
+
 before(async () => {
   browser = await chromium.launch();
   page = await openPage(errors, external);
+  A = await anosDe(page);
 });
 after(async () => { await browser?.close(); });
 
@@ -53,6 +67,38 @@ test('título da página e do topo', async () => {
   assert.equal(await page.title(), 'Rodovias do Brasil · Centro de Inteligência');
   assert.equal((await page.textContent('.topbar__title')).trim(), 'Rodovias do Brasil · Centro de Inteligência');
   assert.match(await page.textContent('.topbar__sub'), /SNV .*RoadShow/);
+});
+
+// Título e linha de origem (malha e concessões) legíveis sem passar o mouse: nada cortado, em telas largas e no celular,
+// com as 10 abas (a barra de abas rola dentro do topo).
+test('topo: título e linha de origem sem corte em 1440, 1280, 1024 e 390 px, com 10 abas', async () => {
+  for (const width of [1440, 1280, 1024, 390]) {
+    const context = await browser.newContext({ viewport: { width, height: 800 } });
+    await context.route('**/*', r => (/^(file|data):/.test(r.request().url()) ? r.continue() : r.abort()));
+    const p = await context.newPage();
+    await p.goto('file://' + HTML + '#mapa');
+    await p.waitForSelector('#kpi-km');
+    for (const abas of [10]) {
+      const r = await p.evaluate(abas => {
+        const nav = document.getElementById('tabs');
+        if (nav.children.length !== abas) throw new Error(`esperava ${abas} abas, há ${nav.children.length}`);
+        const m = el => ({ sw: el.scrollWidth, cw: el.clientWidth, sh: el.scrollHeight, ch: el.clientHeight, vis: el.offsetParent !== null });
+        const sub = document.getElementById('topbar-sub'), map = document.getElementById('map').getBoundingClientRect();
+        return { titulo: m(document.querySelector('.topbar__titles')), sub: m(sub), txt: sub.innerText, doc: document.documentElement.scrollWidth,
+          vw: innerWidth, mapTop: map.top, subBottom: sub.getBoundingClientRect().bottom };
+      }, abas);
+      const tag = `${width} px, ${abas} abas`;
+      for (const k of ['titulo', 'sub']) {
+        assert.ok(r[k].vis, `${tag}: ${k} visível`);
+        assert.ok(r[k].sw <= r[k].cw, `${tag}: ${k} cortado na largura ${JSON.stringify(r[k])}`);
+      }
+      assert.ok(r.sub.sh <= r.sub.ch, `${tag}: linha de origem cortada na altura ${JSON.stringify(r.sub)}`);
+      assert.match(r.txt, /Malha rodoviária federal: SNV \S+ \(DNIT\) · Concessões: RoadShow/, tag);
+      assert.ok(r.doc <= r.vw, `${tag}: página alargou`);
+      assert.ok(Math.abs(r.mapTop - r.subBottom) < 1, `${tag}: o mapa começa logo abaixo da linha de origem`);
+    }
+    await context.close();
+  }
 });
 
 test('(a) seletor "Cor das rodovias" com os 6 rótulos na ordem, acessível', async () => {
@@ -92,9 +138,9 @@ test('(b, c) modo Tráfego: legenda com 5 faixas, "Sem dado" e "Estimativa de mo
   assert.match(t, /Estimativa de modelo/);
   assert.match(t, /veíc\.\/dia/);
   // v3.1: Tráfego colorido pelo VMDa 2025 (DNIT, modelado), com o ano visível no título e na fonte
-  assert.match(await page.textContent('#legend .legend__title'), /VMDa 2025, modelado/);
-  assert.match(await page.textContent('#legend .legend__src'), /DNIT, VMDa 2025 \(modelado\)/);
-  assert.doesNotMatch(t, /VMDa 2023/);
+  assert.ok((await page.textContent('#legend .legend__title')).includes(`VMDa ${A.v25}, modelado`));
+  assert.ok((await page.textContent('#legend .legend__src')).includes(`DNIT, VMDa ${A.v25} (modelado)`));
+  assert.ok(!t.includes(`VMDa ${A.v23}`));
   // camada de estaduais desligada: a legenda não fala delas
   assert.doesNotMatch(t, /estaduais/i);
   // faixas "a – b" formatadas, contíguas
@@ -151,10 +197,10 @@ test('(d) KPI de veíc·km com filtro UF = MT bate com o modelo', async () => {
   });
   assert.equal((await page.textContent('#kpi-vkm')).trim(), expected.vkm);
   assert.notEqual(expected.vkm, '—');
-  assert.equal(expected.ano, 2025);
+  assert.equal(expected.ano, A.v25);
   assert.ok(expected.ok25);
   const sub = await page.locator('#kpi-vkm').evaluate(e => e.nextElementSibling.textContent);
-  assert.ok(sub.startsWith(`${expected.pct} pesados (estimativa: % de 2023) · Tráfego VMDa 2025, modelado`), sub);
+  assert.ok(sub.startsWith(`${expected.pct} pesados (estimativa: % de ${A.v23}) · Tráfego VMDa ${A.v25}, modelado`), sub);
   assert.match(await page.textContent('#kpi-acid'), /\d/);
   assert.match(await page.textContent('#kpi-tkm'), /t·km\/ano/);
   // cobertura sobre os km pavimentados da seleção
@@ -187,12 +233,13 @@ test('(e) cartão de físico com VMDa mostra o bloco "Tráfego e segurança"', a
   const t = await page.textContent('#card');
   assert.match(t, /Tráfego e segurança/);
   assert.match(t, /veíc\.\/dia/);
-  assert.match(t, /VMDa 2023 · modelado · leves e pesados/);
+  assert.ok(t.includes(`VMDa ${A.v23} · modelado · leves e pesados`));
   // v3.1: VMDa 2025 total e por sentido; pesados 2025 rotulados "estimativa"; bloco 2023 leves/pesados mantido
   const subs = await page.$$eval('#card .card__intel dt.card__sub', ds => ds.map(d => d.textContent));
   // grupos paralelos: "VMDa <ano> · modelado · <o que traz>"
-  assert.ok(subs.some(s => s === 'VMDa 2025 · modelado · total e por sentido'), subs.join(' | '));
-  assert.ok(subs.some(s => s === 'VMDa 2023 · modelado · leves e pesados'), subs.join(' | '));
+  const G25 = `VMDa ${A.v25} · modelado · total e por sentido`, G23 = `VMDa ${A.v23} · modelado · leves e pesados`;
+  assert.ok(subs.some(s => s === G25), subs.join(' | '));
+  assert.ok(subs.some(s => s === G23), subs.join(' | '));
   const k25 = await page.evaluate(j => {
     const f = window.INTEL.vmda2025.fis, x = IntelModel.fisIntel(window.INTEL, window.SNV, j);
     return { t: IntelModel.fmtVmd(f.t[j]), c: IntelModel.fmtVmd(f.c[j]), d: IntelModel.fmtVmd(f.d[j]), pes: IntelModel.fmtVmd(x.pes25),
@@ -207,16 +254,15 @@ test('(e) cartão de físico com VMDa mostra o bloco "Tráfego e segurança"', a
     }
     return out;
   });
-  const G25 = 'VMDa 2025 · modelado · total e por sentido', G23 = 'VMDa 2023 · modelado · leves e pesados';
   assert.equal(rows25[`${G25}|Total`], k25.t);
   assert.equal(rows25[`${G25}|Sentido crescente (SNV)`], k25.c);
   assert.equal(rows25[`${G25}|Sentido decrescente (SNV)`], k25.d);
   assert.equal(rows25[`${G25}|Pesados (estimativa)`], k25.pes);
   assert.equal(rows25[`${G23}|Leves`], k25.l);
   assert.equal(rows25[`${G23}|Pesados`], k25.p);
-  assert.match(t, /Pesados \(estimativa\) = total 2025 × [\d,]+% de pesados no VMDa 2023 do trecho/);
+  assert.match(t, new RegExp(`Pesados \\(estimativa\\) = total ${A.v25} × [\\d,]+% de pesados no VMDa ${A.v23} do trecho`));
   assert.equal(await page.locator('#card .card__flag[data-ns]').count(), 0);
-  assert.match(t, /modelo PNL, 2017/);
+  assert.ok(t.includes(`modelo PNL, ${A.pnl}`));
   assert.match(t, /10⁶ veíc·km/);
   // veíc·km/dia do trecho, acidentes por km por ano e carga total do PNL
   const f = await page.evaluate(j => {
@@ -243,10 +289,21 @@ test('cartão de trecho planejado (PLA) marca tráfego e acidentes como "trecho 
   await page.waitForSelector('#card:not([hidden])');
   const tags = await page.$$eval('#card .card__intel .card__sub .tag-nv', ts => ts.map(t => t.textContent));
   assert.ok(tags.length >= 1 && tags.every(t => t === 'trecho planejado no SNV'), tags.join());
+  // trecho planejado com valores: uma nota explica de onde vêm os números (estrada existente no traçado)
+  const nota = await page.$$eval('#card .card__intel [data-pla]', ns => ns.map(n => n.textContent));
+  assert.equal(nota.length, 1);
+  assert.match(nota[0], /ainda não foi implantada/);
+  assert.match(nota[0], /estrada que já existe nesse traçado/);
+  await page.click('#card-close');
+  // trecho pavimentado: sem a nota
+  const k = await page.evaluate(() => window.SNV.fis.findIndex((_, j) => IntelModel.fisSup(window.SNV, j) === 'PAV' && window.INTEL.trafego.vmda.l[j] != null));
+  await page.evaluate(k => MapView.pick(k), k);
+  await page.waitForSelector('#card:not([hidden])');
+  assert.equal(await page.locator('#card [data-pla]').count(), 0);
   await page.click('#card-close');
 });
 
-test('v3.1: trecho "não simulável" no VMDa 2025 mostra "uso restrito (área urbana)" no cartão', async () => {
+test('trecho "não simulável" no VMDa 2025 mostra "uso restrito (área urbana)" no cartão', async () => {
   const j = await page.evaluate(() => {
     const f = window.INTEL.vmda2025.fis;
     return window.SNV.fis.findIndex((_, j) => f.ns[j] === 1 && f.t[j] != null);
@@ -278,9 +335,9 @@ test('(f) modos Acidentes e Carga mudam a legenda', async () => {
   assert.match(carga, /PNL/);
   await mode('pesados');
   assert.match(await legend(), /Pesados/);
-  // Pesados segue o VMDa 2023 (leves/pesados), rotulado 2023
-  assert.match(await page.textContent('#legend .legend__title'), /VMDa 2023, modelado/);
-  assert.match(await page.textContent('#legend .legend__src'), /VMDa 2023/);
+  // Pesados segue o VMDa da Infra S.A. (leves/pesados), rotulado com o ano dele
+  assert.ok((await page.textContent('#legend .legend__title')).includes(`VMDa ${A.v23}, modelado`));
+  assert.ok((await page.textContent('#legend .legend__src')).includes(`VMDa ${A.v23}`));
   assert.equal(await page.evaluate(() => MapView.colorMode()), 'pesados');
 });
 
@@ -309,10 +366,10 @@ test('(g) troca de modo em menos de 300 ms', async t => {
   }
 });
 
-test('(i) volta ao modo Concessões com legenda e halo da v2', async () => {
+test('(i) volta ao modo Concessões com legenda e halo', async () => {
   await mode('concessoes');
   assert.equal(await page.evaluate(() => MapView.colorMode()), 'concessoes');
-  assert.match(await legend(), /Leilão agendado 2026/);
+  assert.ok((await legend()).includes(A.agendado));
   assert.ok(await page.evaluate(() => MapView.haloCount()) > 0);
 });
 
@@ -334,7 +391,7 @@ test('sem window.INTEL tudo degrada para "sem dado"', async () => {
 });
 
 // ---------- Task 10: camadas de sobreposição e cartões de ponto ----------
-const LAYER_LABELS = ['Praças de pedágio', 'SATs', 'Obras ANTT', 'Ferrovias em operação', 'Portos e ETCs', 'Fluxos ferroviários de grãos'];
+const LAYER_LABELS = ['Praças de pedágio', 'Contadores de tráfego (SAT)', 'Obras nas concessões federais', 'Ferrovias em operação', 'Portos e terminais', 'Fluxos ferroviários de grãos'];
 const layerBox = key => page.locator(`#layers-section input[data-layer="${key}"]`);
 async function setLayer(p, key, on) {
   const box = p.locator(`#layers-section input[data-layer="${key}"]`);
@@ -350,7 +407,7 @@ test('(a) seção Camadas acima de Filtros, aberta, com os rótulos, fontes e no
   assert.match(t, /Camadas/);
   for (const l of LAYER_LABELS) assert.ok(t.includes(l), l);
   for (const l of ['Fundo municipal', 'Nenhum', 'Soja', 'Milho', 'Cana', 'Algodão', 'Café', 'Trigo', 'Armazenagem']) assert.ok(t.includes(l), l);
-  assert.match(t, /Medido: praças, SATs \(ANTT\), PAM, Estoques\. Modelado: VMDa, carga PNL\./);
+  assert.match(t, /Medido: praças e contadores de tráfego \(SAT\) da ANTT, PAM, Estoques\. Modelado: VMDa, carga PNL\./);
   // todas desligadas por padrão; fundo = Nenhum
   assert.equal(await page.locator('#layers-section input[data-layer]:checked').count(), 0);
   assert.equal(await page.locator('#layers-section input[name="fundo"]:checked').getAttribute('value'), '');
@@ -474,12 +531,12 @@ test('(b) Praças: ≥ 230 pontos; cartão da maior VMD com veíc./dia, gráfico
   const t = await page.textContent('#card');
   assert.ok(t.includes(top.nome));
   assert.match(t, /veíc\.\/dia/);
-  assert.match(t, /VMD 2025/);
+  assert.ok(t.includes(`VMD ${A.pracas}`));
   assert.match(t, /% pesados/);
   assert.match(t, /Eixos médios do comercial/);
-  assert.match(t, /Receita 2025/);
+  assert.ok(t.includes(`Receita ${A.pracas}`));
   assert.match(t, /Contagem medida · ANTT/);
-  assert.match(t, /jan\/2024 a ago\/2026/);
+  assert.ok(t.includes(A.perPracas), A.perPracas);
   assert.ok(await page.locator('#card svg.chart path.line').count() >= 2);
   assert.match(await page.locator('#card svg.chart title').first().textContent(), /^Leves [a-z]{3}\/\d{4}: /);
   assert.equal(await page.locator('#card a[href^="#ficha/"]').count(), top.ficha ? 1 : 0);
@@ -540,16 +597,19 @@ test('cartão do trecho lista "Medições no trecho" e abre o cartão da praça'
   await page.click('#card-close');
 });
 
-test('SATs e Obras: cartões com período, % pesados e previsto × executado', async () => {
+test('Contadores de tráfego (SAT) e obras: cartões com período, % pesados e previsto × executado', async () => {
   await setLayer(page, 'sats', true);
   await setLayer(page, 'obras', true);
   assert.ok(await page.evaluate(() => Layers.count('sats')) >= 400);
   assert.ok(await page.evaluate(() => Layers.count('obras')) >= 900);
-  const i = await page.evaluate(() => Layers.rowsOf('sats').findIndex(r => r.periodo && r.periodo.includes('/')));
-  await page.evaluate(i => Layers.open('sats', i), i);
+  const sat = await page.evaluate(() => {
+    const rows = Layers.rowsOf('sats'), i = rows.findIndex(r => r.periodo && r.periodo.includes('/'));
+    return { i, per: rows[i].periodo.split('/').map(IntelModel.monthLabel).join(' a ') };
+  });
+  await page.evaluate(i => Layers.open('sats', i), sat.i);
   let t = await page.textContent('#card');
   assert.match(t, /% pesados/); assert.match(t, /% motos/); assert.match(t, /Período/);
-  assert.match(t, /set\/2025 a ago\/2026/);
+  assert.ok(t.includes(sat.per), sat.per);
   const o = await page.evaluate(() => Layers.items('obras')[0]);
   await page.evaluate(i => Layers.open('obras', i), o);
   t = await page.textContent('#card');
@@ -568,18 +628,34 @@ test('(c) Portos e ETCs: só os 4 tipos', async () => {
     return { n: Layers.count('portos'), tipos: [...new Set(shown)].sort(), raw: [...new Set(Layers.items('portos').map(i => rows[i].tipo))].sort() };
   });
   assert.ok(r.n > 300, String(r.n));
-  assert.deepEqual(r.tipos, ['ETC', 'Porto Organizado', 'Porto público', 'TUP']);
-  assert.deepEqual(r.raw, ['Estação de transbordo de cargas', 'Porto Organizado', 'Porto Público', 'Terminal de uso privado']);
+  // rótulos em português do dicionário (IntelModel.PORTO_TIPOS), nunca a grafia crua da ANTAQ
+  const dic = await page.evaluate(() => IntelModel.PORTO_TIPOS);
+  assert.deepEqual(r.tipos, Object.values(dic).sort());
+  assert.deepEqual(r.raw, Object.keys(dic).sort());
   const i = await page.evaluate(() => Layers.items('portos')[0]);
   await page.evaluate(i => Layers.open('portos', i), i);
   assert.match(await page.textContent('#card'), /UF/);
-  // "Porto público" × "Porto Público" (só a caixa muda): o tipo não se repete
-  const pp = await page.evaluate(() => { const rows = Layers.rowsOf('portos'); return Layers.items('portos').find(i => rows[i].tipo === 'Porto Público'); });
-  await page.evaluate(i => Layers.open('portos', i), pp);
-  assert.doesNotMatch(await page.textContent('#card .card__grid'), /Tipo ANTAQ/);
-  const tup = await page.evaluate(() => { const rows = Layers.rowsOf('portos'); return Layers.items('portos').find(i => rows[i].tipoLabel === 'TUP'); });
-  await page.evaluate(i => Layers.open('portos', i), tup);
-  assert.match(await page.textContent('#card .card__grid'), /Tipo ANTAQ/);
+  // cada tipo: o cartão mostra só o rótulo em português (uma linha "Tipo", sem a grafia da ANTAQ)
+  for (const [raw, label] of Object.entries(dic)) {
+    const k = await page.evaluate(raw => { const rows = Layers.rowsOf('portos'); return Layers.items('portos').find(i => rows[i].tipo === raw); }, raw);
+    await page.evaluate(k => Layers.open('portos', k), k);
+    const g = await page.$$eval('#card .card__grid dt', ds => ds.map(d => [d.textContent, d.nextElementSibling.textContent]));
+    assert.deepEqual(g.filter(([dt]) => /Tipo/.test(dt)), [['Tipo', label]], raw);
+    const t = await page.textContent('#card');
+    assert.doesNotMatch(t, /Tipo ANTAQ/);
+    if (!label.includes(raw)) assert.ok(!t.includes(raw), raw);
+  }
+  // ponto corrigido no script (fora da UF na fonte): o cartão diz que a localização é aproximada; os demais não
+  const ap = await page.evaluate(() => { const rows = Layers.rowsOf('portos'); return Layers.items('portos').filter(i => rows[i].aprox); });
+  const nAprox = await page.evaluate(() => window.INTEL.multimodal.portos.filter(p => p.aprox && IntelModel.portoTipo(p.tipo)).length);
+  assert.ok(nAprox > 0, 'nenhum porto com localização aproximada no modelo');
+  assert.equal(ap.length, nAprox);
+  for (const k of ap) {
+    await page.evaluate(k => Layers.open('portos', k), k);
+    assert.match(await page.textContent('#card .card__grid'), /Localização\s*aproximada/);
+  }
+  await page.evaluate(i => Layers.open('portos', i), i);
+  assert.doesNotMatch(await page.textContent('#card .card__grid'), /aproximada/);
   await page.click('#card-close');
 });
 
@@ -597,7 +673,7 @@ test('(d) Fundo Soja: legenda com 5 faixas e "IBGE PAM 2025"; Sorriso mostra a p
   await page.waitForSelector('#fundo-legend:not([hidden])');
   assert.equal(await page.locator('#fundo-legend .legend__row[data-class]').count(), 5);
   const lt = await page.textContent('#fundo-legend');
-  assert.match(lt, /IBGE PAM 2025/);
+  assert.ok(lt.includes(`IBGE PAM ${A.pam}`));
   assert.match(lt, /Soja/);
   assert.match(lt, /Sem dado ou zero/);
   const rows = await page.$$eval('#fundo-legend .legend__row[data-class] .legend__range', es => es.map(e => e.textContent));
@@ -615,7 +691,8 @@ test('(d) Fundo Soja: legenda com 5 faixas e "IBGE PAM 2025"; Sorriso mostra a p
   await page.waitForSelector('#card:not([hidden])');
   const t = await page.textContent('#card');
   assert.match(t, /Sorriso \/ MT/);
-  assert.match(t, /2\.343\.000 t|2,3 Mt/);
+  const soja = await page.evaluate(() => IntelModel.fmtInt(window.INTEL.agro.produtos.soja[window.INTEL.municipios.ids.indexOf('5107925')]));
+  assert.ok(t.includes(`${soja} t`), soja);
   assert.match(t, /Milho 2ª safra/);
   assert.match(t, /Capacidade útil/);
   assert.ok(!/NaN|undefined|null/.test(t));
@@ -653,7 +730,7 @@ test('(d) Fundo Soja: legenda com 5 faixas e "IBGE PAM 2025"; Sorriso mostra a p
   // armazenagem explica o sigilo
   await page.check('#layers-section input[name="fundo"][value="armazenagem"]');
   const at = await page.textContent('#fundo-legend');
-  assert.match(at, /IBGE Estoques 2º sem\/2025/);
+  assert.ok(at.includes(`IBGE Estoques ${A.arm}`));
   assert.match(at, /Sigilo/);
   await page.check('#layers-section input[name="fundo"][value=""]');
   assert.equal(await page.isHidden('#fundo-legend'), true);
@@ -712,13 +789,18 @@ test('(a) ficha Nova Rota do Oeste: ANTT, controladora, gráfico de receita e pr
   const t = await fichaText();
   assert.match(t, /ANTT/);
   assert.match(t, /MTPAR/);
-  for (const re of [/Controladora/, /Trecho/, /Extensão/, /850,9 km/, /12\/03\/2014/, /003\/2013/, /06\/09\/2015/, /21\/set/]) assert.match(t, re);
+  for (const re of [/Controladora/, /Trecho/, /Extensão/]) assert.match(t, re);
+  const capa = await page.evaluate(() => {
+    const c = window.INTEL.antt.capas['nova-rota-do-oeste'];
+    return { prazo: c.prazo, s: [Model.fmtKm(c.extensao_km), ConcModel.fmtData(c.assinatura), c.edital, ConcModel.fmtData(c.cobranca), c.database] };
+  });
+  for (const x of capa.s) assert.ok(t.includes(x), x);
   // prazo é o vigente (com prorrogações), em caixa baixa
   const kv = await page.$$eval('#ficha .fblock', bs => {
-    const b = bs.find(x => x.querySelector('h3').textContent === 'ANTT');
+    const b = bs.find(x => x.querySelector('h3').textContent === 'Cadastro na ANTT');
     return Object.fromEntries([...b.querySelectorAll('dt')].map(dt => [dt.textContent, dt.nextElementSibling.textContent]));
   });
-  assert.equal(kv['Prazo atual (com prorrogações)'], '30 anos');
+  assert.equal(kv['Prazo atual (com prorrogações)'], capa.prazo.toLowerCase());
   assert.ok(!('Prazo' in kv));
   const url = await page.evaluate(() => window.INTEL.antt.capas['nova-rota-do-oeste'].url);
   const link = page.locator('#ficha a', { hasText: 'Página da concessão na ANTT' });
@@ -736,17 +818,19 @@ test('(a) ficha Nova Rota do Oeste: ANTT, controladora, gráfico de receita e pr
   const vmds = exp.linhas.map(p => p.vmd);
   assert.deepEqual(vmds, [...vmds].sort((a, b) => b - a));
   assert.match(await page.textContent('#ficha-pracas tfoot'), new RegExp(exp.receita ? (await page.evaluate(v => IntelModel.fmtBRL(v), exp.receita)).replace(/[$.]/g, '\\$&') : '—'));
-  assert.match(t, /Contagem medida · ANTT 2025/);
+  assert.ok(t.includes(`Contagem medida · ANTT ${A.pracas}`));
   // série mensal leves × pesados das praças da concessão (mesma regra da aba Tráfego, filtrada pela concessão)
   const s = await page.evaluate(() => IntelModel.pracasSerie(window.INTEL, p => p.ent === 'nova-rota-do-oeste'));
   assert.ok(s.n >= 1 && s.n <= s.total && s.total === exp.linhas.length, JSON.stringify([s.n, s.total]));
   const st = await page.textContent('#ficha-pracas-serie');
   assert.ok(st.includes(`Entram ${s.n} de ${s.total} praças da concessão`), st);
-  assert.match(st, /jan\/2024 a ago\/2026/);
+  const per = await page.evaluate(m => `${IntelModel.monthLabel(m[0])} a ${IntelModel.monthLabel(m[m.length - 1])}`, s.meses);
+  assert.ok(st.includes(per), per);
   assert.equal(await page.locator('#ficha-pracas-serie svg.chart rect.cbar').count(), s.meses.length * 2);
   assert.match(await page.textContent('#ficha-pracas-serie .chart-legend'), /Leves.*Pesados/);
   const tip = await page.evaluate(v => IntelModel.fmtInt(v), s.l[0]);
-  assert.ok((await page.innerHTML('#ficha-pracas-serie')).includes(`<title>jan/2024 · Leves: ${tip} veíc./dia</title>`));
+  const mes0 = await page.evaluate(m => IntelModel.monthLabel(m), s.meses[0]);
+  assert.ok((await page.innerHTML('#ficha-pracas-serie')).includes(`<title>${mes0} · Leves: ${tip} veíc./dia</title>`));
   assert.doesNotMatch(t, /undefined|NaN/);
   await escFicha();
   assert.equal(await page.evaluate(() => location.hash), '#mapa');
@@ -985,7 +1069,11 @@ test('(e, f) Pipeline: ≥ 60 linhas por data prevista, filtros, contagem por st
   // item estadual com concessão vigente abre a ficha estadual (RS Bloco 3 → Caminhos da Serra Gaúcha), km como na ficha
   const b3 = page.locator('#pipe-table tbody tr[data-ent="rs-caminhos-da-serra-gaucha"]');
   assert.equal(await b3.count(), 1);
-  assert.equal(await b3.locator('td.num').textContent(), '271,4');
+  const kmB3 = await page.evaluate(() => {
+    const e = window.INTEL.estaduais.entidades.find(x => x.id === 'rs-caminhos-da-serra-gaucha');
+    return new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(e.km_decl);
+  });
+  assert.equal(await b3.locator('td.num').textContent(), kmB3);
   // observação: detalhe expansível na linha, sem abrir a ficha
   const nObs = await page.evaluate(() => window.INTEL.pipeline.itens.filter(i => i.obs).length);
   assert.equal(await page.locator('#pipe-table details.pipe-obs').count(), nObs);
@@ -1008,7 +1096,99 @@ test('(e, f) Pipeline: ≥ 60 linhas por data prevista, filtros, contagem por st
   await go('#mapa');
 });
 
-test('sem window.INTEL: Projetos e ficha da v2 sem esfera, pipeline nem ANTT, sem erros', async () => {
+test('Pipeline: linha do tempo de editais e leilões bate com o modelo (linhas, marcas, cores, rodapé) e o nome abre a ficha', async () => {
+  await go('#projetos');
+  const m = await page.evaluate(() => {
+    const res = IntelModel.linhaDoTempoResumo(window.CONC, window.INTEL.pipeline);
+    return { res, ficha: res.rows.map(r => !!(r.ent && Ficha.exists(r.ent))), cor: Object.fromEntries(Object.entries(PIPE_STATUS)),
+      lbl: Object.fromEntries(window.INTEL.pipeline.status.map(x => [x.key, x.label])) };
+  });
+  const { res } = m;
+  // o recorte começa no ano corrente: o número de linhas muda com o relógio e com os dados; a tela segue o modelo
+  if (!res.rows.length) { assert.equal(await page.isHidden('#pipe-timeline'), true); await go('#mapa'); return; }
+  // linhas de item só de imprensa (verificado = false no pipeline) levam "(não verificado)" no rótulo e "não oficial" na dica
+  const nvModelo = await page.evaluate(ids => ids.filter(id => window.INTEL.pipeline.itens.find(i => i.id === id).verificado === false), res.rows.map(r => r.id));
+  const marcados = await page.$$eval('#pipe-timeline svg.chart .tl-row', gs => gs.filter(g => / \(não verificado\)$/.test(g.querySelector('text[text-anchor="end"]').textContent))
+    .map(g => g.querySelector('.tl-leilao').dataset.id));
+  assert.deepEqual(marcados, nvModelo);
+  for (const id of nvModelo) assert.match(await page.$eval(`#pipe-timeline .tl-leilao[data-id="${id}"] title`, t => t.textContent), /fonte: imprensa — não oficial$/, id);
+  // cartão dentro do Pipeline, antes da tabela; título com os anos dos leilões
+  const pos = await page.evaluate(() => {
+    const c = document.getElementById('pipe-timeline'), t = document.getElementById('pipe-table');
+    return { dentro: !!c.closest('#pipeline'), antes: !!(c.compareDocumentPosition(t) & 4), hidden: c.hidden, h3: c.querySelector('h3').textContent };
+  });
+  assert.deepEqual([pos.dentro, pos.antes, pos.hidden], [true, true, false]);
+  assert.equal(pos.h3, `Linha do tempo: editais e leilões ${res.anos.de}–${res.anos.ate}`);
+  // uma linha e um losango por item do modelo, na mesma ordem; círculo só onde há edital
+  const sel = '#pipe-timeline svg.chart';
+  assert.deepEqual(await page.$$eval(`${sel} .tl-leilao`, ps => ps.map(p => p.dataset.id)), res.rows.map(r => r.id));
+  assert.equal(await page.locator(`${sel} .tl-row`).count(), res.rows.length);
+  assert.deepEqual(await page.$$eval(`${sel} .tl-edital`, cs => cs.map(c => c.dataset.id)), res.rows.filter(r => r.edital).map(r => r.id));
+  assert.equal(await page.locator(`${sel} .tl-span`).count(), res.rows.filter(r => r.edital).length);
+  // posição cresce com a data do leilão; o eixo mostra cada ano entre de e ate (do modelo)
+  const xs = await page.$$eval(`${sel} .tl-leilao`, ps => ps.map(p => Number(p.dataset.leilaoX)));
+  assert.deepEqual(xs, [...xs].sort((a, b) => a - b));
+  const anos = await page.$$eval(`${sel} .tl-ano`, ts => ts.map(t => Number(t.textContent)));
+  assert.deepEqual(anos, Array.from({ length: res.ate - res.de + 1 }, (_, k) => res.de + k));
+  // cor de cada losango e círculo = token do status; legenda com os status usados e as duas marcas
+  const rgb = h => `rgb(${[1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)).join(', ')})`;
+  const fills = await page.$$eval(`${sel} .tl-leilao`, ps => ps.map(p => getComputedStyle(p).fill));
+  fills.forEach((f, i) => assert.equal(f, rgb(m.cor[res.rows[i].status]), res.rows[i].id));
+  const strokes = await page.$$eval(`${sel} .tl-edital`, cs => cs.map(c => [getComputedStyle(c).stroke, getComputedStyle(c).fill]));
+  const comEdital = res.rows.filter(r => r.edital);
+  strokes.forEach(([st, fl], i) => { assert.equal(st, rgb(m.cor[comEdital[i].status])); assert.equal(fl, 'none'); });
+  const leg = await page.textContent('#pipe-timeline .chart-legend:first-of-type');
+  for (const k of new Set(res.rows.map(r => r.status))) assert.ok(leg.includes(m.lbl[k]), k);
+  // amostra da legenda: mesma forma e cor cheia do losango da linha (sem transparência), um por status usado
+  const usados = [...new Set(res.rows.map(r => r.status))];
+  const amostras = await page.$$eval('#pipe-timeline .chart-legend:first-of-type span', ss => ss.map(sp => {
+    const el = sp.querySelector('svg path'), cs = getComputedStyle(el);
+    return [sp.textContent.trim(), cs.fill, cs.fillOpacity, el.getAttribute('d')];
+  }));
+  assert.equal(amostras.length, usados.length);
+  const formaMarca = await page.$eval(`${sel} .tl-leilao`, p => p.getAttribute('d').match(/L/g).length);
+  amostras.forEach(([txt, fill, op, d], i) => {
+    assert.equal(txt, m.lbl[usados.find(k => m.lbl[k] === txt)], txt);
+    assert.equal(fill, rgb(m.cor[usados.find(k => m.lbl[k] === txt)]), txt);
+    assert.equal(op, '1', txt);
+    assert.equal(d.match(/L/g).length, formaMarca, txt); // losango: M + 3 L + Z, como a marca
+  });
+  assert.match(await page.textContent('#pipe-timeline'), /Edital\s*Leilão|Edital.*Leilão/);
+  // só tokens do projeto nas marcas
+  const cores = await page.$$eval(sel + ' [fill], ' + sel + ' [stroke]', els => els.flatMap(e => [e.getAttribute('fill'), e.getAttribute('stroke')]).filter(c => c && c[0] === '#'));
+  const ok = new Set(await page.evaluate(() => [...DATA_TOKENS, '#183C80', '#0071BB', '#231F20', '#525254', '#F7F7F8']));
+  for (const c of cores) assert.ok(ok.has(c.toUpperCase()), c);
+  // rodapé: itens do pipeline sem data de leilão, contados pelo modelo
+  const fora = page.locator('#pipe-timeline-fora');
+  if (res.semData) assert.match(await fora.textContent(), new RegExp(`^${res.semData}\\s`)); else assert.equal(await fora.count(), 0);
+  // data só com mês: marca "(mês)" no texto e na dica, e não nas datas completas
+  const textos = await page.$$eval(`${sel} .tl-row`, gs => gs.map(g => [...g.querySelectorAll(':scope > text')].pop().textContent));
+  res.rows.forEach((r, i) => assert.equal(/\(mês\)$/.test(textos[i]), r.leilao.length === 7, r.id));
+  assert.ok(!/NaN|undefined|null/.test(await page.innerHTML(sel)));
+  // o nome abre a ficha só nas linhas com ficha
+  const ks = await page.$$eval(`${sel} .tl-row`, gs => gs.map(g => g.dataset.k || null));
+  assert.deepEqual(ks, res.rows.map((r, i) => (m.ficha[i] ? r.ent : null)));
+  const i0 = ks.findIndex(Boolean);
+  if (i0 >= 0) { // depende dos dados: alguma linha com ficha no recorte
+    await page.locator(`${sel} .tl-row`).nth(i0).locator(':scope > text').first().click();
+    await routed(page, '#ficha/' + ks[i0]);
+    await escFicha();
+    // teclado: Enter na linha abre a ficha
+    await page.locator(`${sel} .tl-row[data-k]`).first().focus();
+    await page.keyboard.press('Enter');
+    await routed(page, '#ficha/' + ks[i0]);
+    await escFicha();
+  }
+  // linha sem ficha não navega
+  const semFicha = ks.findIndex(k => !k);
+  if (semFicha >= 0) {
+    await page.locator(`${sel} .tl-row`).nth(semFicha).locator(':scope > text').first().click();
+    assert.equal(await page.evaluate(() => location.hash), '#projetos');
+  }
+  await go('#mapa');
+});
+
+test('sem window.INTEL: Projetos e ficha sem esfera, pipeline nem ANTT, sem erros', async () => {
   const errs = [], ext = [];
   const p = await openPage(errs, ext, html => html.replace('window.INTEL=', 'window.INTEL_AUSENTE='));
   await go('#projetos', p);
@@ -1020,8 +1200,9 @@ test('sem window.INTEL: Projetos e ficha da v2 sem esfera, pipeline nem ANTT, se
   const titles = await p.$$eval('#ficha .fblock h3', hs => hs.map(h => h.textContent));
   assert.ok(!titles.some(h => /ANTT|Praças da concessão|Pipeline/.test(h)));
   await p.evaluate(() => { location.hash = '#ficha/sp-lt01-autoban'; });
-  await p.waitForFunction(() => location.hash === '#mapa' && Tabs.current().active === 'mapa' && !Ficha.isOpen());
-  assert.equal(await p.evaluate(() => location.hash), '#mapa');
+  // ficha inexistente (sem INTEL) cai na página inicial
+  await p.waitForFunction(() => location.hash === '#resumo' && Tabs.current().active === 'resumo' && !Ficha.isOpen());
+  assert.equal(await p.evaluate(() => location.hash), '#resumo');
   assert.deepEqual(errs, []);
   await p.context().close();
 });
@@ -1040,7 +1221,7 @@ test('sem window.INTEL a seção Camadas não quebra', async () => {
 });
 
 // ---------- Task 12: abas Tráfego, Cargas e Fontes ----------
-const TABS7 = ['Mapa', 'Projetos', 'Tráfego', 'Cargas', 'Mercado', 'Regulatório', 'Fontes'];
+const ABAS = ['Resumo', 'Mapa', 'Projetos', 'Tráfego', 'Cargas', 'Mercado', 'Debêntures', 'Regulatório', 'Fontes', 'Glossário'];
 // Espera a condição real (aba Mapa exibida, cartão aberto, seleção feita) em vez de um tempo fixo.
 const untilMapCard = (p, extra = 'true') => p.waitForFunction(`location.hash === '#mapa' && Tabs.current().active === 'mapa' && !document.getElementById('card').hidden && (${extra})`);
 async function goTab(p, hash) {
@@ -1048,12 +1229,12 @@ async function goTab(p, hash) {
   await p.waitForFunction(h => Tabs.current().active === h.slice(1) && document.querySelector(`#page-${h.slice(1)} .page__inner`), hash);
 }
 
-test('(a) barra de abas com as 7 abas na ordem', async () => {
+test('(a) barra de abas na ordem (Resumo primeiro, Glossário por último)', async () => {
   await page.evaluate(() => { location.hash = '#mapa'; });
   await page.waitForFunction(() => Tabs.current().active === 'mapa');
-  assert.deepEqual(await page.$$eval('#tabs a', as => as.map(a => a.textContent)), TABS7);
+  assert.deepEqual(await page.$$eval('#tabs a', as => as.map(a => a.textContent)), ABAS);
   assert.deepEqual(await page.$$eval('#tabs a', as => as.map(a => a.getAttribute('href'))),
-    ['#mapa', '#projetos', '#trafego', '#cargas', '#mercado', '#regulatorio', '#fontes']);
+    ['#resumo', '#mapa', '#projetos', '#trafego', '#cargas', '#mercado', '#debentures', '#regulatorio', '#fontes', '#glossario']);
 });
 
 test('(b) Tráfego: ≥ 5 gráficos, "Fonte:" em cada cartão, KPIs do modelo, sem undefined/NaN', async () => {
@@ -1081,22 +1262,22 @@ test('(b) Tráfego: ≥ 5 gráficos, "Fonte:" em cada cartão, KPIs do modelo, s
     t.forEach((x, i) => { if (x != null && x > 0) est += x * m.linhas[i][iExt]; });
     return { fed: IntelModel.fmtVkm(a.vkm), est: IntelModel.fmtVkm(est), ano: a.anoVmda };
   });
-  assert.equal(v.ano, 2025);
+  assert.equal(v.ano, A.v25);
   assert.equal(await page.textContent('#kpi-vkm b'), v.fed);
-  assert.match(await page.textContent('#kpi-vkm span'), /^na malha federal \(VMDa 2025, modelado\)$/);
+  assert.equal(await page.textContent('#kpi-vkm span'), `na malha federal (VMDa ${A.v25}, modelado)`);
   assert.equal(await page.textContent('#kpi-vkm-est b'), v.est);
-  assert.match(await page.textContent('#kpi-vkm-est span'), /^nas rodovias estaduais \(VMDa 2025, modelado\)$/);
+  assert.equal(await page.textContent('#kpi-vkm-est span'), `nas rodovias estaduais (VMDa ${A.v25}, modelado)`);
   const kSrc = await page.textContent('#card-t-kpis');
-  assert.match(kSrc, /DNIT — VMDa 2025 .* · 2025 · modelado/);
+  assert.match(kSrc, new RegExp(`DNIT — VMDa ${A.v25} .* · ${A.v25} · modelado`));
   assert.match(kSrc, /Rodovias estaduais: .* km com estimativa de .* km/);
   // cobertura exata: a malha inclui duplicados e em obras (não só "pavimentadas") e não afirma "fora das BRs"
   assert.match(kSrc, /pavimentados, duplicados ou em obras de pavimentação, mais os usados por concessões estaduais/);
   assert.match(kSrc, /se sobrepõem a rodovias federais do SNV em mais de 80% da extensão/);
   assert.doesNotMatch(kSrc, /fora das BRs/);
   // a taxa de acidentes segue com o VMDa 2023 (leves/pesados), rotulada
-  assert.match(await page.textContent('#card-t-taxa'), /÷ VMDa 2023/);
+  assert.ok((await page.textContent('#card-t-taxa')).includes(`÷ VMDa ${A.v23}`));
   // períodos das fontes em pt-BR
-  assert.match(await page.textContent('#card-t-rank .src:last-child'), /jan\/2024 a ago\/2026/);
+  assert.ok((await page.textContent('#card-t-rank .src:last-child')).includes(A.perPracas));
   assert.doesNotMatch(await page.textContent('#page-trafego'), /\b\d{4}-(0[1-9]|1[0-2])\b/);
   const t = await page.textContent('#page-trafego');
   assert.doesNotMatch(t, /undefined|NaN/);
@@ -1109,8 +1290,8 @@ test('(b) Tráfego: ≥ 5 gráficos, "Fonte:" em cada cartão, KPIs do modelo, s
   assert.equal(await page.locator('#chart-t-taxa .hrow').count(), 15);
   assert.equal(await page.locator('#chart-t-uf-a .hrow').count(), await page.evaluate(() => IntelModel.acidentesPorUf(window.INTEL, window.SNV).length));
   // dicas da série mensal e do ABCR em mmm/aaaa
-  assert.match(await page.innerHTML('#chart-t-serie'), /<title>jan\/2024 · Leves:/);
-  assert.match(await page.innerHTML('#chart-t-abcr'), /<title>Leves out\/2016:/);
+  assert.ok((await page.innerHTML('#chart-t-serie')).includes(`<title>${A.mes0} · Leves:`));
+  assert.ok((await page.innerHTML('#chart-t-abcr')).includes(`<title>Leves ${A.abcr0}:`));
 });
 
 test('(b) clicar na 1ª praça do ranking abre o Mapa com a camada Praças e o cartão da praça', async () => {
@@ -1201,7 +1382,7 @@ test('(c) fretes: ordena por R$/t, filtra UF de origem e marca origem aproximada
   assert.equal(await page.locator('#frete-table .tag-nv', { hasText: 'origem aproximada' }).count(), nAprox);
   // distância suspeita na fonte: R$/t·km "—" com etiqueta, e essas rotas sempre no fim (em qualquer ordenação)
   const nSus = await page.evaluate(() => window.INTEL.multimodal.fretes.linhas.filter(l => l[6].includes('km_suspeito')).length);
-  assert.ok(nSus >= 17);
+  assert.ok(nSus > 0);
   for (const key of ['rs_t', 'rs_tkm', 'km', 'origem']) {
     await page.click(`#frete-table [data-fsort="${key}"]`);
     const flags = await page.$$eval('#frete-table tbody tr', trs => trs.map(t => t.dataset.suspeito === '1'));
@@ -1211,7 +1392,12 @@ test('(c) fretes: ordena por R$/t, filtra UF de origem e marca origem aproximada
   const cells = await page.$$eval('#frete-table tbody tr[data-suspeito] td:nth-child(7)', tds => tds.map(t => t.textContent.trim()));
   assert.ok(cells.every(c => c === '— distância suspeita na fonte'), cells[0]);
   const ms = await page.$$eval('#frete-table tbody tr[data-suspeito]', trs => trs.filter(t => t.children[1].textContent === 'MS').length);
-  assert.equal(ms, 17);
+  const msEsperado = await page.evaluate(() => {
+    const f = window.INTEL.multimodal.fretes, k = f.campos.indexOf('uf_o');
+    return f.linhas.filter(l => l[6].includes('km_suspeito') && l[k] === 'MS').length;
+  });
+  assert.ok(msEsperado > 0);
+  assert.equal(ms, msEsperado);
   await page.click('#frete-table [data-fsort="rs_t"]');
   if ((await page.getAttribute('#frete-table th[aria-sort]', 'aria-sort')) !== 'descending') await page.click('#frete-table [data-fsort="rs_t"]');
   assert.ok(isSorted(await vals(), 'desc'));
@@ -1248,24 +1434,26 @@ test('(c) município de soja abre no mapa com o fundo Soja; trecho de carga abre
   await page.evaluate(() => MapView.fitBrasil(false));
 });
 
-test('(d) Fontes: ≥ 30 fontes, ≥ 9 indisponíveis com motivo, bases v1/v2 e explicação medido × modelado', async () => {
+test('(d) Fontes: ≥ 30 fontes, ≥ 9 indisponíveis com motivo, bases do painel e explicação medido × modelado', async () => {
   await goTab(page, '#fontes');
   assert.ok(await page.locator('#fontes-table tbody tr').count() >= 30);
   assert.ok(await page.locator('#fontes-indisp-table tbody tr').count() >= 9);
   assert.equal(await page.locator('#fontes-base-table tbody tr').count(), await page.evaluate(() => window.INTEL.fontes.base.length));
   const t = await page.textContent('#page-fontes');
   assert.match(t, /Medido × modelado/);
-  assert.match(t, /Não disponíveis neste ambiente/);
-  assert.match(t, /Bases da v1\/v2/);
-  assert.match(t, /20\/10\/2026/);
-  assert.match(t, /jan\/2024 a ago\/2026/);
+  assert.match(t, /Fontes procuradas e não obtidas/);
+  assert.match(t, /Bases do painel/);
+  const acessos = await page.evaluate(() => [...new Set(window.INTEL.fontes.fontes.map(f => f.acesso))]);
+  for (const a of acessos) assert.ok(t.includes(a.split('-').reverse().join('/')), `acesso ${a} em dd/mm/aaaa`);
+  assert.ok(t.includes(A.perPracas), A.perPracas);
   // coluna Período em pt-BR (as notas ficam como na fonte)
   const periodos = await page.$$eval('#fontes-table tbody tr td:nth-child(3), #fontes-base-table tbody tr td:nth-child(2)', tds => tds.map(t => t.textContent));
   for (const x of periodos) assert.doesNotMatch(x, /\b\d{4}-(0[1-9]|1[0-2])\b/, x);
   const leg = await page.textContent('#fontes-legenda');
   for (const re of [/Medido/, /Modelado/, /Cadastro/, /"—": fonte de apoio/]) assert.match(leg, re);
   assert.match(t, /Cadastro é registro de infraestrutura ou de contratos/);
-  assert.doesNotMatch(t, /undefined|NaN|2026-10-20/);
+  assert.doesNotMatch(t, /undefined|NaN/);
+  for (const a of acessos) assert.ok(!t.includes(a), `data crua ${a}`);
   const motivos = await page.$$eval('#fontes-indisp-table tbody tr td:nth-child(2)', tds => tds.map(t => t.textContent));
   assert.ok(motivos.every(m => m.length > 5));
   assert.equal(await page.getAttribute('#fontes-table tbody tr a', 'target'), '_blank');
@@ -1276,38 +1464,108 @@ test('(d) Fontes: ≥ 30 fontes, ≥ 9 indisponíveis com motivo, bases v1/v2 e 
   for (const [b, n, tp] of tipoDe) {
     if (b === 'Municípios' || b === 'Estaduais' || /Capas das concessões/.test(n)) assert.equal(tp, 'Cadastro', n);
   }
-  // v3.1: blocos novos com nome legível (nunca a chave interna), VMDa 2025 modelado e rotas como cadastro
+  // blocos com o nome do arquivo de descrições (o mesmo do Resumo), nunca a chave interna; VMDa 2025 modelado e rotas como cadastro
+  const nomeDe = await page.evaluate(() => Object.fromEntries(Object.entries(window.FONTES_DESCRICAO).map(([k, v]) => [k, v.nome])));
   const blocos = new Set(tipoDe.map(r => r[0]));
-  assert.ok(blocos.has('Tráfego (VMDa 2025)') && blocos.has('Rotas de Integração'), [...blocos].join());
+  assert.ok(blocos.has(nomeDe.vmda2025) && blocos.has(nomeDe.rotas), [...blocos].join());
   for (const b of blocos) assert.doesNotMatch(b, /^[a-z0-9]+$/, b);
   for (const [b, n, tp] of tipoDe) {
-    if (b === 'Tráfego (VMDa 2025)') assert.equal(tp, 'Modelado', n);
-    if (b === 'Rotas de Integração') assert.equal(tp, 'Cadastro', n);
+    if (b === nomeDe.vmda2025) assert.equal(tp, 'Modelado', n);
+    if (b === nomeDe.rotas) assert.equal(tp, 'Cadastro', n);
   }
 });
 
-test('(e) hashes inválidos continuam caindo no Mapa', async () => {
+// Fontes listadas na aba × fontes dos blocos embutidos no HTML, nos dois sentidos (nada a mais, nada a menos).
+const fontesListadas = p => p.evaluate(() => {
+  const rows = sel => [...document.querySelectorAll(sel)];
+  return {
+    dados: rows('#fontes-table tbody tr').map(tr => `${tr.dataset.bloco}|${tr.children[1].textContent}`).sort(),
+    base: rows('#fontes-base-table tbody tr').map(tr => tr.dataset.bloco).sort(),
+    docs: rows('#fontes-verificacao-table tbody tr').map(tr => tr.dataset.doc).sort(),
+    glossario: rows('#fontes-glossario-table tbody tr').map(tr => tr.children[0].textContent).sort(),
+    rotulos: Object.fromEntries(rows('#fontes-table tbody tr').map(tr => [tr.dataset.bloco, tr.children[0].textContent])),
+  };
+});
+const fontesEmbutidas = p => p.evaluate(() => {
+  const I = window.INTEL, C = window.CONC, G = window.GLOSSARIO || [];
+  const lista = x => (Array.isArray(x) ? x : x ? [x] : []);
+  const dados = Object.entries(I).filter(([k]) => k !== 'fontes').flatMap(([k, b]) => lista(b && b.fonte).map(f => `${k}|${f.nome}`)).sort();
+  // bases do painel: a malha (window.SNV) e a carteira (window.CONC), embutidas fora do INTEL
+  const base = [window.SNV && 'snv', C && 'roadshow'].filter(Boolean).sort();
+  const docs = [...new Set([...lista(C.verificacao && C.verificacao.fontes), ...lista(C.consorcios).flatMap(c => lista(c.fontes))].map(d => d.id))].sort();
+  const glossario = [...new Set(G.filter(e => e.fonte && e.fonte.nome).map(e => e.fonte.nome))].sort();
+  return { dados, base, docs, glossario };
+});
+
+test('Fontes: lista exatamente as fontes dos blocos embutidos (dados, bases, documentos dos leilões e consórcios, glossário)', async () => {
+  await goTab(page, '#fontes');
+  const l = await fontesListadas(page), e = await fontesEmbutidas(page);
+  assert.deepEqual(l.dados, e.dados, 'fontes de dados = itens "fonte" de cada bloco do INTEL');
+  assert.deepEqual(l.base, e.base);
+  assert.deepEqual(l.docs, e.docs);
+  assert.deepEqual(l.glossario, e.glossario);
+  assert.ok(e.dados.length && e.docs.length && e.glossario.length);
+  const t = await page.textContent('#page-fontes');
+  assert.doesNotMatch(t, /neste ambiente|Centro de Inteligência|novidades/i);  // sem histórico do projeto (versões: test_sem_mencoes.py)
+});
+
+test('Fontes: bloco novo com fonte (bloco fictício) e fonte nova no glossário entram sozinhos', async () => {
+  const errs = [], ext = [];
+  const inject = html => {
+    const i = html.indexOf('</script>', html.indexOf('window.INTEL='));
+    return `${html.slice(0, i)};(() => { const I = window.INTEL;
+      const f = { nome: 'Corretora X — negócios de exemplo', url: 'https://exemplo.invalid/', periodo: '2026-10-01/2026-10-21', acesso: '2026-10-22', licenca: 'uso restrito', tipo: 'medido' };
+      I.bloco_exemplo = { fonte: [f] };
+      I.fontes.fontes.push(Object.assign({ bloco: 'bloco_exemplo', nota: '' }, f));
+      window.FONTES_DESCRICAO.bloco_exemplo = { nome: 'Bloco de exemplo', oQue: 'Exemplo.' };
+      window.GLOSSARIO.push({ id: 'termo-exemplo', termo: 'Termo de exemplo', definicao: 'Exemplo.', fonte: { nome: 'Norma de exemplo nº 1/2026' }, categorias: ['Finanças'] });
+    })();${html.slice(i)}`;
+  };
+  const p = await openPage(errs, ext, inject);
+  await goTab(p, '#fontes');
+  const l = await fontesListadas(p), e = await fontesEmbutidas(p);
+  assert.ok(l.dados.includes('bloco_exemplo|Corretora X — negócios de exemplo'), l.dados.join('\n'));
+  assert.deepEqual(l.dados, e.dados);
+  assert.equal(l.rotulos.bloco_exemplo, 'Bloco de exemplo');
+  assert.ok(l.glossario.includes('Norma de exemplo nº 1/2026'));
+  assert.deepEqual(l.glossario, e.glossario);
+  assert.match(await p.textContent('#fontes-table tr[data-bloco="bloco_exemplo"]'), /01\/10\/2026 a 21\/10\/2026/);
+  assert.deepEqual(errs, []);
+  assert.deepEqual(ext, []);
+  await p.context().close();
+});
+
+test('(e) hashes inválidos caem no Resumo (página inicial)', async () => {
   for (const h of ['#xyz', '#trafego/x%zz', '#Fontes']) {
     await goTab(page, '#fontes');
     await page.evaluate(x => { location.hash = x; }, h);
-    await page.waitForFunction(() => location.hash === '#mapa' && Tabs.current().active === 'mapa');
-    assert.equal(await page.isVisible('#map'), true);
+    await page.waitForFunction(() => location.hash === '#resumo' && Tabs.current().active === 'resumo');
+    assert.equal(await page.isVisible('#page-resumo'), true);
+    assert.equal(await page.isVisible('#map'), false);
   }
   await goTab(page, '#cargas');
   assert.equal(await page.isVisible('#page-cargas'), true);
   await go('#mapa');
 });
 
-test('sem window.INTEL as abas Tráfego, Cargas e Fontes degradam sem erros', async () => {
+test('sem window.INTEL as abas Resumo, Tráfego, Cargas e Fontes degradam sem erros', async () => {
   const errs = [], ext = [];
   const p = await openPage(errs, ext, html => html.replace('window.INTEL=', 'window.INTEL_AUSENTE='));
-  assert.deepEqual(await p.$$eval('#tabs a', as => as.map(a => a.textContent)), TABS7);
-  for (const [h, re] of [['#trafego', /não estão neste arquivo/], ['#cargas', /não estão neste arquivo/], ['#fontes', /não está neste arquivo/]]) {
+  assert.deepEqual(await p.$$eval('#tabs a', as => as.map(a => a.textContent)), ABAS);
+  // Resumo sem INTEL: o achado do calendário (pipeline) some; os demais continuam, sem undefined/NaN
+  await goTab(p, '#resumo');
+  const ids = await p.$$eval('#resumo-achados .achado', as => as.map(a => a.dataset.achado));
+  assert.deepEqual(ids, await p.evaluate(() => LeiloesModel.resumoAchados(window.CONC, undefined).map(a => a.id)));
+  assert.ok(!ids.includes('calendario'));
+  assert.doesNotMatch(await p.textContent('#page-resumo'), /undefined|NaN/);
+  for (const [h, re] of [['#trafego', /não estão neste arquivo/], ['#cargas', /não estão neste arquivo/], ['#fontes', /não está neste arquivo/],
+    ['#debentures', /Os dados de mercado das debêntures .* não estão neste arquivo/]]) {
     await goTab(p, h);
     const t = await p.textContent('#page-' + h.slice(1));
     assert.match(t, re, h);
     assert.doesNotMatch(t, /undefined|NaN/);
   }
+  assert.equal(await p.locator('#card-d-incentivadas').count(), 1, 'a série do RoadShow não depende do bloco debentures');
   assert.deepEqual(errs, []);
   await p.context().close();
 });
@@ -1366,25 +1624,26 @@ const rectOf = (p, sel) => p.$$eval(sel, es => es.map(e => { const r = e.getBoun
 const overlap = (a, b) => a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;
 // Fim do enquadramento: nenhuma animação de zoom em curso e a vista já na área das rotas (sul além de -42°; a do Brasil para em -38°)
 // ou de volta ao Brasil.
-const naAreaDasRotas = (p = page) => p.waitForFunction(() => !MapView.map._animatingZoom && MapView.map.getBounds().getSouth() < -42);
-const noBrasil = (p = page) => p.waitForFunction(() => !MapView.map._animatingZoom && MapView.map.getBounds().getSouth() > -42);
-const NOTA = /Traçado esquemático · fonte MPO, jul\/2026/;
+const naAreaDasRotas = (p = page) => p.waitForFunction(() => !MapView.zoomAnimando() && MapView.map.getBounds().getSouth() < -42);
+const noBrasil = (p = page) => p.waitForFunction(() => !MapView.zoomAnimando() && MapView.map.getBounds().getSouth() > -42);
+
 
 test('rotas: ligar mostra países, linhas, rótulos diretos e legenda; enquadra a América do Sul; desligar volta ao Brasil', async t => {
   await page.evaluate(() => { location.hash = '#mapa'; });
   await page.waitForFunction(() => Tabs.current().active === 'mapa');
   await page.evaluate(() => MapView.fitBrasil(false));
-  await page.waitForFunction(() => !MapView.map._animatingZoom);
+  await page.waitForFunction(() => !MapView.zoomAnimando());
   const b0 = await page.evaluate(() => MapView.map.getBounds().toBBoxString().split(',').map(Number));
   const R = await page.evaluate(() => window.INTEL.rotas.rotas.map(r => ({ id: r.id, t: `Rota ${r.n} · ${r.nome}`, c: ROTAS[r.id] })));
   assert.equal(R.length, 5);
   // grupo próprio no painel Camadas, desligado, com fonte no title e no texto oculto
   const g = await page.textContent('#layers-section .rotas-group');
   assert.match(g, /Rotas de Integração Sul-Americana/);
-  assert.match(g, NOTA);
+  assert.ok(g.includes(A.notaRotas), A.notaRotas);
   assert.equal(await rotasBox().isChecked(), false);
   const title = await page.locator('#layers-section label:has(input[data-layer="rotas"])').getAttribute('title');
-  assert.match(title, /MPO .*01\/07\/2026.*traçado esquemático/);
+  assert.ok(A.apresentacao);
+  assert.match(title, new RegExp(`MPO .*${A.apresentacao}.*traçado esquemático`));
   assert.equal(await page.textContent('#layer-src-rotas'), `Fonte: ${title}`);
   // ligar em menos de 400 ms (a 1ª vez é medida no teste "(g) ligar cada camada")
   await settle(page);
@@ -1414,7 +1673,8 @@ test('rotas: ligar mostra países, linhas, rótulos diretos e legenda; enquadra 
   await page.waitForSelector('#rotas-legend:not([hidden])');
   assert.deepEqual(await page.$$eval('#rotas-legend [data-rota]', bs => bs.map(b => b.textContent.trim())), R.map(r => r.t));
   const lt = await page.textContent('#rotas-legend');
-  for (const re of [/Hidrovia/, /Cabotagem/, /Trecho em pavimentação/, /Trecho em estudos/, NOTA]) assert.match(lt, re);
+  for (const re of [/Hidrovia/, /Cabotagem/, /Trecho em pavimentação/, /Trecho em estudos/]) assert.match(lt, re);
+  assert.ok(lt.includes(A.notaRotas));
   assert.doesNotMatch(lt, /undefined|NaN/);
   // recolhível como "Camadas", aberta por padrão, sem título dentro do <summary>
   assert.equal(await page.locator('#rotas-legend details[open]').count(), 1);
@@ -1516,6 +1776,53 @@ test('rotas: clique real numa linha da Rota 4 abre o cartão; rótulo e legenda 
   assert.deepEqual(errors, []);
 });
 
+// Clica no checkbox das rotas e, no início da animação de zoom que esse clique dispara, clica de novo `extra` vezes.
+// Devolve se zoomAnimando() já marcava a animação nesse momento.
+const togglesDuranteAnimacao = (extra) => page.evaluate(n => new Promise(res => {
+  const box = document.querySelector('#layers-section input[data-layer="rotas"]');
+  MapView.map.once('zoomanim', () => { const a = MapView.zoomAnimando(); for (let k = 0; k < n; k++) box.click(); res(a); });
+  box.click();
+}), extra);
+// A vista continua a mesma depois de alguns quadros (nenhum enquadramento pendente mudou a vista depois da espera).
+const vistaEstavel = async () => {
+  const b = () => page.evaluate(() => MapView.map.getBounds().toBBoxString());
+  const b1 = await b();
+  await page.waitForTimeout(600);
+  assert.equal(await page.evaluate(() => MapView.zoomAnimando()), false);
+  assert.equal(await b(), b1);
+};
+
+test('enquadramento repetido: o último pedido feito durante a animação de zoom vale (ligar/desligar as rotas em seguida)', async () => {
+  await page.evaluate(() => { location.hash = '#mapa'; });
+  await page.waitForFunction(() => Tabs.current().active === 'mapa');
+  assert.equal(await rotasBox().isChecked(), false);
+  await page.evaluate(() => MapView.fitBrasil(false));
+  await noBrasil();
+  assert.equal(await page.evaluate(() => MapView.zoomAnimando()), false);
+  // ligar e, com a animação em curso, desligar: termina no Brasil (o Leaflet sozinho descartaria o 2º enquadramento)
+  assert.equal(await togglesDuranteAnimacao(1), true);
+  assert.equal(await rotasBox().isChecked(), false);
+  await noBrasil();
+  await vistaEstavel();
+  assert.ok(await page.evaluate(() => MapView.map.getBounds().getSouth()) > -42);
+  // ligar e esperar; depois desligar e, com a animação em curso, religar: termina na área das rotas
+  await rotasBox().check();
+  await naAreaDasRotas();
+  assert.equal(await togglesDuranteAnimacao(1), true);
+  assert.equal(await rotasBox().isChecked(), true);
+  await naAreaDasRotas();
+  await vistaEstavel();
+  assert.equal(await page.evaluate(() => MapView.map.getBounds().contains(IntelModel.rotasBounds(window.INTEL.rotas, true))), true);
+  // desligar e, durante a mesma animação, três pedidos (liga, desliga, liga): vale o último, a área das rotas
+  assert.equal(await togglesDuranteAnimacao(3), true);
+  assert.equal(await rotasBox().isChecked(), true);
+  await naAreaDasRotas();
+  await vistaEstavel();
+  await rotasBox().uncheck();
+  await noBrasil();
+  assert.deepEqual(errors, []);
+});
+
 test('sem o bloco rotas: sem grupo no painel, "enquadrar a América do Sul" cai no Brasil, sem erros', async () => {
   const errs = [], ext = [];
   const inject = html => {
@@ -1562,7 +1869,7 @@ test('VMDa 2025: no modo Tráfego, as estaduais (camada ligada) usam a rampa e a
   // classes = classOf(VMDa 2025 estadual, quebras federais), linha a linha
   assert.deepEqual(r.got.porClasse, r.exp);
   assert.equal(r.got.n, r.n);
-  assert.equal(r.got.ano, 2025);
+  assert.equal(r.got.ano, A.v25);
   for (let c = 0; c < 5; c++) assert.ok(r.exp[c] > 0, `classe ${c} vazia`);
   // cores: os 5 passos da rampa do Tráfego, cinza sem dado, concessões estaduais (magenta + halo); sem o verde da malha
   const T = await page.evaluate(() => RAMPS.trafego.map(c => c.toUpperCase()));
@@ -1572,7 +1879,7 @@ test('VMDa 2025: no modo Tráfego, as estaduais (camada ligada) usam a rampa e a
   assert.deepEqual(await page.evaluate(() => Layers.EST_NONE), { color: '#525254', weight: 0.75, opacity: 0.5 });
   // legenda: inclui as estaduais, faixas cobrem também os valores estaduais, linha "Sem dado (estadual)"
   const lg = await legend();
-  assert.match(lg, /inclui rodovias estaduais \(VMDa 2025\)/i);
+  assert.ok(lg.toLowerCase().includes(`inclui rodovias estaduais (vmda ${A.v25})`), lg);
   assert.match(lg, /Sem dado \(federal\)/);
   assert.match(lg, /Sem dado \(estadual\)/);
   assert.equal(await page.locator('#legend .legend__row[data-class]').count(), 5);
@@ -1627,7 +1934,7 @@ test('VMDa 2025: no modo Tráfego, as estaduais (camada ligada) usam a rampa e a
   assert.equal(await page.evaluate(() => Layers.estTrafego()), null);
   await box.check();
   await page.waitForTimeout(50);
-  assert.match(await legend(), /inclui rodovias estaduais \(VMDa 2025\)/i);
+  assert.ok((await legend()).toLowerCase().includes(`inclui rodovias estaduais (vmda ${A.v25})`));
   await box.uncheck();
   await mode('concessoes');
   assert.deepEqual(errors, []);
@@ -1648,16 +1955,16 @@ test('VMDa 2025: sem o bloco vmda2025 tudo volta ao VMDa 2023, sem erros', async
     for (let j = 0; j < all.length; j++) { const t = IntelModel.sumNullable(v.l[j], v.p[j]); if (t != null) s += t * window.SNV.fis[j].ext; }
     return { fmt: IntelModel.fmtVkm(x.vkm), ok: Math.abs(s - x.vkm) < 1e-6 * s, ano: x.anoVmda };
   });
-  assert.equal(a.ano, 2023);
+  assert.equal(a.ano, A.v23);
   assert.ok(a.ok);
   assert.equal((await p.textContent('#kpi-vkm')).trim(), a.fmt);
   const sub = await p.locator('#kpi-vkm').evaluate(e => e.nextElementSibling.textContent);
-  assert.match(sub, /pesados · Tráfego VMDa 2023, modelado/);
+  assert.ok(sub.includes(`pesados · Tráfego VMDa ${A.v23}, modelado`), sub);
   assert.doesNotMatch(sub, /estimativa/);
   // modo Tráfego: legenda 2023, estaduais continuam verdes e fora da legenda
   await p.click('#legend [data-mode="trafego"]');
-  assert.match(await p.textContent('#legend .legend__title'), /VMDa 2023, modelado/);
-  assert.match(await p.textContent('#legend .legend__src'), /Infra S\.A\.\/DNIT, VMDa 2023/);
+  assert.ok((await p.textContent('#legend .legend__title')).includes(`VMDa ${A.v23}, modelado`));
+  assert.ok((await p.textContent('#legend .legend__src')).includes(`Infra S.A./DNIT, VMDa ${A.v23}`));
   assert.equal(await p.locator('#legend .legend__row[data-class]').count(), 5);
   await p.locator('#layers-section input[data-layer="estaduais"]').check();
   await p.waitForTimeout(50);
@@ -1669,15 +1976,15 @@ test('VMDa 2025: sem o bloco vmda2025 tudo volta ao VMDa 2023, sem erros', async
   await p.evaluate(j => MapView.pick(j), j);
   await p.waitForSelector('#card:not([hidden])');
   const t = await p.textContent('#card');
-  assert.doesNotMatch(t, /VMDa 2025|Sentido crescente|uso restrito|estimativa/);
-  assert.match(t, /VMDa 2023 · modelado · leves e pesados/);
+  assert.doesNotMatch(t, new RegExp(`VMDa ${A.v25}|Sentido crescente|uso restrito|estimativa`));
+  assert.ok(t.includes(`VMDa ${A.v23} · modelado · leves e pesados`));
   assert.match(t, /Veículos × extensão/);
   // aba Tráfego: só o veíc·km federal 2023, sem o estadual
   await goTab(p, '#trafego');
   assert.equal(await p.textContent('#kpi-vkm b'), a.fmt);
-  assert.match(await p.textContent('#kpi-vkm span'), /VMDa 2023, modelado/);
+  assert.ok((await p.textContent('#kpi-vkm span')).includes(`VMDa ${A.v23}, modelado`));
   assert.equal(await p.locator('#kpi-vkm-est').count(), 0);
-  assert.doesNotMatch(await p.textContent('#page-trafego'), /undefined|NaN|VMDa 2025/);
+  assert.doesNotMatch(await p.textContent('#page-trafego'), new RegExp(`undefined|NaN|VMDa ${A.v25}`));
   assert.deepEqual(errs, []);
   assert.deepEqual(ext, []);
   await p.context().close();
@@ -1762,7 +2069,13 @@ test('rotas em 1366 × 768 e 1280 × 720: nenhum rótulo de rota sob as legendas
       for (const b of boxes) assert.ok(!overlap(l, b), `${w}: ${l.text} sob uma legenda`);
       for (const o of lr) if (o !== l) assert.ok(!overlap(l, o), `${w}: ${l.text} × ${o.text}`);
     }
-    for (const l of await rectOf(p, '.leaflet-tooltip.pais-label')) for (const o of lr) assert.ok(!overlap(l, o), `${w}: ${l.text} × ${o.text}`);
+    // rótulos dos países: fora dos rótulos de rota e, com 2 px de folga, uns dos outros (Suriname e Guiana Francesa)
+    const pr = await rectOf(p, '.leaflet-tooltip.pais-label');
+    const folga2 = r => ({ l: r.l - 2, t: r.t - 2, r: r.r + 2, b: r.b + 2 });
+    for (const l of pr) {
+      for (const o of lr) assert.ok(!overlap(l, o), `${w}: ${l.text} × ${o.text}`);
+      for (const o of pr) if (o !== l) assert.ok(!overlap(folga2(l), o), `${w}: ${l.text} × ${o.text}`);
+    }
     // recolhida, mas a legenda continua lá: abre com um clique e mostra as 5 rotas
     assert.equal(await p.isVisible('#rotas-legend summary'), true);
     await p.click('#rotas-legend summary');
@@ -1771,6 +2084,396 @@ test('rotas em 1366 × 768 e 1280 × 720: nenhum rótulo de rota sob as legendas
     assert.deepEqual(ext, []);
     await p.context().close();
   }
+});
+
+test('1366 × 768: a legenda do Tráfego não cobre o Brasil (nenhuma UF sob ela)', async () => {
+  const errs = [], ext = [];
+  const p = await openPage(errs, ext, null, { width: 1366, height: 768 });
+  await p.click('#legend [data-mode="trafego"]');
+  await p.waitForFunction(() => MapView.colorMode() === 'trafego');
+  await p.evaluate(() => MapView.fitBrasil(false));
+  await p.waitForFunction(() => !MapView.zoomAnimando());
+  const leg = (await rectOf(p, '#legend'))[0], map = (await rectOf(p, '#map'))[0];
+  assert.match(await p.textContent('#legend'), /Tráfego/);
+  // caixa de cada UF na tela (dos polígonos do arquivo): à esquerda da legenda e dentro do mapa
+  const ufs = await p.evaluate(() => {
+    const r = MapView.map.getContainer().getBoundingClientRect();
+    return window.SNV.ufs.features.map(f => {
+      const b = L.geoJSON(f).getBounds(), nw = MapView.map.latLngToContainerPoint(b.getNorthWest()), se = MapView.map.latLngToContainerPoint(b.getSouthEast());
+      return { text: f.properties.sigla, l: r.left + nw.x, t: r.top + nw.y, r: r.left + se.x, b: r.top + se.y };
+    });
+  });
+  assert.equal(ufs.length, 27);
+  for (const u of ufs) {
+    assert.ok(!overlap(u, leg), `${u.text} sob a legenda: ${JSON.stringify(u)} × ${JSON.stringify(leg)}`);
+    assert.ok(u.l >= map.l && u.r <= map.r && u.t >= map.t && u.b <= map.b, `${u.text} fora do mapa`);
+  }
+  // o Brasil continua grande: zoom ≥ 4
+  assert.ok(await p.evaluate(() => MapView.map.getZoom()) >= 4);
+  assert.deepEqual(errs, []);
+  assert.deepEqual(ext, []);
+  await p.context().close();
+});
+
+test('1366 × 768: a legenda das rotas reavalia o recolhimento quando a janela muda de tamanho; a escolha do leitor fica', async () => {
+  const errs = [], ext = [];
+  const p = await openPage(errs, ext, null, { width: 1366, height: 768 });
+  const aberta = () => p.evaluate(() => document.querySelector('#rotas-legend details').open);
+  const espera = v => p.waitForFunction(v => document.querySelector('#rotas-legend details').open === v, v);
+  await p.locator('#layers-section input[data-layer="rotas"]').check();
+  await naAreaDasRotas(p);
+  await espera(false);
+  // janela maior: os rótulos das rotas saem de baixo da legenda, que reabre; de volta a 1366 × 768, recolhe de novo
+  await p.setViewportSize({ width: 1920, height: 1080 });
+  await espera(true);
+  const lr = await rectOf(p, '.leaflet-tooltip.rota-label'), leg = (await rectOf(p, '#rotas-legend'))[0];
+  for (const l of lr) assert.ok(!overlap(l, leg), `1920: ${l.text} sob a legenda aberta`);
+  await p.setViewportSize({ width: 1366, height: 768 });
+  await espera(false);
+  // o leitor abre a legenda: mudar o tamanho da janela não a recolhe
+  await p.click('#rotas-legend summary');
+  assert.equal(await aberta(), true);
+  await p.setViewportSize({ width: 1360, height: 760 });
+  await p.waitForTimeout(600);
+  assert.equal(await aberta(), true);
+  // religar a camada volta ao comportamento automático
+  await p.locator('#layers-section input[data-layer="rotas"]').uncheck();
+  await noBrasil(p);
+  await p.locator('#layers-section input[data-layer="rotas"]').check();
+  await naAreaDasRotas(p);
+  await espera(false);
+  await p.setViewportSize({ width: 1920, height: 1080 });
+  await espera(true);
+  assert.deepEqual(errs, []);
+  assert.deepEqual(ext, []);
+  await p.context().close();
+});
+
+test('fechamento: períodos e constantes impressas seguem os dados (dados alterados na página)', async () => {
+  // valores originais (página sem alteração) e os mesmos deslocados 10 anos: nenhum ano esperado fica digitado aqui
+  const o = await page.evaluate(() => {
+    const c = window.CONC, m = c.mercado, I = window.INTEL;
+    return { per: m.periodo_concorrencia.split('–').map(Number), anos: ConcModel.anosPrograma(c), pracas: I.antt.pracas.ano,
+      vmda: I.trafego.vmda.ano, pnl: I.carga.ano_base, ap: I.rotas.fonte.find(f => /Apresentação/.test(f.nome)).periodo };
+  });
+  const D = 10, mais = a => a + D, novo = {
+    per: o.per.map(mais).join('–'), anos: o.anos.map(mais), pracas: mais(o.pracas), vmda: mais(o.vmda), pnl: mais(o.pnl),
+    ap: o.ap.replace(/(\d{4})$/, a => String(mais(+a))) };
+  const errs = [], ext = [];
+  // muda, antes de a interface montar, os valores que davam rótulos: nenhum deles pode estar digitado no código
+  const inject = html => {
+    const i = html.indexOf('</script>', html.indexOf('window.INTEL='));
+    return `${html.slice(0, i)};(() => { const c = window.CONC, m = c.mercado, D = ${D}, I = window.INTEL;
+      m.desagio_medio_impresso += 1.11; m.fontes.desagio_medio_impresso = [999]; m.periodo_concorrencia = ${JSON.stringify(novo.per)};
+      for (const k of ['programa_por_ano', 'gestao', 'leiloes_por_ano']) m[k].forEach(x => { x.ano += D; });
+      c.entidades.forEach(e => { if (e.ano_programa) e.ano_programa += D; });
+      c.estudos.forEach(e => { e.pagina = 999; });
+      I.antt.pracas.ano += D; I.trafego.vmda.ano += D; I.carga.ano_base += D;
+      I.rotas.fonte.find(f => /Apresentação/.test(f.nome)).periodo = ${JSON.stringify(novo.ap)}; })();${html.slice(i)}`;
+  };
+  const p = await openPage(errs, ext, inject);
+  const x = await p.evaluate(() => {
+    const c = window.CONC, m = c.mercado, per = s => `${Math.min(...s.map(r => r.ano))}–${Math.max(...s.map(r => r.ano))}`;
+    const nf2 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return { prog: per(m.programa_por_ano), gestao: per(m.gestao), leiloes: per(m.leiloes_por_ano), anos: ConcModel.anosPrograma(c),
+      media: nf2.format(m.desagio_medio_impresso), nEstudos: c.estudos.length };
+  });
+  assert.deepEqual(x.anos, novo.anos);
+  await goTab(p, '#mercado');
+  assert.equal(await p.textContent('#card-kpis h3'), `Concorrência nos leilões do programa federal, ${novo.per}`);
+  assert.ok((await p.textContent('#card-kpis .sub')).includes(`programa federal ${x.prog} do Ministério`));
+  assert.ok((await p.textContent('#card-desagio .sub')).endsWith(`(RoadShow, p. 999: ${x.media}%)`));
+  assert.equal(await p.textContent('#card-faixas .sub'), `Leilões do programa federal em ${novo.per}, como impresso no RoadShow`);
+  assert.ok((await p.textContent('#card-porN .sub')).startsWith(`Leilões do programa federal em ${novo.per}, como impresso no RoadShow;`));
+  assert.equal(await p.textContent('#card-programa h3'), `Programa federal de concessões rodoviárias ${x.prog}, por ano`);
+  assert.ok((await p.textContent('#card-indic h3')).includes(`programa federal de concessões rodoviárias ${x.prog} (`));
+  assert.ok((await p.textContent('#card-leiloes .sub')).endsWith(`, ${x.leiloes}`));
+  assert.ok((await p.textContent('#card-gestao .sub')).endsWith(`, ${x.gestao}`));
+  await goTab(p, '#projetos');
+  assert.deepEqual(await p.$$eval('#page-projetos .chip[data-f="ano"]', bs => bs.map(b => +b.dataset.v)), novo.anos);
+  assert.ok((await p.textContent('#page-projetos .page__lead')).includes(`(contratos e programa ${novo.anos[0]}–${novo.anos[novo.anos.length - 1]})`));
+  assert.ok((await p.textContent('#estudos-lead')).startsWith(`${x.nEstudos} estudos contratados para futuras concessões rodoviárias federais; o RoadShow (p. 999) só informa as BRs e UFs.`));
+  await goTab(p, '#trafego');
+  assert.ok((await p.textContent('#kpi-pracas span')).includes(`em ${novo.pracas}`));
+  assert.equal(await p.textContent('#card-t-rank h3'), `As 20 praças de pedágio federais de maior VMD em ${novo.pracas}`);
+  await goTab(p, '#fontes');
+  const prosa = await p.textContent('.fontes-nota');
+  assert.ok(prosa.includes(`Infra S.A. (${novo.vmda})`) && prosa.includes(`ano-base ${novo.pnl}`), prosa);
+  await p.evaluate(() => { location.hash = '#mapa'; });
+  await p.waitForFunction(() => Tabs.current().active === 'mapa');
+  assert.deepEqual(await p.$$eval('input[data-cfilter="ano"]', is => is.map(i => +i.value)), novo.anos);
+  assert.ok((await p.locator('#layers-section label:has(input[data-layer="rotas"])').getAttribute('title')).includes(`apresentação de ${novo.ap}`));
+  assert.deepEqual(errs, []);
+  assert.deepEqual(ext, []);
+});
+
+// ---------- Aba Debêntures ----------
+const fmt2 = v => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const diaMes = d => d.split('-').slice(1).reverse().join('/');
+const limpa = t => t.replace(/\s+/g, ' ').trim();
+const blocoDeb = p => p.evaluate(() => JSON.parse(JSON.stringify(window.INTEL.debentures)));
+// Abre a aba com "ver somado" desligado, qualquer que seja o estado deixado por um teste anterior.
+async function abreDeb() {
+  await goTab(page, '#debentures');
+  if ((await page.getAttribute('#deb-somado', 'aria-checked')) === 'true') await page.click('#deb-somado');
+}
+const AFETADOS = ['kpis', 'dia-vol', 'dia-n', 'subsetor', 'emissor', 'ultimo'];
+// Média ponderada recombinada à mão a partir das linhas cruas (independente do modelo).
+const recombina = (linhas, ix) => {
+  let a = 0, w = 0;
+  for (const l of linhas) if (l && l.volume_taxa && l.volume_taxa[ix]) { a += l.taxa_media[ix] * l.volume_taxa[ix]; w += l.volume_taxa[ix]; }
+  return w ? a / w : null;
+};
+const fotoDeb = p => p.evaluate(() => {
+  const t = s => [...document.querySelectorAll(s)].map(e => e.textContent.replace(/\s+/g, ' ').trim());
+  return { status: t('#deb-status')[0], aria: document.getElementById('deb-somado').getAttribute('aria-checked'),
+    rotulos: [...document.querySelectorAll('#page-debentures [data-afetado]')].map(c => `${c.id}|${c.querySelector('.deb-rotulo').textContent}`),
+    corpo: Object.fromEntries(['kpis', 'dia-vol', 'dia-n', 'subsetor', 'emissor', 'ultimo'].map(id => [id, document.getElementById('chart-d-' + id).innerHTML])),
+    kpis: t('#chart-d-kpis .kpi-tile'), volTitulos: t('#chart-d-dia-vol rect.cbar title'), nTitulos: t('#chart-d-dia-n rect.cbar title'),
+    tituloN: t('#titulo-d-dia-n')[0], tituloUltimo: t('#titulo-d-ultimo')[0], taxaSub: t('#chart-d-subsetor-taxa g.hrow-tip > title'), spreadSub: t('#chart-d-subsetor-spread g.hrow-tip > title'),
+    emissor: t('#deb-emissores tbody tr'), ultimo: t('#deb-ultimo tbody tr'), cabEmissor: t('#deb-emissores thead th'),
+    fixos: ['card-d-intencoes', 'card-d-emissoes', 'card-d-macro', 'card-d-ntnb', 'card-d-incentivadas'].map(id => document.getElementById(id).innerHTML) };
+});
+
+test('Debêntures: cartões com fonte, período e legenda; indicadores e curva vêm do bloco; sem NaN', async () => {
+  await abreDeb();
+  const b = await blocoDeb(page);
+  // cartões presentes segundo o modelo: indicadores e curva só com dado; a série do RoadShow só se a base a traz
+  const ids = await page.evaluate(() => {
+    const b = window.INTEL.debentures;
+    return [DebenturesModel.macro(b).length && 'macro', DebenturesModel.curvaNtnb(b).length && 'ntnb', 'emissoes', 'kpis', 'dia-vol', 'dia-n', 'subsetor',
+      'emissor', 'ultimo', 'intencoes', DebenturesModel.serieIncentivadas(window.CONC.mercado) && 'incentivadas'].filter(Boolean);
+  });
+  assert.ok(ids.length >= 8, ids.join());
+  assert.deepEqual(await page.$$eval('#page-debentures .ccard', cs => cs.map(c => c.id)), ids.map(i => 'card-d-' + i));
+  for (const id of ids) {
+    const c = page.locator('#card-d-' + id), txt = await c.textContent();
+    assert.doesNotMatch(txt, /NaN|undefined|null|Infinity/, id);
+    assert.match(await c.locator('.src').last().textContent(), /^Fonte: \S/, id);
+    if (await c.locator('svg.chart').count()) assert.ok(await c.locator('.chart-legend').count() >= 1, `${id}: gráfico sem legenda`);
+    const tit = await c.locator('svg.chart title').allTextContents();
+    assert.ok(!tit.some(t => /NaN|undefined/.test(t)), id);
+  }
+  // indicadores macro com a data de cada um, na ordem do modelo
+  const macro = await page.evaluate(() => DebenturesModel.macro(window.INTEL.debentures).map(m => [m.valor, m.data]));
+  const tiles = await page.$$eval('#card-d-macro .kpi-tile', ts => ts.map(t => [t.querySelector('b').textContent, t.querySelector('span').textContent]));
+  macro.forEach(([valor, data], i) => { assert.equal(tiles[i][0], valor); assert.ok(tiles[i][1].endsWith(data), `${tiles[i][1]} × ${data}`); });
+  assert.equal(tiles.length, macro.length);
+  if (b.macro.selic) assert.equal(macro.find(m => m[0].endsWith('a.a.'))[0], `${fmt2(b.macro.selic.valor)}% a.a.`);
+  if (macro.length) for (const f of b.fonte.filter(x => /Banco Central/.test(x.nome))) assert.ok((await page.textContent('#card-d-macro')).includes(f.nome.split(' — ')[0]));
+  // curva de NTN-B: uma linha por vencimento, com título e taxa; a data da curva no título
+  const rows = await page.$$eval('#deb-ntnb tbody tr', trs => trs.map(tr => [...tr.children].map(td => td.textContent)));
+  const curva = await page.evaluate(() => DebenturesModel.curvaNtnb(window.INTEL.debentures));
+  assert.deepEqual(rows.map(r => r[2]), curva.map(p => fmt2(p.taxa)));
+  assert.deepEqual(rows.map(r => r[0]), curva.map(p => p.vencimento.split('-').reverse().join('/')));
+  if (curva.length) {
+    assert.equal(await page.locator('#chart-d-ntnb-linha circle').count(), curva.length);
+    const dataCurva = curva.map(p => p.data).sort().pop().split('-').reverse().join('/');
+    assert.ok((await page.textContent('#titulo-d-ntnb')).endsWith(dataCurva));
+  }
+  // período dos negócios e a explicação do spread, em uma linha
+  const per = `${b.secundario.periodo.de.split('-').reverse().join('/')} a ${b.secundario.periodo.ate.split('-').reverse().join('/')}`;
+  assert.ok((await page.textContent('#card-d-kpis')).includes(per));
+  const sp = limpa(await page.textContent('#deb-spread'));
+  assert.match(sp, /spread = taxa do papel − taxa da NTN-B interpolada pelo vencimento/);
+  assert.match(sp, /Tesouro Direto, taxa de compra; só para papéis IPCA\+; “—” quando não há curva no dia/);
+  // links do glossário: os termos pedidos aparecem e existem no arquivo embutido
+  const gl = await page.$$eval('#page-debentures a.glossario-link', as => as.map(a => decodeURIComponent(a.getAttribute('href').replace('#glossario/', ''))));
+  for (const t of ['debenture', 'debenture-incentivada', 'debenture-infraestrutura', 'ntn-b', 'spread', 'duration', 'ipca-mais', 'cdi', 'selic', 'focus', 'mercado-secundario',
+    'negocio-intencao', 'taxa-media-ponderada', 'rating', 'indexador']) assert.ok(gl.includes(t), t);
+  assert.deepEqual(await page.evaluate(l => l.filter(i => !window.GLOSSARIO.some(e => e.id === i)), gl), []);
+  assert.equal(new Set(gl).size, gl.length, 'um link por termo');
+  // clareza: "tela" é definida na abertura; sem notas de ingestão repetidas; spread sempre dito "sobre a NTN-B"; p.p. explicado
+  const aba = limpa(await page.textContent('#page-debentures'));
+  assert.match(await page.textContent('#page-debentures .page__lead'), /telas<\/b>|telas das corretoras XP e BTG: as listas de debêntures/);
+  assert.doesNotMatch(aba, /traz só a hora|fornecidos pelo usuário|enviad[oa] pelo usuário/);
+  assert.match(aba, /pontos percentuais \(p\.p\.\)/);
+  const cabSpread = await page.$$eval('#page-debentures th, #page-debentures h3, #page-debentures h4', es => es.map(e => e.textContent).filter(t => /pread/.test(t)));
+  assert.ok(cabSpread.length >= 5);
+  assert.ok(cabSpread.every(t => /NTN-B/.test(t)), cabSpread.join(' | '));
+  assert.doesNotMatch(aba, /\bmetrô\)?[,.]? (e|ou) mobilidade|, metrô\)/);
+  // curva de NTN-B: o eixo não começa em zero e traz a nota sobre isso
+  const eixo = await page.$$eval('#chart-d-ntnb-linha svg text[text-anchor="end"]', ts => ts.map(t => Number(t.textContent.replace(',', '.'))));
+  assert.ok(eixo[0] > 0 && eixo.length >= 3, eixo.join());
+  assert.ok((await page.textContent('#card-d-ntnb .sub')).includes('não começa em zero'));
+  // Resumo: a data-base do bloco é um intervalo de datas, não só o ano
+  await goTab(page, '#resumo');
+  await page.evaluate(() => document.querySelectorAll('#resumo-sobre details').forEach(d => { d.open = true; }));
+  assert.match(await page.textContent('#sobre-table tr[data-fonte="debentures"] td:nth-child(2)'), /^\d{2}\/\d{2}\/\d{4} a \d{2}\/\d{2}\/\d{4}$/);
+  await goTab(page, '#debentures');
+  // a aba não mostra nenhuma linha de negócio ou intenção: só agregados e o último de cada papel
+  assert.ok(await page.locator('#deb-ultimo tbody tr').count() <= b.secundario.ultimo_por_ticker.length);
+});
+
+test('Debêntures: tabela de emissões ordenável, com "—" onde a fonte não traz e exportação em CSV', async () => {
+  await abreDeb();
+  const b = await blocoDeb(page);
+  const linhas = () => page.$$eval('#deb-emissoes tbody tr', trs => trs.map(tr => [...tr.children].map(td => td.textContent)));
+  const cab = await page.$$eval('#deb-emissoes thead th', ths => ths.map(t => t.textContent.replace(/\s[↑↓]$/, '')));
+  for (const c of ['Papel', 'Emissor', 'Subsetor', 'Indexador', 'Taxa na emissão', 'Vencimento', 'Volume emitido', 'Incentivada (Lei 12.431)']) assert.ok(cab.includes(c), c);
+  // coluna que a fonte não preenche em nenhum papel fica oculta (e dita na nota); a que tem algum dado aparece
+  const ocultas = await page.evaluate(() => DebenturesModel.tabelaEmissoes(window.INTEL.debentures).ocultas);
+  assert.deepEqual(ocultas, ['Data de emissão', 'Coordenadores'].filter(c => !b.emissoes.some(e => e[c === 'Coordenadores' ? 'coordenadores' : 'data_emissao'] && e[c === 'Coordenadores' ? 'coordenadores' : 'data_emissao'].length)));
+  for (const c of ocultas) { assert.ok(!cab.includes(c), c); assert.ok((await page.textContent('#card-d-emissoes')).includes(c)); }
+  let r = await linhas();
+  assert.equal(r.length, b.emissoes.length);
+  assert.equal(await page.textContent('#deb-em-n'), `${b.emissoes.length} de ${b.emissoes.length} papéis`);
+  const col = n => cab.indexOf(n);
+  // campo ausente da fonte: "—"
+  assert.equal(r.filter(x => x[col('Volume emitido')] === '—').length, b.emissoes.filter(e => e.volume_emitido == null).length);
+  assert.equal(r.filter(x => x[col('Incentivada (Lei 12.431)')] === 'Sim').length, b.emissoes.filter(e => e.incentivada === true).length);
+  // ordenar por volume emitido: o primeiro é o maior e os sem volume ficam no fim
+  await page.click('#deb-emissoes [data-sort="volume_emitido"]');
+  assert.equal(await page.getAttribute('#deb-emissoes th[aria-sort]', 'aria-sort'), 'descending');
+  r = await linhas();
+  const maior = Math.max(...b.emissoes.map(e => e.volume_emitido || 0));
+  assert.equal(r[0][col('Papel')], b.emissoes.find(e => e.volume_emitido === maior).ticker);
+  assert.equal(r[r.length - 1][col('Volume emitido')], '—');
+  await page.click('#deb-emissoes [data-sort="volume_emitido"]');
+  assert.equal(await page.getAttribute('#deb-emissoes th[aria-sort]', 'aria-sort'), 'ascending');
+  // filtro por subsetor
+  const sub = b.emissoes[0].subsetor;
+  await page.selectOption('#deb-em-sub', sub);
+  const n = b.emissoes.filter(e => e.subsetor === sub).length;
+  assert.equal((await linhas()).length, n);
+  assert.equal(await page.textContent('#deb-em-n'), `${n} de ${b.emissoes.length} papéis`);
+  // CSV: o que está na tela (linhas filtradas e ordenadas), com cabeçalho
+  const [download] = await Promise.all([page.waitForEvent('download'), page.locator('.csv-btn:has(+ .table-wrap #deb-emissoes)').click()]);
+  assert.match(download.suggestedFilename(), /^debentures-emissoes-\d{4}-\d{2}-\d{2}\.csv$/);
+  const csv = fs.readFileSync(await download.path(), 'utf8').split('\r\n');
+  assert.equal(csv.length, n + 1);
+  assert.ok(csv[0].includes('"Papel";"Emissor"'));
+  await page.selectOption('#deb-em-sub', '');
+  assert.equal((await linhas()).length, b.emissoes.length);
+});
+
+test('Debêntures: números do mercado secundário batem com o modelo, com e sem somar', async () => {
+  await abreDeb();
+  const b = await blocoDeb(page);
+  const neg = b.secundario.negocios, int = b.secundario.intencoes;
+  const ant = await fotoDeb(page);
+  assert.equal(ant.aria, 'false');
+  assert.equal(ant.tituloUltimo, 'Último negócio de cada papel');
+  assert.equal(ant.status, 'Mostrando: negócios fechados');
+  // sem somar: um título por dia, direto do bloco
+  assert.deepEqual(ant.volTitulos, neg.por_dia.map(d => `${diaMes(d.data)}: ${fmt2(d.volume / 1e6)} R$ mi`));
+  assert.deepEqual(ant.nTitulos, neg.por_dia.map(d => `${diaMes(d.data)}: ${d.n} negócios`));
+  const k = await page.evaluate(() => DebenturesModel.kpis(window.INTEL.debentures));
+  assert.equal(k.n, neg.por_dia.reduce((t, d) => t + d.n, 0));
+  assert.equal(ant.kpis[1], `${k.n.toLocaleString('pt-BR')}número de negócios`);
+  assert.ok(ant.kpis[4].startsWith(`IPCA + ${fmt2(recombina(neg.por_dia, 'IPCA+'))}%`), ant.kpis[4]);
+  assert.deepEqual(ant.ultimo.length, b.secundario.ultimo_por_ticker.filter(e => e.origem === 'negocio').length);
+  assert.ok(ant.ultimo.every(l => /Negócio$/.test(l)));
+  // somando: dias, volumes e operações recombinados a partir das duas listas, rótulo em todos os cartões afetados
+  await page.click('#deb-somado');
+  const som = await fotoDeb(page);
+  const rotulo = 'negócios + intenções (somados como se fossem negócios)';
+  assert.equal(som.aria, 'true');
+  assert.equal(som.status, `Mostrando: ${rotulo}`);
+  assert.deepEqual(som.rotulos, AFETADOS.map(id => `card-d-${id}|${rotulo}`));
+  const dias = [...new Set([...neg.por_dia, ...int.por_dia].map(d => d.data))].sort();
+  const dia = (l, d) => l.find(x => x.data === d);
+  const soma = (d, c) => ((dia(neg.por_dia, d) || {})[c] || 0) + ((dia(int.por_dia, d) || {})[c] || 0);
+  assert.deepEqual(som.volTitulos, dias.map(d => `${diaMes(d)}: ${fmt2(soma(d, 'volume') / 1e6)} R$ mi`));
+  assert.deepEqual(som.nTitulos, dias.map(d => `${diaMes(d)}: ${soma(d, 'n')} negócios + intenções`));
+  assert.equal(som.tituloN, 'Número de negócios + intenções por dia');
+  assert.equal(som.tituloUltimo, 'Último negócio ou intenção de cada papel');
+  // o CSV de quem soma leva "-somado" no nome
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.locator('.csv-btn:has(+ .table-wrap #deb-ultimo)').click()]);
+  assert.match(dl.suggestedFilename(), /^debentures-ultimo-por-papel-somado-\d{4}-\d{2}-\d{2}\.csv$/);
+  const todas = [...neg.por_dia, ...int.por_dia];
+  assert.ok(som.kpis[4].startsWith(`IPCA + ${fmt2(recombina(todas, 'IPCA+'))}%`), som.kpis[4]);
+  assert.equal(som.kpis[1], `${(neg.por_dia.concat(int.por_dia).reduce((t, d) => t + d.n, 0)).toLocaleString('pt-BR')}número de negócios + intenções`);
+  // taxa por subsetor: a mesma recombinação, feita à mão por subsetor
+  for (const linha of som.taxaSub) {
+    const [, nome, taxa] = linha.match(/^(.+?): ([\d,]+)%/);
+    const esperado = recombina([...neg.por_subsetor, ...int.por_subsetor].filter(x => x.subsetor === nome), 'IPCA+');
+    assert.equal(taxa, fmt2(esperado), nome);
+  }
+  assert.equal(som.taxaSub.length, new Set([...neg.por_subsetor, ...int.por_subsetor].map(x => x.subsetor)).size);
+  // o último de cada papel agora considera também as intenções
+  const tickers = new Set(b.secundario.ultimo_por_ticker.map(e => e.ticker));
+  assert.equal(som.ultimo.length, tickers.size);
+  assert.ok(som.ultimo.some(l => /Intenção de (compra|venda)$/.test(l)));
+  // todos os cartões afetados mudaram; os demais não
+  for (const id of AFETADOS) assert.notEqual(som.corpo[id], ant.corpo[id], `${id} não mudou`);
+  assert.notDeepEqual(som.emissor, ant.emissor);
+  assert.deepEqual(som.fixos, ant.fixos, 'intenções à parte, emissões, indicadores e curva não mudam');
+  assert.equal(som.cabEmissor[3], 'Negócios + intenções');
+  assert.doesNotMatch(JSON.stringify(som), /NaN|undefined/);
+  // o modelo diz o mesmo da tela
+  const m = await page.evaluate(() => DebenturesModel.series(window.INTEL.debentures, { somado: true }));
+  assert.equal(m.rotulo, rotulo);
+  assert.equal(m.porDia.length, dias.length);
+  assert.equal(som.emissor.length, m.porEmissor.length);
+  // desligar volta exatamente aos negócios
+  await page.click('#deb-somado');
+  const dep = await fotoDeb(page);
+  assert.deepEqual(dep, ant);
+  // pelo teclado também (chave acessível)
+  await page.focus('#deb-somado');
+  assert.equal(await page.getAttribute('#deb-somado', 'role'), 'switch');
+  await page.keyboard.press('Space');
+  assert.equal(await page.getAttribute('#deb-somado', 'aria-checked'), 'true');
+  await page.keyboard.press('Enter');
+  assert.deepEqual(await fotoDeb(page), ant);
+});
+
+test('Debêntures: as tabelas de emissor e de último negócio ordenam, e a ordem sobrevive a somar', async () => {
+  await abreDeb();
+  const col = (id, n) => page.$$eval(`#${id} tbody tr`, (trs, n) => trs.map(tr => tr.children[n].textContent), n);
+  await page.click('#deb-emissores [data-sort="emissor"]');
+  const nomes = await col('deb-emissores', 0);
+  assert.deepEqual(nomes, [...nomes].sort((x, y) => x.localeCompare(y, 'pt-BR')));
+  await page.click('#deb-somado');
+  assert.equal(await page.getAttribute('#deb-emissores th[aria-sort]', 'aria-sort'), 'ascending');
+  const depois = await col('deb-emissores', 0);
+  assert.deepEqual(depois, [...depois].sort((x, y) => x.localeCompare(y, 'pt-BR')));
+  await page.click('#deb-ultimo [data-sort="ticker"]');
+  const t = await col('deb-ultimo', 0);
+  assert.deepEqual(t, [...t].sort((x, y) => x.localeCompare(y, 'pt-BR')));
+  await page.click('#deb-somado');
+  const [download] = await Promise.all([page.waitForEvent('download'), page.locator('.csv-btn:has(+ .table-wrap #deb-emissores)').click()]);
+  assert.match(download.suggestedFilename(), /^debentures-por-emissor-/);
+  const csv = fs.readFileSync(await download.path(), 'utf8').split('\r\n');
+  assert.ok(csv[0].includes('"Negócios"') && !csv[0].includes('intenções'), csv[0]);
+});
+
+test('Debêntures: intenções à parte, por direção, dia e emissor, iguais ao bloco', async () => {
+  await abreDeb();
+  const b = await blocoDeb(page), int = b.secundario.intencoes;
+  const dir = await page.$$eval('#deb-int-direcao tbody tr', trs => trs.map(tr => [...tr.children].map(td => td.textContent)));
+  assert.deepEqual(dir.map(r => [r[0], r[2]]), [['Compra', String(int.por_direcao.find(d => d.direcao === 'compra').n)], ['Venda', String(int.por_direcao.find(d => d.direcao === 'venda').n)]]
+    .map(([a, n]) => [a, Number(n).toLocaleString('pt-BR')]));
+  const dias = await page.$$eval('#chart-d-int-dia rect.cbar title', ts => ts.map(t => t.textContent));
+  const esperado = int.por_dia.flatMap(d => ['compra', 'venda'].map(x => [d, x])).filter(([d, x]) => (d.por_direcao[x] || {}).volume > 0)
+    .map(([d, x]) => `${diaMes(d.data)} · ${x === 'compra' ? 'Compra' : 'Venda'}: ${fmt2(d.por_direcao[x].volume / 1e6)} R$ mi`);
+  assert.deepEqual(dias, esperado);
+  assert.equal(await page.locator('#chart-d-int-emissor g.hrow').count(), Math.min(15, int.por_emissor.length));
+  assert.ok((await page.textContent('#card-d-intencoes .sub')).includes('não são negócios fechados'));
+  assert.equal(await page.locator('#card-d-intencoes .chart-legend').count(), 2);
+});
+
+test('Debêntures: celular 390 px, com e sem somar, sem rolagem lateral e sem rede', async () => {
+  const errs = [], ext = [];
+  const p = await openPage(errs, ext, null, { width: 390, height: 844 });
+  await goTab(p, '#debentures');
+  for (const somado of [false, true]) {
+    if (somado) await p.click('#deb-somado');
+    await p.waitForTimeout(100);
+    const w = await p.evaluate(() => {
+      const pg = document.querySelector('.page:not([hidden])');
+      return { sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, aba: pg.scrollWidth - pg.clientWidth,
+        pw: Math.max(...[...pg.querySelectorAll('*')].filter(e => !e.closest('.table-wrap, .chart-box')).map(e => e.scrollWidth - e.clientWidth)) };
+    });
+    assert.ok(w.sw <= w.cw, `somado ${somado}: página alargou (${w.sw} > ${w.cw})`);
+    assert.ok(w.aba <= 0, `somado ${somado}: a aba rola na horizontal (${w.aba}px)`);
+    assert.ok(w.pw <= 0, `somado ${somado}: algo alarga além da tela (${w.pw}px)`);
+  }
+  assert.doesNotMatch(await p.textContent('#page-debentures'), /NaN|undefined/);
+  assert.deepEqual(errs, []);
+  assert.deepEqual(ext, []);
+  await p.context().close();
 });
 
 test('nenhuma requisição externa', () => assert.deepEqual(external, []));

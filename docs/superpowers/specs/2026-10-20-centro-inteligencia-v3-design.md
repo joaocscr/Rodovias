@@ -37,7 +37,7 @@ Uso (herdado da v1/v2): análise interna, desktop, offline. Perguntas típicas q
 
 ## 3. Restrições (herdadas)
 
-HTML único ≤ 15 MB, offline (`file://`). Só as 5 cores da marca Galapagos (`#183C80`, `#0071BB`, `#231F20`, `#525254`, `#F7F7F8`) mais opacidade. Texto ≥ 14 px, grid de 8 px. Formatos pt-BR (`R$ 7,34 bi`, `19,60%`, `734,9 km`, `12.345 veíc./dia`). Campo ausente = `—`.
+HTML único ≤ 15 MB, offline (`file://`). Só as 5 cores da paleta base institucional (`#183C80`, `#0071BB`, `#231F20`, `#525254`, `#F7F7F8`) mais opacidade. Texto ≥ 14 px, grid de 8 px. Formatos pt-BR (`R$ 7,34 bi`, `19,60%`, `734,9 km`, `12.345 veíc./dia`). Campo ausente = `—`.
 
 ## 4. Base do SNV sem o shapefile (chamada do builder)
 

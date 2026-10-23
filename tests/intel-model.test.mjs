@@ -406,11 +406,19 @@ test('lineWeight: espessura ∝ t, mínimo 1 px', () => {
   assert.equal(IntelModel.lineWeight(10, 0), 1);
 });
 
-test('portoTipo: só os 4 tipos, com rótulos curtos', () => {
-  assert.equal(IntelModel.portoTipo('Porto Organizado'), 'Porto Organizado');
-  assert.equal(IntelModel.portoTipo('Terminal de uso privado'), 'TUP');
-  assert.equal(IntelModel.portoTipo('Estação de transbordo de cargas'), 'ETC');
+test('portoTipo: só os 4 tipos, com rótulo em português por extenso (sigla entre parênteses)', () => {
+  assert.equal(IntelModel.portoTipo('Porto Organizado'), 'Porto organizado');
+  assert.equal(IntelModel.portoTipo('Terminal de uso privado'), 'Terminal de uso privado (TUP)');
+  assert.equal(IntelModel.portoTipo('Estação de transbordo de cargas'), 'Estação de transbordo de cargas (ETC)');
   assert.equal(IntelModel.portoTipo('Porto Público'), 'Porto público');
+  // rótulo em minúsculas depois da 1ª palavra, sem a grafia crua da ANTAQ
+  for (const v of Object.values(IntelModel.PORTO_TIPOS)) assert.match(v, /^[A-ZÀ-Ú][a-zà-ú ]+( \([A-Z]+\))?$/, v);
+  assert.deepEqual(Object.keys(IntelModel.PORTO_TIPOS).sort(),
+    ['Estação de transbordo de cargas', 'Porto Organizado', 'Porto Público', 'Terminal de uso privado']);
+  // forma do marcador para cada tipo do dicionário: portos em quadrado, terminais e estações em círculo
+  assert.deepEqual(Object.keys(IntelModel.PORTO_FORMA).sort(), Object.keys(IntelModel.PORTO_TIPOS).sort());
+  assert.deepEqual(Object.entries(IntelModel.PORTO_FORMA).filter(([, f]) => f === 'quadrado').map(([t]) => t).sort(), ['Porto Organizado', 'Porto Público']);
+  assert.ok(Object.values(IntelModel.PORTO_FORMA).every(f => f === 'quadrado' || f === 'circulo'));
   for (const t of ['IP4', 'Registro - Terminal de uso privado', 'TNA', 'Plataforma Marítima', null]) assert.equal(IntelModel.portoTipo(t), null, t);
 });
 
@@ -729,6 +737,13 @@ test('fisSup: superfície do registro principal (PAV, N_PAV, PLA); sem dicionár
   assert.equal(IntelModel.fisSup({ fis: [{ ext: 1 }] }, 0), null);
 });
 
+test('fisSit: situação do registro principal; sem dicionário = null', () => {
+  const s = { dict: { situacao: ['Duplicada', 'Pavimentada'] }, trechos: [['x', 0, 0, 0, 1], ['y', 0, 0, 0, 0]], fis: [{ ext: 1, r: [0, 1] }] };
+  assert.equal(IntelModel.fisSit(s, 0), 'Pavimentada');
+  assert.equal(IntelModel.fisSit(s, 5), null);
+  assert.equal(IntelModel.fisSit({ fis: [{ ext: 1 }] }, 0), null);
+});
+
 test('qualidadeRecorte: um rótulo só para mapa e ficha', () => {
   assert.equal(IntelModel.qualidadeRecorte('ok'), 'Recorte ok');
   assert.equal(IntelModel.qualidadeRecorte('aproximado'), 'Recorte aproximado');
@@ -851,13 +866,10 @@ test('cargaTop: físicos com maior carga agrícola modelada, com BR/UF e locais 
   assert.deepEqual(IntelModel.cargaTop({}, snvT), []);
 });
 
-test('fmtDia e fontesData: dd/mm/aaaa e listas com padrão vazio', () => {
+test('fmtDia: dd/mm/aaaa', () => {
   assert.equal(IntelModel.fmtDia('2026-10-20'), '20/10/2026');
   assert.equal(IntelModel.fmtDia(null), '—');
   assert.equal(IntelModel.fmtDia('2026'), '2026');
-  const f = IntelModel.fontesData({ fontes: { fontes: [{ nome: 'A' }], indisponiveis: [{ nome: 'B' }] } });
-  assert.deepEqual(f, { fontes: [{ nome: 'A' }], indisponiveis: [{ nome: 'B' }], base: [] });
-  assert.equal(IntelModel.fontesData({}), null);
 });
 
 
@@ -885,6 +897,21 @@ test('fmtPeriodo: AAAA-MM vira mmm/aaaa; anos, intervalos de anos e datas ficam 
   assert.equal(IntelModel.fmtPeriodo('2024-13'), '2024-13');
   assert.equal(IntelModel.fmtPeriodo('14/10/2026'), '14/10/2026');
   assert.equal(IntelModel.fmtPeriodo(null), '—');
+});
+
+test('fmtPeriodo: datas ISO completas viram dd/mm/aaaa e intervalos ISO ("início/fim") viram "início a fim"', () => {
+  assert.equal(IntelModel.fmtPeriodo('2025-05-06'), '06/05/2025');
+  assert.equal(IntelModel.fmtPeriodo('acesso em 2026-10-20'), 'acesso em 20/10/2026');
+  assert.equal(IntelModel.fmtPeriodo('2024-01-01/2025-12-31'), '01/01/2024 a 31/12/2025');
+  assert.equal(IntelModel.fmtPeriodo('2024-01/2026-08'), 'jan/2024 a ago/2026');
+  assert.equal(IntelModel.fmtPeriodo('2024-01-15/2026-08'), '15/01/2024 a ago/2026');
+  // ano até um mês (como no manifesto do índice ABCR, "1999-2026-09")
+  assert.equal(IntelModel.fmtPeriodo('1999-2026-09'), '1999 a set/2026');
+  assert.equal(IntelModel.fmtPeriodo('2026-01 a 2026-08 (parcial)'), 'jan/2026 a ago/2026 (parcial)');
+  // dia ou mês inválido não vira data; safra "2024/2025" e intervalos de anos ficam como estão
+  assert.equal(IntelModel.fmtPeriodo('2025-02-32'), '2025-02-32');
+  assert.equal(IntelModel.fmtPeriodo('safra 2024/2025'), 'safra 2024/2025');
+  assert.equal(IntelModel.fmtPeriodo('2022-2026'), '2022-2026');
 });
 
 test('fmtMt: t em Mt com 2 casas; abaixo de 0,005 Mt vira "< 0,01"; ausente = —', () => {
@@ -984,4 +1011,128 @@ test('paisLabelPoint: fica no polo se livre; senão vai ao ponto livre mais pró
   const p2 = IntelModel.paisLabelPoint(quad, grade, { hw: 2, hh: 2 });
   assert.ok(IntelModel.pointInRings(p2[0], p2[1], IntelModel.paisAneis(quad)), String(p2));
   assert.equal(IntelModel.paisLabelPoint({ nome: 'x' }, []), null);
+});
+
+test('paisLabelPoint: evita os rótulos já colocados (ocupados), como SR e GF lado a lado', () => {
+  const quad = { nome: 'Quadrado', iso: 'QQ', label: [-60, -20], p: [enc([[-66, -26], [-54, -26], [-54, -14], [-66, -14], [-66, -26]])] };
+  // rótulo vizinho centrado 1° a leste do polo: as caixas (meia-largura 2 + 2) se cruzam; o rótulo sai até não tocar
+  const viz = { lat: -20, lng: -59, hw: 2, hh: 0.5 };
+  const pt = IntelModel.paisLabelPoint(quad, [], { hw: 2, hh: 0.5, passo: 0.25, ocupados: [viz] });
+  assert.ok(Math.abs(pt[1] - viz.lng) >= 4 || Math.abs(pt[0] - viz.lat) >= 1, `caixas se cruzam: ${pt}`);
+  assert.ok(IntelModel.pointInRings(pt[0], pt[1], IntelModel.paisAneis(quad)));
+  // o mais perto possível do polo: sobe ou desce 1° (meia-altura 0,5 + 0,5), sem andar na longitude
+  assert.deepEqual([Math.abs(pt[0] + 20), pt[1]], [1, -60]);
+  // ocupado longe: fica no polo; sem `ocupados`, igual a antes
+  assert.deepEqual(IntelModel.paisLabelPoint(quad, [], { hw: 2, hh: 0.5, ocupados: [{ lat: 0, lng: 0, hw: 1, hh: 1 }] }), [-20, -60]);
+  // linha e rótulo vizinho juntos: o ponto não toca nenhum dos dois
+  const linha = [[[-21, -70], [-21, -50]]];
+  const p2 = IntelModel.paisLabelPoint(quad, linha, { hw: 2, hh: 0.5, passo: 0.25, ocupados: [viz] });
+  assert.ok(Math.abs(p2[0] + 21) >= 0.5, String(p2));
+  assert.ok(Math.abs(p2[1] - viz.lng) >= 4 || Math.abs(p2[0] - viz.lat) >= 1, String(p2));
+  // caixa maior entre rótulos (zoom menor): o afastamento usa a caixa, não hw × hh
+  const p3 = IntelModel.paisLabelPoint(quad, [], { hw: 2, hh: 0.5, passo: 0.25, ocupados: [viz], caixa: { hw: 3, hh: 1 } });
+  assert.deepEqual([Math.abs(p3[0] + 20), p3[1]], [1.5, -60]);
+});
+
+// ---------- Linha do tempo de editais e leilões ----------
+const tlConc = { entidades: [
+  { id: 'e1', leilao: '2026-12-11', edital: '2026-09-02', cronograma: [{ marco: 'Edital', data: '2026-09-02' }, { marco: 'Leilão', data: '2026-12-11' }] },
+  { id: 'e2', leilao: '2026-05-28', edital: null, cronograma: [{ marco: 'TCU', data: '2025' }, { marco: 'Edital', data: '2026-02-13' }, { marco: 'Leilão', data: '2026-05-28' }] },
+  { id: 'e3', leilao: '2027-06', edital: '2027-03', cronograma: [] },
+  { id: 'e4', leilao: '2027-09', edital: null, cronograma: [{ marco: 'Edital', data: '2027' }] },
+  { id: 'e5', leilao: '2022-04-13', edital: '2022-01-10', cronograma: [] },
+  { id: 'e6', leilao: null, edital: null, cronograma: [{ marco: 'Leilão', data: '2027-02-10' }] },
+] };
+const tlItem = (id, o) => Object.assign({ id, nome: id.toUpperCase(), esfera: 'federal', status: 'edital', data_prevista: null, ent: null }, o);
+const tlPipe = { itens: [
+  tlItem('p-e3', { ent: 'e3', status: 'tcu', data_prevista: '2027-06' }),
+  tlItem('p-e1', { ent: 'e1', status: 'leilao_agendado', data_prevista: '2026-12-11' }),
+  tlItem('p-e2', { ent: 'e2', status: 'contrato', data_prevista: '2026-09-29' }), // data_prevista = assinatura; vale o leilão da entidade
+  tlItem('p-e4', { ent: 'e4', status: 'estudo' }), // edital só com o ano: sem edital
+  tlItem('p-e5', { ent: 'e5', status: 'contrato', data_prevista: '2022-12-22' }), // leilão anterior a 2026: fora do recorte (e não conta como sem data)
+  tlItem('p-e6', { ent: 'e6', status: 'estudo' }), // leilão só no cronograma
+  tlItem('est-a', { esfera: 'estadual', status: 'tcu', data_prevista: '2027-04-26' }), // sem entidade: data_prevista é o leilão
+  tlItem('est-b', { esfera: 'estadual', status: 'contrato', data_prevista: '2022-12-22', ent: 'x-estadual' }), // assinatura não é leilão: sem data de leilão
+  tlItem('est-c', { esfera: 'estadual', status: 'estudo' }),
+  tlItem('fed-d', { status: 'estudo' }),
+] };
+
+test('linhaDoTempo: ordena pela data do leilão (mês sem dia no meio do mês); edital da entidade, senão do cronograma', () => {
+  const r = IntelModel.linhaDoTempo(tlConc, tlPipe, 2026);
+  assert.deepEqual(r.map(x => x.id), ['p-e2', 'p-e1', 'p-e6', 'est-a', 'p-e3', 'p-e4']);
+  const by = Object.fromEntries(r.map(x => [x.id, x]));
+  assert.deepEqual([by['p-e1'].edital, by['p-e1'].leilao, by['p-e1'].status, by['p-e1'].nome], ['2026-09-02', '2026-12-11', 'leilao_agendado', 'P-E1']);
+  assert.equal(by['p-e2'].edital, '2026-02-13'); // cronograma quando a entidade não tem edital
+  assert.equal(by['p-e2'].leilao, '2026-05-28'); // leilão da entidade, não a assinatura do pipeline
+  assert.equal(by['p-e3'].edital, '2027-03'); assert.equal(by['p-e3'].leilao, '2027-06');
+});
+
+test('linhaDoTempo: sem edital desenha só o leilão; ano sem mês não é data', () => {
+  const by = Object.fromEntries(IntelModel.linhaDoTempo(tlConc, tlPipe, 2026).map(x => [x.id, x]));
+  assert.equal(by['p-e4'].edital, null);
+  assert.equal(by['p-e4'].leilao, '2027-09');
+  assert.equal(by['est-a'].edital, null);
+  assert.equal(by['est-a'].leilao, '2027-04-26');
+  assert.equal(by['p-e6'].leilao, '2027-02-10');
+});
+
+test('linhaDoTempo: leilão anterior a 2026 fica fora; sem data nenhuma fica fora e é contado', () => {
+  const ids = IntelModel.linhaDoTempo(tlConc, tlPipe, 2026).map(x => x.id);
+  for (const fora of ['p-e5', 'est-b', 'est-c', 'fed-d']) assert.ok(!ids.includes(fora), fora);
+  const res = IntelModel.linhaDoTempoResumo(tlConc, tlPipe, 2026);
+  assert.equal(res.semData, 3); // est-b, est-c, fed-d; p-e5 (2022) não conta
+  assert.deepEqual(res.rows.map(x => x.id), ids);
+  assert.deepEqual([res.anos.de, res.anos.ate], [2026, 2027]); // anos dos leilões
+  assert.deepEqual([res.de, res.ate], [2026, 2027]); // eixo: anos de todas as datas desenhadas
+});
+
+test('linhaDoTempo: o eixo abrange também um edital anterior ao primeiro leilão', () => {
+  const res = IntelModel.linhaDoTempoResumo({ entidades: [{ id: 'z', leilao: '2026-03-01', edital: '2025-07-17', cronograma: [] }] }, { itens: [tlItem('z', { ent: 'z' })] }, 2026);
+  assert.deepEqual([res.de, res.ate, res.anos.de, res.anos.ate], [2025, 2026, 2026, 2026]);
+});
+
+test('linhaDoTempo: pipeline como lista, sem conc nem itens e item com ent desconhecida não quebram', () => {
+  assert.equal(IntelModel.linhaDoTempo(tlConc, tlPipe.itens, 2026).length, 6);
+  assert.deepEqual(IntelModel.linhaDoTempo(null, null), []);
+  assert.deepEqual(IntelModel.linhaDoTempo({}, {}), []);
+  const res = IntelModel.linhaDoTempoResumo(null, { itens: [tlItem('q', { ent: 'nenhum', data_prevista: '2026-08' })] }, 2026);
+  assert.equal(res.rows.length, 1); assert.equal(res.rows[0].leilao, '2026-08');
+  const vazio = IntelModel.linhaDoTempoResumo(tlConc, { itens: [] }, 2026);
+  assert.deepEqual([vazio.rows.length, vazio.semData, vazio.de, vazio.ate, vazio.anos], [0, 0, null, null, null]);
+});
+
+test('linhaDoTempo: a linha leva verificado do item (false só quando o item é de imprensa)', () => {
+  const pipe = { itens: [tlItem('nv', { esfera: 'estadual', status: 'edital', data_prevista: '2026-03-20', verificado: false }),
+    tlItem('ok', { esfera: 'estadual', status: 'edital', data_prevista: '2026-04-20', verificado: true }),
+    tlItem('sem', { esfera: 'estadual', status: 'edital', data_prevista: '2026-05-20' })] };
+  const by = Object.fromEntries(IntelModel.linhaDoTempo(null, pipe, 2026).map(x => [x.id, x.verificado]));
+  assert.deepEqual(by, { nv: false, ok: true, sem: true });
+});
+
+test('linhaDoTempo: datas inválidas (mês 13, texto) contam como sem data', () => {
+  const res = IntelModel.linhaDoTempoResumo({ entidades: [{ id: 'w', leilao: '2026-13', edital: 'breve', cronograma: [] }] }, { itens: [tlItem('w', { ent: 'w' })] }, 2026);
+  assert.equal(res.rows.length, 0); assert.equal(res.semData, 1);
+});
+
+test('anoPracas e comAno: o ano dos rótulos das praças vem do bloco antt; sem ele, rótulo sem ano', () => {
+  assert.equal(IntelModel.anoPracas({ antt: { pracas: { ano: 2026, campos: [], linhas: [] } } }), 2026);
+  assert.equal(IntelModel.anoPracas({ antt: { pracas: { campos: [], linhas: [] } } }), null);
+  assert.equal(IntelModel.anoPracas(null), null);
+  assert.equal(IntelModel.comAno('VMD', 2026), 'VMD 2026');
+  assert.equal(IntelModel.comAno('VMD', null), 'VMD');
+});
+
+test('rotasDocs: data da apresentação e anos dos relatórios a partir das fontes do bloco rotas', () => {
+  const rotas = { fonte: [{ nome: 'MPO — Apresentação Rotas (01/07/2026)', periodo: '01/07/2026' },
+    { nome: 'MPO — Relatório 2025', periodo: '2025' }, { nome: 'MPO — Relatório 2024', periodo: '2024' }, { nome: 'Natural Earth', periodo: 'x' }] };
+  assert.deepEqual(IntelModel.rotasDocs(rotas), { apresentacao: '01/07/2026', relatorios: ['2024', '2025'] });
+  assert.deepEqual(IntelModel.rotasDocs(null), { apresentacao: null, relatorios: [] });
+});
+
+test('linhaDoTempo: o início do recorte é o ano passado (padrão: o ano corrente)', () => {
+  const ids = desde => IntelModel.linhaDoTempo(tlConc, tlPipe, desde).map(x => x.id);
+  const em2026 = ids(2026), em2027 = ids(2027);
+  assert.ok(em2027.length < em2026.length && em2027.every(i => em2026.includes(i)));
+  const anoAtual = new Date().getFullYear();
+  assert.deepEqual(IntelModel.linhaDoTempo(tlConc, tlPipe).map(x => x.id), ids(anoAtual));
 });

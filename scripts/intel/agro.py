@@ -260,10 +260,11 @@ def _write(name, obj):
     return p
 
 
-def fetch():
+def fetch(force=False):
+    """Baixa o que falta (com `force`, baixa tudo de novo) e registra no manifesto."""
     m = Manifest("agro")
     for url, rel, desc, periodo in ARQUIVOS:
-        dest = baixar(url, RAW / rel)
+        dest = baixar(url, RAW / rel, force=force)
         m.add(url, dest, desc, periodo=periodo, licenca=IBGE_LIC)
     m.save()
     return m

@@ -11,14 +11,14 @@
 <body>
 <header class="topbar">
   <div class="topbar__titles">
-    <h1 class="topbar__title">Rodovias do Brasil · Centro de Inteligência</h1>
-    <span class="topbar__sub">SNV {{VERSAO}} · DNIT · RoadShow 2026-2027</span>
+    <h1 class="topbar__title">Rodovias do Brasil<span class="topbar__title-extra"> · Centro de Inteligência</span></h1>
   </div>
   <nav class="tabs" id="tabs" aria-label="Seções"></nav>
   <button class="icon-btn drawer-toggle" id="drawer-toggle" type="button" aria-label="Abrir painel" aria-controls="panel" aria-expanded="false">
     <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="16" cy="6" r="2" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="12" r="2" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="18" cy="18" r="2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
   </button>
 </header>
+<p class="topbar__sub" id="topbar-sub">Malha rodoviária federal: SNV {{VERSAO}} (DNIT) · Concessões: RoadShow 2026-2027<span class="topbar__sub-extra">, apresentação do Ministério dos Transportes a investidores ({{EDICAO}})</span></p>
 <div class="app" data-tab="mapa">
   <aside class="panel" id="panel" aria-label="Busca, filtros e números">
     <section class="panel__section" id="search-section"></section>
@@ -32,12 +32,15 @@
     <div class="legend" id="legend"></div>
   </main>
 </div>
+<section class="page" data-tab="resumo" id="page-resumo" hidden></section>
 <section class="page" data-tab="projetos" id="page-projetos" hidden></section>
 <section class="page" data-tab="trafego" id="page-trafego" hidden></section>
 <section class="page" data-tab="cargas" id="page-cargas" hidden></section>
 <section class="page" data-tab="mercado" id="page-mercado" hidden></section>
+<section class="page" data-tab="debentures" id="page-debentures" hidden></section>
 <section class="page" data-tab="regulatorio" id="page-regulatorio" hidden></section>
 <section class="page" data-tab="fontes" id="page-fontes" hidden></section>
+<section class="page" data-tab="glossario" id="page-glossario" hidden></section>
 <div class="ficha-backdrop" id="ficha-backdrop" hidden></div>
 <div class="ficha" id="ficha" role="dialog" aria-modal="true" aria-labelledby="ficha-title" hidden></div>
 <script>

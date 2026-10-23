@@ -19,9 +19,10 @@ Colunas do CSV (as do contrato mais `estudo`):
   - edital, leilao_agendado, tcu, consulta_publica, estudo (e suspenso/cancelado, quando houver): data do leilão;
   - leiloado: data da assinatura do contrato (prevista);
   - contrato: data da assinatura do contrato (efetiva).
-  Quando o item tem `ent`, a data segue data/base/conc.json (`leilao`, `assinatura`, `assinatura_aditivo`) ou a ficha
-  estadual (`assinatura`) para coincidir com as demais abas; divergências de outras fontes (ex.: BNDES Hub) ficam em
-  `obs`. O `km` de item com ficha estadual é o `km_decl` da ficha.
+  Quando o item tem `ent` federal, `montar` usa a data da entidade (data/roadshow/entidades.json relido sobre a base,
+  como no build, com a camada de verificação: `leilao`, `assinatura`, `assinatura_aditivo`), e o valor do CSV fica só
+  como reserva quando a entidade não tem a data; com ficha estadual, a data do CSV segue a `assinatura` da ficha. Assim
+  o pipeline coincide com as demais abas; divergências de outras fontes (ex.: BNDES Hub) ficam em `obs`. O `km` de item com ficha estadual é o `km_decl` da ficha.
 - `obs`: texto exibido ao usuário; fatos em linguagem direta.
 
 Uso: python scripts/intel/pipeline.py [fetch|build|all]
@@ -36,12 +37,15 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from intel.fontes import RAW, ROOT, Manifest, fetch as baixar  # noqa: E402
+from roadshow import conc_da_base  # noqa: E402
+from verificacao import aplicar, carregar, carregar_aliases, carregar_consorcios, validar  # noqa: E402
 
 DOMINIO = "pipeline"
 RAW_DIR = RAW / DOMINIO
 CSV = ROOT / "data" / "intel" / "pipeline.csv"
 OUT = ROOT / "data" / "intel" / "pipeline.json"
-CONC = ROOT / "data" / "base" / "conc.json"
+BASE = ROOT / "data" / "base"
+ROADSHOW = ROOT / "data" / "roadshow"
 ESTADUAIS = ROOT / "data" / "intel" / "estaduais.json"
 ACESSO = "2026-10-20"
 
@@ -63,10 +67,11 @@ RE_DATA = re.compile(r"\d{4}-\d{2}(-\d{2})?")
 COLUNAS = ["id", "nome", "esfera", "uf", "rodovias", "km", "status", "data_prevista", "ent", "estudo", "verificado",
            "fonte_url", "fonte_data", "obs"]
 
+# "origem": "imprensa" marca a fonte não oficial (rótulo "imprensa — não oficial" na interface).
 FONTE = [
-    {"nome": "Carteira de Concessões Rodoviárias 2023-2027 (Ministério dos Transportes, v40)",
+    {"nome": "Carteira de Concessões Rodoviárias 2023-2027 (Ministério dos Transportes)",
      "url": "https://www.gov.br/transportes/pt-br/assuntos/concessoes/concessoes-rodoviarias-2027",
-     "periodo": "carteira de 14/10/2026", "acesso": ACESSO, "licenca": "Informação pública (LAI, Lei 12.527/2011)",
+     "periodo": "versão de 14/10/2026", "acesso": ACESSO, "licenca": "Informação pública (LAI, Lei 12.527/2011)",
      "nota": "O PDF da carteira é só imagem e foi transcrito à mão (slide 12, otimizações; slide 24, cronograma de 2027; slide 26, estudos)."},
     {"nome": "ANTT: Novos projetos em rodovias e Reestruturação de contratos de concessão",
      "url": "https://www.gov.br/antt/pt-br/assuntos/rodovias/novos-projetos-em-rodovias",
@@ -83,7 +88,7 @@ FONTE = [
      "licenca": "Informação pública (LAI, Lei 12.527/2011)", "nota": "Portal de parcerias de SP (SPI) consultado em 20/10/2026."},
     {"nome": "Imprensa especializada (Agência iNFRA, O Tempo, Itatiaia, Atlas Público)",
      "url": "https://agenciainfra.com/", "periodo": "out/2025 a jul/2026", "acesso": ACESSO,
-     "licenca": "Fatos noticiados, citados com link; sem reprodução de texto",
+     "licenca": "Fatos noticiados, citados com link; sem reprodução de texto", "origem": "imprensa",
      "nota": "Itens com fonte apenas de imprensa aparecem como não verificados e podem estar desatualizados."},
 ]
 
@@ -104,15 +109,15 @@ BRUTOS = [
     ("mt_carteira_2023_2027.pdf",
      "https://www.gov.br/transportes/pt-br/assuntos/concessoes/conteudos-rodovias-2026/"
      "carteira_de_concessoes_2023_2027_sem_gestao_publica_privada.pdf/@@display-file/file",
-     "MT: carteira de concessões 2023-2027 (v40, só imagem)", "14/10/2026"),
+     "MT: carteira de concessões 2023-2027 (versão de 14/10/2026, só imagem)", "14/10/2026"),
 ]
 
 
-def fetch():
-    """Baixa o que falta em data/raw/pipeline/ e registra em data/manifest/pipeline.json."""
+def fetch(force=False):
+    """Baixa o que falta em data/raw/pipeline/ (com `force`, tudo de novo) e registra em data/manifest/pipeline.json."""
     m = Manifest(DOMINIO)
     for nome, url, descricao, periodo in BRUTOS:
-        dest = baixar(url, RAW_DIR / nome)
+        dest = baixar(url, RAW_DIR / nome, force=force)
         m.add(url, dest, descricao, periodo=periodo, licenca="Informação pública")
     m.save()
     return m
@@ -184,13 +189,40 @@ def item_de_linha(r, ents, n_estudos, ents_est=frozenset()):
     }
 
 
-def montar(csv_path=CSV, conc_path=CONC, est_path=ESTADUAIS):
-    conc = json.loads(Path(conc_path).read_text(encoding="utf-8"))
-    ents = {e["id"] for e in conc["entidades"]}
+def data_da_entidade(status, e):
+    """Data do item ligado à entidade federal `e`: assinatura (prevista no leiloado, com o termo aditivo da otimização;
+    efetiva no contrato) ou leilão (demais status)."""
+    if status == "leiloado":
+        return e.get("assinatura_aditivo") or e.get("assinatura")
+    if status == "contrato":
+        return e.get("assinatura")
+    return e.get("leilao")
+
+
+def montar(csv_path=CSV, base_dir=BASE, roadshow_dir=ROADSHOW, est_path=ESTADUAIS):
+    # o mesmo CONC do build (base congelada + entidades e demais JSON curados de data/roadshow/), com a camada de
+    # verificação validada e aplicada como no build
+    ler = lambda nome: json.loads((Path(base_dir) / nome).read_text(encoding="utf-8"))  # noqa: E731
+    try:
+        conc = conc_da_base(ler("conc.json"), roadshow_dir, ler("snv.json"))
+    except ValueError as e:
+        sys.exit(f"Falha: {e}")
+    verif, aliases, consorcios = carregar(), carregar_aliases(), carregar_consorcios()
+    erros = validar(verif, conc, aliases, consorcios)
+    if erros:
+        sys.exit("Falha na verificação dos leilões:\n" + "\n".join(erros))
+    conc = aplicar(conc, verif, aliases, consorcios)
+    por_id = {e["id"]: e for e in conc["entidades"]}
+    ents = set(por_id)
     est = Path(est_path)
     ents_est = {e["id"] for e in json.loads(est.read_text(encoding="utf-8"))["entidades"]} if est.exists() else set()
     with open(csv_path, encoding="utf-8", newline="") as f:
         itens = [item_de_linha(r, ents, len(conc["estudos"]), ents_est) for r in csv.DictReader(f)]
+    for i in itens:
+        if i["ent"] in por_id:
+            d = data_da_entidade(i["status"], por_id[i["ent"]])
+            if isinstance(d, str) and RE_DATA.fullmatch(d):  # data da entidade (AAAA-MM-DD ou AAAA-MM); senão, a do CSV
+                i["data_prevista"] = d
     return {"fonte": FONTE, "itens": itens, "status": [{"key": k, "label": v} for k, v in STATUS]}
 
 
