@@ -10,6 +10,9 @@ Entradas
 - Séries públicas, baixadas por `fetch` para data/raw/debentures/publico/: Banco Central (SGS: Selic meta 432, CDI 12
   e IPCA 12 meses 13522; Olinda: expectativa Focus do IPCA 12 meses) e Tesouro Nacional (taxas do Tesouro Direto, de
   onde sai a curva diária das NTN-B).
+- Cadastro de debêntures do SND (ANBIMA), baixado por `fetch` para data/raw/debentures/publico/snd_caracteristicas.txt e
+  lido por snd.py: data de emissão, coordenador líder e incentivo fiscal (Lei 12.431) de cada papel, casados pelo código.
+  Sem o arquivo, os campos ficam None e cada papel vira item de curadoria.
 
 Saída: só agregados (por dia, emissor, subsetor e, nas intenções, direção) e o último negócio e a última intenção de
 cada papel; nunca a lista de negócios ou intenções linha a linha. Intenções ficam à parte dos negócios, com o mesmo
@@ -41,6 +44,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from intel import debentures_planilhas as _planilhas  # noqa: E402
 from intel.debentures_planilhas import ler_negocios, ler_telas  # noqa: E402,F401 — leitores padrão de `montar`
 from intel.debentures_texto import normalizar, para_data, taxa_pct  # noqa: E402
+from intel import snd as _snd  # noqa: E402
 from intel.fontes import RAW, ROOT, Manifest, fetch as _fetch, sha256  # noqa: E402
 
 PASTA = RAW / "debentures"
@@ -55,6 +59,7 @@ DIAS_UTEIS = 252
 # (conta no volume e no número) e vai para a curadoria
 LIMITES_TAXA = {"% DI": (0, 300), "DI+": (-5, 20)}
 LIMITES_PADRAO = (-10, 50)
+SND_ARQUIVO = _snd.DEST.name
 ORIGEM = {"negocios": "negócios BTG", "intencoes": "intenções XP"}
 
 SGS = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.{}/dados/ultimos/{}?formato=json"
@@ -269,7 +274,11 @@ def _universo(telas, mov, emissores):
     return classe, pend
 
 
-def _emissoes(telas, classe):
+def _emissoes(telas, classe, cadastro=None):
+    """Uma emissão por papel das telas cujo emissor está no universo. `cadastro`: saída de snd.ler; dele vêm a data de
+    emissão, o coordenador líder e, quando traz, o incentivo fiscal (vale sobre a tela); papel fora dele fica com
+    data e coordenador None e sem "SND" nas fontes."""
+    cadastro = cadastro or {}
     por = defaultdict(dict)
     for t in telas:
         por[t["ticker"]].setdefault(t["origem"], t)
@@ -281,11 +290,15 @@ def _emissoes(telas, classe):
         if not c:
             continue
         val = lambda k: next((f[k] for f in (btg, xp) if f and f[k] is not None), None)  # noqa: E731
+        snd = cadastro.get(ticker)
+        incentivada = snd["incentivada"] if snd and snd["incentivada"] is not None else val("incentivada")
         out.append({"ticker": ticker, "emissor": c["nome"], "subsetor": c["subsetor"], "grupo": c["grupo"],
                     "indexador": val("indexador"), "taxa_emissao": _r(val("taxa_emissao"), 4),
                     "vencimento": val("vencimento"), "volume_emitido": val("volume_emitido"),
-                    "incentivada": val("incentivada"), "rating": val("rating"), "data_emissao": None,
-                    "coordenadores": None, "fontes": [o for o in ("BTG", "XP") if o in fontes]})
+                    "incentivada": incentivada, "rating": val("rating"),
+                    "data_emissao": snd["data_emissao"] if snd else None,
+                    "coordenador_lider": snd["coordenador_lider"] if snd else None,
+                    "fontes": [o for o in ("BTG", "XP") if o in fontes] + (["SND"] if snd else [])})
     return sorted(out, key=lambda e: (e["emissor"], e["vencimento"] or "", e["ticker"]))
 
 
@@ -375,7 +388,7 @@ def registrar_planilhas(manifesto, arquivos, hoje):
     return acessos
 
 
-def _fontes(telas, mov, macro, curvas, dias_usados, manifesto, acesso_corretora, hoje):
+def _fontes(telas, mov, macro, curvas, dias_usados, manifesto, acesso_corretora, hoje, emissoes=(), cadastro_de=None):
     """Fontes do bloco. Datas das planilhas vêm dos dados (data da tela, horário dos negócios e das intenções); o acesso
     de cada corretora é o dia em que se viu pela primeira vez a planilha mais recente que a traz (`acesso_corretora`), o
     das séries públicas é o do último download (manifesto). Nenhuma data vem do dia em que o bloco é gerado."""
@@ -408,6 +421,17 @@ def _fontes(telas, mov, macro, curvas, dias_usados, manifesto, acesso_corretora,
                  "subsetor, com o último pedido de cada papel."
                  + (" A tela da XP traz só a hora da atualização, não a data; vale a data da tela da BTG." if xp_sem_data else "")},
     ]
+    do_snd = [e for e in emissoes if "SND" in e["fontes"]]
+    if do_snd:
+        out.append({"nome": "ANBIMA — cadastro de debêntures (SND)", "url": "https://www.debentures.com.br/",
+                    "acesso": _baixado(manifesto, {_snd.URL}) or hoje,
+                    "periodo": f"cadastro de {_br(cadastro_de)}" if cadastro_de else "sem data no arquivo",
+                    "licenca": _snd.LICENCA, "tipo": "medido",
+                    "nota": "Cadastro público de debêntures do Sistema Nacional de Debêntures (SND), exportação "
+                            "\"Características das debêntures públicas\" com todas as séries registradas. Casado com as "
+                            "planilhas pelo código do ativo; entram só os papéis da tabela de emissões. Dele vêm a data de "
+                            "emissão, o coordenador líder e se a debênture é incentivada (Lei 12.431). Papel fora do "
+                            "cadastro fica sem data e sem coordenador."})
     sgs = [k for k in SERIES if macro.get(k)]
     if sgs:
         urls = {SGS.format(SERIES[k][0], SERIES[k][1]) for k in sgs}
@@ -446,13 +470,23 @@ def plausivel(taxa, indexador):
     return taxa is None or lo < taxa <= hi
 
 
+def _ler_cadastro(caminho):
+    """(cadastro do SND, dia em que o SND o gerou). Arquivo ausente ou que não é o cadastro vale como vazio (cada papel
+    vira curadoria)."""
+    try:
+        return _snd.ler(caminho), _snd.gerado_em(caminho)
+    except (OSError, ValueError):
+        return {}, None
+
+
 def montar(pasta=PASTA, publico=PUBLICO, emissores=EMISSORES, ler_telas=ler_telas, ler_negocios=ler_negocios,
-           hoje=None, manifesto=None):
+           hoje=None, manifesto=None, snd=None):
     """Bloco data/intel/debentures.json a partir das planilhas de `pasta`, das séries de `publico` e da classificação
     `emissores` (caminho). `ler_telas`/`ler_negocios`: leitores trocáveis (ver o início do arquivo). `hoje`: data de
     referência de planilha vista pela primeira vez e das séries sem registro de download (AAAA-MM-DD; padrão, hoje).
     `manifesto`: onde ficam o dia em que cada planilha foi vista e o do download das séries (padrão, o do domínio; quem
-    chama grava com `save`). Sem planilhas: FileNotFoundError."""
+    chama grava com `save`). `snd`: arquivo do cadastro do SND (padrão, snd_caracteristicas.txt em `publico`). Sem
+    planilhas: FileNotFoundError."""
     arquivos = planilhas(pasta)
     if not arquivos:
         raise FileNotFoundError(2, "nenhuma planilha .xlsx", str(Path(pasta) / "*.xlsx"))
@@ -471,6 +505,8 @@ def montar(pasta=PASTA, publico=PUBLICO, emissores=EMISSORES, ler_telas=ler_tela
     emis = carregar_emissores(emissores)
     classe, pend = _universo(telas, mov, emis)
     macro, curvas, ausentes = _macro(publico, hoje, manifesto)
+    cadastro, cadastro_de = _ler_cadastro(snd or Path(publico) / SND_ARQUIVO)
+    emissoes = _emissoes(telas, classe, cadastro)
 
     dias_sem_curva, dias_usados, descartadas, sem_data = set(), set(), defaultdict(int), defaultdict(int)
     universo = {}
@@ -495,10 +531,10 @@ def montar(pasta=PASTA, publico=PUBLICO, emissores=EMISSORES, ler_telas=ler_tela
     agreg = lambda ls, d=False: _conjunto([{**l, "emissor": l["emissor_classe"]} for l in ls], d)  # noqa: E731
     datas = [l["data"] for t in ("negocios", "intencoes") for l in mov[t] if l["data"]]
     return {
-        "fonte": _fontes(telas, mov, macro, curvas, dias_usados, manifesto, acesso_corretora, hoje),
+        "fonte": _fontes(telas, mov, macro, curvas, dias_usados, manifesto, acesso_corretora, hoje, emissoes, cadastro_de),
         "tipo": "medido",
         "macro": macro,
-        "emissoes": _emissoes(telas, classe),
+        "emissoes": emissoes,
         "secundario": {
             "periodo": {"de": min(datas), "ate": max(datas)} if datas else {"de": None, "ate": None},
             "negocios": agreg(universo["negocios"]),
@@ -508,6 +544,7 @@ def montar(pasta=PASTA, publico=PUBLICO, emissores=EMISSORES, ler_telas=ler_tela
         },
         "pendencias": {
             "emissores_sem_classificacao": pend,
+            "emissoes_sem_snd": [{"ticker": e["ticker"], "emissor": e["emissor"]} for e in emissoes if "SND" not in e["fontes"]],
             "series_indisponiveis": [{"serie": ROTULO_SERIE[k], "arquivo": _rel(Path(publico) / ARQUIVO_SERIE[k])}
                                      for k in ausentes],
             "dias_sem_curva": sorted(dias_sem_curva) if curvas else [],
@@ -526,8 +563,8 @@ def _rel(p):
 
 
 def fetch(force=False):  # noqa: ARG001 — `force` existe pela interface comum; aqui sempre se baixa de novo
-    """Baixa de novo as séries públicas (dados diários: Selic, CDI, IPCA, Focus e o histórico do Tesouro Direto) para
-    data/raw/debentures/publico/ e registra no manifesto, com ou sem `force`. Série que não responde depois das novas
+    """Baixa de novo as séries públicas (dados diários: Selic, CDI, IPCA, Focus e o histórico do Tesouro Direto) e o
+    cadastro de debêntures do SND (snd.py) para data/raw/debentures/publico/ e registra no manifesto, com ou sem `force`. Série que não responde depois das novas
     tentativas não interrompe as outras: fica o arquivo anterior (o download vai para um arquivo temporário) e o aviso;
     sem arquivo nenhum, o `build` gera o bloco sem ela e a curadoria pede nova tentativa (sem o Tesouro, spread "—")."""
     m = Manifest("debentures")
@@ -546,6 +583,8 @@ def fetch(force=False):  # noqa: ARG001 — `force` existe pela interface comum;
             print(f"AVISO: {e}", file=sys.stderr)
             continue
         m.add(url, dest, descricao, licenca=licenca)["baixado"] = dt.date.today().isoformat()
+    if not _snd.fetch(PUBLICO / SND_ARQUIVO, manifesto=m):
+        falhas.append(SND_ARQUIVO)
     m.save()
     if falhas:
         print(f"AVISO: séries públicas sem download: {', '.join(falhas)}", file=sys.stderr)

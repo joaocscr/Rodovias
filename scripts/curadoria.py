@@ -22,6 +22,7 @@ TIPOS = {
     "consorcio_sem_composicao": "Consórcios vencedores sem composição na base de consórcios",
     "consorcio_fora_da_ata": "Consórcios que a ata do leilão não lista",
     "emissor_sem_classificacao": "Emissores de debêntures sem classificação",
+    "emissao_sem_cadastro_snd": "Debêntures fora do cadastro do SND (data de emissão e coordenador líder \"—\")",
     "debentures_sem_serie": "Debêntures sem série pública ou sem curva das NTN-B (indicador ou spread \"—\")",
     "taxa_fora_do_intervalo": "Taxas de debêntures fora do intervalo plausível (fora das médias)",
     "linha_sem_data": "Linhas das planilhas de debêntures sem data legível (fora dos totais)",
@@ -220,7 +221,8 @@ def _consorcios(conc):
 
 def _debentures(bloco):
     """Pendências do bloco de debêntures (scripts/intel/debentures.py): emissor das planilhas sem classificação (fica
-    fora da página), série pública ausente e dias de negócio ou intenção IPCA+ sem curva das NTN-B do Tesouro."""
+    fora da página), papel fora do cadastro do SND, série pública ausente e dias de negócio ou intenção IPCA+ sem curva das
+    NTN-B do Tesouro."""
     pend = (bloco or {}).get("pendencias") or {}
     refazer = "depois rode `python scripts/atualizar.py --dominios debentures`"
     out = [("emissor_sem_classificacao", p["nome"],
@@ -229,6 +231,13 @@ def _debentures(bloco):
             f"grafia em `nomes` de um emissor que já existe) ou, se não for de transporte, ponha o nome em "
             f"`fora_do_universo`; {refazer}")
            for p in pend.get("emissores_sem_classificacao") or []]
+    out += [("emissao_sem_cadastro_snd", p["ticker"],
+             f"{p['emissor']}: o papel não está no cadastro de debêntures do SND (data/raw/debentures/publico/"
+             "snd_caracteristicas.txt), então a data de emissão e o coordenador líder ficam \"—\"; rode "
+             "`python scripts/atualizar.py --baixar --dominios debentures` (série recém-registrada pode demorar a entrar "
+             "no cadastro) e, se o código da planilha estiver diferente do da ANBIMA, corrija a planilha em "
+             "data/raw/debentures/")
+            for p in pend.get("emissoes_sem_snd") or []]
     out += [("debentures_sem_serie", s["serie"],
              f"sem arquivo em {s['arquivo']} (a fonte não respondeu): o indicador fica \"—\" e, sem o Tesouro, todos os "
              "spreads também; rode `python scripts/atualizar.py --baixar --dominios debentures` mais tarde")

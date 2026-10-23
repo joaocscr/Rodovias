@@ -13,8 +13,8 @@ const bloco = {
     ntnb: [{ vencimento: '2032-08-15', taxa: 6.79, data: '2026-10-15', titulo: 'NTN-B' }, { vencimento: '2029-05-15', taxa: 6.77, data: '2026-10-15', titulo: 'NTN-B Principal' }],
   },
   emissoes: [
-    { ticker: 'AAA11', emissor: 'Alfa', subsetor: 'rodovias', grupo: 'G', indexador: 'IPCA+', taxa_emissao: 5.1, vencimento: '2030-01-15', volume_emitido: 450e6, incentivada: true, rating: 'AA', data_emissao: null, coordenadores: null },
-    { ticker: 'BBB11', emissor: 'Beta', subsetor: 'ferrovias', grupo: null, indexador: 'PRÉ', taxa_emissao: 13.5, vencimento: '2028-02-15', volume_emitido: null, incentivada: false, rating: null, data_emissao: '2020-03-01', coordenadores: ['X', 'Y'] },
+    { ticker: 'AAA11', emissor: 'Alfa', subsetor: 'rodovias', grupo: 'G', indexador: 'IPCA+', taxa_emissao: 5.1, vencimento: '2030-01-15', volume_emitido: 450e6, incentivada: true, rating: 'AA', data_emissao: null, coordenador_lider: null },
+    { ticker: 'BBB11', emissor: 'Beta', subsetor: 'ferrovias', grupo: null, indexador: 'PRÉ', taxa_emissao: 13.5, vencimento: '2028-02-15', volume_emitido: null, incentivada: false, rating: null, data_emissao: '2020-03-01', coordenador_lider: 'X' },
   ],
   secundario: {
     periodo: { de: '2026-10-01', ate: '2026-10-21' },
@@ -152,18 +152,18 @@ test('intenções à parte: por direção, dia e emissor, sempre só as intenç�
   assert.deepEqual(i.porEmissor.map(e => [e.emissor, e.compra.volume, e.venda.volume]), [['Alfa', 2000, 1000], ['Gama', 0, 400]]);
 });
 
-test('tabelaEmissoes: "—" onde a fonte não traz, incentivada sim/não, coordenadores em texto', () => {
+test('tabelaEmissoes: "—" onde a fonte não traz, incentivada sim/não, coordenador líder em texto', () => {
   const t = D.tabelaEmissoes(bloco);
   const cel = (l, k) => t.colunas.find(c => c.k === k).fmt(l);
   const [a, b] = t.linhas;
   assert.equal(cel(a, 'data_emissao'), '—');
-  assert.equal(cel(a, 'coordenadores'), '—');
+  assert.equal(cel(a, 'coordenador_lider'), '—');
   assert.equal(cel(a, 'incentivada'), 'Sim');
   assert.equal(cel(b, 'incentivada'), 'Não');
   assert.equal(cel(b, 'volume_emitido'), '—');
   assert.equal(cel(b, 'rating'), '—');
   assert.equal(cel(b, 'grupo'), '—');
-  assert.equal(cel(b, 'coordenadores'), 'X, Y');
+  assert.equal(cel(b, 'coordenador_lider'), 'X');
   assert.equal(cel(a, 'volume_emitido'), 'R$ 450,00 mi');
   assert.equal(cel(a, 'taxa_emissao'), 'IPCA + 5,10%');
   assert.equal(cel(b, 'taxa_emissao'), 'Prefixada 13,50%');
@@ -232,15 +232,15 @@ test('no bloco real, os totais por dia, emissor e subsetor fecham entre si, soma
 
 test('tabelaEmissoes: coluna "—" em todos os papéis sai da tabela e volta quando a fonte preenche; "Incentivada" fica', () => {
   const b = JSON.parse(JSON.stringify(bloco));
-  b.emissoes.forEach(e => { e.data_emissao = null; e.coordenadores = null; e.incentivada = null; });
+  b.emissoes.forEach(e => { e.data_emissao = null; e.coordenador_lider = null; e.incentivada = null; });
   const t = D.tabelaEmissoes(b);
   const ks = t.colunas.map(c => c.k);
-  assert.ok(!ks.includes('data_emissao') && !ks.includes('coordenadores'));
+  assert.ok(!ks.includes('data_emissao') && !ks.includes('coordenador_lider'));
   assert.ok(ks.includes('incentivada'), 'fixa');
   assert.deepEqual(t.ocultas, ['Data de emissão', 'Coordenadores']);
-  b.emissoes[1].coordenadores = ['X'];
+  b.emissoes[1].coordenador_lider = 'X';
   const t2 = D.tabelaEmissoes(b);
-  assert.ok(t2.colunas.some(c => c.k === 'coordenadores'));
+  assert.ok(t2.colunas.some(c => c.k === 'coordenador_lider'));
   assert.deepEqual(t2.ocultas, ['Data de emissão']);
   assert.deepEqual(D.tabelaEmissoes({}).ocultas, []);
 });

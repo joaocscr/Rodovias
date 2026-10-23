@@ -2313,7 +2313,7 @@ test('Debêntures: tabela de emissões ordenável, com "—" onde a fonte não t
   for (const c of ['Papel', 'Emissor', 'Subsetor', 'Indexador', 'Taxa na emissão', 'Vencimento', 'Volume emitido', 'Incentivada (Lei 12.431)']) assert.ok(cab.includes(c), c);
   // coluna que a fonte não preenche em nenhum papel fica oculta (e dita na nota); a que tem algum dado aparece
   const ocultas = await page.evaluate(() => DebenturesModel.tabelaEmissoes(window.INTEL.debentures).ocultas);
-  assert.deepEqual(ocultas, ['Data de emissão', 'Coordenadores'].filter(c => !b.emissoes.some(e => e[c === 'Coordenadores' ? 'coordenadores' : 'data_emissao'] && e[c === 'Coordenadores' ? 'coordenadores' : 'data_emissao'].length)));
+  assert.deepEqual(ocultas, ['Data de emissão', 'Coordenadores'].filter(c => !b.emissoes.some(e => e[c === 'Coordenadores' ? 'coordenador_lider' : 'data_emissao'])));
   for (const c of ocultas) { assert.ok(!cab.includes(c), c); assert.ok((await page.textContent('#card-d-emissoes')).includes(c)); }
   let r = await linhas();
   assert.equal(r.length, b.emissoes.length);

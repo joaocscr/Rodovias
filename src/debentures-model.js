@@ -209,7 +209,7 @@ const DebenturesModel = (() => {
     { k: 'vencimento', rotulo: 'Vencimento', num: true, fmt: l => fmtData(l.vencimento) },
     { k: 'volume_emitido', rotulo: 'Volume emitido', num: true, fmt: l => fmtVolume(l.volume_emitido) },
     { k: 'data_emissao', rotulo: 'Data de emissão', num: true, fmt: l => fmtData(l.data_emissao) },
-    { k: 'coordenadores', rotulo: 'Coordenadores', fmt: l => txt(l.coordenadores) },
+    { k: 'coordenador_lider', rotulo: 'Coordenadores', fmt: l => txt(l.coordenador_lider) },
     { k: 'incentivada', rotulo: 'Incentivada (Lei 12.431)', fixa: true, fmt: l => (l.incentivada === true ? 'Sim' : l.incentivada === false ? 'Não' : DASH) },
     { k: 'rating', rotulo: 'Nota de crédito (rating)', fmt: l => txt(l.rating) },
   ];
@@ -217,8 +217,7 @@ const DebenturesModel = (() => {
   // fica "—"; coluna que a fonte não preenche em nenhum papel sai da tabela (e é listada em `ocultas`), e volta sozinha
   // quando uma fonte passar a trazer o dado. "Incentivada" (fixa) fica sempre.
   function tabelaEmissoes(bloco) {
-    const linhas = ((bloco && bloco.emissoes) || []).map(e => Object.assign({}, e, {
-      coordenadores: Array.isArray(e.coordenadores) ? (e.coordenadores.join(', ') || null) : (e.coordenadores || null) }));
+    const linhas = (bloco && bloco.emissoes) || [];
     const vazia = c => !c.fixa && linhas.length > 0 && linhas.every(l => c.fmt(l) === DASH);
     return { colunas: COLUNAS_EMISSOES.filter(c => !vazia(c)), ocultas: COLUNAS_EMISSOES.filter(vazia).map(c => c.rotulo), linhas,
       subsetores: [...new Set(linhas.map(l => l.subsetor).filter(Boolean))].sort(collator.compare) };

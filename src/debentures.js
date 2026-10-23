@@ -8,7 +8,7 @@ const Debentures = (() => {
   const nf2 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const nf0 = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
   const C = Charts.C;
-  const WRAP = new Set(['emissor', 'grupo', 'coordenadores', 'rating', 'taxa_ipca', 'tipo', 'subsetor']);
+  const WRAP = new Set(['emissor', 'grupo', 'coordenador_lider', 'rating', 'taxa_ipca', 'tipo', 'subsetor']);
   const NOME_PAPEIS = { 'PRÉ': 'prefixados' };  // nos outros indexadores o papel leva o rótulo do indexador (DM.rotuloIndexador)
 
   let bloco = null, conc = null, built = false;
@@ -69,7 +69,7 @@ const Debentures = (() => {
     return card('emissoes', 'Emissões de debêntures de rodovias e infraestrutura de transporte',
       `Um papel (série de debênture) por linha, de emissores de rodovias, ferrovias, portos e terminais, aeroportos, hidrovias e mobilidade urbana que aparecem nas telas das corretoras. Taxa na emissão conforme o ${Glossario.link('indexador', 'indexador')}; “incentivada” = benefício da Lei 12.431 (${Glossario.link('debenture-infraestrutura', 'debênture de infraestrutura')} é a de 2024); “${DM.DASH}” quando a fonte não traz o campo. Clique no cabeçalho para ordenar`, {
         wide: true,
-        note: `Nota de crédito (${Glossario.link('rating', 'rating')}) como informada na tela da corretora.${t.colunas.some(c => c.k === 'coordenadores') ? ` Coordenadores: ${Glossario.link('coordenador', 'coordenadores da oferta')} da emissão.` : ''}${t.ocultas.length ? ` Colunas que a fonte não preenche em nenhum papel ficam ocultas (agora: ${esc(t.ocultas.join(' e '))}) e aparecem sozinhas quando uma fonte trouxer o dado.` : ''}`,
+        note: `Nota de crédito (${Glossario.link('rating', 'rating')}) como informada na tela da corretora.${t.colunas.some(c => c.k === 'coordenador_lider') ? ` Coordenadores: ${Glossario.link('coordenador', 'coordenadores da oferta')} da emissão.` : ''}${t.ocultas.length ? ` Colunas que a fonte não preenche em nenhum papel ficam ocultas (agora: ${esc(t.ocultas.join(' e '))}) e aparecem sozinhas quando uma fonte trouxer o dado.` : ''}`,
         legend: `<div class="toolbar"><label class="sub" for="deb-em-sub">Subsetor</label><select id="deb-em-sub"><option value="">Todos</option>${
           t.subsetores.map(s => `<option>${esc(s)}</option>`).join('')}</select><span class="page__src" id="deb-em-n"></span></div>`,
         html: '<div id="deb-em-tabela"></div>', fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'tela' }) });
@@ -98,7 +98,7 @@ const Debentures = (() => {
       if (novo) novo.focus();
     });
   }
-  const TEXTO_EMISSOES = new Set(['ticker', 'emissor', 'subsetor', 'grupo', 'indexador', 'coordenadores', 'incentivada', 'rating']);
+  const TEXTO_EMISSOES = new Set(['ticker', 'emissor', 'subsetor', 'grupo', 'indexador', 'coordenador_lider', 'incentivada', 'rating']);
   const TEXTO_EMISSORES = new Set(['emissor', 'subsetor']);
   const TEXTO_ULTIMO = new Set(['ticker', 'emissor', 'subsetor', 'indexador', 'tipo']);
 

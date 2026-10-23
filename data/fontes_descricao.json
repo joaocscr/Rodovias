@@ -59,7 +59,7 @@
   },
   "debentures": {
     "nome": "Debêntures de infraestrutura de transporte",
-    "oQue": "Planilhas das corretoras XP e BTG (telas de debêntures e negócios): negócios fechados (BTG) e intenções de compra e venda (XP) no mercado secundário. Também Selic, CDI, IPCA e a expectativa do Boletim Focus, do Banco Central do Brasil, e as taxas das NTN-B do Tesouro Nacional, base do spread.",
-    "termos": [{"id": "debenture", "texto": "debêntures"}, {"id": "mercado-secundario", "texto": "mercado secundário"}, {"id": "selic", "texto": "Selic"}, {"id": "cdi", "texto": "CDI"}, {"id": "ipca", "texto": "IPCA"}, {"id": "focus", "texto": "Boletim Focus"}, {"id": "ntn-b", "texto": "NTN-B"}, {"id": "spread", "texto": "spread"}]
+    "oQue": "Planilhas das corretoras XP e BTG (telas de debêntures e negócios): negócios fechados (BTG) e intenções de compra e venda (XP) no mercado secundário. Cadastro de debêntures da ANBIMA (SND): data de emissão e coordenador líder. Também Selic, CDI, IPCA e a expectativa do Boletim Focus, do Banco Central do Brasil, e as NTN-B do Tesouro Nacional, base do spread.",
+    "termos": [{"id": "debenture", "texto": "debêntures"}, {"id": "mercado-secundario", "texto": "mercado secundário"}, {"id": "coordenador", "texto": "coordenador líder"}, {"id": "selic", "texto": "Selic"}, {"id": "cdi", "texto": "CDI"}, {"id": "ipca", "texto": "IPCA"}, {"id": "focus", "texto": "Boletim Focus"}, {"id": "ntn-b", "texto": "NTN-B"}, {"id": "spread", "texto": "spread"}]
   }
 }

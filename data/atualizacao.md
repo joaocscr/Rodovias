@@ -1,21 +1,12 @@
 # Atualização dos dados — 23/10/2026
 
-Gerado por `python scripts/atualizar.py` (sem --baixar). Diferenças em relação à versão de `data/intel/` no último commit do git.
+Gerado por `python scripts/atualizar.py` (sem --baixar, --dominios debentures). Diferenças em relação à versão de `data/intel/` no último commit do git.
 
 ## Passos
 
 | Passo | Resultado | Detalhe |
 |---|---|---|
-| trafego | pulado | arquivo ausente: data/raw/trafego/infrasa/vmda2023_data.json (baixe com `--baixar`) |
-| antt | ok |  |
-| carga | pulado | arquivo ausente: data/raw/graos/multimodal/pnl2035_cenario_base.zip (baixe com `--baixar`) |
-| agro | pulado | arquivo ausente: data/raw/graos/malha/ibge_municipios.json (baixe com `--baixar`) |
-| multimodal | ok |  |
-| pipeline | ok |  |
 | debentures | ok |  |
-| estaduais | pulado | arquivo ausente: data/raw/estaduais/abcr/api_conc.json (baixe com `--baixar`) |
-| vmda2025 | pulado | falta data/raw/trafego/vmda2025/vgeo_vmda2025.zip (shapefile do Google Drive do usuário; ver README, "Atualizar os dados"); vmda2025.json ficou como estava |
-| rotas | pulado | arquivo ausente: data/raw/rotas/apresentacao_rotas_2026-07-01.pdf (baixe com `--baixar`) |
 | fontes_bloco | ok |  |
 | validação da verificação | ok |  |
 | build.py (HTML) | ok |  |
@@ -29,9 +20,9 @@ Registros: itens das coleções principais de cada bloco (valores preenchidos); 
 | agro | 5.571 | 5.571 | 210,5 | 210,5 | não |
 | antt | 1.938 | 1.938 | 399,2 | 399,2 | não |
 | carga | 4.312 | 4.312 | 141,3 | 141,3 | não |
-| debentures | 236 | 236 | 91,2 | 91,2 | não |
+| debentures | 236 | 236 | 91,2 | 96,3 | sim (+5,1 KB) |
 | estaduais | 16.238 | 16.238 | 2.949,8 | 2.949,8 | não |
-| fontes | 54 | 54 | 28,0 | 28,0 | não |
+| fontes | 54 | 55 | 28,0 | 28,7 | sim (+717 bytes) |
 | multimodal | 3.188 | 3.188 | 413,9 | 413,9 | não |
 | municipios | 5.571 | 5.571 | 1.687,6 | 1.687,6 | não |
 | pipeline | 64 | 64 | 42,9 | 42,9 | não |

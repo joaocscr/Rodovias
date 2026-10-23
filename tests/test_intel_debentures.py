@@ -17,9 +17,11 @@ import curadoria  # noqa: E402
 from intel import debentures as deb  # noqa: E402
 from intel import debentures_planilhas as dp  # noqa: E402
 from intel import debentures_texto as tx  # noqa: E402
+from intel import snd as snd_mod  # noqa: E402
 
 FIX = ROOT / "tests" / "fixtures" / "debentures"
 PUBLICO = FIX / "publico"
+SND = FIX / "snd.txt"
 EMISSORES = FIX / "emissores.json"
 BLOCO = ROOT / "data" / "intel" / "debentures.json"
 HOJE = dt.date(2026, 10, 22)
@@ -46,13 +48,13 @@ class _Manifesto:
 
 def _downloads(dia="2026-10-22"):
     """Registros de download das séries públicas, como o `fetch` grava no manifesto."""
-    urls = [deb.SGS.format(c, n) for c, n, _ in deb.SERIES.values()] + [deb.FOCUS_URL, deb.TESOURO_URL]
+    urls = [deb.SGS.format(c, n) for c, n, _ in deb.SERIES.values()] + [deb.FOCUS_URL, deb.TESOURO_URL, snd_mod.URL]
     return [{"url": u, "acesso": dia, "baixado": dia, "sha256": u[-8:]} for u in urls]
 
 
 @pytest.fixture(scope="module")
 def bloco():
-    return deb.montar(FIX, PUBLICO, EMISSORES, hoje="2026-10-22", manifesto=_Manifesto(_downloads()))
+    return deb.montar(FIX, PUBLICO, EMISSORES, hoje="2026-10-22", manifesto=_Manifesto(_downloads()), snd=SND)
 
 
 def _por(lista, campo):
@@ -292,15 +294,64 @@ def test_bloco_so_tem_agregados_e_o_ultimo_de_cada_papel(bloco):
         assert f'"{chave}"' not in texto, chave
 
 
+def test_emissoes_recebem_data_e_coordenador(bloco):
+    em = _por(bloco["emissoes"], "ticker")
+    assert em["TSTR11"]["data_emissao"] == "2022-05-15"
+    assert em["TSTR11"]["coordenador_lider"] == "BANCO TESTE DE INVESTIMENTO S/A"
+    assert em["TSTR21"]["data_emissao"] == "2020-08-15" and em["TSTR21"]["incentivada"] is False
+    assert em["FERX11"]["data_emissao"] == "2020-05-15" and em["FERX11"]["coordenador_lider"] is None
+    assert em["FERX11"]["fontes"] == ["BTG", "SND"]
+    assert all("coordenadores" not in e for e in bloco["emissoes"])
+    # papel fora do cadastro: sem data nem coordenador, sem "SND" nas fontes, e na pendência
+    assert em["FERX99"]["coordenador_lider"] is None and "SND" not in em["FERX99"]["fontes"]
+    assert bloco["pendencias"]["emissoes_sem_snd"] == [{"ticker": "FERX99", "emissor": "Ferrovia Exemplo"}]
+
+
+def test_incentivada_do_snd_vale_sobre_a_tela(tmp_path):
+    """O cadastro é a fonte do incentivo fiscal: quando existe, vale sobre o que a tela da corretora diz."""
+    linhas = SND.read_bytes().decode("latin-1").splitlines()
+    k = linhas[4].split("\t").index("Deb. Incent. (Lei 12.431)")
+    campos = linhas[6].split("\t")            # TSTR21: a tela BTG diz "N"
+    assert campos[0].strip() == "TSTR21" and campos[k] == "N"
+    campos[k] = "S"
+    linhas[6] = "\t".join(campos)
+    arq = tmp_path / "snd.txt"
+    arq.write_bytes(("\r\n".join(linhas) + "\r\n").encode("latin-1"))
+    b = deb.montar(FIX, PUBLICO, EMISSORES, hoje="2026-10-22", manifesto=_Manifesto(_downloads()), snd=arq)
+    assert _por(b["emissoes"], "ticker")["TSTR21"]["incentivada"] is True
+
+
+def test_sem_cadastro_snd_data_fica_nula():
+    """Sem o arquivo do SND (a pasta pública de teste não o tem), as emissões ficam sem data e sem coordenador e há um
+    item de curadoria por papel."""
+    b = deb.montar(FIX, PUBLICO, EMISSORES, hoje="2026-10-22", manifesto=_Manifesto(_downloads()))
+    assert b["emissoes"] and all(e["data_emissao"] is None and e["coordenador_lider"] is None for e in b["emissoes"])
+    assert all("SND" not in e["fontes"] for e in b["emissoes"])
+    assert not any(f["nome"].startswith("ANBIMA") for f in b["fonte"])
+    itens = [i for i in curadoria.itens({}, {"debentures": b}, {}, HOJE) if i["tipo"] == "emissao_sem_cadastro_snd"]
+    assert [i["item"] for i in itens] == sorted(e["ticker"] for e in b["emissoes"])
+    assert all("snd_caracteristicas.txt" in i["motivo"] and "--baixar" in i["motivo"] for i in itens)
+    assert "Debêntures fora do cadastro do SND" in curadoria.relatorio(HOJE, [], [], itens)
+
+
+def test_arquivo_do_snd_ilegivel_vale_como_ausente(tmp_path):
+    ruim = tmp_path / "snd.txt"
+    ruim.write_bytes(b"<html>erro</html>")
+    b = deb.montar(FIX, PUBLICO, EMISSORES, hoje="2026-10-22", manifesto=_Manifesto(_downloads()), snd=ruim)
+    assert all(e["data_emissao"] is None for e in b["emissoes"])
+    assert len(b["pendencias"]["emissoes_sem_snd"]) == len(b["emissoes"])
+
+
 def test_emissoes_e_macro(bloco):
     em = _por(bloco["emissoes"], "ticker")
     assert set(em) == {"TSTR11", "TSTR21", "FERX11", "FERX99"}
     t = em["TSTR11"]
     assert t == {"ticker": "TSTR11", "emissor": "Emissora Teste Rodovias", "subsetor": "rodovias", "grupo": "Grupo Teste",
                  "indexador": "IPCA+", "taxa_emissao": 6.5, "vencimento": "2032-05-15", "volume_emitido": 500_000_000,
-                 "incentivada": True, "rating": "AAA Fitch", "data_emissao": None, "coordenadores": None,
-                 "fontes": ["BTG", "XP"]}
-    assert em["FERX99"]["fontes"] == ["XP"] and em["FERX99"]["volume_emitido"] is None
+                 "incentivada": True, "rating": "AAA Fitch", "data_emissao": "2022-05-15",
+                 "coordenador_lider": "BANCO TESTE DE INVESTIMENTO S/A", "fontes": ["BTG", "XP", "SND"]}
+    assert "coordenadores" not in t
+    assert em["FERX99"]["fontes"] == ["XP"] and em["FERX99"]["data_emissao"] is None and em["FERX99"]["volume_emitido"] is None
     assert em["FERX99"]["indexador"] == "DI+" and em["FERX99"]["taxa_emissao"] == pytest.approx(1.2)
     assert em["TSTR21"]["rating"] is None and em["TSTR21"]["incentivada"] is False
     m = bloco["macro"]
@@ -336,9 +387,9 @@ def test_bloco_nao_depende_do_dia_do_build(tmp_path):
     de acesso das planilhas é a do primeiro dia, e uma planilha nova leva a data do dia em que apareceu."""
     pasta = _pasta_com_planilhas(tmp_path)
     man = _Manifesto(_downloads())
-    a = deb.montar(pasta, PUBLICO, EMISSORES, hoje="2026-10-22", manifesto=man)
+    a = deb.montar(pasta, PUBLICO, EMISSORES, hoje="2026-10-22", manifesto=man, snd=SND)
     man.save()
-    b = deb.montar(pasta, PUBLICO, EMISSORES, hoje="2026-12-01", manifesto=man)
+    b = deb.montar(pasta, PUBLICO, EMISSORES, hoje="2026-12-01", manifesto=man, snd=SND)
     assert json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
     btg = next(f for f in b["fonte"] if f["nome"].startswith("BTG"))
     assert btg["acesso"] == "2026-10-22"
@@ -346,7 +397,7 @@ def test_bloco_nao_depende_do_dia_do_build(tmp_path):
     shutil.copy(FIX / "negocios.xlsx", pasta / "negocios2.xlsx")
     wb = pasta / "negocios2.xlsx"
     wb.write_bytes(wb.read_bytes() + b"\0")
-    c = deb.montar(pasta, PUBLICO, EMISSORES, hoje="2026-12-01", manifesto=man)
+    c = deb.montar(pasta, PUBLICO, EMISSORES, hoje="2026-12-01", manifesto=man, snd=SND)
     datas = {i["arquivo"].rsplit("/", 1)[-1]: i["acesso"] for i in man.items if not i["url"]}
     assert datas == {"negocios.xlsx": "2026-10-22", "telas.xlsx": "2026-10-22", "negocios2.xlsx": "2026-12-01"}
     assert next(f for f in c["fonte"] if f["nome"].startswith("BTG"))["acesso"] == "2026-12-01"
@@ -387,7 +438,7 @@ def test_taxa_implausivel_sai_das_medias_e_vai_para_curadoria():
 
 def test_fontes_do_bloco(bloco):
     fontes = bloco["fonte"]
-    assert len(fontes) == 5
+    assert len(fontes) == 6
     for f in fontes:
         assert set(f) == {"nome", "url", "periodo", "acesso", "licenca", "tipo", "nota"}, f
         assert f["url"].startswith("https://") and f["tipo"] == "medido"
@@ -400,6 +451,10 @@ def test_fontes_do_bloco(bloco):
     assert xp["periodo"] == "tela de 21/10/2026 a 22/10/2026; intenções de 01/10/2026 a 03/10/2026"
     assert "traz só a hora" in xp["nota"] and "traz só a hora" not in xp["periodo"]
     assert btg["acesso"] == xp["acesso"] == "2026-10-22"
+    cadastro = next(f for f in fontes if f["nome"] == "ANBIMA — cadastro de debêntures (SND)")
+    assert cadastro["url"] == "https://www.debentures.com.br/" and cadastro["acesso"] == "2026-10-22"
+    assert cadastro["periodo"] == "cadastro de 23/10/2026"       # dia em que o SND gerou o arquivo, não o do build
+    assert "data de emissão" in cadastro["nota"] and "coordenador líder" in cadastro["nota"]
     tesouro = next(f for f in fontes if "Tesouro" in f["nome"])
     assert "taxa de compra) interpolada pelo vencimento (não pela duration)" in tesouro["nota"]
 
@@ -410,7 +465,8 @@ def test_datas_nao_dependem_da_data_do_arquivo(tmp_path, bloco):
     for nome in ("telas.xlsx", "negocios.xlsx"):
         shutil.copy(FIX / nome, pasta / nome)
         os.utime(pasta / nome, (0, 0))                 # 01/01/1970
-    assert deb.montar(pasta, PUBLICO, EMISSORES, hoje="2026-10-22", manifesto=_Manifesto(_downloads()))["fonte"] == bloco["fonte"]
+    novo = deb.montar(pasta, PUBLICO, EMISSORES, hoje="2026-10-22", manifesto=_Manifesto(_downloads()), snd=SND)
+    assert novo["fonte"] == bloco["fonte"]
 
 
 def test_baixar_sempre_renova_as_series_publicas(monkeypatch, tmp_path):
@@ -433,10 +489,14 @@ def test_baixar_sempre_renova_as_series_publicas(monkeypatch, tmp_path):
 
         def save(self):
             pass
+    cadastro = []
     monkeypatch.setattr(deb, "_fetch", falso)
     monkeypatch.setattr(deb, "Manifest", Manif)
     monkeypatch.setattr(deb, "PUBLICO", tmp_path)
+    monkeypatch.setattr(snd_mod, "fetch", lambda dest, manifesto=None: cadastro.append((Path(dest), manifesto)) or True)
     deb.fetch()                                         # sem force: o --baixar comum
+    assert [c[0] for c in cadastro] == [tmp_path / "snd_caracteristicas.txt"]      # o cadastro do SND vem junto
+    assert cadastro[0][1] is not None                                              # e é registrado no mesmo manifesto
     assert sorted(chamadas) == sorted([("sgs_432.json", True), ("sgs_12.json", True), ("sgs_13522.json", True),
                                        ("focus_ipca12m.json", True), ("tesouro_direto.csv", True)])
 
