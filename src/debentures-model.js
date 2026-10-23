@@ -12,6 +12,7 @@ const DebenturesModel = (() => {
   const collator = new Intl.Collator('pt-BR');
   const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
   const INDEXADORES = ['IPCA+', 'DI+', '% DI', 'PRÉ'];  // ordem de exibição; outros indexadores vêm depois, em ordem alfabética
+  const CORRETORAS = ['BTG', 'XP'];  // corretoras das telas de emissões e negócios; os cartões citam as que existem no bloco
   const MEDIDAS = ['volume', 'n', 'taxa_media', 'volume_taxa', 'spread_medio', 'volume_spread', 'por_direcao'];
 
   // ---------- formatação ----------
@@ -219,12 +220,11 @@ const DebenturesModel = (() => {
   function tabelaEmissoes(bloco) {
     const linhas = (bloco && bloco.emissoes) || [];
     const vazia = c => !c.fixa && linhas.length > 0 && linhas.every(l => c.fmt(l) === DASH);
-    return { colunas: COLUNAS_EMISSOES.filter(c => !vazia(c)), ocultas: COLUNAS_EMISSOES.filter(vazia).map(c => c.rotulo), linhas,
-      subsetores: [...new Set(linhas.map(l => l.subsetor).filter(Boolean))].sort(collator.compare) };
+    return { colunas: COLUNAS_EMISSOES.filter(c => !vazia(c)), ocultas: COLUNAS_EMISSOES.filter(vazia).map(c => c.rotulo), linhas };
   }
 
-  // Filtro de subsetor da tabela de emissões: "outros" é todo subsetor diferente de rodovias.
-  const FILTROS_SUBSETOR = ['todos', 'rodovias', 'outros'];
+  // Filtro de subsetor da tabela de emissões, [id, rótulo] na ordem de exibição: "outros" é todo subsetor diferente de rodovias.
+  const FILTROS_SUBSETOR = [['todos', 'Todos'], ['rodovias', 'Rodovias'], ['outros', 'Outros transportes']];
   const ehRodovia = l => l.subsetor === 'rodovias';
   function contagemSubsetor(emissoes) {
     const ls = emissoes || [], rodovias = ls.filter(ehRodovia).length;
@@ -234,13 +234,18 @@ const DebenturesModel = (() => {
     const ls = emissoes || [];
     return filtro === 'rodovias' ? ls.filter(ehRodovia) : filtro === 'outros' ? ls.filter(l => !ehRodovia(l)) : [...ls];
   }
-  // Indicação acima da tabela: a frase muda sozinha se aparecer uma emissão não incentivada.
+  // Indicação acima da tabela: a frase muda sozinha se aparecer uma emissão não incentivada. Papel sem a informação
+  // (incentivada nula, "—" na tabela) não conta como "não incentivada": é dito à parte.
   function notaIncentivadas(emissoes) {
-    const ls = emissoes || [], inc = ls.filter(l => l.incentivada === true).length;
+    const ls = emissoes || [];
     if (!ls.length) return '';
-    return inc === ls.length
-      ? 'Somente debêntures incentivadas (Lei 12.431): as telas recebidas são de debêntures isentas.'
-      : `${inc} incentivadas (Lei 12.431) e ${ls.length - inc} não incentivadas`;
+    const inc = ls.filter(l => l.incentivada === true).length, nao = ls.filter(l => l.incentivada === false).length, sem = ls.length - inc - nao;
+    if (inc === ls.length) return 'Somente debêntures incentivadas (Lei 12.431): as telas recebidas são de debêntures isentas.';
+    const partes = [];
+    if (inc) partes.push(`${inc} ${inc === 1 ? 'incentivada' : 'incentivadas'} (Lei 12.431)`);
+    if (nao) partes.push(`${nao} ${nao === 1 ? 'não incentivada' : 'não incentivadas'}`);
+    if (sem) partes.push(`${sem} sem a informação`);
+    return partes.length > 1 ? `${partes.slice(0, -1).join(', ')} e ${partes[partes.length - 1]}` : partes[0];
   }
 
   const colunasEmissores = somado => [
@@ -279,7 +284,147 @@ const DebenturesModel = (() => {
     return d && Array.isArray(d.serie) && d.serie.length ? d : null;
   }
 
-  return { ROTULO_NEGOCIOS, ROTULO_SOMADO, DASH, mediaDe, somaLinha, mesclar, series, kpis, intencoes, macro, curvaNtnb, curvaAte, notaCurva, periodoTexto, fonteCurta,
+  // ---------- índices de debêntures: IDA (ANBIMA) e IDEX-Infra ----------
+  const ORDEM_IDA = ['IPCA_INFRAESTRUTURA', 'IPCA', 'GERAL', 'DI'];
+  const NOME_IDA = { IPCA_INFRAESTRUTURA: 'IDA-IPCA Infraestrutura', IPCA: 'IDA-IPCA', GERAL: 'IDA-Geral', DI: 'IDA-DI' };
+  const ORDEM_IDEX = ['Idex-Infra Geral', 'Idex-Infra Core'];
+  const R_IDA = 'IPCA_INFRAESTRUTURA', R_IDEX = 'Idex-Infra Geral';
+  const nomeIdex = k => String(k).replace(/^idex/i, 'IDEX');
+  const mesNum = mes => { const [y, m] = String(mes).split('-').map(Number); return y * 12 + (m - 1); };
+  const rotuloMes = n => fmtData(`${Math.floor(n / 12)}-${String((n % 12) + 1).padStart(2, '0')}`);
+  const diaNum = s => { const [y, m, d] = String(s).split('-').map(Number); return Date.UTC(y, m - 1, d) / 864e5; };
+  const ordena = (chaves, ordem) => [...ordem.filter(k => chaves.includes(k)), ...chaves.filter(k => !ordem.includes(k)).sort()];
+  const indicesIda = ida => (ida && ida.indices) || {};
+  const chavesIda = ida => ordena(Object.keys(indicesIda(ida)), ORDEM_IDA);
+  const nomeIda = (k, ix) => (ix && ix.nome) || NOME_IDA[k] || k;
+  const serieIda = (ida, k) => [...((indicesIda(ida)[k] || {}).serie || [])].sort(porData);
+  const arred = v => +v.toFixed(10);
+  const orgDe = (bloco, padrao) => {
+    const f = bloco && Array.isArray(bloco.fonte) ? bloco.fonte[0] : bloco && bloco.fonte;
+    return (f && f.nome ? String(f.nome).split(' — ')[0] : '') || padrao;
+  };
+
+  // Número-índice de cada subíndice rebaseado em 100 no primeiro dia da série: [{chave, nome, pontos: [{data, base100}]}].
+  function evolucaoIda(ida) {
+    return chavesIda(ida).map(k => {
+      const serie = serieIda(ida, k), base = serie.find(p => num(p.numero_indice) && p.numero_indice !== 0);
+      const pontos = serie.map(p => ({ data: p.data, base100: base && num(p.numero_indice) ? (p.numero_indice / base.numero_indice) * 100 : num(p.base100) ? p.base100 : null }))
+        .filter(p => num(p.base100));
+      return { chave: k, nome: nomeIda(k, indicesIda(ida)[k]), pontos };
+    });
+  }
+  // Variações publicadas pela ANBIMA no último dia de cada subíndice (no mês, no ano, em 12 e em 24 meses, em %).
+  function variacoesIda(ida) {
+    const v = x => (num(x) ? x : null);
+    return chavesIda(ida).filter(k => indicesIda(ida)[k].ultimo).map(k => {
+      const u = indicesIda(ida)[k].ultimo;
+      return { chave: k, nome: nomeIda(k, indicesIda(ida)[k]), data: u.data || null, var_mes: v(u.var_mes), var_ano: v(u.var_ano), var_12m: v(u.var_12m), var_24m: v(u.var_24m) };
+    });
+  }
+  // Dias da série do IDA (o primeiro e o último), de todos os subíndices.
+  function periodoIda(ida) {
+    const ds = chavesIda(ida).flatMap(k => serieIda(ida, k).map(p => p.data)).filter(Boolean).sort();
+    return ds.length ? { de: ds[0], ate: ds[ds.length - 1], dias: new Set(ds).size } : null;
+  }
+
+  // Retorno acumulado do IDEX-Infra desde o primeiro mês, composto mês a mês: 1% e depois 2% dão 3,02%, não 3%.
+  function retornosIdex(idex) {
+    const r = (idex && idex.retornos) || {};
+    return ordena(Object.keys(r), ORDEM_IDEX).map(k => {
+      let fator = 1;
+      const pontos = [...r[k]].filter(m => m && m.mes && num(m.pct)).sort((a, b) => (a.mes < b.mes ? -1 : a.mes > b.mes ? 1 : 0))
+        .map(m => { fator *= 1 + m.pct / 100; return { mes: m.mes, acumulado_pct: arred((fator - 1) * 100) }; });
+      return { chave: k, nome: nomeIdex(k), pontos };
+    });
+  }
+  // Spread médio diário do IDEX-Infra Geral: a fonte traz pontos-base (100 pontos-base = 1 p.p.); aqui já em p.p.
+  const bpsParaPp = bps => (num(bps) ? bps / 100 : null);
+  function spreadIdex(idex) {
+    return [...((idex && idex.spread) || [])].filter(d => d && d.data && num(d.spread_medio_bps)).sort(porData)
+      .map(d => ({ data: d.data, spread_pp: bpsParaPp(d.spread_medio_bps), duration: num(d.duration_media) ? d.duration_media : null, n_papeis: d.n_papeis }));
+  }
+  function periodoIdex(idex) {
+    const sp = spreadIdex(idex), ms = retornosIdex(idex).flatMap(r => r.pontos.map(p => p.mes)).sort();
+    return { spread: sp.length ? { de: sp[0].data, ate: sp[sp.length - 1].data } : null, retornos: ms.length ? { de: ms[0], ate: ms[ms.length - 1] } : null };
+  }
+  // Retorno em 12 meses lado a lado: o IDA-IPCA Infraestrutura (variação publicada pela ANBIMA) e o IDEX-Infra Geral (relatório
+  // mensal). Os períodos são diferentes e vêm ditos em `referencia`.
+  function comparacaoRetorno12m(ida, idex) {
+    const out = [], u = indicesIda(ida)[R_IDA] && indicesIda(ida)[R_IDA].ultimo;
+    if (u && num(u.var_12m)) out.push({ rotulo: nomeIda(R_IDA, indicesIda(ida)[R_IDA]), pct: u.var_12m, referencia: `variação em 12 meses publicada pela ANBIMA em ${fmtData(u.data)}` });
+    const ac = idex && idex.acumulado_12m && idex.acumulado_12m[R_IDEX], ret = retornosIdex(idex).find(r => r.chave === R_IDEX);
+    if (num(ac)) out.push({ rotulo: nomeIdex(R_IDEX), pct: ac, referencia: `12 meses até ${ret && ret.pontos.length ? fmtData(ret.pontos[ret.pontos.length - 1].mes) : DASH}, do relatório mensal` });
+    return out;
+  }
+
+  // Fontes curtas dos cartões (quem forneceu e o período, tirados dos blocos).
+  function fonteIda(ida) {
+    const p = periodoIda(ida);
+    return p ? `${orgDe(ida, 'ANBIMA')}, resultado diário do IDA, ${fmtData(p.de)} a ${fmtData(p.ate)}` : DASH;
+  }
+  // parte: 'spread' (planilha de dados), 'retornos' (relatório mensal) ou 'ambos'
+  function fonteIdex(idex, parte = 'ambos') {
+    const p = periodoIdex(idex), org = orgDe(idex, 'IDEX Analytics'), partes = [];
+    if (p.spread && parte !== 'retornos') partes.push(`planilha de dados de ${fmtData(p.spread.de)} a ${fmtData(p.spread.ate)}`);
+    if (p.retornos && parte !== 'spread') partes.push(`relatório mensal de ${fmtData(p.retornos.de)} a ${fmtData(p.retornos.ate)}`);
+    return partes.length ? `${org}, ${partes.join('; ')}` : DASH;
+  }
+
+  // Comparação do spread sobre a NTN-B: debêntures de transporte (do painel), IDA-IPCA Infraestrutura e IDEX-Infra Geral. Cada linha
+  // traz o último dia com valor (spread_pp, data) e, se as três séries têm dias em comum, a média simples nesses dias
+  // (media_comum_pp, dias_comuns, periodo_comum). `ate`: último dia da série, que pode ser posterior ao do valor (dia sem curva do
+  // Tesouro não tem spread).
+  function comparacaoSpread(bloco, ida, idex, { somado = false } = {}) {
+    const pontos = (lista, dia, val) => lista.filter(x => x && dia(x) && num(val(x))).map(x => ({ data: dia(x), v: val(x) })).sort(porData);
+    const transporte = series(bloco, { somado }).porDia;
+    const defs = [
+      { rotulo: `Debêntures de transporte (${somado ? 'negócios + intenções' : 'negócios'})`, todas: transporte,
+        pts: pontos(transporte, x => x.data, x => x.spread_medio), fonte: fonteCurta(bloco, { corretoras: CORRETORAS, periodo: 'dados', tesouro: true }) },
+      { rotulo: nomeIda(R_IDA, indicesIda(ida)[R_IDA]), todas: serieIda(ida, R_IDA), pts: pontos(serieIda(ida, R_IDA), x => x.data, x => x.spread_medio),
+        fonte: fonteIda(ida) },
+      { rotulo: nomeIdex(R_IDEX), todas: (idex && idex.spread) || [], pts: pontos(spreadIdex(idex), x => x.data, x => x.spread_pp),
+        fonte: fonteIdex(idex, 'spread') },
+    ];
+    const comuns = defs[0].pts.map(p => p.data).filter(dia => defs.every(d => d.pts.some(p => p.data === dia))).sort();
+    return defs.map(d => {
+      const ult = d.pts[d.pts.length - 1] || null, ate = d.todas.map(x => x && x.data).filter(Boolean).sort().pop() || null;
+      const media = comuns.length ? comuns.reduce((t, dia) => t + d.pts.find(p => p.data === dia).v, 0) / comuns.length : null;
+      return { rotulo: d.rotulo, spread_pp: ult ? ult.v : null, data: ult ? ult.data : null, periodo: ult ? fmtData(ult.data) : '', ate, fonte: d.fonte,
+        media_comum_pp: media, dias_comuns: comuns.length, periodo_comum: !comuns.length ? '' : comuns.length === 1 ? fmtData(comuns[0]) : `${fmtData(comuns[0])} a ${fmtData(comuns[comuns.length - 1])}` };
+    });
+  }
+
+  // Um papel por linha: spread do painel (último negócio), taxa indicativa da ANBIMA (carteira do IDA) e spread do IDEX-Infra em p.p.
+  // Papel fora de um índice (ou sem curva no dia) fica com null, "—" na tela. Os papéis são os da tabela de emissões.
+  function tabelaIndicesPorPapel(bloco, ida, idex) {
+    const ult = new Map(series(bloco).ultimoPorTicker.map(e => [e.ticker, e]));
+    const base = (bloco && bloco.emissoes && bloco.emissoes.length ? bloco.emissoes : [...ult.values()]).filter(e => e && e.ticker);
+    const pa = (ida && ida.papeis) || {}, px = (idex && idex.papeis) || {};
+    return base.map(e => ({
+      ticker: e.ticker, emissor: e.emissor || (ult.get(e.ticker) || {}).emissor || null,
+      spread_painel: num((ult.get(e.ticker) || {}).spread) ? ult.get(e.ticker).spread : null,
+      taxa_anbima: pa[e.ticker] && num(pa[e.ticker].taxa_indicativa) ? pa[e.ticker].taxa_indicativa : null,
+      spread_idex_pp: px[e.ticker] ? bpsParaPp(px[e.ticker].spread_bps) : null,
+    }));
+  }
+  // A tabela do cartão: as linhas acima, com o indexador (para escrever a taxa como o mercado a escreve) e a data de cada índice no
+  // cabeçalho da coluna.
+  function tabelaIndices(bloco, ida, idex) {
+    const indexador = new Map(((bloco && bloco.emissoes) || []).map(e => [e.ticker, e.indexador]));
+    const linhas = tabelaIndicesPorPapel(bloco, ida, idex).map(l => Object.assign({ indexador: indexador.get(l.ticker) || null }, l));
+    const maisRecente = papeis => Object.values(papeis || {}).map(p => p && p.data).filter(Boolean).sort().pop();
+    const dA = maisRecente(ida && ida.papeis), dX = maisRecente(idex && idex.papeis), com = (t, d) => (d ? `${t} (${fmtData(d)})` : t);
+    return { datas: { anbima: dA || null, idex: dX || null }, linhas, colunas: [
+      { k: 'ticker', rotulo: 'Papel', fmt: l => txt(l.ticker) },
+      { k: 'emissor', rotulo: 'Emissor', fmt: l => txt(l.emissor) },
+      { k: 'spread_painel', rotulo: 'Spread do painel sobre a NTN-B (IPCA+, último negócio)', num: true, fmt: l => fmtPp(l.spread_painel) },
+      { k: 'taxa_anbima', rotulo: com('Taxa indicativa ANBIMA', dA), num: true, fmt: l => taxaTexto(l.indexador, l.taxa_anbima) },
+      { k: 'spread_idex_pp', rotulo: com('Spread IDEX-Infra sobre a NTN-B', dX), num: true, fmt: l => fmtPp(l.spread_idex_pp) },
+    ] };
+  }
+
+  return { CORRETORAS, evolucaoIda, variacoesIda, periodoIda, retornosIdex, spreadIdex, periodoIdex, comparacaoRetorno12m, comparacaoSpread, tabelaIndicesPorPapel, tabelaIndices,
+    fonteIda, fonteIdex, diaNum, mesNum, rotuloMes, ROTULO_NEGOCIOS, ROTULO_SOMADO, DASH, mediaDe, somaLinha, mesclar, series, kpis, intencoes, macro, curvaNtnb, curvaAte, notaCurva, periodoTexto, fonteCurta,
     FILTROS_SUBSETOR, contagemSubsetor, filtrarSubsetor, notaIncentivadas, tabelaEmissoes, tabelaEmissores, tabelaUltimo, serieIncentivadas, taxaIpca, taxaTexto, taxaMediaTexto, rotuloIndexador,
     fmtPct, fmtPp, fmtInt, fmtVolume, fmtData, fmtDiaMes };
 })();

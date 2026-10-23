@@ -301,8 +301,8 @@
   },
   {
     "id": "coordenador",
-    "termo": "Coordenador da oferta",
-    "definicao": "Banco ou corretora que estrutura a emissão de uma debênture e a distribui aos investidores.",
+    "termo": "Coordenador líder",
+    "definicao": "Banco ou corretora que lidera a oferta de uma debênture: estrutura a emissão e a distribui aos investidores. É o que a coluna “Coordenador líder” da tabela de emissões mostra.",
     "categorias": ["Debêntures e juros"]
   },
   {
@@ -403,6 +403,34 @@
     "id": "rating",
     "termo": "Rating",
     "definicao": "Nota de risco de crédito dada por uma agência de classificação à empresa ou à emissão, indicando a chance de o pagamento ser feito em dia. Notas melhores (como AAA) costumam pagar taxas menores.",
+    "categorias": ["Debêntures e juros"]
+  },
+  {
+    "id": "ida",
+    "termo": "Índice de Debêntures ANBIMA",
+    "sigla": "IDA",
+    "definicao": "Índice da ANBIMA que acompanha o retorno de uma carteira teórica de debêntures, ponderada pelo valor de mercado de cada papel. Tem subíndices: IDA-IPCA Infraestrutura, IDA-IPCA, IDA-Geral e IDA-DI. A ANBIMA divulga o número-índice e as variações a cada dia útil.",
+    "fonte": { "nome": "ANBIMA — IDA", "url": "https://www.anbima.com.br/informacoes/ida/default.asp" },
+    "categorias": ["Debêntures e juros"]
+  },
+  {
+    "id": "idex-infra",
+    "termo": "IDEX-Infra",
+    "definicao": "Índice de debêntures de infraestrutura calculado pela IDEX Analytics. O relatório mensal traz o retorno do IDEX-Infra Geral e do Core, e a planilha de dados traz, por dia, o spread sobre a NTN-B de cada debênture da carteira.",
+    "fonte": { "nome": "IDEX Analytics", "url": "https://www.idexanalytics.com.br/" },
+    "categorias": ["Debêntures e juros"]
+  },
+  {
+    "id": "carteira-teorica",
+    "termo": "Carteira teórica",
+    "definicao": "Lista dos papéis que compõem um índice, com o peso de cada um, definida pelas regras do índice. Não é uma carteira de verdade: serve para calcular o retorno e a taxa média do conjunto de debêntures que o índice representa.",
+    "categorias": ["Debêntures e juros"]
+  },
+  {
+    "id": "ponto-base",
+    "termo": "Ponto-base",
+    "sigla": "bps",
+    "definicao": "Centésimo de ponto percentual: 100 pontos-base equivalem a 1 ponto percentual (p.p.). O IDEX-Infra informa o spread em pontos-base; o painel divide por 100 para mostrá-lo em p.p., como os demais spreads.",
     "categorias": ["Debêntures e juros"]
   }
 ]

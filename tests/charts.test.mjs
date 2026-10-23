@@ -340,3 +340,10 @@ test('linesSvg: o último rótulo do eixo x cabe na margem direita', () => {
   const ultimo = [...svg.matchAll(/<text x="([\d.]+)" y="\d+" text-anchor="middle" fill="#525254">(\d{4})<\/text>/g)].pop();
   assert.ok(Number(ultimo[1]) + 15 <= 342, `último rótulo em x=${ultimo[1]}`);
 });
+
+test('linesSvg: quatro séries ganham quatro traços distintos (a quarta em Spacial Grey, tracejada se pedido)', () => {
+  const pts = y => [{ x: 1, y }, { x: 2, y: y + 1 }];
+  const svg = Charts.linesSvg([{ name: 'A', points: pts(1) }, { name: 'B', points: pts(2) }, { name: 'C', points: pts(3) }, { name: 'D', points: pts(4), dash: true }], {});
+  const tracos = [...svg.matchAll(/<path class="line"[^>]*stroke="([^"]+)"([^>]*)\/>/g)].map(m => [m[1], /stroke-dasharray/.test(m[2])]);
+  assert.deepEqual(tracos, [['#183C80', false], ['#0071BB', false], ['#525254', false], ['#231F20', true]]);
+});

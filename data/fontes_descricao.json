@@ -65,10 +65,11 @@
   "ida": {
     "nome": "Índice de Debêntures ANBIMA (IDA)",
     "oQue": "Resultado diário dos índices de debêntures da ANBIMA (IPCA Infraestrutura, IPCA, Geral e DI): número-índice, duration e carteira teórica com a taxa indicativa de cada papel. Daí saem a evolução dos índices, o spread médio do IPCA Infraestrutura sobre a NTN-B e a taxa dos papéis de transporte.",
-    "termos": [{"id": "duration", "texto": "duration"}, {"id": "taxa-indicativa-anbima", "texto": "taxa indicativa"}]
+    "termos": [{"id": "ida", "texto": "índices de debêntures da ANBIMA"}, {"id": "duration", "texto": "duration"}, {"id": "carteira-teorica", "texto": "carteira teórica"}, {"id": "taxa-indicativa-anbima", "texto": "taxa indicativa"}]
   },
   "idex": {
     "nome": "IDEX-Infra (índice de debêntures de infraestrutura)",
-    "oQue": "Arquivos da IDEX Analytics fornecidos ao projeto: a planilha de dados, com o spread sobre a NTN-B e a duration de cada debênture do IDEX-Infra por dia, e o relatório mensal, com o retorno mensal do IDEX-Infra Geral e do Core. O painel guarda só médias diárias e o spread das debêntures de transporte."
+    "oQue": "Arquivos da IDEX Analytics fornecidos ao projeto: a planilha de dados, com o spread sobre a NTN-B e a duration de cada debênture do IDEX-Infra por dia, e o relatório mensal, com o retorno mensal do IDEX-Infra Geral e do Core. O painel guarda só médias diárias e o spread das debêntures de transporte.",
+    "termos": [{"id": "idex-infra", "texto": "IDEX-Infra"}]
   }
 }

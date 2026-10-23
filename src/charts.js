@@ -182,7 +182,7 @@ const Charts = (() => {
     for (let k = 0, x = x0; x <= x1 + 1e-9; k++, x = x0 + k * step) body += `<text x="${xOf(x)}" y="${h - B + 24}" text-anchor="middle" fill="${C.grey}">${esc(fx(x))}</text>`;
     series.forEach((s, k) => {
       const pts = s.points.filter(p => num(p.x) && num(p.y));
-      const color = k === 0 ? C.deep : k === 1 ? C.bright : C.grey;
+      const color = k === 0 ? C.deep : k === 1 ? C.bright : k === 2 ? C.grey : C.spacial;  // 4ª linha em Spacial Grey; quem desenha 4 linhas traceja a última (dash) para distingui-la da 3ª
       const d = pts.map((p, i) => `${i ? 'L' : 'M'}${xOf(p.x).toFixed(1)},${yOf(p.y).toFixed(1)}`).join('');
       body += `<path class="line" d="${d}" fill="none" stroke="${color}" stroke-width="2.5"${s.dash ? ' stroke-dasharray="6 4"' : ''}/>`;
       body += pts.map(p => `<circle cx="${xOf(p.x).toFixed(1)}" cy="${yOf(p.y).toFixed(1)}" r="${r}" fill="${color}"><title>${esc(s.name)} ${esc(fx(p.x))}: ${esc(fy(p.y))}${esc(unit)}</title></circle>`).join('');
