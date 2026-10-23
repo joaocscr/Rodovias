@@ -13,12 +13,15 @@ carteira teórica do dia (código, vencimento, indexador, taxa indicativa e peso
   (feriado) recua até o primeiro dia com resultado. O site só entrega os resultados recentes (em out/2026, os de 14/10 em
   diante; o histórico está no ANBIMA Feed, com login): nessa volta as semanas são percorridas da mais recente para a mais
   antiga e ela termina depois de 4 semanas seguidas sem resultado. A série cresce a cada execução. Dia sem resultado fica
-  no cache como "sem_dado"; dia que falhou nas tentativas não entra e é pedido de novo na próxima vez.
+  no cache como "sem_dado" (e é pedido de novo enquanto estiver nos últimos 10 dias úteis, porque a ANBIMA às vezes
+  publica com atraso); dia que falhou nas tentativas, ou cuja resposta não tem o número-índice, não entra e é pedido de
+  novo na próxima vez.
   A carteira do dia mais recente de cada índice fica em `data/raw/ida/carteira_<ÍNDICE>_<data>.csv`; a do IPCA
   Infraestrutura de cada dia fica no cache em forma enxuta (vencimento, taxa e peso dos papéis IPCA), de onde sai a série
   de spread.
 - `data/indices/ida_historico.json` (versionado, gerado pelo `build`): por índice e por dia, a linha do índice e, no IPCA
-  Infraestrutura, o spread médio. É o histórico acumulado: `data/raw/` não vai para o git e pode se perder, o histórico não.
+  Infraestrutura, o spread médio; o dia que o site respondeu "sem resultado" (feriado, ou ainda não publicado) fica como
+  "sem_dado", para o bloco ser o mesmo com ou sem `data/raw/`. É o histórico acumulado: `data/raw/` não vai para o git e pode se perder, o histórico não.
   O `build` junta o histórico com o cache (o cache e o dia novo valem mais) e grava o resultado de volta. O spread de um
   dia é recalculado quando o cache tem a carteira e a curva do dia existe; senão fica o que já estava no histórico.
 - `build` nunca vai à rede. "Hoje", para a janela de amostragem, é o último dia com resultado, não o relógio: o bloco não
@@ -158,10 +161,10 @@ def ultimos_dias_uteis(hoje, n):
 
 
 def lacunas(cache_indice, historico_indice, hoje):
-    """Dias úteis dos últimos 10 que nem o cache nem o histórico têm (o `fetch` de rotina os pede de novo). Dias anteriores
+    """Dias úteis dos últimos 10 que nem o cache nem o histórico têm (nem como resultado, nem como "sem_dado") (o `fetch` de rotina os pede de novo). Dias anteriores
     ao primeiro resultado conhecido não contam: o site só guarda os resultados recentes e o que nunca existiu não é falha."""
     conhecidos = set(cache_indice) | set(historico_indice)
-    inicio = min(set(_dias_com_dado(cache_indice)) | set(historico_indice), default=None)
+    inicio = min(set(_dias_com_dado(cache_indice)) | set(_dias_com_dado(historico_indice)), default=None)
     if inicio is None:
         return []
     return sorted(d.isoformat() for d in ultimos_dias_uteis(hoje, DIAS_ROTINA)
@@ -192,6 +195,8 @@ def _interpretar(bruto, data, indice):
     linha = lido["indice"]
     if linha is None or linha["data"] != data:
         return SEM_DADO
+    if linha["numero_indice"] is None:
+        raise ValueError("resposta do IDA sem o número-índice legível")
     resumo = {k: linha[k] for k in CAMPOS_INDICE}
     if indice == INFRA:
         resumo["carteira"] = [[p["vencimento"], p["taxa_indicativa"], p["peso"]] for p in lido["carteira"]
@@ -230,8 +235,8 @@ def carteiras_baixadas(pasta=PASTA):
 
 
 def ler_historico(path=HISTORICO):
-    """{índice: {AAAA-MM-DD: {numero_indice, var_*, duration_du, valor_mercado[, spread_medio]}}} do arquivo versionado;
-    ausente ou ilegível, vazio."""
+    """{índice: {AAAA-MM-DD: {numero_indice, var_*, duration_du, valor_mercado[, spread_medio]} | "sem_dado"}} do arquivo
+    versionado; ausente ou ilegível, vazio."""
     try:
         dados = json.loads(Path(path).read_text(encoding="utf-8"))
     except (OSError, ValueError):
@@ -252,16 +257,19 @@ def _gravar_historico(path, dias):
 
 
 def mesclar(historico, cache, curvas):
-    """Histórico (arquivo versionado) + cache: {índice: {dia: agregado}} só com os dias com resultado. O cache e o dia novo
-    valem mais que o histórico. No IPCA Infraestrutura entra `spread_medio`: recalculado da carteira enxuta do cache com a
-    curva do dia, quando ambas existem; senão o do histórico para o mesmo número-índice; senão None."""
+    """Histórico (arquivo versionado) + cache: {índice: {dia: agregado | "sem_dado"}}. O cache e o dia novo valem mais que
+    o histórico; um "sem_dado" nunca apaga um dia que já tem resultado, e o "sem_dado" depois do último dia com resultado
+    (ainda não publicado) não fica. No IPCA Infraestrutura entra `spread_medio`: recalculado da carteira enxuta do cache
+    com a curva do dia, quando ambas existem; senão o do histórico para o mesmo número-índice; senão None."""
     out = {}
     for ind in INDICES:
-        dias = {d: dict(v) for d, v in ((historico or {}).get(ind) or {}).items()}
+        dias = {d: (v if v == SEM_DADO else dict(v)) for d, v in ((historico or {}).get(ind) or {}).items()}
         for d, l in (cache.get(ind) or {}).items():
             if l == SEM_DADO:
+                dias.setdefault(d, SEM_DADO)
                 continue
-            ant = dias.get(d) or {}
+            ant = dias.get(d)
+            ant = ant if isinstance(ant, dict) else {}
             novo = {k: l[k] for k in CAMPOS_INDICE}
             if ind == INFRA:
                 s = None
@@ -273,7 +281,8 @@ def mesclar(historico, cache, curvas):
                     s = ant.get("spread_medio")
                 novo["spread_medio"] = s
             dias[d] = novo
-        out[ind] = dict(sorted(dias.items()))
+        ultimo = max(_dias_com_dado(dias), default="")
+        out[ind] = {d: v for d, v in sorted(dias.items()) if v != SEM_DADO or d < ultimo}
     return out
 
 
@@ -318,15 +327,22 @@ def fetch(force=False, consultar=_consultar, hoje=None, pausa=PAUSA, dormir=time
     hist = ler_historico(historico)
     completo = bool(os.environ.get("IDA_COMPLETO")) if completo is None else completo
     recentes, semanas = plano(hoje)
+    reask = {d.isoformat() for d in ultimos_dias_uteis(hoje, DIAS_ROTINA)}
     feitos, ultimo_bruto, falhas, pedidos, seguidas = set(), {}, [], [0], [0]
 
     def pedir(ind, d):
         iso = d.isoformat()
         cache.setdefault(ind, {})
-        if (ind, iso) in feitos or (iso in cache[ind] and not force):
+        if (ind, iso) in feitos:
             return cache[ind].get(iso)
-        if iso in (hist.get(ind) or {}) and not force:
-            return "historico"                   # já está no histórico versionado: não pede de novo
+        atual, h = cache[ind].get(iso), (hist.get(ind) or {}).get(iso)
+        if h is not None and h != SEM_DADO and atual in (None, SEM_DADO):
+            atual = "historico"                  # já está no histórico versionado: não pede de novo
+        elif atual is None and h is not None:
+            atual = h
+        # "sem_dado" nos últimos 10 dias úteis pode ser publicação atrasada: pede de novo; mais antigo que isso, não
+        if atual is not None and not force and not (atual == SEM_DADO and iso in reask):
+            return atual
         feitos.add((ind, iso))
         valor, erro = None, None
         for k in range(len(ESPERAS) + 1):
@@ -361,7 +377,7 @@ def fetch(force=False, consultar=_consultar, hoje=None, pausa=PAUSA, dormir=time
         cache.setdefault(ind, {})
         seguidas[0] = 0
         try:
-            ultimo = max(set(_dias_com_dado(cache[ind])) | set(hist.get(ind) or {}), default=None)
+            ultimo = max(set(_dias_com_dado(cache[ind])) | set(_dias_com_dado(hist.get(ind) or {})), default=None)
             if completo or force or ultimo is None:
                 for d in recentes:
                     pedir(ind, d)
@@ -387,13 +403,13 @@ def fetch(force=False, consultar=_consultar, hoje=None, pausa=PAUSA, dormir=time
             print(f"AVISO: IDA {ind}: o site não respondeu a {FALHAS_SEGUIDAS} pedidos seguidos; o resto fica para a "
                   "próxima vez", file=sys.stderr)
         # dia sem resultado depois do último com resultado ainda pode não ter sido publicado: não fica no cache
-        ultimo_dado = max(set(_dias_com_dado(cache[ind])) | set(hist.get(ind) or {}), default="")
+        ultimo_dado = max(set(_dias_com_dado(cache[ind])) | set(_dias_com_dado(hist.get(ind) or {})), default="")
         for iso in [i for i, v in cache[ind].items() if v == SEM_DADO and i > ultimo_dado]:
             del cache[ind][iso]
     _gravar_cache(pasta, cache)
 
     for ind in indices:
-        dias = sorted(set(_dias_com_dado(cache.get(ind) or {})) | set(hist.get(ind) or {}))
+        dias = sorted(set(_dias_com_dado(cache.get(ind) or {})) | set(_dias_com_dado(hist.get(ind) or {})))
         if not dias:
             continue
         alvo = pasta / f"carteira_{ind}_{dias[-1]}.csv"
@@ -401,15 +417,19 @@ def fetch(force=False, consultar=_consultar, hoje=None, pausa=PAUSA, dormir=time
             alvo.write_bytes(ultimo_bruto[ind][1])
         elif not alvo.exists():
             try:
-                alvo.write_bytes(consultar(ind, dias[-1]))
+                bruto = consultar(ind, dias[-1])
                 dormir(pausa)
                 pedidos[0] += 1
-            except (RuntimeError, OSError) as e:
+                if _interpretar(bruto, dias[-1], ind) == SEM_DADO:   # aviso do site ou arquivo sem o índice: não serve
+                    raise ValueError("resposta sem a carteira do dia")
+                alvo.write_bytes(bruto)
+            except (RuntimeError, ValueError, OSError) as e:
                 falhas.append(f"{ind} carteira de {dias[-1]}: {e}")
-        for velho in pasta.glob("carteira_*.csv"):
-            if velho != alvo and velho.name.startswith(f"carteira_{ind}_") and re.fullmatch(
-                    r"\d{4}-\d{2}-\d{2}\.csv", velho.name[len(f"carteira_{ind}_"):]):
-                velho.unlink()
+        if alvo.exists():                     # as carteiras antigas só saem quando a nova está em disco
+            for velho in pasta.glob("carteira_*.csv"):
+                if velho != alvo and velho.name.startswith(f"carteira_{ind}_") and re.fullmatch(
+                        r"\d{4}-\d{2}-\d{2}\.csv", velho.name[len(f"carteira_{ind}_"):]):
+                    velho.unlink()
     for f in falhas:
         print(f"AVISO: IDA sem download: {f}", file=sys.stderr)
     if manifesto is None:
@@ -478,19 +498,23 @@ def _papeis(carteiras, tickers, curvas):
     return dict(sorted(out.items()))
 
 
-def _acesso(manifesto, hoje):
+def _acesso(manifesto, fim):
+    """Dia em que o cache do IDA foi visto pela primeira vez (manifesto); sem registro, o último dia com resultado, que é
+    um dado e não o relógio."""
     datas = [i["acesso"] for i in getattr(manifesto, "items", []) if i.get("arquivo", "").endswith("ida/cache.json")
              and i.get("acesso")]
-    return max(datas) if datas else hoje
+    return max(datas) if datas else fim
 
 
-def montar(cache, carteiras, tickers, curvas, manifesto=None, hoje=None, historico=None):
+def montar(cache, carteiras, tickers, curvas, manifesto=None, historico=None, mesclado=None):
     """Bloco do IDA. `cache`: o de `fetch`; `historico`: o arquivo versionado (ver `mesclar`: o cache vale mais);
     `carteiras`: {índice: (data, [papel])} da carteira mais recente de cada índice; `tickers`: papéis de transporte;
-    `curvas`: de `debentures.ler_tesouro`. A janela parte do último dia com resultado; `hoje` (o relógio) só entra como
-    data de acesso quando o manifesto não registra o cache."""
+    `curvas`: de `debentures.ler_tesouro`; `mesclado`: o resultado de `mesclar`, se quem chama já o tem. A janela parte do
+    último dia com resultado; nada aqui depende do relógio. `tickers` None: a lista de papéis de transporte não estava
+    disponível (vira pendência e `papeis` fica vazio)."""
     cache, historico = cache or {}, historico or {}
-    mesclado = mesclar(historico, cache, curvas)
+    mesclado = mesclar(historico, cache, curvas) if mesclado is None else mesclado
+    mesclado = {i: {d: v for d, v in dias.items() if v != SEM_DADO} for i, dias in mesclado.items()}
     dias = [d for ind in INDICES for d in mesclado[ind]]
     if not dias:
         raise ValueError("o IDA não tem nenhum dia com resultado (nem no cache nem no histórico): rode `python "
@@ -511,7 +535,7 @@ def montar(cache, carteiras, tickers, curvas, manifesto=None, hoje=None, histori
     series = [p["data"] for i in indices.values() for p in i["serie"]]
     periodo = f"{_br(min(series))} a {_br(max(series))}" if min(series) != max(series) else _br(min(series))
     fonte = [{"nome": "ANBIMA — Índice de Debêntures ANBIMA (IDA), resultado diário", "url": PAGINA, "periodo": periodo,
-              "acesso": _acesso(manifesto, hoje), "licenca": LICENCA, "tipo": "medido",
+              "acesso": _acesso(manifesto, fim), "licenca": LICENCA, "tipo": "medido",
               "nota": "Consulta pública \"Resultado diário por índice\" da ANBIMA, um pedido por índice e por dia: "
                       "número-índice, variações, duration, valor de mercado e carteira teórica com a taxa indicativa de "
                       "cada papel. O site só entrega os resultados recentes e o histórico completo exige o ANBIMA Feed "
@@ -522,15 +546,20 @@ def montar(cache, carteiras, tickers, curvas, manifesto=None, hoje=None, histori
                       "IDA-IPCA Infraestrutura é a média, ponderada pelo peso na carteira, de taxa indicativa − NTN-B "
                       "(Tesouro Direto, taxa de compra) do mesmo dia, interpolada pelo vencimento; sem curva no dia, "
                       "fica sem valor. Das carteiras ficam só os papéis de transporte da tabela de emissões."}]
-    return {"fonte": fonte, "indices": indices, "papeis": _papeis(carteiras, set(tickers), curvas),
-            "pendencias": {"dias_sem_download": sem_download}}
+    pendencias = {"dias_sem_download": sem_download}
+    if tickers is None:
+        pendencias["sem_lista_de_papeis"] = True
+    return {"fonte": fonte, "indices": indices, "papeis": _papeis(carteiras, set(tickers or ()), curvas),
+            "pendencias": pendencias}
 
 
 def _tickers(path=DEBENTURES):
+    """Papéis de transporte (os `ticker` das emissões de debentures.json); None se o arquivo não existe ou não se lê: sem a
+    lista, `papeis` fica vazio e a curadoria avisa, em vez de um bloco vazio sem explicação."""
     try:
         return [e["ticker"] for e in json.loads(Path(path).read_text(encoding="utf-8")).get("emissoes") or []]
-    except (OSError, ValueError, KeyError):
-        return []
+    except (OSError, ValueError, KeyError, AttributeError):
+        return None
 
 
 def build(pasta=PASTA, out=OUT, debentures=DEBENTURES, tesouro=None, manifesto=None, historico=HISTORICO):
@@ -550,8 +579,8 @@ def build(pasta=PASTA, out=OUT, debentures=DEBENTURES, tesouro=None, manifesto=N
     proprio = manifesto is None
     manifesto = Manifest("ida") if proprio else manifesto
     registrar(manifesto, pasta)
-    doc = montar(cache, carteiras, _tickers(debentures), curvas, manifesto=manifesto, hoje=dt.date.today().isoformat(),
-                 historico=hist)
+    mesclado = mesclar(hist, cache, curvas)
+    doc = montar(cache, carteiras, _tickers(debentures), curvas, manifesto=manifesto, historico=hist, mesclado=mesclado)
     if not carteiras:
         try:
             doc["papeis"] = json.loads(out.read_text(encoding="utf-8")).get("papeis") or {}
@@ -559,7 +588,7 @@ def build(pasta=PASTA, out=OUT, debentures=DEBENTURES, tesouro=None, manifesto=N
             pass
     if proprio:
         manifesto.save()
-    _gravar_historico(historico, mesclar(hist, cache, curvas))
+    _gravar_historico(historico, mesclado)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(doc, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     n = {i: len(v["serie"]) for i, v in doc["indices"].items()}

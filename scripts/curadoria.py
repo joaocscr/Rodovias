@@ -27,6 +27,7 @@ TIPOS = {
     "taxa_fora_do_intervalo": "Taxas de debêntures fora do intervalo plausível (fora das médias)",
     "linha_sem_data": "Linhas das planilhas de debêntures sem data legível (fora dos totais)",
     "ida_dias_com_falha": "Dias do IDA (ANBIMA) que não foram baixados (faltam na série)",
+    "ida_sem_papeis": "IDA sem a lista de papéis de transporte (taxa indicativa dos papéis fica de fora)",
     "idex_arquivo_antigo": "Planilha do IDEX-Infra com o último dia muito antes dos dados de debêntures",
     "idex_relatorio_ilegivel": "Relatórios mensais do IDEX-Infra que não puderam ser lidos",
     "idex_reconciliacao": "Retornos mensais do IDEX-Infra que não fecham com o acumulado do ano impresso",
@@ -270,13 +271,19 @@ def _debentures(bloco):
 
 
 def _ida(bloco):
-    """Dias do IDA que o cache não tem e o `fetch` não conseguiu baixar (ou que ainda não foram pedidos), por índice."""
-    dias = ((bloco or {}).get("pendencias") or {}).get("dias_sem_download") or []
+    """Pendências do bloco do IDA (scripts/intel/ida.py): dias úteis recentes que nem o cache nem o histórico têm (o
+    `fetch` não conseguiu baixar, ou ainda não pediu), por índice, e a falta da lista de papéis de transporte."""
+    pend = (bloco or {}).get("pendencias") or {}
+    dias = pend.get("dias_sem_download") or []
     por_indice = {}
     for d in dias:
         por_indice.setdefault(d["indice"], []).append(d["data"])
-    return [("ida_dias_com_falha", ind,
-             f"{len(datas)} dia(s) sem download no cache de data/raw/ida/ ({', '.join(_fmt(d) for d in datas[:6])}"
+    sem_lista = [("ida_sem_papeis", "Papéis de transporte do IDA",
+                  "data/intel/debentures.json não existe ou não se lê, então o bloco do IDA ficou sem os papéis de transporte "
+                  "(`papeis` vazio); gere as debêntures antes e rode `python scripts/atualizar.py --dominios debentures,ida`")
+                 ] if pend.get("sem_lista_de_papeis") else []
+    return sem_lista + [("ida_dias_com_falha", ind,
+             f"{len(datas)} dia(s) útil(eis) recente(s) sem resultado no histórico nem no cache ({', '.join(_fmt(d) for d in datas[:6])}"
              f"{', …' if len(datas) > 6 else ''}): a série fica sem esses pontos; rode "
              "`python scripts/atualizar.py --baixar --dominios ida` (o site da ANBIMA responde \"muitas requisições\" "
              "em rajadas; só os dias que faltam são pedidos de novo)")

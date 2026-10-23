@@ -105,7 +105,7 @@ def test_dia_sem_resultado_nao_quebra(tmp_path):
     assert c["2026-10-13"]["numero_indice"] > 0
     carteiras = {ind: (d, ida.ler_csv((p).read_bytes().decode("latin-1"))["carteira"])
                  for ind, (d, p) in ida.carteiras_baixadas(tmp_path).items()}
-    bloco = ida.montar(cache_de(tmp_path), carteiras, ["TSTR11"], {}, hoje="2026-10-21")
+    bloco = ida.montar(cache_de(tmp_path), carteiras, ["TSTR11"], {})
     datas = [p["data"] for p in bloco["indices"][ida.INFRA]["serie"]]
     assert feriado not in datas and vazio not in datas and "2026-10-13" in datas
     assert bloco["pendencias"]["dias_sem_download"] == []
@@ -135,7 +135,7 @@ def test_semana_com_sexta_feriado_vale_a_quinta(tmp_path):
     c = cache_de(tmp_path)[ida.INFRA]
     assert c["2026-07-03"] == ida.SEM_DADO and c["2026-07-02"] != ida.SEM_DADO
     assert "2026-07-01" not in c                                    # a quarta não é pedida: a quinta já tem resultado
-    bloco = ida.montar(cache_de(tmp_path), {}, [], {}, hoje="2026-10-21")
+    bloco = ida.montar(cache_de(tmp_path), {}, [], {})
     datas = [p["data"] for p in bloco["indices"][ida.INFRA]["serie"]]
     assert "2026-07-02" in datas and "2026-07-01" not in datas      # uma amostra por semana fora dos últimos 31 dias
 
@@ -148,7 +148,7 @@ def test_falha_nao_entra_no_cache_e_vira_pendencia(tmp_path):
     assert "2026-10-15" not in cache_de(tmp_path)[ida.INFRA]
     assert [d for _, d in chamadas].count("2026-10-15") == 3        # três tentativas
     assert ida.ESPERAS[0] in esperas and ida.ESPERAS[1] in esperas  # com espera entre elas
-    bloco = ida.montar(cache_de(tmp_path), {}, [], {}, hoje="2026-10-21")
+    bloco = ida.montar(cache_de(tmp_path), {}, [], {})
     assert bloco["pendencias"]["dias_sem_download"] == [{"indice": ida.INFRA, "data": "2026-10-15"}]
     # na vez seguinte o dia que falhou é pedido de novo
     chamadas.clear()
@@ -261,16 +261,16 @@ def test_bloco_ida_nao_depende_do_dia(tmp_path):
     cart = {ind: (d, ida.ler_csv(p.read_bytes().decode("latin-1"))["carteira"]) for ind, (d, p) in ida.carteiras_baixadas(tmp_path).items()}
     man = _Manifesto([{"arquivo": "data/raw/ida/cache.json", "acesso": "2026-10-21", "sha256": "x"}])
     curvas = {"2026-10-20": [(v, t, "NTN-B") for v, t in CURVA]}
-    a = ida.montar(cache, cart, ["TSTR11"], curvas, manifesto=man, hoje="2026-10-22")
-    b = ida.montar(cache, cart, ["TSTR11"], curvas, manifesto=man, hoje="2027-03-01")
+    a = ida.montar(cache, cart, ["TSTR11"], curvas, manifesto=man)
+    b = ida.montar(cache, cart, ["TSTR11"], curvas, manifesto=man)
     assert json.dumps(a) == json.dumps(b)
     assert a["fonte"][0]["acesso"] == "2026-10-21"
     assert a["indices"][ida.INFRA]["serie"][-1]["data"] == "2026-10-21"
 
 
 def test_fonte_com_periodo_e_licenca():
-    f = ida.montar(_cache_curto(), {}, [], {}, hoje="2026-10-22")["fonte"][0]
-    assert f["periodo"] == "19/10/2026 a 21/10/2026" and f["acesso"] == "2026-10-22"
+    f = ida.montar(_cache_curto(), {}, [], {})["fonte"][0]
+    assert f["periodo"] == "19/10/2026 a 21/10/2026" and f["acesso"] == "2026-10-21"   # sem manifesto: o último dia do dado
     assert f["tipo"] == "medido" and f["url"].startswith("https://www.anbima.com.br/") and f["licenca"]
 
 
@@ -318,14 +318,18 @@ def test_site_so_guarda_dias_recentes_a_volta_para_sozinha(tmp_path):
     c = cache_de(tmp_path)[ida.INFRA]
     assert _dados(c) == ["2026-10-14", "2026-10-15", "2026-10-16", "2026-10-19", "2026-10-20", "2026-10-21", "2026-10-22"]
     assert len(chamadas) < 22 + 5 * (ida.SEMANAS_VAZIAS + 1)           # os 31 dias recentes + as semanas vazias
-    assert min(c) >= "2026-09-01"
+    assert min(c) >= "2026-09-04"
     bloco = ida.montar(cache_de(tmp_path), {}, [], {})
     assert bloco["pendencias"]["dias_sem_download"] == []
     chamadas.clear()
     rodar(tmp_path, "2026-10-22", consultar=servidor(desde="2026-10-14", chamadas=chamadas), indices=(ida.INFRA,))
-    assert chamadas == []                                               # a segunda volta não pede nada
+    # a segunda volta só repete os "sem resultado" dos últimos 10 dias úteis (publicação atrasada); nada mais antigo
+    ultimos = {d.isoformat() for d in ida.ultimos_dias_uteis("2026-10-22", ida.DIAS_ROTINA)}
+    assert {d for _, d in chamadas} <= ultimos and all(c[d] == ida.SEM_DADO for _, d in chamadas for c in [cache_de(tmp_path)[ida.INFRA]] if d < "2026-10-14")
+    chamadas.clear()
     rodar(tmp_path, "2026-10-26", consultar=servidor(desde="2026-10-14", chamadas=chamadas), indices=(ida.INFRA,))
-    assert {d for _, d in chamadas} == {"2026-10-23", "2026-10-26"}   # só os dias novos, sem recuar de novo
+    ultimos = {d.isoformat() for d in ida.ultimos_dias_uteis("2026-10-26", ida.DIAS_ROTINA)}
+    assert {"2026-10-23", "2026-10-26"} <= {d for _, d in chamadas} <= ultimos | {"2026-10-23", "2026-10-26"}
 
 
 def test_site_fora_do_ar_encerra_o_indice(tmp_path, capsys):
@@ -446,8 +450,8 @@ def test_bloco_do_historico_nao_depende_do_dia(tmp_path):
     hist = {ind: {d: {k: v[k] for k in ida.CAMPOS_INDICE} for d, v in dias.items() if v != ida.SEM_DADO}
             for ind, dias in cache.items()}
     man = _Manifesto([{"arquivo": "data/raw/ida/cache.json", "acesso": "2026-10-21", "sha256": "x"}])
-    a = ida.montar({}, {}, [], {}, manifesto=man, hoje="2026-10-22", historico=hist)
-    b = ida.montar({}, {}, [], {}, manifesto=man, hoje="2027-03-01", historico=hist)
+    a = ida.montar({}, {}, [], {}, manifesto=man, historico=hist)
+    b = ida.montar({}, {}, [], {}, manifesto=man, historico=hist)
     assert json.dumps(a) == json.dumps(b) and a["indices"][ida.INFRA]["serie"][-1]["data"] == "2026-10-21"
 
 
@@ -460,7 +464,7 @@ def test_fetch_de_rotina_pede_so_os_dias_novos_e_os_ultimos_10_uteis(tmp_path):
     pedidos = {d for _, d in chamadas}
     assert pedidos == {"2026-10-22", "2026-10-23"}             # o resto dos últimos 10 dias úteis já está no histórico
     assert len(chamadas) == 2
-    assert "2026-09-01" not in pedidos
+    assert "2026-09-04" not in pedidos
 
 
 def test_completo_volta_nas_semanas_antigas(tmp_path, monkeypatch):
@@ -468,8 +472,108 @@ def test_completo_volta_nas_semanas_antigas(tmp_path, monkeypatch):
     _build(tmp_path)
     chamadas = []
     rodar(tmp_path, "2026-10-21", indices=(ida.INFRA,), consultar=servidor(desde="2026-07-01", chamadas=chamadas))
-    assert chamadas == []                                      # de rotina não olha para trás
+    assert all(d >= "2026-10-08" for _, d in chamadas)         # de rotina não olha para trás (só os últimos 10 dias úteis)
     (tmp_path / "cache.json").unlink()                         # cache perdido: o que o site disser sobre as semanas antigas
     monkeypatch.setenv("IDA_COMPLETO", "1")
     rodar(tmp_path, "2026-10-21", indices=(ida.INFRA,), consultar=servidor(desde="2026-07-01", chamadas=chamadas))
     assert any(d < "2026-10-01" for _, d in chamadas)          # IDA_COMPLETO=1 refaz a amostra completa
+
+
+# ---------- sem_dado no histórico, acesso sem relógio, downloader ----------
+
+def test_sem_dado_fica_no_historico_e_sem_o_cru_o_bloco_e_o_mesmo(tmp_path):
+    """Dia que o site nunca publicou (feriado) persiste como "sem_dado" no histórico versionado: apagado o data/raw/ida/, o
+    bloco sai idêntico e sem pendência para esse dia."""
+    rodar(tmp_path, "2026-10-21", consultar=servidor(feriados=("2026-10-15",)))
+    antes = _build(tmp_path)
+    assert _historico(tmp_path)[ida.INFRA]["2026-10-15"] == ida.SEM_DADO
+    assert antes["pendencias"]["dias_sem_download"] == []
+    texto = (tmp_path / "ida.json").read_text(encoding="utf-8")
+    for p in tmp_path.glob("carteira_*"):
+        p.unlink()
+    (tmp_path / "cache.json").unlink()
+    depois = _build(tmp_path)
+    assert (tmp_path / "ida.json").read_text(encoding="utf-8") == texto and depois == antes
+
+
+def test_sem_dado_depois_do_ultimo_dia_nao_vai_para_o_historico(tmp_path):
+    rodar(tmp_path, "2026-10-21", consultar=servidor(desde="2026-10-01"))
+    cache = cache_de(tmp_path)
+    cache[ida.INFRA]["2026-10-22"] = ida.SEM_DADO                       # ainda não publicado
+    mesclado = ida.mesclar({}, cache, {})
+    assert "2026-10-22" not in mesclado[ida.INFRA]
+
+
+def test_sem_dado_nao_apaga_dia_com_resultado():
+    linha = {k: 1.0 for k in ida.CAMPOS_INDICE}
+    historico = {ida.INFRA: {"2026-10-19": {**linha, "spread_medio": None}, "2026-10-20": {**linha, "spread_medio": None}}}
+    cache = {ida.INFRA: {"2026-10-19": ida.SEM_DADO}}
+    assert ida.mesclar(historico, cache, {})[ida.INFRA]["2026-10-19"]["numero_indice"] == 1.0
+
+
+def test_acesso_nao_depende_do_relogio(tmp_path, monkeypatch):
+    """Dois "hoje" diferentes (o relógio do build), sem registro no manifesto: o mesmo ida.json e o mesmo histórico, com o
+    acesso da fonte tirado do dado."""
+    rodar(tmp_path, "2026-10-21", indices=(ida.INFRA,))
+    textos = []
+    for ano, mes in ((2026, 10), (2027, 3)):
+        class Hoje(dt.date):
+            @classmethod
+            def today(cls):
+                return cls(ano, mes, 25)
+        monkeypatch.setattr(ida.dt, "date", Hoje)
+        _build(tmp_path)
+        textos.append(((tmp_path / "ida.json").read_text(encoding="utf-8"), (tmp_path / "historico.json").read_text(encoding="utf-8")))
+        monkeypatch.undo()
+    assert textos[0] == textos[1]
+    assert json.loads(textos[0][0])["fonte"][0]["acesso"] == "2026-10-21"
+
+
+def test_sem_dado_dos_ultimos_10_dias_uteis_e_pedido_de_novo_mas_nao_os_antigos(tmp_path):
+    rodar(tmp_path, "2026-10-21", indices=(ida.INFRA,), consultar=servidor(feriados=("2026-10-15", "2026-09-04")))
+    chamadas = []
+    rodar(tmp_path, "2026-10-21", indices=(ida.INFRA,), consultar=servidor(chamadas=chamadas))    # o site publicou 15/10
+    assert chamadas == [(ida.INFRA, "2026-10-15")]
+    assert cache_de(tmp_path)[ida.INFRA]["2026-10-15"] != ida.SEM_DADO
+    assert cache_de(tmp_path)[ida.INFRA]["2026-09-04"] == ida.SEM_DADO     # fora da janela de 10 dias: não volta
+    chamadas.clear()
+    rodar(tmp_path, "2026-10-21", indices=(ida.INFRA,), consultar=servidor(chamadas=chamadas), completo=True)
+    assert (ida.INFRA, "2026-09-04") not in chamadas
+
+
+def test_resposta_sem_numero_legivel_e_falha_e_nao_vai_para_o_cache(tmp_path):
+    def estragado(indice, iso):
+        texto = A.replace("19/10/2026", f"{iso[8:]}/{iso[5:7]}/{iso[:4]}").replace("2.000,500000", "abc")
+        return texto.encode("latin-1")
+    ida.fetch(hoje="2026-10-21", pausa=0, dormir=lambda s: None, pasta=tmp_path, manifesto=_Manifesto(),
+              log=lambda *_: None, indices=(ida.INFRA,), consultar=estragado, historico=tmp_path / "h.json")
+    assert cache_de(tmp_path)[ida.INFRA] == {}
+
+
+def test_carteira_invalida_nao_substitui_a_anterior(tmp_path):
+    rodar(tmp_path, "2026-10-21", indices=(ida.INFRA,))
+    bom = tmp_path / "carteira_IPCA_INFRAESTRUTURA_2026-10-21.csv"
+    _build(tmp_path)
+    (tmp_path / "cache.json").unlink()
+    bom.rename(tmp_path / "carteira_IPCA_INFRAESTRUTURA_2026-10-20.csv")             # a carteira em disco é a do dia anterior
+    texto = (tmp_path / "carteira_IPCA_INFRAESTRUTURA_2026-10-20.csv").read_bytes()
+
+    def pagina_de_erro(indice, iso):
+        return b"Ocorreu um erro na leitura do arquivo XML." if iso == "2026-10-21" else servidor()(indice, iso)
+    rodar(tmp_path, "2026-10-21", indices=(ida.INFRA,), consultar=pagina_de_erro)
+    assert (tmp_path / "carteira_IPCA_INFRAESTRUTURA_2026-10-20.csv").read_bytes() == texto   # continua lá
+    assert not (tmp_path / "carteira_IPCA_INFRAESTRUTURA_2026-10-21.csv").exists()
+
+
+def test_sem_lista_de_papeis_vira_pendencia_e_item_de_curadoria(tmp_path):
+    import curadoria
+    rodar(tmp_path, "2026-10-21")
+    doc = _build(tmp_path)                                    # debentures.json não existe
+    assert doc["papeis"] == {} and doc["pendencias"]["sem_lista_de_papeis"] is True
+    itens = [i for i in curadoria.itens({}, {"ida": doc}, {}, dt.date(2026, 10, 21)) if i["tipo"] == "ida_sem_papeis"]
+    assert len(itens) == 1 and "debentures" in itens[0]["motivo"]
+    deb = tmp_path / "debentures.json"
+    deb.write_text(json.dumps({"emissoes": [{"ticker": "TSTR11"}]}), encoding="utf-8")
+    ok = ida.build(pasta=tmp_path, out=tmp_path / "ida.json", debentures=deb, tesouro=tmp_path / "sem.csv",
+                   manifesto=_Manifesto(), historico=tmp_path / "historico.json")
+    assert "sem_lista_de_papeis" not in ok["pendencias"] and "TSTR11" in ok["papeis"]
