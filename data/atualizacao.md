@@ -6,18 +6,18 @@ Gerado por `python scripts/atualizar.py` (sem --baixar). Diferenças em relaçã
 
 | Passo | Resultado | Detalhe |
 |---|---|---|
-| trafego | pulado | arquivo ausente: data/raw/trafego/infrasa/vmda2023_data.json (baixe com `--baixar`) |
+| trafego | ok |  |
 | antt | ok |  |
-| carga | pulado | arquivo ausente: data/raw/graos/multimodal/pnl2035_cenario_base.zip (baixe com `--baixar`) |
+| carga | ok |  |
 | agro | pulado | arquivo ausente: data/raw/graos/malha/ibge_municipios.json (baixe com `--baixar`) |
 | multimodal | ok |  |
 | pipeline | ok |  |
 | debentures | ok |  |
 | ida | ok |  |
 | idex | ok |  |
-| estaduais | pulado | arquivo ausente: data/raw/estaduais/abcr/api_conc.json (baixe com `--baixar`) |
+| estaduais | ok |  |
 | vmda2025 | pulado | falta data/raw/trafego/vmda2025/vgeo_vmda2025.zip (shapefile do Google Drive do usuário; ver README, "Atualizar os dados"); vmda2025.json ficou como estava |
-| rotas | pulado | arquivo ausente: data/raw/rotas/apresentacao_rotas_2026-07-01.pdf (baixe com `--baixar`) |
+| rotas | ok |  |
 | fontes_bloco | ok |  |
 | validação da verificação | ok |  |
 | build.py (HTML) | ok |  |
@@ -33,9 +33,9 @@ Registros: itens das coleções principais de cada bloco (valores preenchidos); 
 | carga | 4.312 | 4.312 | 141,3 | 141,3 | não |
 | debentures | 236 | 236 | 96,3 | 96,3 | não |
 | estaduais | 16.238 | 16.238 | 2.949,8 | 2.949,8 | não |
-| fontes | 56 | 57 | 30,0 | 31,0 | sim (+1,0 KB) |
+| fontes | 57 | 57 | 31,0 | 31,0 | não |
 | ida | 99 | 99 | 11,0 | 11,0 | não |
-| idex | — | 116 | — | 9,7 | novo |
+| idex | 116 | 116 | 9,7 | 9,7 | não |
 | multimodal | 3.188 | 3.188 | 413,9 | 413,9 | não |
 | municipios | 5.571 | 5.571 | 1.687,6 | 1.687,6 | não |
 | pipeline | 64 | 64 | 42,9 | 42,9 | não |

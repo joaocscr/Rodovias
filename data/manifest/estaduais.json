@@ -1,6 +1,17 @@
 [
  {
   "dominio": "estaduais",
+  "descricao": "ARTESP — ficha da concessionária mota-engil",
+  "url": "https://www.artesp.sp.gov.br/artesp/setor-regulado/rodovia/concessionarias/mota-engil",
+  "arquivo": "data/raw/estaduais/artesp/fichas/mota-engil.html",
+  "bytes": 90319,
+  "sha256": "f2203274ae325f106ad4c7427ff26ccdd93577b091963bcc45a263f702ac4556",
+  "periodo": "2026",
+  "licenca": "Página pública ARTESP",
+  "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "estaduais",
   "descricao": "Infra S.A. Hosted/Rodovias_Estaduais, feições 0–1999 (GeoJSON, EPSG:4326)",
   "url": "https://geo.infrasa.gov.br/server/rest/services/Hosted/Rodovias_Estaduais/FeatureServer/0/query?where=1%3D1&outFields=*&orderByFields=fid&resultOffset=0&resultRecordCount=2000&outSR=4326&f=geojson",
   "arquivo": "data/raw/estaduais/infrasa/hosted_pages/p_000000.geojson",
@@ -422,44 +433,44 @@
   "descricao": "ARTESP — ficha da concessionária autoban",
   "url": "https://www.artesp.sp.gov.br/artesp/setor-regulado/rodovia/concessionarias/autoban",
   "arquivo": "data/raw/estaduais/artesp/fichas/autoban.html",
-  "bytes": 147287,
-  "sha256": "714cb62c94ce90dd3e8b1d42c75bd0a301d315ba810d2c11f3c0fca3b279a56f",
+  "bytes": 147288,
+  "sha256": "e1e0faa55a4afbb3fcf3db44d554b38285053dde832d657e6e47d883c9317a54",
   "periodo": "2026",
   "licenca": "Página pública ARTESP",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
   "descricao": "ARTESP — ficha da concessionária tebe",
   "url": "https://www.artesp.sp.gov.br/artesp/setor-regulado/rodovia/concessionarias/tebe",
   "arquivo": "data/raw/estaduais/artesp/fichas/tebe.html",
-  "bytes": 97674,
-  "sha256": "8b8c0a181931c052987fbb90af097d429c918c7ed4f60342c59fed52d3c7f64c",
+  "bytes": 97808,
+  "sha256": "6aa05895169d9bc561126bba1ffeb8f9534d8daa078779f6c1e44296b428f6dd",
   "periodo": "2026",
   "licenca": "Página pública ARTESP",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
   "descricao": "ARTESP — ficha da concessionária arteris-intervias",
   "url": "https://www.artesp.sp.gov.br/artesp/setor-regulado/rodovia/concessionarias/arteris-intervias",
   "arquivo": "data/raw/estaduais/artesp/fichas/arteris-intervias.html",
-  "bytes": 141152,
-  "sha256": "4160a9399c05ed68768d173ed0c09874f3988dbb1bba3e28ea13201b6445d9ef",
+  "bytes": 141286,
+  "sha256": "d8a3020f9da42c8131ca9fdd1d48318b68b81f26a654c2f3d2e8d8aa9a012086",
   "periodo": "2026",
   "licenca": "Página pública ARTESP",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
   "descricao": "ARTESP — ficha da concessionária rota-bandeiras",
   "url": "https://www.artesp.sp.gov.br/artesp/setor-regulado/rodovia/concessionarias/rota-bandeiras",
   "arquivo": "data/raw/estaduais/artesp/fichas/rota-bandeiras.html",
-  "bytes": 115615,
-  "sha256": "4ddee9550375afae696622491cfe6768b6063e49e81ba74fba045c51f1fe2ef2",
+  "bytes": 115748,
+  "sha256": "6e635d75fb46d723c66e4be08f575fdb132315fbbe9b9b4a75154cec57b41aaf",
   "periodo": "2026",
   "licenca": "Página pública ARTESP",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -467,197 +478,197 @@
   "url": "https://www.artesp.sp.gov.br/artesp/setor-regulado/rodovia/concessionarias/renovias",
   "arquivo": "data/raw/estaduais/artesp/fichas/renovias.html",
   "bytes": 145302,
-  "sha256": "ebf8130c2461eb20173b8dbde019c0a20085be5a5accbfe55600464d64e96336",
+  "sha256": "c0bb21cdac7ff231013e0b4a1b9d9b08013be96b452e989b92370f22ed340c82",
   "periodo": "2026",
   "licenca": "Página pública ARTESP",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
   "descricao": "ARTESP — ficha da concessionária via-colinas",
   "url": "https://www.artesp.sp.gov.br/artesp/setor-regulado/rodovia/concessionarias/via-colinas",
   "arquivo": "data/raw/estaduais/artesp/fichas/via-colinas.html",
-  "bytes": 151000,
-  "sha256": "88886f7ae62908f89d4b7c2ae8b796433230f86d54ff5b32f59497209dec2b81",
+  "bytes": 151134,
+  "sha256": "113f742b794d7e27d50ae5f93cc9652928bd645b1e4a5286b7f1eca1f428b86d",
   "periodo": "2026",
   "licenca": "Página pública ARTESP",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
   "descricao": "ARTESP — ficha da concessionária cart",
   "url": "https://www.artesp.sp.gov.br/artesp/setor-regulado/rodovia/concessionarias/cart",
   "arquivo": "data/raw/estaduais/artesp/fichas/cart.html",
-  "bytes": 111515,
-  "sha256": "751b2e2dff1644e2ec31be115fd4091c7ba4844c69a847bfb087f95401ebce3d",
+  "bytes": 111649,
+  "sha256": "80cc6836839ad1c9f65220cf5de2fa75f2f1526989263b72fbf468bc2e1e5b0d",
   "periodo": "2026",
   "licenca": "Página pública ARTESP",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
   "descricao": "ARTESP — ficha da concessionária viarondon",
   "url": "https://www.artesp.sp.gov.br/artesp/setor-regulado/rodovia/concessionarias/viarondon",
   "arquivo": "data/raw/estaduais/artesp/fichas/viarondon.html",
-  "bytes": 118904,
-  "sha256": "59c40d8feb680d5e089af2e543730e0a2dd18d4a1572baa987ce4e03d22d2980",
+  "bytes": 119038,
+  "sha256": "7d74e134cadb725af706430c7bc830dd2f21eafc4c5b082ad78880c4dffc02ec",
   "periodo": "2026",
   "licenca": "Página pública ARTESP",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
   "descricao": "ARTESP — ficha da concessionária spvias",
   "url": "https://www.artesp.sp.gov.br/artesp/setor-regulado/rodovia/concessionarias/spvias",
   "arquivo": "data/raw/estaduais/artesp/fichas/spvias.html",
-  "bytes": 112098,
-  "sha256": "9535e30a4902aa0d61d7caa36c1585e655e1314f72d62925ebb00072110b888f",
+  "bytes": 112099,
+  "sha256": "8d9a36d473ebd28e0f594f5316ca0a9040df70c8ee096bc87d56a2e769359632",
   "periodo": "2026",
   "licenca": "Página pública ARTESP",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
   "descricao": "ARTESP — ficha da concessionária rodovias-tiete",
   "url": "https://www.artesp.sp.gov.br/artesp/setor-regulado/rodovia/concessionarias/rodovias-tiete",
   "arquivo": "data/raw/estaduais/artesp/fichas/rodovias-tiete.html",
-  "bytes": 109875,
-  "sha256": "56ecb34c72a7aabd48e375abdf8ad7718b850e4824d337bbeaa2637b296e6600",
+  "bytes": 111779,
+  "sha256": "c2c9d0100c3ee2714bbb531a2d9f6f8a0ab5058ceeaadc51e25bf105040264d5",
   "periodo": "2026",
   "licenca": "Página pública ARTESP",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
   "descricao": "ARTESP — ficha da concessionária ecovias-imigrantes",
   "url": "https://www.artesp.sp.gov.br/artesp/setor-regulado/rodovia/concessionarias/ecovias-imigrantes",
   "arquivo": "data/raw/estaduais/artesp/fichas/ecovias-imigrantes.html",
-  "bytes": 140564,
-  "sha256": "6616b6027bc2a8528e5198a1176f14f08b16402ba8e47d6c7dac5e8f2c923468",
+  "bytes": 140698,
+  "sha256": "cd32ebe68144c1f619f910a6def9c1de44098b903a94eee609d336b7533b978a",
   "periodo": "2026",
   "licenca": "Página pública ARTESP",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
   "descricao": "ARTESP — ficha da concessionária ecovias-leste",
   "url": "https://www.artesp.sp.gov.br/artesp/setor-regulado/rodovia/concessionarias/ecovias-leste",
   "arquivo": "data/raw/estaduais/artesp/fichas/ecovias-leste.html",
-  "bytes": 114517,
-  "sha256": "42f2c3af2a89a0fc62de6d4cdee35d1bf0dbcd9ec02e3a0dade8a5b6afbe6714",
+  "bytes": 114651,
+  "sha256": "2b8ff572cd6ac63f56ac14b99af10be736c8a1e61748eb681e3f6886dcb55ecc",
   "periodo": "2026",
   "licenca": "Página pública ARTESP",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
   "descricao": "ARTESP — ficha da concessionária rodoanel-oeste",
   "url": "https://www.artesp.sp.gov.br/artesp/setor-regulado/rodovia/concessionarias/rodoanel-oeste",
   "arquivo": "data/raw/estaduais/artesp/fichas/rodoanel-oeste.html",
-  "bytes": 110521,
-  "sha256": "7053633120c6ca6baf4ca7daddb4371526548aea0c630fdf58f40ebeaa18abc8",
+  "bytes": 110655,
+  "sha256": "8296d77c6e51700f89eebdce15ed8bb72ff68c4a25f297e265ba8103ac63b078",
   "periodo": "2026",
   "licenca": "Página pública ARTESP",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
   "descricao": "ARTESP — ficha da concessionária spmar",
   "url": "https://www.artesp.sp.gov.br/artesp/setor-regulado/rodovia/concessionarias/spmar",
   "arquivo": "data/raw/estaduais/artesp/fichas/spmar.html",
-  "bytes": 111666,
-  "sha256": "885636dbcf0909b020ad0134c01535c51c5f94536bfa4a91bd573af0fd3d95d8",
+  "bytes": 111799,
+  "sha256": "2c5c83e162ca2c3156fa5fe5200b0cf24a5238494d32ae09b2ceae35b212fba8",
   "periodo": "2026",
   "licenca": "Página pública ARTESP",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
   "descricao": "ARTESP — ficha da concessionária spserra",
   "url": "https://www.artesp.sp.gov.br/artesp/setor-regulado/rodovia/concessionarias/spserra",
   "arquivo": "data/raw/estaduais/artesp/fichas/spserra.html",
-  "bytes": 109153,
-  "sha256": "ac6911d2fb4ee17173dba410b9ad12ec42148441f9c03acc58cbe9103faf9168",
+  "bytes": 109287,
+  "sha256": "7490cc51a7c7d5339477bd91fb7ef88cbe246135a623b95d153edf01243a7be7",
   "periodo": "2026",
   "licenca": "Página pública ARTESP",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
   "descricao": "ARTESP — ficha da concessionária tamoios",
   "url": "https://www.artesp.sp.gov.br/artesp/setor-regulado/rodovia/concessionarias/tamoios",
   "arquivo": "data/raw/estaduais/artesp/fichas/tamoios.html",
-  "bytes": 133034,
-  "sha256": "b6db7be0280cbc8f23f9a7ba9b256b16ddb8a7675e6c8ba0956d721d323abab4",
+  "bytes": 133168,
+  "sha256": "a68078bb5ca83e4f623273250310557e13aa79b7b12bb2aba0e67e8b1edacd30",
   "periodo": "2026",
   "licenca": "Página pública ARTESP",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
   "descricao": "ARTESP — ficha da concessionária entrevias",
   "url": "https://www.artesp.sp.gov.br/artesp/setor-regulado/rodovia/concessionarias/entrevias",
   "arquivo": "data/raw/estaduais/artesp/fichas/entrevias.html",
-  "bytes": 114697,
-  "sha256": "d95d07a972470f55d4a7949a807277c51e6a1be58099aaf8d84485d206008259",
+  "bytes": 114698,
+  "sha256": "d277f7cdb76a531603acdfc9c8588b0537a5c49ee9480080ef13306325959910",
   "periodo": "2026",
   "licenca": "Página pública ARTESP",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
   "descricao": "ARTESP — ficha da concessionária viapaulista",
   "url": "https://www.artesp.sp.gov.br/artesp/setor-regulado/rodovia/concessionarias/viapaulista",
   "arquivo": "data/raw/estaduais/artesp/fichas/viapaulista.html",
-  "bytes": 114532,
-  "sha256": "5db879587e4d4b40daab8d08873bea52ecfffe58712e5a552dbab6ff8b2953cf",
+  "bytes": 114666,
+  "sha256": "66548dd37384a883687cd43c2121539ca796f0c5201fe30eecd11e5143ff41b6",
   "periodo": "2026",
   "licenca": "Página pública ARTESP",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
   "descricao": "ARTESP — ficha da concessionária eixo-sp",
   "url": "https://www.artesp.sp.gov.br/artesp/setor-regulado/rodovia/concessionarias/eixo-sp",
   "arquivo": "data/raw/estaduais/artesp/fichas/eixo-sp.html",
-  "bytes": 114219,
-  "sha256": "8163916cd0f3a5c9a2a8a2690fb1715f9659a7abf00c6c21d073678079376675",
+  "bytes": 114353,
+  "sha256": "7f64b8959d042750c464336fe62588a4051c9f493c71617c6557411723ece2fd",
   "periodo": "2026",
   "licenca": "Página pública ARTESP",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
   "descricao": "ARTESP — ficha da concessionária ecovias-noroeste",
   "url": "https://www.artesp.sp.gov.br/artesp/setor-regulado/rodovia/concessionarias/ecovias-noroeste",
   "arquivo": "data/raw/estaduais/artesp/fichas/ecovias-noroeste.html",
-  "bytes": 109316,
-  "sha256": "a329036e395674b754e40ce5b8349675b8baccb579e52633e9e8935e5ea328c2",
+  "bytes": 109317,
+  "sha256": "1a43ec5c537f2b235c475f755ed9d09a4fdaa1e3738ddbf1757212a5934c9869",
   "periodo": "2026",
   "licenca": "Página pública ARTESP",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
   "descricao": "ARTESP — ficha da concessionária cnl",
   "url": "https://www.artesp.sp.gov.br/artesp/setor-regulado/rodovia/concessionarias/cnl",
   "arquivo": "data/raw/estaduais/artesp/fichas/cnl.html",
-  "bytes": 111959,
-  "sha256": "54653f8ecfbb2d5d05a95b63e10cdc9caa812cac266b40547d22cfd9d9f473c8",
+  "bytes": 112093,
+  "sha256": "630f9383284ce8637476e4d611734b8400ef981f3e0c04c0ef619153529e4aa2",
   "periodo": "2026",
   "licenca": "Página pública ARTESP",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
   "descricao": "ARTESP — ficha da concessionária rota-sorocabana",
   "url": "https://www.artesp.sp.gov.br/artesp/setor-regulado/rodovia/concessionarias/rota-sorocabana",
   "arquivo": "data/raw/estaduais/artesp/fichas/rota-sorocabana.html",
-  "bytes": 114507,
-  "sha256": "e9c898c676438f9f9d4bb297f0fb9b6095b972a97737479132d5f801e4d7ac1f",
+  "bytes": 114640,
+  "sha256": "5e9f86d19a18cc6918e8c286b29e710c8f230ed5ca16f67a506b686b6f295088",
   "periodo": "2026",
   "licenca": "Página pública ARTESP",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -665,43 +676,32 @@
   "url": "https://www.artesp.sp.gov.br/artesp/setor-regulado/rodovia/concessionarias/ecovias-raposo-castello",
   "arquivo": "data/raw/estaduais/artesp/fichas/ecovias-raposo-castello.html",
   "bytes": 112083,
-  "sha256": "ce60660926c2072a69e89cd29300e02e02b0fd3d018f21a4d3459b05da547737",
+  "sha256": "ccecfaa8ea8c2eee844b788f90fa7f722cd7886c9debb3549d2104388b0f37b1",
   "periodo": "2026",
   "licenca": "Página pública ARTESP",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
   "descricao": "ARTESP — ficha da concessionária via-raposo",
   "url": "https://www.artesp.sp.gov.br/artesp/setor-regulado/rodovia/concessionarias/via-raposo",
   "arquivo": "data/raw/estaduais/artesp/fichas/via-raposo.html",
-  "bytes": 119300,
-  "sha256": "72e34a53a069322c6b91bb195fa73378a7a20076927dc18ce88744a422bdac41",
+  "bytes": 119166,
+  "sha256": "59f984d9c35467e55e0074b2dcf8b83bffbe71f65b336c4acc3ce511818930f0",
   "periodo": "2026",
   "licenca": "Página pública ARTESP",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
   "descricao": "ARTESP — ficha da concessionária rota-mogiana",
   "url": "https://www.artesp.sp.gov.br/artesp/setor-regulado/rodovia/concessionarias/rota-mogiana",
   "arquivo": "data/raw/estaduais/artesp/fichas/rota-mogiana.html",
-  "bytes": 133733,
-  "sha256": "d2439735bf0205a3f84a28a3662705405b4f03834c354f03062d33b12d18fe06",
+  "bytes": 133599,
+  "sha256": "70661a35fb9a086247308dad698c33f54abaf20755cc5553d1229a493a527664",
   "periodo": "2026",
   "licenca": "Página pública ARTESP",
-  "acesso": "2026-10-20"
- },
- {
-  "dominio": "estaduais",
-  "descricao": "ARTESP — ficha da concessionária mota-engil",
-  "url": "https://www.artesp.sp.gov.br/artesp/setor-regulado/rodovia/concessionarias/mota-engil",
-  "arquivo": "data/raw/estaduais/artesp/fichas/mota-engil.html",
-  "bytes": 90319,
-  "sha256": "f2203274ae325f106ad4c7427ff26ccdd93577b091963bcc45a263f702ac4556",
-  "periodo": "2026",
-  "licenca": "Página pública ARTESP",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -719,22 +719,22 @@
   "descricao": "AGERGS — rodovias concedidas",
   "url": "https://agergs.rs.gov.br/rodovias-concedidas",
   "arquivo": "data/raw/estaduais/agergs/rodovias-concedidas.html",
-  "bytes": 120103,
-  "sha256": "30398deee1b7a9d50b37e9fc15823945689ea34153000b2143f42ff24f5e3334",
+  "bytes": 120088,
+  "sha256": "629fe3ec50c155f882c22f0ea036a7fc8bbcd2d3083d7ad76ccf50d91b159dc4",
   "periodo": "2026",
   "licenca": "Página pública do regulador estadual",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
   "descricao": "Ager-MT — rodovias pedagiadas",
   "url": "https://www.ager.mt.gov.br/rodovias-pedagiadas",
   "arquivo": "data/raw/estaduais/mt/ager_rodovias_pedagiadas.html",
-  "bytes": 189209,
-  "sha256": "959a92f0af36e060497c02ff503296776bf063ea0f9cc6f1f60f8559b68805e9",
+  "bytes": 189361,
+  "sha256": "f3f5c9859e54b2311baff0bd298da49cef1b6bfbb341f4b907147e76f3ee2971",
   "periodo": "2026",
   "licenca": "Página pública do regulador estadual",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -786,10 +786,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/epr-parana/",
   "arquivo": "data/raw/estaduais/abcr/fichas/epr-parana.html",
   "bytes": 532556,
-  "sha256": "b8302c931784a5072e9f1c247158f8b1426753e3910fb7f675101dc6514d329d",
+  "sha256": "3addbbbf354e3b83552a91f8e8a5478f6970f2f531566b283a0e8d0a82a9b7ac",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -797,10 +797,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/epr-iguacu/",
   "arquivo": "data/raw/estaduais/abcr/fichas/epr-iguacu.html",
   "bytes": 531579,
-  "sha256": "33f13d9d9e0ce6d99f2c55fe2562d9af1647a85c7b326432412cfd2da84d8294",
+  "sha256": "7b40f6ba790a78f1910084343eb91ba99fb041bf18d9502192b4db6cd14f4bfb",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -808,10 +808,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/ecovias-raposo-castello/",
   "arquivo": "data/raw/estaduais/abcr/fichas/ecovias-raposo-castello.html",
   "bytes": 532394,
-  "sha256": "90cc25e71a1676f4f9a31a1640c9fcdf1f543f31af0ab6e7fbe921dac5acf918",
+  "sha256": "359c86f738b9303876dbb96fe895966d3af8f13eccedb1dcfd5f1547191c32cc",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -819,10 +819,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/nova-364-s-a/",
   "arquivo": "data/raw/estaduais/abcr/fichas/nova-364-s-a.html",
   "bytes": 531611,
-  "sha256": "64b6a8adabc0766ee4174a58599a849acf562c46763220149b125ead63b493e6",
+  "sha256": "ae3b73118f99822020d7b380e9d77ec72a4244eb916c2b75c19c8797a4bd2f42",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -830,10 +830,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/rota-sorocabana-s-a/",
   "arquivo": "data/raw/estaduais/abcr/fichas/rota-sorocabana-s-a.html",
   "bytes": 532009,
-  "sha256": "775510833b3d87e2ed73d0823dd76dc6f9409c263de72e64893bf5dc85cdd8b0",
+  "sha256": "3477d1b3dbb17c1c4d142d0e46ee738a73a5f1cc51da7b583fc62b04ef92b3ee",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -841,10 +841,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/pr-vias/",
   "arquivo": "data/raw/estaduais/abcr/fichas/pr-vias.html",
   "bytes": 531640,
-  "sha256": "d54039309d47c431dacd0e39010d8460eb7329f18efb061f3ab745fe04fd8ab9",
+  "sha256": "0e9ed6497e61369412517ce7f2ac7f800e59744ca7efcc1cd2fad82ba722668c",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -852,10 +852,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/lamsa/",
   "arquivo": "data/raw/estaduais/abcr/fichas/lamsa.html",
   "bytes": 531644,
-  "sha256": "eb5cac9b6bae2e9a4afec695191aca4ff5a97cef45a2600fe4bca9668c010c11",
+  "sha256": "287ff24e6cb6d2f00405567ab8eb6372c293b9d8ae81c31ac23a024647ff9fd0",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -863,10 +863,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/via-cristais-federal/",
   "arquivo": "data/raw/estaduais/abcr/fichas/via-cristais-federal.html",
   "bytes": 531689,
-  "sha256": "a952c715bbaeb9c701b183cf7aabb8e98a55dca7b25972c9a675ef8bac5c90c3",
+  "sha256": "418edea4e8aa5a88b3b603d6521150b64a12472adc0af10f5f38b0b70fe67418",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -874,10 +874,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/nova-381-federal/",
   "arquivo": "data/raw/estaduais/abcr/fichas/nova-381-federal.html",
   "bytes": 531580,
-  "sha256": "beee720e9546bc8ddf509b8dcc4668079588d9a3adbafab59c17d2469f6ffc9b",
+  "sha256": "9d413e2d9d144e2ebecaf31d357c7e696242089860757080ff603df3d609203a",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -885,10 +885,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/caminhos-da-serra-gaucha-estadual/",
   "arquivo": "data/raw/estaduais/abcr/fichas/caminhos-da-serra-gaucha-estadual.html",
   "bytes": 531892,
-  "sha256": "efa23a98b9a48a7749783f0b60f114a7315a82d1ead2cb34cf4906ef8884e3cc",
+  "sha256": "1405f99e69aa9fb46361a0a07bbf175deaeae8d75351111e5d135f58a848c029",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -896,10 +896,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/rota-dos-coqueiros-estadual/",
   "arquivo": "data/raw/estaduais/abcr/fichas/rota-dos-coqueiros-estadual.html",
   "bytes": 532328,
-  "sha256": "49e16777d792ca581d2db814a9c427584f7d3888778f33293061608091a96da0",
+  "sha256": "272c3dcb97ba04268ffa3cba48717f9bc873a4248c3e5769de96aaf516b6dd3b",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -907,10 +907,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/rota-do-atlantico-estadual/",
   "arquivo": "data/raw/estaduais/abcr/fichas/rota-do-atlantico-estadual.html",
   "bytes": 532241,
-  "sha256": "b89ab980c3e188556f7f3a0e6a8128938b48b453073190cb3c6d17487fd5d11f",
+  "sha256": "c83d3be412bf0ed21fbc4c6db405e9d5c246460cc3429151a3636fa320e886dd",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -918,10 +918,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/rota-de-santa-maria-estadual/",
   "arquivo": "data/raw/estaduais/abcr/fichas/rota-de-santa-maria-estadual.html",
   "bytes": 531215,
-  "sha256": "b48f48bd13bb25671ee7963f9e586ca71d212bb796396a21f05ec6ff07d92198",
+  "sha256": "0cc2dc9ca03246db9d862353277a3733e6ad93d4e99e11c631fcc41702b56c25",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -929,10 +929,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/via-brasil-federal/",
   "arquivo": "data/raw/estaduais/abcr/fichas/via-brasil-federal.html",
   "bytes": 532196,
-  "sha256": "b0416d02077ba31a275bc8256aa15e3c25064f418558c049ce16c038d5ada583",
+  "sha256": "c3c7e8619c736af86495b8409dee857030135d3f7a0c8cbb13fe9ed261cea108",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -940,10 +940,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/nova-rota-do-oeste-federal/",
   "arquivo": "data/raw/estaduais/abcr/fichas/nova-rota-do-oeste-federal.html",
   "bytes": 532278,
-  "sha256": "9b4947cd74c297d681d4d829f22c257e20abdc1758ea5f8e5d4a47d3c1d4af1b",
+  "sha256": "e9f527c234f9303754d1ce9816ad12a439b324f967a1213481b6b598823d1a66",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -951,10 +951,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/cln-estadual/",
   "arquivo": "data/raw/estaduais/abcr/fichas/cln-estadual.html",
   "bytes": 531905,
-  "sha256": "7dbecfdb112c16a5dab3759b570f65e080b7fc97847f57024b87573e88d5b3f3",
+  "sha256": "b165e36e4d1e70bd1040b746820661c00f6f512a104c8a15da806ea542866a79",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -962,10 +962,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/bahia-norte-estadual/",
   "arquivo": "data/raw/estaduais/abcr/fichas/bahia-norte-estadual.html",
   "bytes": 532354,
-  "sha256": "f3e125267804e6dbd0341b98f721528401eee7985f9af24d43ced33c107a9e38",
+  "sha256": "3c6b0d448ebab6b1e4f2c420ae3720e4776bb2b827b4cce312bf73c662e71463",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -973,10 +973,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/rodovia-do-aco-federal/",
   "arquivo": "data/raw/estaduais/abcr/fichas/rodovia-do-aco-federal.html",
   "bytes": 531979,
-  "sha256": "bc85458c3dc4687a1c4bf33300bfc7026747e2563961540440a053f6f495c556",
+  "sha256": "2317e4c94903ea053bda4eb027e6adad6e60174e536a1ca27c8dfdac33410998",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -984,10 +984,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/rota-116-estadual/",
   "arquivo": "data/raw/estaduais/abcr/fichas/rota-116-estadual.html",
   "bytes": 531463,
-  "sha256": "ff0a4d08402ec9e54972adff3c421ab1eb1c8ce599b34a32ee1985126e1f8e0a",
+  "sha256": "69d956bffa5f366cae8987336b99418936ff151be08bdcdbd18cbb90c48fb9db",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -995,10 +995,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/viario-municipal/",
   "arquivo": "data/raw/estaduais/abcr/fichas/viario-municipal.html",
   "bytes": 532053,
-  "sha256": "2269901bb2ea54d11a10e245ccd2db435a4ca593f79a1c1f7f5099960e03fa49",
+  "sha256": "6d59d73aef08fffd3ecc155a1fe695b5f5ed41e0eff46077f5541834a2a1922d",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1006,10 +1006,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/viarondon-estadual/",
   "arquivo": "data/raw/estaduais/abcr/fichas/viarondon-estadual.html",
   "bytes": 531901,
-  "sha256": "cdb84faf96156b4bed073fd49835c8c071e15429899db5c919306572c510ffcb",
+  "sha256": "029db698cda253f9f8baa711cdfdb93aa17467efa0554f1696cadc9753e5eac0",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1017,10 +1017,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/tamoios-estadual/",
   "arquivo": "data/raw/estaduais/abcr/fichas/tamoios-estadual.html",
   "bytes": 531894,
-  "sha256": "429d6172bb7020bf094d9d70b7eaaaf922e21a344dffcc97141ccdc30368796e",
+  "sha256": "144fbaedfdc7bcb0a3ae8c05ec61200bbb574f8b68668719b3a5136b2b6bf442",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1028,10 +1028,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/spmar-estadual/",
   "arquivo": "data/raw/estaduais/abcr/fichas/spmar-estadual.html",
   "bytes": 531985,
-  "sha256": "e1c7db4cb14d2ce27356a1f60b37cf6e62828b99098f3f82cee4d2d8787221f1",
+  "sha256": "d5404c7cc916b8f7c1576f34943fac54abce609698245ff287edb027f36c0b3a",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1039,10 +1039,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/rota-das-bandeiras-estadual/",
   "arquivo": "data/raw/estaduais/abcr/fichas/rota-das-bandeiras-estadual.html",
   "bytes": 532712,
-  "sha256": "108236ceb336aca50559759d7626cf545728e55c4594352258414985b1343082",
+  "sha256": "1b101c182764700fc522fd344352990c349f5519f4f083173f38a7a707990a48",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1050,10 +1050,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/renovias-estadual/",
   "arquivo": "data/raw/estaduais/abcr/fichas/renovias-estadual.html",
   "bytes": 532505,
-  "sha256": "71be6e46dd99f66296c2cb6b7d08f3d1be0cfed5f32e7602d8b8a2ea326d5369",
+  "sha256": "36e2f9154f3fc0d29d233f374f949e9dc28c9b2f9305238ff82fad100380e484",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1061,10 +1061,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/novo-litoral-estadual/",
   "arquivo": "data/raw/estaduais/abcr/fichas/novo-litoral-estadual.html",
   "bytes": 531956,
-  "sha256": "d7a47cacab996e8578cd44f3ac1afdc2780c5f6d94909df86c590141c32e1995",
+  "sha256": "50a60109fcdf96a121fa92e34a66b2dff60a91d08ac857b6d66f94a342ab9117",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1072,10 +1072,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/entrevias-estadual/",
   "arquivo": "data/raw/estaduais/abcr/fichas/entrevias-estadual.html",
   "bytes": 532634,
-  "sha256": "efcb3270fe1d8ace1d7ab3b25c772b79e8fd2e3db7ebf4b902bd4acf750f189d",
+  "sha256": "02f5456f7278f172d9a58c7352e29424a8bb49cb8976f7c17d30a87774afe1b9",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1083,10 +1083,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/epr-triangulo-estadual/",
   "arquivo": "data/raw/estaduais/abcr/fichas/epr-triangulo-estadual.html",
   "bytes": 531796,
-  "sha256": "7734726b930030b30ebce273aca3563930dfea7c92775488102b520185706279",
+  "sha256": "88e741a670f0eae6502254038845d525bf28c8c716dd42032ff693aca300f948",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1094,10 +1094,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/via-nascentes-estadual/",
   "arquivo": "data/raw/estaduais/abcr/fichas/via-nascentes-estadual.html",
   "bytes": 532845,
-  "sha256": "8b52441d7587cc8a2bf3fa559ace453b14cff168c17b82908035b291ab3440e0",
+  "sha256": "d60550dddf74c6272786bf2774395b579340b50b6e64790fd550cf0277b9d04b",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1105,10 +1105,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/via-sp-serra-estadual/",
   "arquivo": "data/raw/estaduais/abcr/fichas/via-sp-serra-estadual.html",
   "bytes": 532319,
-  "sha256": "77dd7f72908b7a8732515876ca933d7322bcb64d8d19f867c1831033d3ceab66",
+  "sha256": "e6ffbb061fedc1c34942ecbe73a9f6d9d2b8960a457d89e93987210cde532717",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1116,10 +1116,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/via-colinas-estadual/",
   "arquivo": "data/raw/estaduais/abcr/fichas/via-colinas-estadual.html",
   "bytes": 532629,
-  "sha256": "c18df54f7e5fcc53932c091b0dbd8de228b8af7cbbca7a3c852955f1b7d9169e",
+  "sha256": "061c695ff7aa50d39044cdb4c4fb72097f2199ddd223aebeab1123750cf6392f",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1127,10 +1127,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/ccr-via-costeira-federal/",
   "arquivo": "data/raw/estaduais/abcr/fichas/ccr-via-costeira-federal.html",
   "bytes": 532203,
-  "sha256": "ea6c756fc94cc80825bacc8ea629d266dab73620dfac50db08b354909d83543f",
+  "sha256": "691f63db0c1b365015be296af3db72e0e312ab7c400a68720f373b82b4330c6a",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1138,10 +1138,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/ccr-viasul-federal/",
   "arquivo": "data/raw/estaduais/abcr/fichas/ccr-viasul-federal.html",
   "bytes": 532367,
-  "sha256": "5574bd3926f6349ffb9ef69de227bda4897f3798b380bd0a6d6b6efc6d562c63",
+  "sha256": "af75953d8fae1a4ea6e30e0733c8dda9a6e226a9ec9ffe8fb4dae358162a737a",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1149,10 +1149,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/ccr-riosp-federal-2/",
   "arquivo": "data/raw/estaduais/abcr/fichas/ccr-riosp-federal-2.html",
   "bytes": 532230,
-  "sha256": "c5f67a22919ef8952148eaa42f4c83253a673750253825503958ce5ef47e7a5e",
+  "sha256": "32d5600850581dff4c0e973aca1c7b4f4955f6111bc41a825f404f31efd96f57",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1160,10 +1160,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/vialagos-estadual/",
   "arquivo": "data/raw/estaduais/abcr/fichas/vialagos-estadual.html",
   "bytes": 531915,
-  "sha256": "3bf30f0cf981a058811ec2660f9b5a3a74287f56d1823eb2cf7b549ceb90226b",
+  "sha256": "a415b033f765ad7766756c3a4a8015348e23f7fa581a440cef33727290d3fb76",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1171,10 +1171,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/ccr-msvia-federal/",
   "arquivo": "data/raw/estaduais/abcr/fichas/ccr-msvia-federal.html",
   "bytes": 532131,
-  "sha256": "0dee49337ee0a24f9c6b8fb3555a064cdad094984521ee295ce07f99e47f8b94",
+  "sha256": "3920f9eb68ed444ae71da24bab1984d5db0009839cb1753e9cc148d647de1dff",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1182,10 +1182,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/ccr-spvias-estadual/",
   "arquivo": "data/raw/estaduais/abcr/fichas/ccr-spvias-estadual.html",
   "bytes": 532287,
-  "sha256": "94cd2322fc5c6856a56735a80950bc49d42ec24bbcd53a4dc24019ba19ab660f",
+  "sha256": "83ef5a6c8a06e77029715c5e1bdef51d3708bc0fac3be4db5a993cd5259c18e5",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1193,10 +1193,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/ccr-rodoanel-oeste-estadual/",
   "arquivo": "data/raw/estaduais/abcr/fichas/ccr-rodoanel-oeste-estadual.html",
   "bytes": 532184,
-  "sha256": "090c94b6662462753d8f10f81ea94c898c23453dc9c49e1e6702e1a32c70bfba",
+  "sha256": "ba42d8c0a6856d8b76a3223781730f310e294156174a20b55a833245fdc116e7",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1204,10 +1204,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/ccr-riosp-federal/",
   "arquivo": "data/raw/estaduais/abcr/fichas/ccr-riosp-federal.html",
   "bytes": 532199,
-  "sha256": "9097d8727a9e430d999482da5d152e5c4d5cb4e467719b3c79e342ff1eadaaaa",
+  "sha256": "5d587d7f68f11c54220fbe82d76386b4a9fcdee6042cb122431bc0e08dd260a9",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1215,10 +1215,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/ccr-autoban-estadual/",
   "arquivo": "data/raw/estaduais/abcr/fichas/ccr-autoban-estadual.html",
   "bytes": 532558,
-  "sha256": "5e3cace473b44f2cb83dc52914b84e0998168ac375e19b8e6be5439cf1f8d75d",
+  "sha256": "e7a1c3865053c5ee8bca63dc41ca160bd4ca34c9028862065ae1c50cbd089768",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1226,10 +1226,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/epr-litoral-pioneiro-federal/",
   "arquivo": "data/raw/estaduais/abcr/fichas/epr-litoral-pioneiro-federal.html",
   "bytes": 531820,
-  "sha256": "2f872ebac5c7dde0606405ee099574a460c91815eeb1d680f8880109601dac5d",
+  "sha256": "63fa0c1194205b5ab6daf772a2702fa9e1a62c17cb0962ae03e3e9bd86c25681",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1237,10 +1237,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/epr-via-mineira-federal/",
   "arquivo": "data/raw/estaduais/abcr/fichas/epr-via-mineira-federal.html",
   "bytes": 532761,
-  "sha256": "92a42a63b170b49cd57221dcf40e0e7c7a44793739f46b0a943e7dc844518dd5",
+  "sha256": "4ea8ef5b15c033e182c714191379ad4f7f9bbe633935f7e3dcab76e703e6c621",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1248,10 +1248,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/epr-vias-do-cafe-estadual/",
   "arquivo": "data/raw/estaduais/abcr/fichas/epr-vias-do-cafe-estadual.html",
   "bytes": 531523,
-  "sha256": "f3401d1f1250bb5e57fc5cba7f2e2ee2b5917c2a0306bf1b93933b404d5d488d",
+  "sha256": "7628e43d875aa3fcf3c65934a60039acebbe097c9d394640f0f1d02312db50d7",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1259,10 +1259,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/epr-sul-de-minas-estadual/",
   "arquivo": "data/raw/estaduais/abcr/fichas/epr-sul-de-minas-estadual.html",
   "bytes": 531863,
-  "sha256": "6fdf477121225b3c7e0ddad7799385d15d63aa8347a78c7f05a1dfd61129a255",
+  "sha256": "15f44e158a8767d962b683a04425db74f475f8f543a5d423988fcfec656a92d1",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1270,10 +1270,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/ecovias-araguaia-federal/",
   "arquivo": "data/raw/estaduais/abcr/fichas/ecovias-araguaia-federal.html",
   "bytes": 532515,
-  "sha256": "badd7a3be4fef3b160be115d076d5465125cdda6d774fab05f555f4369cae956",
+  "sha256": "4241887313ac4bc002f32c9a2f4960899ca93cd0bb59ca58b9d3957331268586",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1281,10 +1281,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/ecovias-minas-goias-federal-2/",
   "arquivo": "data/raw/estaduais/abcr/fichas/ecovias-minas-goias-federal-2.html",
   "bytes": 532442,
-  "sha256": "26ea903925d02dec2a2016786a60baf1eaf95b034c964d6293e59d5a9efefa49",
+  "sha256": "04dc3d4e2d22d02931cde87cf85e3c04b34d8816ce665736258c78e67876298d",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1292,10 +1292,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/ecovias-cerrado-federal/",
   "arquivo": "data/raw/estaduais/abcr/fichas/ecovias-cerrado-federal.html",
   "bytes": 532365,
-  "sha256": "6e5b9b533077f7adbe8dd978773cf4c76a775b09f87031859d439651b5d43b94",
+  "sha256": "2584d26f1f1e4011d30d0590d82fb02a1e8b480f0863b24b44ec4f9c102eb81f",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1303,10 +1303,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/ecovias-minas-goias-federal/",
   "arquivo": "data/raw/estaduais/abcr/fichas/ecovias-minas-goias-federal.html",
   "bytes": 532423,
-  "sha256": "66b1574dde9cea5480e6b45fa43f7fa672bc175d3a6c145e1b9e96793fbec0dd",
+  "sha256": "aa1e76436cfff7d1b4318f3506acef903458cfff8eacbe4ca453eb45c651767c",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1314,10 +1314,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/ecovias-norte-minas-estadual/",
   "arquivo": "data/raw/estaduais/abcr/fichas/ecovias-norte-minas-estadual.html",
   "bytes": 532380,
-  "sha256": "d55a218759baccd0c55554f1a75088ee8d6e28d96a6aa24fe5b2e1a67166a73e",
+  "sha256": "6dbe46685b32b49cde18b5450c19aaf19ac104e3fd16a2da2e09f23be6a8fc6c",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1325,10 +1325,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/ecovias-sul-federal/",
   "arquivo": "data/raw/estaduais/abcr/fichas/ecovias-sul-federal.html",
   "bytes": 532115,
-  "sha256": "8d9e48a5628e9e2600e2764662d5c223010e02c2d8fcb9c64cfc5fca49b985f6",
+  "sha256": "72e962b7bd385f8819da0fdfbfb6179c0a00ae036e8905671aeec3235d6196e4",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1336,10 +1336,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/ecovias-101-federal/",
   "arquivo": "data/raw/estaduais/abcr/fichas/ecovias-101-federal.html",
   "bytes": 532240,
-  "sha256": "df9b2200b7a7452bed7a430520cf5f1e0b6902f14923d3c1b00ccb621ecbde2e",
+  "sha256": "94cdf8f2f68ef50bf6de87fbd30f4dae830d5be77ac99f70491e63490949e97c",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1347,10 +1347,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/ecovias-rio-minas-federal/",
   "arquivo": "data/raw/estaduais/abcr/fichas/ecovias-rio-minas-federal.html",
   "bytes": 532794,
-  "sha256": "bffe6e199f90c3ec5b7b2a6c4d0eb205aaf7392d49ccee63f662c9cfbf159a27",
+  "sha256": "22340439a97a60310e988a98839a530b8635285a3098d9d4e1af0d4fab1db66e",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1358,10 +1358,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/ecovias-ponte-federal/",
   "arquivo": "data/raw/estaduais/abcr/fichas/ecovias-ponte-federal.html",
   "bytes": 532316,
-  "sha256": "cf813a8a9f24985b0b6bbb53b28162b74e7e700418fe9b0b491f455242b62d17",
+  "sha256": "3033c30395748a6fc9864d1cbb32ad926487abbfe74f37b108633f8e8641624b",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1369,10 +1369,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/ecovias-imigrantes/",
   "arquivo": "data/raw/estaduais/abcr/fichas/ecovias-imigrantes.html",
   "bytes": 532951,
-  "sha256": "241e319da746aba13c33e1f44ba8b4e7b5e4dc210b4934a2d8bc817a2eb5dc19",
+  "sha256": "96d0c7389a4ccd3be78d4544eab547dbcad50a95db6192201035d450a9ba1536",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1380,10 +1380,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/ecovias-leste-paulista-estadual/",
   "arquivo": "data/raw/estaduais/abcr/fichas/ecovias-leste-paulista-estadual.html",
   "bytes": 532742,
-  "sha256": "fb3beb65180dc7e5d34882dc63204d008947a6ba3ada2bf957517476633a9a67",
+  "sha256": "f69e632b4bd8c7007f4ed372144f8745a23b07b8bb61316e045554a9664c4911",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1391,10 +1391,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/ecovias-noroeste-paulista-estadual/",
   "arquivo": "data/raw/estaduais/abcr/fichas/ecovias-noroeste-paulista-estadual.html",
   "bytes": 532694,
-  "sha256": "d37b7f2bba125aab8c727587660a6ce9c2eb06e1e7042f65e0252e4a525bb1b6",
+  "sha256": "a8d82ce948acac5ecd551744e617490a73f57613902f46787e45177ea1b4796f",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1402,10 +1402,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/regis-bittencourt-2/",
   "arquivo": "data/raw/estaduais/abcr/fichas/regis-bittencourt-2.html",
   "bytes": 532113,
-  "sha256": "ce984b6452fe3e2d25bcc9d6f12f7cf99db3469fe4b9a8d340fa853e7ca45a13",
+  "sha256": "0706f0336b14f63d94bed352ac25cbee040f190cd0f3d5ef511bf920160b7445",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1413,10 +1413,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/planalto-sul-2/",
   "arquivo": "data/raw/estaduais/abcr/fichas/planalto-sul-2.html",
   "bytes": 531975,
-  "sha256": "8e3cabacf522c08e70820a53fcf5ca110e3ecaa0a735122b86464806ee046df2",
+  "sha256": "a17abb47f1d7cb3ffe0e2f3cfa0074d2e548e21eee7f564d9c8145dfc0ab0457",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1424,10 +1424,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/litoral-sul-2/",
   "arquivo": "data/raw/estaduais/abcr/fichas/litoral-sul-2.html",
   "bytes": 532046,
-  "sha256": "e17a15d27dd06410e4b4e4b9a73ca0c451269d1b9ce39f1e58bc5301bce702eb",
+  "sha256": "b3898bbd204bb8a55a6dbc75f193042441eb83b76a2197dd547e9fb0893984c0",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1435,10 +1435,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/fluminense/",
   "arquivo": "data/raw/estaduais/abcr/fichas/fluminense.html",
   "bytes": 531760,
-  "sha256": "b6626a5dad64b17a0872f3e095524be8ac38655c7a02e1d5b83b7d77212350d3",
+  "sha256": "650dace7d3239c0942456856d60188cdf4240427465d1e2e9f82fe7d0c91446f",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1446,10 +1446,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/planalto-sul/",
   "arquivo": "data/raw/estaduais/abcr/fichas/planalto-sul.html",
   "bytes": 531842,
-  "sha256": "986d7925331d249f81fa87974f87d71eb97da8ec4571e65b9161276be0fef08f",
+  "sha256": "0d9cd1ef5e93f5a0332c06810c41196f2fe1ee84c1b857518b5653fd79746277",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1457,10 +1457,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/litoral-sul/",
   "arquivo": "data/raw/estaduais/abcr/fichas/litoral-sul.html",
   "bytes": 531914,
-  "sha256": "0ba7d0d113c5c621dcd11cde5c4a48721c694576cdada0b48bfeff21ede496a7",
+  "sha256": "ee4585fcb210122f62da0384431953aa4fe0566c71b959780409fe000036b858",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1468,10 +1468,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/fernao-dias-2/",
   "arquivo": "data/raw/estaduais/abcr/fichas/fernao-dias-2.html",
   "bytes": 531964,
-  "sha256": "91512074129dddf4fba68d4c84c6cbececcd5bc220d05d463e76564c9e13265f",
+  "sha256": "80dd781fad360eb5b0dc3a3a50f096fd9d75d975d862be80c801e1c8ee333b11",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1479,10 +1479,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/viapaulista/",
   "arquivo": "data/raw/estaduais/abcr/fichas/viapaulista.html",
   "bytes": 531754,
-  "sha256": "436505ad20bbd56763b1275d76ca495b884ae4db2f3d91217474164593e47ca6",
+  "sha256": "fc3002c15cc4c2e38fdb1c740172898f14f040d7736b45d8bc2b3f09ce08a9ec",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1490,10 +1490,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/regis-bittencourt/",
   "arquivo": "data/raw/estaduais/abcr/fichas/regis-bittencourt.html",
   "bytes": 531976,
-  "sha256": "e166d65481ddfa9fd07776dcc3e1166634f10051df2661d08b8dd4324734af82",
+  "sha256": "900126fb1f468c75e725e8a02b8454d1abe441c3ec4a8a9777b66c6ddacfec35",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1501,10 +1501,10 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/intervias/",
   "arquivo": "data/raw/estaduais/abcr/fichas/intervias.html",
   "bytes": 532566,
-  "sha256": "e0bd555fa6a327afeca3ebeeacd3db30fd0364fc52f985049c1a7b2af10da119",
+  "sha256": "9ab27ad88d7f8a3ac766b386209777c40d5dd748a274b63b5dada3658d6ece76",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "estaduais",
@@ -1512,9 +1512,9 @@
   "url": "https://melhoresrodovias.org.br/cadastro-concessiona/fernao-dias/",
   "arquivo": "data/raw/estaduais/abcr/fichas/fernao-dias.html",
   "bytes": 531935,
-  "sha256": "aa44214f4225bab4515294bb54131fe77b4516d655d9d4e91d5ca2c3447605cf",
+  "sha256": "3edccfd98dac5612cc626d68458c816fdcc7ca126b3723da38acbab428c8c493",
   "periodo": "2026",
   "licenca": "Página pública ABCR",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  }
 ]
