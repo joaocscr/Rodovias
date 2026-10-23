@@ -2289,9 +2289,11 @@ test('Debêntures: cartões com fonte, período e legenda; indicadores e curva v
   assert.match(await page.textContent('#page-debentures .page__lead'), /telas<\/b>|telas das corretoras XP e BTG: as listas de debêntures/);
   assert.doesNotMatch(aba, /traz só a hora|fornecidos pelo usuário|enviad[oa] pelo usuário/);
   assert.match(aba, /pontos percentuais \(p\.p\.\)/);
-  const cabSpread = await page.$$eval('#page-debentures th, #page-debentures h3, #page-debentures h4', es => es.map(e => e.textContent).filter(t => /pread/.test(t)));
+  // a tabela por papel tem cabeçalhos curtos ("Spread painel (p.p.)"): o título do cartão é que diz "sobre a NTN-B"
+  const cabSpread = await page.$$eval('#page-debentures th, #page-debentures h3, #page-debentures h4', es => es.filter(e => !e.closest('#deb-ind-papel')).map(e => e.textContent).filter(t => /pread/.test(t)));
   assert.ok(cabSpread.length >= 5);
   assert.ok(cabSpread.every(t => /NTN-B/.test(t)), cabSpread.join(' | '));
+  assert.match(await page.textContent('#titulo-d-ind-papel'), /spread sobre a NTN-B/);
   assert.doesNotMatch(aba, /\bmetrô\)?[,.]? (e|ou) mobilidade|, metrô\)/);
   // curva de NTN-B: o eixo não começa em zero e traz a nota sobre isso
   const eixo = await page.$$eval('#chart-d-ntnb-linha svg text[text-anchor="end"]', ts => ts.map(t => Number(t.textContent.replace(',', '.'))));
@@ -2594,6 +2596,29 @@ test('Debêntures: seção de índices entre o mercado secundário e o RoadShow,
   const esperado = geral.map(x => { f *= 1 + x.pct / 100; return fmt2((f - 1) * 100); });
   const tituloGeral = await page.$$eval('#chart-d-ind-idex-ret path.line:first-of-type ~ circle title', ts => ts.map(t => t.textContent));
   assert.deepEqual(tituloGeral.slice(0, geral.length).map(t => t.split(': ')[1].split(' ')[0]), esperado);
+  // títulos dos gráficos dizem a cobertura (vinda dos dados); eixos com unidade; cores distintas; linha interrompida nos dias sem ponto
+  const cob = await page.evaluate(() => ({ ida: DebenturesModel.coberturaIda(window.INTEL.ida), idex: DebenturesModel.coberturaIdex(window.INTEL.idex), lac: DebenturesModel.lacunasIda(window.INTEL.ida),
+    quebras: DebenturesModel.evolucaoIda(window.INTEL.ida).map(s => s.pontos.filter(p => p.quebra).length) }));
+  assert.match(cob.ida, /^\d+ dias?, de \d{2}\/\d{2}( a |\/\d{4} a )\d{2}\/\d{2}\/\d{4}$/);
+  assert.ok((await page.textContent('#deb-ida-titulo')).includes(cob.ida));
+  assert.ok(cob.ida.startsWith(`${m.per.dias} dia`));
+  assert.ok((await page.textContent('#deb-idex-ret-titulo')).includes(cob.idex.retornos));
+  assert.ok((await page.textContent('#deb-idex-spread-titulo')).includes(cob.idex.spread));
+  assert.ok(cob.idex.spread.startsWith(`${idex.spread.length} dias`));
+  if (dias >= 2) {
+    assert.equal(await page.textContent('#chart-d-ind-ida text.ylabel'), 'Base 100');
+    const cores = await page.$$eval('#chart-d-ind-ida path.line', ps => ps.map(p => p.getAttribute('stroke')));
+    assert.equal(new Set(cores).size, m.ev.length, `uma cor por subíndice: ${cores.join()}`);
+    const legCores = await page.$$eval('#deb-ind-ida .chart-legend rect', rs => rs.map(r => r.getAttribute('fill')));
+    assert.deepEqual(legCores, cores, 'a legenda usa as cores das linhas');
+    // cada interrupção da linha = um trecho a mais no desenho (M); o aviso diz os dias
+    const trechos = await page.$$eval('#chart-d-ind-ida path.line', ps => ps.map(p => (p.getAttribute('d').match(/M/g) || []).length));
+    assert.deepEqual(trechos, cob.quebras.map(q => q + 1));
+    if (cob.lac.length) assert.ok((await page.textContent('#deb-ida-lacunas')).includes(cob.lac.map(d => brData(d)).join(', ')), 'o aviso diz os dias sem ponto');
+    else assert.equal(await page.locator('#deb-ida-lacunas').count(), 0);
+  }
+  assert.equal(await page.textContent('#chart-d-ind-idex-ret text.ylabel'), '% acumulado');
+  assert.equal(await page.textContent('#chart-d-ind-idex-spread text.ylabel'), 'p.p.');
   // série diária do IDA: data de início dita e dos dados
   assert.equal(limpa(await page.textContent('#deb-ida-serie')), `Série diária acumulada desde ${brData(m.per.de)} (primeiro download); cresce a cada atualização.`);
   // variações publicadas pela ANBIMA: uma linha por subíndice, valores do bloco
@@ -2608,11 +2633,18 @@ test('Debêntures: seção de índices entre o mercado secundário e o RoadShow,
     assert.deepEqual(r.slice(off), [v.var_mes, v.var_ano, v.var_12m, v.var_24m].map(pct2));
   });
   // retorno em 12 meses lado a lado, com a referência de cada um
-  const tiles = await page.$$eval('#deb-ind-12m .kpi-tile', ts => ts.map(t => [t.querySelector('b').textContent, t.querySelector('span').textContent]));
+  // a janela de cada número está no próprio cartão, em negrito como o número; aviso só quando as datas finais diferem
+  const tiles = await page.$$eval('#deb-ind-12m .kpi-tile', ts => ts.map(t => [t.querySelector('b').textContent, t.querySelector('b.kpi-janela').textContent, t.querySelector('b.kpi-janela').getBoundingClientRect().width > 0 && getComputedStyle(t.querySelector('b.kpi-janela')).fontWeight]));
   assert.deepEqual(tiles.map(t => t[0]), m.r12.map(x => pct2(x.pct)));
   assert.equal(pct2(ida.indices.IPCA_INFRAESTRUTURA.ultimo.var_12m), tiles[0][0]);
   assert.equal(pct2(idex.acumulado_12m['Idex-Infra Geral']), tiles[1][0]);
-  m.r12.forEach((x, i) => assert.ok(tiles[i][1].includes(x.referencia) && tiles[i][1].includes(x.rotulo), tiles[i][1]));
+  assert.deepEqual(tiles.map(t => t[1]), m.r12.map(x => x.janela));
+  assert.deepEqual(tiles.map(t => t[1]), [`IDA-IPCA Infraestrutura — 12 meses até ${brData(ida.indices.IPCA_INFRAESTRUTURA.ultimo.data)}`,
+    `IDEX-Infra Geral — 12 meses até ${await page.evaluate(() => { const r = DebenturesModel.retornosIdex(window.INTEL.idex)[0].pontos; return DebenturesModel.fmtData(r[r.length - 1].mes); })}`]);
+  assert.ok(tiles.every(t => Number(t[2]) >= 600), 'a janela tem o peso de um negrito');
+  const difere = await page.evaluate(() => DebenturesModel.janelasDiferentes(DebenturesModel.comparacaoRetorno12m(window.INTEL.ida, window.INTEL.idex)));
+  assert.equal(await page.locator('#deb-ind-12m-aviso').count(), difere ? 1 : 0);
+  if (difere) assert.equal(limpa(await page.textContent('#deb-ind-12m-aviso')), 'Janelas diferentes: os números não são diretamente comparáveis.');
   // fonte e período de cada cartão vêm dos blocos
   const fonte1 = await page.locator('#card-d-ind-evolucao .src').last().textContent();
   assert.ok(fonte1.includes(`${brData(m.per.de)} a ${brData(m.per.ate)}`), fonte1);
@@ -2637,7 +2669,11 @@ test('Debêntures: spread comparado bate com o modelo e com os blocos, com "ver 
   const leitura = () => page.evaluate(() => {
     const t = s => [...document.querySelectorAll(s)].map(e => e.textContent.replace(/\s+/g, ' ').trim());
     return { barras: t('#chart-d-ind-spread-ultimo g.hrow-tip > title'), comum: t('#chart-d-ind-spread-comum g.hrow-tip > title'),
-      tabela: [...document.querySelectorAll('#deb-ind-spread-tabela tbody tr')].map(tr => [...tr.children].map(td => td.textContent)),
+      rotulosBarras: t('#chart-d-ind-spread-ultimo g.hrow-tip > text:nth-of-type(1)'), rotulosComum: t('#chart-d-ind-spread-comum g.hrow-tip > text:nth-of-type(1)'),
+      ordem: [...document.querySelectorAll('#deb-ind-spread > *')].map(e => e.id).filter(Boolean),
+      sub: document.querySelector('#card-d-ind-spread .sub').textContent, pond: document.getElementById('deb-ind-ponderacao').textContent,
+      alturaComum: (document.querySelector('#chart-d-ind-spread-comum rect.cbar') || { getAttribute: () => 0 }).getAttribute('height'), alturaUltimo: document.querySelector('#chart-d-ind-spread-ultimo rect.cbar').getAttribute('height'),
+      tabela: [...document.querySelectorAll('#deb-ind-spread-tabela tbody tr')].map(tr => [tr.querySelector('.deb-nome') ? tr.querySelector('.deb-nome').textContent : tr.children[0].textContent, ...[...tr.children].slice(1).map(td => td.textContent)]),
       rotulo: document.querySelector('#card-d-ind-spread .deb-rotulo').textContent, csv: document.getElementById('deb-ind-spread-tabela').dataset.csvName };
   });
   for (const somado of [false, true]) {
@@ -2648,8 +2684,17 @@ test('Debêntures: spread comparado bate com o modelo e com os blocos, com "ver 
     assert.equal(c[0].rotulo, `Debêntures de transporte (${somado ? 'negócios + intenções' : 'negócios'})`);
     assert.deepEqual(c.slice(1).map(l => l.rotulo), ['IDA-IPCA Infraestrutura', 'IDEX-Infra Geral']);
     // barras e tabela = modelo
-    assert.deepEqual(tela.barras, c.map(l => `${l.rotulo}: ${pp2(l.spread_pp)} (em ${brData(l.data)})`));
+    // todo rótulo de barra traz a data (não só a dica); no último dia, as datas das séries
+    assert.deepEqual(tela.rotulosBarras, c.map(l => `${l.rotulo_curto} · ${brData(l.data)}`));
+    assert.deepEqual(tela.barras, c.map(l => `${l.rotulo_curto} · ${brData(l.data)}: ${pp2(l.spread_pp)} (em ${brData(l.data)})`));
+    assert.equal(c[0].rotulo_curto, somado ? 'Transporte + intenções' : 'Transporte (negócios)');
     assert.deepEqual(tela.tabela.map(r => [r[0], r[1], r[2]]), c.map(l => [l.rotulo, pp2(l.spread_pp), brData(l.data)]));
+    // só a linha de transporte leva o rótulo "Mostrando"; o subtítulo do cartão não
+    assert.doesNotMatch(tela.sub, /Mostrando/);
+    assert.match(tela.sub, /“Ver somado” .* muda só a linha de transporte/);
+    assert.equal(await page.locator('#card-d-ind-spread .deb-rotulo').count(), 1);
+    assert.equal(await page.locator('#deb-ind-spread-tabela tbody tr:first-child .deb-rotulo').count(), 1);
+    assert.equal(tela.pond, 'Transporte: média ponderada pelo volume negociado; IDA e IDEX: ponderada pela participação de cada papel no índice.');
     assert.equal(tela.rotulo, somado ? 'negócios + intenções (somados como se fossem negócios)' : 'negócios fechados');
     assert.equal(tela.csv, somado ? 'debentures-indices-spread-somado' : 'debentures-indices-spread');
     // IDA e IDEX conferidos à mão no bloco: o IDEX em pontos-base ÷ 100; o IDA, no último dia com valor
@@ -2660,11 +2705,17 @@ test('Debêntures: spread comparado bate com o modelo e com os blocos, com "ver 
     assert.equal(tela.tabela[2][1], pp2(idex.spread.find(x => x.data === dIdex).spread_medio_bps / 100));
     // média nos dias em comum: ou aparece, igual ao modelo, ou a tela diz que não há dias em comum
     if (c[0].dias_comuns > 0) {
-      assert.deepEqual(tela.comum, c.map(l => `${l.rotulo}: ${pp2(l.media_comum_pp)} (média de ${l.dias_comuns} ${l.dias_comuns === 1 ? 'dia' : 'dias'}, ${l.periodo_comum})`));
+      const n = c[0].dias_comuns, quando = n === 1 ? c[0].periodo_comum : `média de ${n} dias`;
+      assert.deepEqual(tela.rotulosComum, c.map(l => `${l.rotulo_curto} · ${quando}`));
+      assert.deepEqual(tela.comum, c.map(l => `${l.rotulo_curto} · ${quando}: ${pp2(l.media_comum_pp)} (${n === 1 ? 'dia' : `média de ${n} dias`} ${l.periodo_comum})`));
       assert.deepEqual(tela.tabela.map(r => r[3]), c.map(l => pp2(l.media_comum_pp)));
+      // o gráfico dos dias em comum vem primeiro e é o maior
+      assert.deepEqual(tela.ordem.filter(i => /^deb-ind-(comum|ultimo)-titulo$/.test(i)), ['deb-ind-comum-titulo', 'deb-ind-ultimo-titulo']);
+      assert.ok(Number(tela.alturaComum) > Number(tela.alturaUltimo), `${tela.alturaComum} × ${tela.alturaUltimo}`);
     } else {
       assert.deepEqual(tela.comum, []);
       assert.equal(await page.locator('#deb-ind-comum-nao').count(), 1);
+      assert.equal(await page.locator('#chart-d-ind-spread-ultimo').count(), 1);
     }
   }
   // o cartão muda com a opção e volta ao desligar; os outros dois cartões da seção não mudam
@@ -2689,15 +2740,16 @@ test('Debêntures: tabela por papel com "—" fora do índice, ordenável e com 
   const cab = () => page.$$eval('#deb-ind-papel thead th', ths => ths.map(t => t.textContent.replace(/\s[↑↓]$/, '')));
   const linhas = () => page.$$eval('#deb-ind-papel tbody tr', trs => trs.map(tr => [...tr.children].map(td => td.textContent)));
   const c0 = await cab();
-  assert.equal(c0.length, 5);
-  assert.equal(c0[3], `Taxa indicativa ANBIMA (${brData(Object.values(ida.papeis).map(p => p.data).sort().pop())})`);
-  assert.ok(c0[4].startsWith('Spread IDEX-Infra sobre a NTN-B ('), c0[4]);
+  assert.deepEqual(c0, ['Papel', 'Emissor', 'Spread painel (p.p.)', 'Taxa ANBIMA (%)', 'Spread IDEX (p.p.)']);
+  // as datas dos índices ficam no subtítulo do cartão
+  const sub = await page.textContent('#card-d-ind-papel .sub');
+  assert.ok(sub.includes(`taxa ANBIMA de ${brData(Object.values(ida.papeis).map(p => p.data).sort().pop())}`) && sub.includes(`spread IDEX de ${brData(Object.values(idex.papeis).map(p => p.data).sort().pop())}`), sub);
   let r = await linhas();
   assert.equal(r.length, b.emissoes.length);
   // cada célula confere com os blocos: spread IDEX em p.p., taxa ANBIMA se o papel está na carteira do IDA, "—" se não está
   for (const l of r) {
     const x = idex.papeis[l[0]], a = ida.papeis[l[0]];
-    assert.equal(l[4], x ? pp2(x.spread_bps / 100) : '—', l[0]);
+    assert.equal(l[4], x ? fmt2(x.spread_bps / 100) : '—', l[0]);
     assert.equal(l[3] === '—', !a || typeof a.taxa_indicativa !== 'number', l[0]);
     if (a && typeof a.taxa_indicativa === 'number') assert.ok(l[3].includes(fmt2(a.taxa_indicativa)), `${l[0]}: ${l[3]}`);
   }
@@ -2713,7 +2765,7 @@ test('Debêntures: tabela por papel com "—" fora do índice, ordenável e com 
   r = await linhas();
   const maior = Math.max(...Object.values(idex.papeis).filter(p => b.emissoes.length).map(p => p.spread_bps));
   const noPainel = Math.max(...b.emissoes.filter(e => idex.papeis[e.ticker]).map(e => idex.papeis[e.ticker].spread_bps));
-  assert.equal(r[0][4], pp2(noPainel / 100));
+  assert.equal(r[0][4], fmt2(noPainel / 100));
   assert.ok(maior >= noPainel);
   assert.equal(r[r.length - 1][4], '—');
   const lim = r.findIndex(l => l[4] === '—');
@@ -2726,6 +2778,38 @@ test('Debêntures: tabela por papel com "—" fora do índice, ordenável e com 
   assert.ok(csv[0].includes('"Papel";"Emissor"'), csv[0]);
   // a tabela de variações do IDA também exporta
   assert.equal(await page.locator('.csv-btn:has(+ .table-wrap #deb-ida-variacoes)').count(), 1);
+});
+
+test('Debêntures: tabela por papel sem corte em 1366 px; em 390 px só a tabela rola na horizontal, não a página', async () => {
+  const errs = [], ext = [];
+  const geom = p => p.evaluate(() => {
+    const t = document.getElementById('deb-ind-papel'), w = t.closest('.table-wrap'), ths = [...t.querySelectorAll('thead th')], wr = w.getBoundingClientRect().right;
+    return { ultimoDireita: ths[ths.length - 1].getBoundingClientRect().right, wrapperDireita: wr, tabelaDireita: t.getBoundingClientRect().right, wrapperSw: w.scrollWidth, wrapperCw: w.clientWidth,
+      paginaSw: document.documentElement.scrollWidth, paginaCw: document.documentElement.clientWidth,
+      overflowX: getComputedStyle(w).overflowX };
+  });
+  const d = await openPage(errs, ext, null, { width: 1366, height: 900 });
+  await goTab(d, '#debentures');
+  const g = await geom(d);
+  assert.ok(g.ultimoDireita <= g.wrapperDireita + 0.5, `a última coluna passa da borda do quadro: ${g.ultimoDireita} > ${g.wrapperDireita}`);
+  assert.ok(g.wrapperSw <= g.wrapperCw, `a tabela é mais larga que o quadro (${g.wrapperSw} > ${g.wrapperCw})`);
+  assert.equal(await d.locator('#deb-ind-papel thead th').last().isVisible(), true);
+  assert.ok(g.paginaSw <= g.paginaCw);
+  await d.context().close();
+  const m = await openPage(errs, ext, null, { width: 390, height: 844 });
+  await goTab(m, '#debentures');
+  const h = await geom(m);
+  assert.ok(h.paginaSw <= h.paginaCw, `a página rola na horizontal (${h.paginaSw} > ${h.paginaCw})`);
+  assert.ok(h.wrapperSw > h.wrapperCw && /auto|scroll/.test(h.overflowX), 'a rolagem horizontal fica dentro do quadro da tabela');
+  // o aviso das janelas e os rótulos de barra do cartão de spread cabem na tela estreita, sem corte
+  const rot = await m.$$eval('#chart-d-ind-spread g.hrow-tip > text:nth-of-type(1)', ts => ts.map(t => t.textContent));
+  assert.ok(rot.length >= 3 && rot.every(t => !t.includes('…')), rot.join(' | '));
+  assert.ok(rot.some(t => t.startsWith('Transporte')));
+  await m.click('#deb-somado');
+  assert.ok((await m.$$eval('#chart-d-ind-spread g.hrow-tip > text:nth-of-type(1)', ts => ts.map(t => t.textContent))).some(t => t.startsWith('Transporte + intenções · ')), 'o sufixo "+ intenções" aparece no celular');
+  assert.deepEqual(errs, []);
+  assert.deepEqual(ext, []);
+  await m.context().close();
 });
 
 test('Debêntures: sem o bloco idex a seção avisa que aguarda os arquivos; sem NaN e sem erros', async () => {

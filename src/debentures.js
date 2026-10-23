@@ -27,9 +27,11 @@ const Debentures = (() => {
   // Cartão: título, subtítulo (subHtml já escapado), legenda, conteúdo e fonte. `afetado`: cartão que muda com "ver somado";
   // ele ganha, no subtítulo, o rótulo do que está sendo mostrado (negócios fechados ou negócios + intenções).
   function card(id, title, subHtml, o = {}) {
-    const rotulo = o.afetado ? ` <span class="deb-rotulo">${esc(st.somado ? DM.ROTULO_SOMADO : DM.ROTULO_NEGOCIOS)}</span>` : '';
+    // o.semRotulo: o cartão muda com "ver somado", mas o rótulo vai junto da linha afetada, não no subtítulo
+    const mostra = o.afetado && !o.semRotulo;
+    const rotulo = mostra ? ` <span class="deb-rotulo">${esc(st.somado ? DM.ROTULO_SOMADO : DM.ROTULO_NEGOCIOS)}</span>` : '';
     return `<article class="ccard${o.wide ? ' ccard--wide' : ''}${o.afetado ? ' ccard--afetado' : ''}" id="card-d-${id}"${o.afetado ? ' data-afetado="1"' : ''}>
-      <h3 id="titulo-d-${id}">${esc(title)}</h3>${subHtml || rotulo ? `<p class="sub">${subHtml || ''}${o.afetado ? `${subHtml ? ' · ' : ''}Mostrando:${rotulo}` : ''}</p>` : ''}
+      <h3 id="titulo-d-${id}">${esc(title)}</h3>${subHtml || rotulo ? `<p class="sub">${subHtml || ''}${mostra ? `${subHtml ? ' · ' : ''}Mostrando:${rotulo}` : ''}</p>` : ''}
       ${o.legend || ''}<div class="chart-box" id="chart-d-${id}">${o.html || ''}</div>${o.foot || ''}
       ${o.note ? `<p class="src">${o.note}</p>` : ''}<p class="src">Fonte: ${esc(o.fonte || DM.DASH)}</p></article>`;
   }
@@ -257,20 +259,22 @@ const Debentures = (() => {
   }
 
   function indicesCards() {
-    const spreadSub = `Último dia com valor de cada série, em p.p. (pontos percentuais); o spread do IDEX-Infra, dado em pontos-base, é dividido por 100. Sem a curva do Tesouro no dia, o spread do painel e o do IDA ficam sem valor: vale o último dia que tem`;
+    const spreadSub = 'Em p.p. (pontos percentuais); o spread do IDEX-Infra, dado em pontos-base, é dividido por 100. Sem a curva do Tesouro no dia, o spread do painel e o do IDA ficam sem valor, e vale o último dia que tem. “Ver somado” (no mercado secundário, acima) muda só a linha de transporte';
+    const datas = DM.tabelaIndices(bloco, ida, idex).datas;
+    const dePapel = [datas.anbima && `taxa ANBIMA de ${DM.fmtData(datas.anbima)}`, datas.idex && `spread IDEX de ${DM.fmtData(datas.idex)}`].filter(Boolean).join('; ');
     return [
       card('ind-evolucao', 'Evolução dos índices', 'IDA rebaseado em 100 no primeiro dia da série; retorno acumulado e spread do IDEX-Infra', { wide: true,
         html: '<div id="deb-ind-evolucao"></div>',
         note: 'Retorno acumulado do IDEX-Infra = os retornos mensais compostos desde o primeiro mês: um mês de 1% seguido de outro de 2% dá 3,02%, não 3%. Os eixos verticais dos gráficos de linha não começam em zero.',
         fonte: [temIda() && DM.fonteIda(ida), temIdex() && DM.fonteIdex(idex)].filter(Boolean).join('; ') || DM.DASH }),
-      card('ind-spread', 'Spread sobre a NTN-B: debêntures de transporte, IDA-IPCA Infraestrutura e IDEX-Infra', spreadSub, { wide: true, afetado: true,
+      card('ind-spread', 'Spread sobre a NTN-B: debêntures de transporte, IDA-IPCA Infraestrutura e IDEX-Infra', spreadSub, { wide: true, afetado: true, semRotulo: true,
         html: '<div id="deb-ind-spread"></div>',
         note: 'Spread = taxa menos a da NTN-B de mesmo vencimento (Tesouro Direto, taxa de compra). A média nos dias em comum é a média simples dos spreads diários dos dias em que as três séries têm valor.',
         fonte: [DM.fonteCurta(bloco, { corretoras: CORRETORAS, periodo: 'dados', tesouro: true }), temIda() && DM.fonteIda(ida), temIdex() && DM.fonteIdex(idex, 'spread')].filter(f => f && f !== DM.DASH).join('; ') }),
       card('ind-papel', 'Por papel: spread sobre a NTN-B no painel e no IDEX-Infra, e taxa indicativa da ANBIMA',
-        'Um papel da tabela de emissões por linha; “—” onde o papel não está no índice ou não tem spread. Clique no cabeçalho para ordenar', { wide: true,
+        `Um papel da tabela de emissões por linha${dePapel ? ` (${dePapel})` : ''}; “${DM.DASH}” onde o papel não está no índice ou não tem spread. Clique no cabeçalho para ordenar`, { wide: true,
           html: '<div id="deb-ind-papel-tabela"></div>',
-          note: 'O spread do painel é o do último negócio do papel (só IPCA+, em dia com curva) e pode ser de um dia anterior ao dos índices. A taxa indicativa é a da carteira do IDA no último dia.',
+          note: 'Spread painel: o do último negócio do papel (só IPCA+, em dia com curva), que pode ser de um dia anterior ao dos índices. Taxa ANBIMA: taxa indicativa da carteira do IDA. Spread IDEX: spread sobre a NTN-B do IDEX-Infra, de pontos-base para p.p.',
           fonte: [temIda() && DM.fonteIda(ida), temIdex() && DM.fonteIdex(idex, 'spread'), DM.fonteCurta(bloco, { corretoras: CORRETORAS, periodo: 'dados' })].filter(f => f && f !== DM.DASH).join('; ') || DM.DASH }),
     ].join('');
   }
@@ -279,20 +283,25 @@ const Debentures = (() => {
     return `<h2 class="resumo-h2" id="deb-h-indices">Índices de debêntures (IDA e IDEX-Infra)</h2>${indicesLead()}<div class="grid-cards">${indicesCards()}</div>`;
   }
 
+  // Cores do IDA: fichas categóricas distintas (os dois subíndices IPCA andam quase juntos; o IDA-IPCA vai tracejado)
+  const COR_IDA = [DATA_SLOTS[0], DATA_SLOTS[1], DATA_SLOTS[2], DATA_SLOTS[6]];
+
   // Cartão 1: à esquerda o IDA (linhas e variações publicadas), à direita o IDEX-Infra (retorno acumulado e spread diário).
   function desenhaEvolucao() {
     const el = document.getElementById('deb-ind-evolucao');
     if (!el) return;
-    const w = width(el);
     // ---- IDA
-    let esq = `<h4 class="duo__title">IDA: número-índice rebaseado em 100 no primeiro dia da série</h4>`;
-    if (!temIda()) esq += `<p class="empty" id="deb-ida-aviso">${esc(AGUARDA_IDA)}</p>`;
+    let esq = '';
+    if (!temIda()) esq += `<h4 class="duo__title">IDA</h4><p class="empty" id="deb-ida-aviso">${esc(AGUARDA_IDA)}</p>`;
     else {
       const ev = DM.evolucaoIda(ida), per = DM.periodoIda(ida), dias = Math.max(0, ...ev.map(s => s.pontos.length));
+      esq += `<h4 class="duo__title" id="deb-ida-titulo">IDA: ${esc(DM.coberturaIda(ida))}; número-índice rebaseado em 100 no primeiro dia</h4>`;
       if (dias >= 2) {
-        esq += `${Charts.legendHtml(ev.map((s, k) => [s.nome, [C.deep, C.bright, C.grey, C.spacial][k % 4], 1, k >= 3]))}<div id="chart-d-ind-ida"></div>`;
+        esq += `${Charts.legendHtml(ev.map((s, k) => [s.nome, COR_IDA[k % 4], 1, k === 1]))}<div id="chart-d-ind-ida"></div>`;
       } else esq += `<p class="empty" id="deb-ida-pouco">A série tem só ${plural(dias, 'dia', 'dias')}; o gráfico aparece a partir do segundo.</p>`;
       esq += `<p class="src" id="deb-ida-serie">Série diária acumulada desde ${esc(DM.fmtData(per && per.de))} (primeiro download); cresce a cada atualização.</p>`;
+      const lac = dias >= 2 ? DM.lacunasIda(ida) : [];
+      if (lac.length) esq += `<p class="src" id="deb-ida-lacunas">Sem ponto na série ${lac.length <= 5 ? `em ${esc(lac.map(DM.fmtData).join(', '))}` : `em ${nf0.format(lac.length)} dias úteis`} (feriado ou dia sem resultado publicado); a linha é interrompida nesses dias.</p>`;
       const v = DM.variacoesIda(ida), datas = [...new Set(v.map(x => x.data))].sort();
       if (v.length) {
         esq += `<h4 class="duo__title">${datas.length === 1 ? `Variação publicada pela ANBIMA em ${esc(DM.fmtData(datas[0]))}` : 'Variação publicada pela ANBIMA no último dia de cada índice'}</h4>
@@ -304,31 +313,32 @@ const Debentures = (() => {
     let dir = '';
     if (!temIdex()) dir = `<h4 class="duo__title">IDEX-Infra</h4><p class="empty" id="deb-idex-aviso">${esc(AGUARDA_IDEX)}</p>`;
     else {
-      const ret = DM.retornosIdex(idex), sp = DM.spreadIdex(idex), ate = DM.periodoIdex(idex).retornos;
-      dir += `<h4 class="duo__title">IDEX-Infra: retorno acumulado${ate ? ` desde ${esc(DM.fmtData(ate.de))}` : ''}</h4>`;
+      const ret = DM.retornosIdex(idex), sp = DM.spreadIdex(idex), cob = DM.coberturaIdex(idex);
+      dir += `<h4 class="duo__title" id="deb-idex-ret-titulo">IDEX-Infra: retorno acumulado, ${esc(cob.retornos)}</h4>`;
       dir += ret.length ? `${Charts.legendHtml(ret.map((r, k) => [r.nome, [C.deep, C.bright][k % 2]]))}<div id="chart-d-ind-idex-ret"></div>` : '<p class="empty">Sem retornos mensais.</p>';
-      dir += `<h4 class="duo__title">IDEX-Infra Geral: spread médio diário sobre a NTN-B (p.p.)</h4>`;
+      dir += `<h4 class="duo__title" id="deb-idex-spread-titulo">IDEX-Infra Geral: spread médio diário sobre a NTN-B (p.p.), ${esc(cob.spread)}</h4>`;
       dir += sp.length ? `${legenda('Spread médio ponderado (p.p.)', C.deep)}<div id="chart-d-ind-idex-spread"></div>` : '<p class="empty">Sem spread diário.</p>';
     }
-    // ---- retorno em 12 meses lado a lado
+    // ---- retorno em 12 meses lado a lado: cada janela dita no próprio cartão, com o peso do número
     const r12 = DM.comparacaoRetorno12m(ida, idex);
-    const tiles = r12.length ? `<h4 class="duo__title">Retorno em 12 meses</h4><div class="kpis" id="deb-ind-12m">${r12.map((x, k) => tile('deb-ind-12m-' + k, fmtPct2(x.pct), `${esc(x.rotulo)} · ${esc(x.referencia)}`)).join('')}</div>
-      <p class="src">Os períodos são diferentes (cada índice até a sua última data), por isso o confronto é só uma referência.</p>` : '';
+    const tiles = r12.length ? `<h4 class="duo__title" style="margin-top:24px">Retorno em 12 meses</h4><div class="kpis" id="deb-ind-12m">${r12.map((x, k) =>
+      `<div class="kpi-tile" id="deb-ind-12m-${k}"><b>${esc(fmtPct2(x.pct))}</b><b class="kpi-janela">${esc(x.janela)}</b><span>${esc(x.origem)}</span></div>`).join('')}</div>${
+      DM.janelasDiferentes(r12) ? '<p class="deb-nota deb-aviso" id="deb-ind-12m-aviso">Janelas diferentes: os números não são diretamente comparáveis.</p>' : ''}` : '';
     el.innerHTML = `<div class="duo"><div id="deb-ind-ida">${esq}</div><div id="deb-ind-idex">${dir}</div></div>${tiles}`;
 
     const ida$ = document.getElementById('chart-d-ind-ida');
     if (ida$) {
       const ev = DM.evolucaoIda(ida), xs = ev.flatMap(s => s.pontos.map(p => DM.diaNum(p.data))), ys = ev.flatMap(s => s.pontos.map(p => p.base100));
       const min = Math.min(...ys), max = Math.max(...ys), wi = width(ida$);
-      ida$.innerHTML = Charts.linesSvg(ev.map((s, k) => ({ name: s.nome, dash: k >= 3, points: s.pontos.map(p => ({ x: DM.diaNum(p.data), y: p.base100 })) })),
-        { width: wi, unit: '(base 100)', format: v => nf2.format(v), formatX: diaCurto, stepX: passoX(xs, wi, 64), yMin: min - (max - min) * 0.2,
+      ida$.innerHTML = Charts.linesSvg(ev.map((s, k) => ({ name: s.nome, color: COR_IDA[k % 4], dash: k === 1, points: s.pontos.map(p => ({ x: DM.diaNum(p.data), y: p.base100, quebra: p.quebra })) })),
+        { width: wi, unit: '(base 100)', yLabel: 'Base 100', format: v => nf2.format(v), formatX: diaCurto, stepX: passoX(xs, wi, 64), yMin: min - (max - min) * 0.2,
           title: 'IDA: número-índice rebaseado em 100 (eixo vertical não começa em zero)' });
     }
     const ret$ = document.getElementById('chart-d-ind-idex-ret');
     if (ret$) {
       const ret = DM.retornosIdex(idex), xs = ret.flatMap(r => r.pontos.map(p => DM.mesNum(p.mes))), ys = ret.flatMap(r => r.pontos.map(p => p.acumulado_pct)), wr = width(ret$);
       ret$.innerHTML = Charts.linesSvg(ret.map(r => ({ name: r.nome, points: r.pontos.map(p => ({ x: DM.mesNum(p.mes), y: p.acumulado_pct })) })),
-        { width: wr, unit: '% acumulado', format: v => nf2.format(v), formatX: DM.rotuloMes, stepX: passoX(xs, wr, 80), yMin: Math.min(0, ...ys),
+        { width: wr, unit: '% acumulado', yLabel: '% acumulado', format: v => nf2.format(v), formatX: DM.rotuloMes, stepX: passoX(xs, wr, 80), yMin: Math.min(0, ...ys),
           title: 'IDEX-Infra: retorno acumulado desde o primeiro mês' });
     }
     const esp$ = document.getElementById('chart-d-ind-idex-spread');
@@ -336,33 +346,42 @@ const Debentures = (() => {
       const sp = DM.spreadIdex(idex), xs = sp.map(d => DM.diaNum(d.data)), ys = sp.map(d => d.spread_pp), wi = width(esp$);
       const min = Math.min(...ys), max = Math.max(...ys);
       esp$.innerHTML = Charts.linesSvg([{ name: 'IDEX-Infra Geral', points: sp.map(d => ({ x: DM.diaNum(d.data), y: d.spread_pp })) }],
-        { width: wi, unit: 'p.p.', format: v => nf2.format(v), formatX: diaCurto, stepX: passoX(xs, wi, 64), yMin: min - (max - min) * 0.2,
+        { width: wi, unit: 'p.p.', yLabel: 'p.p.', format: v => nf2.format(v), formatX: diaCurto, stepX: passoX(xs, wi, 64), yMin: min - (max - min) * 0.2,
           title: 'IDEX-Infra Geral: spread médio diário sobre a NTN-B (eixo vertical não começa em zero)' });
     }
   }
 
-  // Cartão 2 (responde a "ver somado"): barras do último spread de cada série e, havendo dias em comum às três, da média neles.
+  // Cartão 2 (responde a "ver somado"; só a linha de transporte muda). Havendo dias em comum às três séries, o gráfico principal é a
+  // média neles (mesma base) e o do último dia de cada série, com datas diferentes, vem em segundo. Todo rótulo de barra traz a data.
   function desenhaSpreadIndices() {
     const el = document.getElementById('deb-ind-spread');
     if (!el) return;
     const c = DM.comparacaoSpread(bloco, ida, idex, { somado: st.somado });
-    const comum = c[0].dias_comuns > 0;
-    const barras = (campo, detail) => c.map(l => ({ label: l.rotulo, value: l[campo], detail: detail(l) }));
+    const comum = c[0].dias_comuns > 0, estreito = width(el) < 520;
     const fmt = v => `${nf2.format(v)} p.p.`;
+    const dia = d => (estreito ? DM.fmtDiaMes(d) : DM.fmtData(d));
     const sem = [!temIdex() && AGUARDA_IDEX, !temIda() && AGUARDA_IDA].filter(Boolean);
     const defasadas = c.filter(l => l.data && l.ate && l.ate > l.data)
       .map(l => `${l.rotulo}: último valor em ${DM.fmtData(l.data)}; a série vai até ${DM.fmtData(l.ate)}, mas sem curva do Tesouro nos dias seguintes.`);
-    el.innerHTML = `${legenda('Spread médio sobre a NTN-B (p.p.)', C.deep)}
-      <h4 class="duo__title">Último dia com valor de cada série</h4><div id="chart-d-ind-spread-ultimo"></div>
-      ${comum ? `<h4 class="duo__title" id="deb-ind-comum-titulo">Média ${c[0].dias_comuns === 1 ? 'no dia em comum' : `nos ${nf0.format(c[0].dias_comuns)} dias em comum`} às três séries (${esc(c[0].periodo_comum)})</h4><div id="chart-d-ind-spread-comum"></div>`
-        : '<p class="src" id="deb-ind-comum-nao">As três séries ainda não têm dias com spread em comum; vale o último dia de cada uma.</p>'}
+    const n = c[0].dias_comuns;
+    const tComum = n === 1 ? `Valor no dia em comum às três séries (${c[0].periodo_comum})` : `Média nos ${nf0.format(n)} dias em comum às três séries (${c[0].periodo_comum})`;
+    const principal = comum
+      ? `<h4 class="duo__title" id="deb-ind-comum-titulo">${esc(tComum)}</h4><div id="chart-d-ind-spread-comum"></div>
+         <h4 class="duo__title" id="deb-ind-ultimo-titulo">Último dia com valor de cada série (datas diferentes)</h4><div id="chart-d-ind-spread-ultimo"></div>`
+      : `<p class="src" id="deb-ind-comum-nao">As três séries ainda não têm dias com spread em comum; vale o último dia de cada uma.</p>
+         <h4 class="duo__title" id="deb-ind-ultimo-titulo">Último dia com valor de cada série (datas diferentes)</h4><div id="chart-d-ind-spread-ultimo"></div>`;
+    el.innerHTML = `${legenda('Spread médio sobre a NTN-B (p.p.)', C.deep)}${principal}
       <div class="table-wrap table-wrap--static"><table class="grid grid--static" id="deb-ind-spread-tabela" data-csv-name="${csvNome('debentures-indices-spread')}"><thead><tr><th>Série</th><th class="num">Spread sobre a NTN-B (último dia com valor)</th><th class="num">Data</th><th class="num">Média nos dias em comum (sobre a NTN-B)</th></tr></thead><tbody>${
-        c.map(l => `<tr class="is-static"><td class="wrap">${esc(l.rotulo)}</td><td class="num">${esc(DM.fmtPp(l.spread_pp))}</td><td class="num">${esc(l.data ? DM.fmtData(l.data) : DM.DASH)}</td><td class="num">${esc(DM.fmtPp(l.media_comum_pp))}</td></tr>`).join('')}</tbody></table></div>
+        c.map((l, k) => `<tr class="is-static"><td class="wrap"><span class="deb-nome">${esc(l.rotulo)}</span>${k === 0 ? `<br><small>Mostrando: <span class="deb-rotulo">${esc(st.somado ? DM.ROTULO_SOMADO : DM.ROTULO_NEGOCIOS)}</span></small>` : ''}</td><td class="num">${esc(DM.fmtPp(l.spread_pp))}</td><td class="num">${esc(l.data ? DM.fmtData(l.data) : DM.DASH)}</td><td class="num">${esc(DM.fmtPp(l.media_comum_pp))}</td></tr>`).join('')}</tbody></table></div>
+      <p class="src" id="deb-ind-ponderacao">Transporte: média ponderada pelo volume negociado; IDA e IDEX: ponderada pela participação de cada papel no índice.</p>
       ${sem.concat(defasadas).map(t => `<p class="src deb-ind-aviso">${esc(t)}</p>`).join('')}`;
+    const opts = { width: 0, labelAbove: estreito, labelWidth: 380, format: fmt };
     const u = document.getElementById('chart-d-ind-spread-ultimo');
-    u.innerHTML = Charts.hbarsSvg(barras('spread_pp', l => (l.data ? `em ${DM.fmtData(l.data)}` : 'sem valor')), { width: width(u), labelWidth: 340, format: fmt, title: 'Spread sobre a NTN-B no último dia com valor' });
+    u.innerHTML = Charts.hbarsSvg(c.map(l => ({ label: `${l.rotulo_curto} · ${l.data ? dia(l.data) : 'sem valor'}`, value: l.spread_pp, detail: l.data ? `em ${DM.fmtData(l.data)}` : 'sem valor' })),
+      Object.assign({}, opts, { width: width(u), big: !comum, title: 'Spread sobre a NTN-B no último dia com valor' }));
     const m = document.getElementById('chart-d-ind-spread-comum');
-    if (m) m.innerHTML = Charts.hbarsSvg(barras('media_comum_pp', l => `média de ${plural(l.dias_comuns, 'dia', 'dias')}, ${l.periodo_comum}`), { width: width(m), labelWidth: 340, format: fmt, title: 'Média do spread nos dias em comum' });
+    if (m) m.innerHTML = Charts.hbarsSvg(c.map(l => ({ label: `${l.rotulo_curto} · ${n === 1 ? (estreito ? l.periodo_comum.slice(0, 5) : l.periodo_comum) : `média de ${nf0.format(n)} dias`}`, value: l.media_comum_pp,
+      detail: `${n === 1 ? 'dia' : 'média de ' + nf0.format(n) + ' dias'} ${l.periodo_comum}` })), Object.assign({}, opts, { width: width(m), big: true, title: 'Spread sobre a NTN-B nos dias em comum' }));
   }
 
   const TEXTO_PAPEIS = new Set(['ticker', 'emissor']);

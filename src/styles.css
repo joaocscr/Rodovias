@@ -767,5 +767,7 @@ table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-siz
 .deb-rotulo { font-weight: 600; color: var(--color-deep-blue); }
 .deb-spread { font-size: 14px; }
 .deb-nota { margin: 0 0 8px; font-size: 14px; color: var(--color-spacial-grey); }
+.deb-aviso { margin-top: 12px; font-weight: 600; color: var(--color-deep-blue); }
+.kpi-tile b.kpi-janela { margin-top: 8px; font-size: 16px; line-height: 24px; }
 .grid-linha { grid-column: 1 / -1; margin: 0; font-size: 14px; color: var(--color-light-grey); }
 @media (max-width: 900px) { .deb-controle { grid-template-columns: minmax(0, 1fr); } }

@@ -347,3 +347,34 @@ test('linesSvg: quatro séries ganham quatro traços distintos (a quarta em Spac
   const tracos = [...svg.matchAll(/<path class="line"[^>]*stroke="([^"]+)"([^>]*)\/>/g)].map(m => [m[1], /stroke-dasharray/.test(m[2])]);
   assert.deepEqual(tracos, [['#183C80', false], ['#0071BB', false], ['#525254', false], ['#231F20', true]]);
 });
+
+test('linesSvg: color da série, quebra da linha antes de um ponto e unidade do eixo (yLabel)', () => {
+  const s = [{ name: 'A', color: '#eb6834', points: [{ x: 1, y: 1 }, { x: 2, y: 2 }, { x: 4, y: 2, quebra: true }, { x: 5, y: 3 }] }];
+  const svg = Charts.linesSvg(s, { yLabel: 'p.p.' });
+  const d = /<path class="line" d="([^"]+)"/.exec(svg)[1];
+  assert.equal((d.match(/M/g) || []).length, 2, 'a linha é interrompida no ponto marcado: dois trechos');
+  assert.equal((d.match(/L/g) || []).length, 2);
+  assert.match(svg, /stroke="#eb6834"/);
+  assert.match(svg, /<text class="ylabel"[^>]*>p\.p\.<\/text>/);
+  assert.doesNotMatch(Charts.linesSvg(s, {}), /ylabel/);
+  assert.equal((/<path class="line" d="([^"]+)"/.exec(Charts.linesSvg([{ name: 'A', points: s[0].points.map(p => ({ x: p.x, y: p.y })) }], {}))[1].match(/M/g) || []).length, 1);
+  // nenhum ponto sai da área do gráfico com a unidade no topo
+  const cys = [...svg.matchAll(/<circle [^>]*cy="([\d.]+)"/g)].map(m => +m[1]);
+  assert.ok(cys.every(y => y >= 36 - 1e-6 && y <= 280 - 40 + 1e-6), cys.join());
+});
+
+test('hbarsSvg: labelAbove põe o rótulo acima da barra, com a barra na largura toda; big engrossa as barras', () => {
+  const rows = [{ label: 'IDA-IPCA Infraestrutura · 14/10', value: 1.13 }, { label: 'Transporte + intenções · 15/10', value: 1.81 }];
+  const lado = Charts.hbarsSvg(rows, { width: 306 }), acima = Charts.hbarsSvg(rows, { width: 306, labelAbove: true });
+  const bar = svg => [...svg.matchAll(/<rect class="cbar" x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="(\d+)"/g)].map(m => m.slice(1).map(Number));
+  assert.equal(bar(acima)[0][0], 0, 'a barra começa na borda esquerda');
+  assert.ok(bar(acima)[1][2] > bar(lado)[1][2] * 2, 'barra bem mais larga sem a coluna de rótulos');
+  assert.match(acima, /<text x="0" [^>]*text-anchor="start"[^>]*>IDA-IPCA Infraestrutura · 14\/10<\/text>/, 'rótulo inteiro, sem corte');
+  assert.ok(!/…/.test(acima));
+  const grande = Charts.hbarsSvg(rows, { width: 640, big: true }), normal = Charts.hbarsSvg(rows, { width: 640 });
+  assert.equal(bar(normal)[0][3], 16);
+  assert.equal(bar(grande)[0][3], 24);
+  assert.ok(+/height="(\d+)"/.exec(grande)[1] > +/height="(\d+)"/.exec(normal)[1]);
+  // com valor nulo a linha continua com "—"
+  assert.match(Charts.hbarsSvg([{ label: 'x', value: null }], { width: 400, labelAbove: true }), />—<\/text>/);
+});

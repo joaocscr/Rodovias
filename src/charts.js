@@ -81,10 +81,13 @@ const Charts = (() => {
   // Barras horizontais com rótulo e valor, na ordem recebida.
   function hbarsSvg(data, o = {}) {
     const rows = data;
-    const w = o.width || 640, rh = 32, h = Math.max(rows.length * rh + 8, 48);
+    // o.labelAbove: o rótulo vai numa linha própria, acima da barra, e a barra ocupa a largura toda (telas estreitas)
+    // o.big: barras maiores (gráfico principal do cartão)
+    const w = o.width || 640, above = !!o.labelAbove, big = !!o.big, bh = big ? 24 : 16, rh = above ? (big ? 64 : 56) : (big ? 48 : 32), h = Math.max(rows.length * rh + 8, 48);
+    const barY = above ? 28 : (rh - bh) / 2;
     if (!rows.length) return empty(w, 120);
     const fmt = o.format || (v => nf1.format(v)), unit = o.unit ? ' ' + o.unit : '';
-    const R = 104, L = labelCol(w, rows.map(r => r.label), o.labelWidth || Math.min(240, w * 0.4)), pw = Math.max(40, w - L - R);
+    const R = 104, L = above ? 0 : labelCol(w, rows.map(r => r.label), o.labelWidth || Math.min(240, w * 0.4)), pw = Math.max(40, w - L - R);
     const max = Math.max(...rows.map(r => (num(r.value) ? r.value : 0)), 0) || 1;
     let body = '';
     rows.forEach((r, i) => {
@@ -96,10 +99,10 @@ const Charts = (() => {
       const attrs = link ? ` data-k="${esc(r.k)}" role="button" tabindex="0" aria-label="${esc(o.rowLabel ? o.rowLabel(r) : r.label)}"` : '';
       body += `<g class="hrow-tip${link ? ' hrow' : ''}"${attrs}><title>${tip}</title>` +
         `<rect class="hit${link ? ' hrow__bg' : ''}" x="0" y="${y}" width="${w}" height="${rh}" fill="${C.bright}" fill-opacity="0"/>` +
-        `<text x="${L - 8}" y="${y + 21}" text-anchor="end" fill="${C.spacial}">${labelText(r.label, L)}</text>` +
-        `<rect class="cbar" x="${L}" y="${y + 8}" width="${bw.toFixed(1)}" height="16" rx="2" fill="${r.alt ? C.bright : C.deep}">` +
+        (above ? `<text x="0" y="${y + 18}" text-anchor="start" fill="${C.spacial}">${labelText(r.label, w)}</text>` : `<text x="${L - 8}" y="${y + rh / 2 + 5}" text-anchor="end" fill="${C.spacial}">${labelText(r.label, L)}</text>`) +
+        `<rect class="cbar" x="${L}" y="${y + barY}" width="${bw.toFixed(1)}" height="${bh}" rx="2" fill="${r.alt ? C.bright : C.deep}">` +
         `<title>${tip}</title></rect>` +
-        `<text x="${(L + bw + 8).toFixed(1)}" y="${y + 21}" fill="${C.grey}">${num(r.value) ? esc(fmt(r.value)) : '—'}</text></g>`;
+        `<text x="${(L + bw + 8).toFixed(1)}" y="${y + barY + bh / 2 + 5}" fill="${C.grey}">${num(r.value) ? esc(fmt(r.value)) : '—'}</text></g>`;
     });
     return frame(w, h, body, o.title, o.clickable ? 'group' : 'img');
   }
@@ -171,19 +174,21 @@ const Charts = (() => {
     const fx = o.formatX || (x => String(x)), r = o.r || 4;
     const xs = all.map(p => p.x), x0 = Math.min(...xs), x1 = Math.max(...xs);
     // margem direita: metade do último rótulo do eixo x, para não ser cortado na borda
-    const L = 72, R = Math.max(16, Math.ceil(larg(fx(x1)) / 2) + 2), T = 16, B = 40, pw = w - L - R, ph = h - T - B;
+    // o.yLabel: unidade do eixo vertical, escrita acima dele (abre espaço no topo)
+    const L = 72, R = Math.max(16, Math.ceil(larg(fx(x1)) / 2) + 2), T = o.yLabel ? 36 : 16, B = 40, pw = w - L - R, ph = h - T - B;
     // o.yMin: o eixo y começa nesse valor (ou no múltiplo do passo logo abaixo), em vez de zero; sem ele, o eixo parte de zero
     const ymax = Math.max(...all.map(p => p.y)), ty = num(o.yMin) && o.yMin < ymax ? ticksFrom(o.yMin, ymax) : ticks(ymax);
     const y0 = num(o.yMin) && o.yMin < ymax ? ty[0] : 0, my = ty[ty.length - 1] || 1;
     const xOf = v => L + (x1 === x0 ? pw / 2 : ((v - x0) / (x1 - x0)) * pw), yOf = v => T + ph - ((v - y0) / ((my - y0) || 1)) * ph;
-    let body = yAxis(ty, L, w - R, yOf, fy);
+    let body = (o.yLabel ? `<text class="ylabel" x="4" y="16" fill="${C.grey}">${esc(o.yLabel)}</text>` : '') + yAxis(ty, L, w - R, yOf, fy);
     // o.stepX: passo dos rótulos do eixo x (ex.: meses em fração de ano); padrão = inteiro, até ~8 rótulos
     const step = o.stepX > 0 ? o.stepX : Math.max(1, Math.ceil((x1 - x0) / 8));
     for (let k = 0, x = x0; x <= x1 + 1e-9; k++, x = x0 + k * step) body += `<text x="${xOf(x)}" y="${h - B + 24}" text-anchor="middle" fill="${C.grey}">${esc(fx(x))}</text>`;
     series.forEach((s, k) => {
       const pts = s.points.filter(p => num(p.x) && num(p.y));
-      const color = k === 0 ? C.deep : k === 1 ? C.bright : k === 2 ? C.grey : C.spacial;  // 4ª linha em Spacial Grey; quem desenha 4 linhas traceja a última (dash) para distingui-la da 3ª
-      const d = pts.map((p, i) => `${i ? 'L' : 'M'}${xOf(p.x).toFixed(1)},${yOf(p.y).toFixed(1)}`).join('');
+      const color = s.color || (k === 0 ? C.deep : k === 1 ? C.bright : k === 2 ? C.grey : C.spacial);  // 4ª linha em Spacial Grey; quem desenha 4 linhas traceja a última (dash) para distingui-la da 3ª
+      // p.quebra: a linha é interrompida antes deste ponto (dia sem resultado), sem ligar os dois lados
+      const d = pts.map((p, i) => `${i && !p.quebra ? 'L' : 'M'}${xOf(p.x).toFixed(1)},${yOf(p.y).toFixed(1)}`).join('');
       body += `<path class="line" d="${d}" fill="none" stroke="${color}" stroke-width="2.5"${s.dash ? ' stroke-dasharray="6 4"' : ''}/>`;
       body += pts.map(p => `<circle cx="${xOf(p.x).toFixed(1)}" cy="${yOf(p.y).toFixed(1)}" r="${r}" fill="${color}"><title>${esc(s.name)} ${esc(fx(p.x))}: ${esc(fy(p.y))}${esc(unit)}</title></circle>`).join('');
     });

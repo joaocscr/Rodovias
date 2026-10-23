@@ -373,18 +373,47 @@ test('spreadIdex: pontos-base viram p.p. (÷ 100)', () => {
   assert.deepEqual(D.spreadIdex(undefined), []);
 });
 
-test('comparacaoRetorno12m: IDA-IPCA Infraestrutura e IDEX-Infra Geral, cada um com a sua referência', () => {
+test('comparacaoRetorno12m: cada número traz a sua janela; janelas que terminam em datas diferentes são avisadas', () => {
   const c = D.comparacaoRetorno12m(ida, idex);
   assert.deepEqual(c.map(x => [x.rotulo, x.pct]), [['IDA-IPCA Infraestrutura', 8.8], ['IDEX-Infra Geral', 7.75]]);
-  assert.match(c[0].referencia, /publicada pela ANBIMA em 05\/10\/2026/);
-  assert.match(c[1].referencia, /12 meses até mar\/2026/);
+  assert.deepEqual(c.map(x => x.janela), ['IDA-IPCA Infraestrutura — 12 meses até 05/10/2026', 'IDEX-Infra Geral — 12 meses até mar/2026']);
+  assert.deepEqual(c.map(x => x.ate), ['2026-10-05', '2026-03-31'], 'o mês vale até o último dia');
+  assert.match(c[0].origem, /ANBIMA/);
+  assert.match(c[1].origem, /relatório mensal/);
+  assert.equal(D.janelasDiferentes(c), true);
+  // mesma data final nos dois: sem aviso (IDEX em fevereiro, IDA em 28/02)
+  const igual = D.comparacaoRetorno12m({ indices: { IPCA_INFRAESTRUTURA: { ultimo: { data: '2026-03-31', var_12m: 5 } } } }, idex);
+  assert.equal(D.janelasDiferentes(igual), false);
+  assert.equal(D.janelasDiferentes(D.comparacaoRetorno12m(ida, undefined)), false, 'uma janela só: nada a comparar');
   assert.deepEqual(D.comparacaoRetorno12m(ida, undefined).map(x => x.rotulo), ['IDA-IPCA Infraestrutura']);
   assert.deepEqual(D.comparacaoRetorno12m(undefined, undefined), []);
+});
+
+test('lacunas do IDA: dia útil sem ponto no trecho diário interrompe a linha; antes disso (série semanal) não', () => {
+  const dia = (d, v) => ({ data: d, numero_indice: v });
+  const serie = [dia('2026-08-07', 100), dia('2026-08-14', 101), dia('2026-09-30', 102), dia('2026-10-01', 103), dia('2026-10-05', 104), dia('2026-10-06', 105)];
+  const g = { indices: { GERAL: { serie } } };
+  const pts = D.evolucaoIda(g)[0].pontos;
+  // 01/10 (qui) -> 05/10 (seg): sexta 02/10 falta; fim de semana não conta; 30/09 -> 01/10 e 05 -> 06 seguidos
+  assert.deepEqual(pts.map(p => !!p.quebra), [false, false, false, false, true, false]);
+  assert.deepEqual(D.lacunasIda(g), ['2026-10-02']);
+  assert.deepEqual(D.lacunasIda(ida), [], 'a série de teste não tem dia útil faltando');
+  assert.deepEqual(D.lacunasIda(undefined), []);
+  assert.equal(D.evolucaoIda(ida)[0].pontos.some(p => p.quebra), false);
+});
+
+test('cobertura de cada série, para os títulos dos gráficos', () => {
+  assert.equal(D.coberturaIda(ida), '3 dias, de 01/10 a 05/10/2026');
+  assert.deepEqual(D.coberturaIdex(idex), { spread: '3 dias, de 01/10 a 05/10/2026', retornos: '3 meses, de jan/2026 a mar/2026' });
+  assert.equal(D.coberturaIda(undefined), '');
+  assert.deepEqual(D.coberturaIdex(undefined), { spread: '', retornos: '' });
+  assert.equal(D.coberturaIda({ indices: { X: { serie: [{ data: '2026-10-01', numero_indice: 1 }] } } }), '1 dia, de 01/10 a 01/10/2026');
 });
 
 test('comparacaoSpread: três linhas, último dia com valor de cada uma, IDEX em p.p., média nos dias em comum', () => {
   const c = D.comparacaoSpread(bloco, ida, idex);
   assert.deepEqual(c.map(x => x.rotulo), ['Debêntures de transporte (negócios)', 'IDA-IPCA Infraestrutura', 'IDEX-Infra Geral']);
+  assert.deepEqual(c.map(x => x.rotulo_curto), ['Transporte (negócios)', 'IDA-IPCA Infraestrutura', 'IDEX-Infra Geral']);
   // cada série no seu último dia com valor: o dia sem spread (sem curva) não conta
   assert.deepEqual(c.map(x => [x.spread_pp, x.data, x.periodo]), [[1, '2026-10-01', '01/10/2026'], [1.6, '2026-10-02', '02/10/2026'], [1.7, '2026-10-05', '05/10/2026']]);
   assert.deepEqual(c.map(x => x.ate), ['2026-10-02', '2026-10-05', '2026-10-05']);
@@ -398,10 +427,12 @@ test('comparacaoSpread: três linhas, último dia com valor de cada uma, IDEX em
 test('comparacaoSpread: com "somado" o rótulo e o valor do transporte mudam; as outras duas linhas não', () => {
   const n = D.comparacaoSpread(bloco, ida, idex), s = D.comparacaoSpread(bloco, ida, idex, { somado: true });
   assert.equal(s[0].rotulo, 'Debêntures de transporte (negócios + intenções)');
+  assert.equal(s[0].rotulo_curto, 'Transporte + intenções', 'o sufixo "+ intenções" cabe na tela estreita');
   assert.ok(proximo(s[0].spread_pp, D.series(bloco, { somado: true }).porDia[0].spread_medio));
   assert.ok(proximo(s[0].spread_pp, 1.7));
   assert.notEqual(s[0].spread_pp, n[0].spread_pp);
-  assert.deepEqual(s.slice(1), n.slice(1).map(x => Object.assign({}, x, { media_comum_pp: x.media_comum_pp })));
+  // IDA e IDEX têm os mesmos valores do último dia; só a média nos dias em comum pode mudar (as intenções podem trazer dias em comum)
+  assert.deepEqual(s.slice(1).map(x => [x.spread_pp, x.data]), n.slice(1).map(x => [x.spread_pp, x.data]));
 });
 
 test('comparacaoSpread: sem dias em comum não há média; série ausente fica sem valor, sem quebrar', () => {
@@ -434,13 +465,13 @@ test('tabelaIndices: "—" onde o papel está fora do índice, taxa escrita pelo
   const t = D.tabelaIndices(bloco, ida, idex);
   const cel = (l, k) => t.colunas.find(c => c.k === k).fmt(l);
   assert.deepEqual(t.colunas.map(c => c.k), ['ticker', 'emissor', 'spread_painel', 'taxa_anbima', 'spread_idex_pp']);
-  assert.deepEqual([cel(t.linhas[0], 'spread_painel'), cel(t.linhas[0], 'taxa_anbima'), cel(t.linhas[0], 'spread_idex_pp')], ['1,00 p.p.', 'IPCA + 7,50%', '1,20 p.p.']);
+  assert.deepEqual([cel(t.linhas[0], 'spread_painel'), cel(t.linhas[0], 'taxa_anbima'), cel(t.linhas[0], 'spread_idex_pp')], ['1,00', 'IPCA + 7,50%', '1,20']);
   assert.deepEqual([cel(t.linhas[1], 'spread_painel'), cel(t.linhas[1], 'taxa_anbima'), cel(t.linhas[1], 'spread_idex_pp')], ['—', '—', '—']);
-  assert.equal(t.colunas[3].rotulo, 'Taxa indicativa ANBIMA (05/10/2026)');
-  assert.equal(t.colunas[4].rotulo, 'Spread IDEX-Infra sobre a NTN-B (05/10/2026)');
-  assert.ok(t.colunas.every(c => /NTN-B|ANBIMA|Papel|Emissor/.test(c.rotulo)));
+  // cabeçalhos curtos (a unidade entre parênteses) e as datas dos índices à parte
+  assert.deepEqual(t.colunas.map(c => c.rotulo), ['Papel', 'Emissor', 'Spread painel (p.p.)', 'Taxa ANBIMA (%)', 'Spread IDEX (p.p.)']);
+  assert.deepEqual(t.datas, { anbima: '2026-10-05', idex: '2026-10-05' });
   const sem = D.tabelaIndices(bloco, undefined, undefined);
-  assert.equal(sem.colunas[3].rotulo, 'Taxa indicativa ANBIMA');
+  assert.deepEqual(sem.datas, { anbima: null, idex: null });
   assert.ok(sem.linhas.every(l => sem.colunas.every(c => !/NaN|undefined|null/.test(c.fmt(l)))));
 });
 
