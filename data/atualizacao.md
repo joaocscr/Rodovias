@@ -31,10 +31,10 @@ Registros: itens das coleções principais de cada bloco (valores preenchidos); 
 | agro | 5.571 | 5.571 | 210,5 | 210,5 | não |
 | antt | 1.938 | 1.938 | 399,2 | 399,2 | não |
 | carga | 4.312 | 4.312 | 141,3 | 141,3 | não |
-| debentures | 236 | 236 | 96,3 | 96,6 | sim (+300 bytes) |
+| debentures | 236 | 236 | 96,6 | 96,7 | sim (+140 bytes) |
 | estaduais | 16.238 | 16.238 | 2.949,8 | 2.949,8 | não |
-| fontes | 57 | 57 | 31,0 | 30,9 | sim (−41 bytes) |
-| ida | 99 | 99 | 11,0 | 11,5 | sim (+575 bytes) |
+| fontes | 57 | 57 | 30,9 | 31,1 | sim (+140 bytes) |
+| ida | 99 | 99 | 11,5 | 11,5 | não |
 | idex | 116 | 116 | 9,8 | 9,8 | não |
 | multimodal | 3.188 | 3.188 | 413,9 | 413,9 | não |
 | municipios | 5.571 | 5.571 | 1.687,6 | 1.687,6 | não |

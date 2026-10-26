@@ -233,8 +233,45 @@ def test_registrar_mantem_o_acesso_do_mesmo_conteudo(tmp_path):
     (pasta / "ms261013.txt").write_bytes(_arquivo("20261013", (("20300815", "6,1000"),)))   # conteúdo novo: data nova
     anb.registrar(man, pasta, acesso="2026-12-15")
     assert {i["arquivo"].rsplit("/", 1)[-1]: i["acesso"] for i in man.items}["ms261013.txt"] == "2026-12-15"
-    (pasta / "ms261014.txt").unlink()                                    # arquivo que saiu da pasta sai do manifesto
+    (pasta / "ms261014.txt").unlink()                                    # o cache cru se perdeu: o manifesto (no git) guarda
     anb.registrar(man, pasta, acesso="2026-12-15")
-    assert sorted(i["arquivo"].rsplit("/", 1)[-1] for i in man.items) == ["coisa.csv", "ms261013.txt"]
+    assert sorted(i["arquivo"].rsplit("/", 1)[-1] for i in man.items) == ["coisa.csv", "ms261013.txt", "ms261014.txt"]
     assert anb.acesso_dos_dias(man, {"2026-10-13"}, pasta) == "2026-12-15"
     assert anb.acesso_dos_dias(man, {"2026-10-20"}, pasta) is None
+
+
+def test_historico_junta_cache_e_arquivo_e_o_cache_vale_mais(tmp_path):
+    pasta, hist = tmp_path / "ms", tmp_path / "h.json"
+    pasta.mkdir()
+    (pasta / "ms261013.txt").write_bytes(_arquivo("20261013", (("20300815", "6,1000"),)))
+    (pasta / "ms261016.txt").write_bytes(_arquivo("20261016", (("20300815", "6,3000"),)))
+    anb._gravar_indice(pasta, {"2026-10-14": anb.SEM_ARQUIVO, "2026-10-17": anb.SEM_ARQUIVO, "2026-10-19": anb.SEM_ARQUIVO,
+                               "2026-10-13": anb.SEM_ARQUIVO})
+    g = anb.atualizar_historico(pasta, hist)
+    # 14/10 sem arquivo (dia útil antes da última curva); 17/10 é sábado e 19/10 vem depois da última curva: fora; a curva de 13/10 não é apagada por um 404
+    assert g == {"2026-10-13": [("2030-08-15", 6.1)], "2026-10-14": anb.SEM_ARQUIVO, "2026-10-16": [("2030-08-15", 6.3)]}
+    assert anb.ler_historico(hist) == g
+    linhas = hist.read_text(encoding="utf-8").splitlines()
+    assert len(linhas) == 5 and linhas[1].startswith(' "2026-10-13":')            # um dia por linha
+    # o cache se perde e um dia novo chega com outra taxa para o 16/10: o cache vale mais; o resto vem do arquivo
+    (pasta / "ms261013.txt").unlink()
+    (pasta / "ms261016.txt").write_bytes(_arquivo("20261016", (("20300815", "6,4000"),)))
+    assert anb.curvas(None, pasta, hist) == {"2026-10-13": [("2030-08-15", 6.1)], "2026-10-16": [("2030-08-15", 6.4)]}
+    assert anb.curvas({"2026-10-16"}, pasta, hist) == {"2026-10-16": [("2030-08-15", 6.4)]}
+    assert anb.curvas(None, tmp_path / "vazia", hist) == {"2026-10-13": [("2030-08-15", 6.1)], "2026-10-16": [("2030-08-15", 6.3)]}
+    assert anb.curvas(None, tmp_path / "vazia") == {}                               # sem histórico, só o cache
+    assert anb.ler_historico(tmp_path / "nao_existe.json") == {}
+    hist.write_text("não é json", encoding="utf-8")
+    assert anb.ler_historico(hist) == {}
+
+
+def test_arquivo_sem_cabecalho_ou_sem_ntnb_nao_entra_no_cache(tmp_path):
+    """200 com uma página HTML, sem o cabeçalho "Titulo@Data Referencia", ou com o cabeçalho e nenhuma NTN-B."""
+    cab = "Titulo@Data Referencia@Codigo SELIC@Data Base/Emissao@Data Vencimento@Tx. Compra@Tx. Venda@Tx. Indicativas\n"
+    site = _Site({"261013": (200, b"<html><title>Requisicao invalida</title></html>"),
+                  "261014": (200, ("sem cabecalho\nNTN-B@20261014@760199@20000715@20300815@6,0@6,0@6,0\n").encode("latin-1")),
+                  "261015": (200, (cab + "LTN@20261015@100000@20230101@20270701@9,0@9,0@9,0\n").encode("latin-1"))})
+    pasta = tmp_path / "ms"
+    for dia in ("2026-10-13", "2026-10-14", "2026-10-15"):
+        assert _baixar(site, [dia], pasta) == {dia: False}
+    assert not list(pasta.glob("ms*.txt")) and not (pasta / "indice.json").exists()

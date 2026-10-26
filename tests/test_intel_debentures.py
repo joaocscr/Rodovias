@@ -478,13 +478,18 @@ def test_datas_nao_dependem_da_data_do_arquivo(tmp_path, bloco):
     assert novo["fonte"] == bloco["fonte"]
 
 
+_RESPOSTAS = {"sgs": '[{"data":"01/10/2026","valor":"14.25"}]',
+              "focus": '{"value":[{"Data":"2026-10-02","Mediana":4.51}]}'}
+_HTML = "<html><title>Requisição inválida!</title><body>A sua requisição foi rejeitada.</body></html>"
+
+
 def test_baixar_sempre_renova_as_series_publicas(monkeypatch, tmp_path):
     chamadas = []
 
     def falso(url, dest, tries=5, force=False):
-        chamadas.append((Path(dest).name, force))
+        chamadas.append((Path(dest).name.removesuffix(".novo"), force))       # baixa para um arquivo ao lado e só então troca
         Path(dest).parent.mkdir(parents=True, exist_ok=True)
-        Path(dest).write_text("[]", encoding="utf-8")
+        Path(dest).write_text(_RESPOSTAS["focus" if "olinda" in url else "sgs"], encoding="utf-8")
         return dest
 
     class Manif:
@@ -511,6 +516,80 @@ def test_baixar_sempre_renova_as_series_publicas(monkeypatch, tmp_path):
                                        ("focus_ipca12m.json", True)])                  # o Tesouro não é mais baixado
     assert len(curva) == 1 and curva[0][1] == tmp_path / "anbima_ms"               # a curva da ANBIMA, só os dias que faltam
     assert curva[0][0] == {anb.ultimos_dias_uteis(dt.date.today(), 1)[0]}
+
+
+def test_resposta_invalida_nao_substitui_o_arquivo_anterior(monkeypatch, tmp_path, capsys):
+    """O Banco Central às vezes responde HTTP 200 com uma página de erro: o arquivo anterior fica, o aviso sai e a série
+    que respondeu direito é trocada. Resposta de forma errada (JSON de outro formato) também não vale."""
+    pub = tmp_path / "publico"
+    pub.mkdir()
+    for arq in ("sgs_432.json", "sgs_12.json", "sgs_13522.json"):
+        (pub / arq).write_text('[{"data":"01/09/2026","valor":"1"}]', encoding="utf-8")
+    (pub / "focus_ipca12m.json").write_text('{"value":[{"Data":"2026-09-01","Mediana":4.0}]}', encoding="utf-8")
+    ruins = {"sgs_13522": _HTML, "sgs_12": '{"erro": "x"}', "focus": "[]"}
+
+    def falso(url, dest, tries=5, force=False):
+        chave = "focus" if "olinda" in url else f"sgs_{url.split('sgs.')[1].split('/')[0]}"
+        Path(dest).write_text(ruins.get(chave, _RESPOSTAS["focus" if chave == "focus" else "sgs"]), encoding="utf-8")
+        return dest
+
+    class Manif:
+        def __init__(self, dominio):
+            self.items, self.adicionados = [], []
+
+        def add(self, url, dest, *a, **k):
+            self.adicionados.append(Path(dest).name)
+            return {}
+
+        def save(self):
+            pass
+    monkeypatch.setattr(deb, "_fetch", falso)
+    monkeypatch.setattr(deb, "Manifest", Manif)
+    monkeypatch.setattr(deb, "ESPERA_INVALIDA", ())
+    monkeypatch.setattr(deb, "PUBLICO", pub)
+    monkeypatch.setattr(deb, "PASTA", tmp_path / "sem_planilhas")
+    monkeypatch.setattr(anb, "fetch", lambda datas, pasta, **k: {d: True for d in datas})
+    monkeypatch.setattr(snd_mod, "fetch", lambda dest, manifesto=None: True)
+    deb.fetch()
+    assert json.loads((pub / "sgs_432.json").read_text(encoding="utf-8")) == [{"data": "01/10/2026", "valor": "14.25"}]   # trocado
+    antigo = '[{"data":"01/09/2026","valor":"1"}]'
+    assert (pub / "sgs_13522.json").read_text(encoding="utf-8") == antigo        # HTML: o anterior fica
+    assert (pub / "sgs_12.json").read_text(encoding="utf-8") == antigo           # JSON de outra forma: idem
+    assert "Mediana\":4.0" in (pub / "focus_ipca12m.json").read_text(encoding="utf-8")
+    assert not list(pub.glob("*.novo"))                                          # nada de arquivo temporário
+    erro = capsys.readouterr().err
+    assert "sgs_13522.json" in erro and "sgs_12.json" in erro and "focus_ipca12m.json" in erro and "arquivo anterior ficou" in erro
+    # a resposta rejeitada é pedida de novo: se a segunda vem boa, vale
+    respostas = iter([_HTML, _RESPOSTAS["sgs"]])
+    ruins.clear()
+    monkeypatch.setattr(deb, "ESPERA_INVALIDA", (0,))
+    monkeypatch.setattr(deb, "_fetch", lambda url, dest, tries=5, force=False: Path(dest).write_text(next(respostas), encoding="utf-8") or dest)
+    deb._baixar_valido("https://x", pub / "sgs_12.json", 5, deb._valida_sgs, dormir=lambda _s: None)
+    assert json.loads((pub / "sgs_12.json").read_text(encoding="utf-8"))[0]["valor"] == "14.25"
+
+
+def test_curva_sem_o_cache_cru_vale_o_historico_versionado(tmp_path):
+    """Apagado o cache da ANBIMA em data/raw/ (fora do git), o bloco é o mesmo, byte a byte: a curva de cada dia e os dias
+    sem arquivo ficam no histórico versionado, e o manifesto guarda o dia em que cada arquivo foi visto."""
+    pub = tmp_path / "publico"
+    shutil.copytree(PUBLICO, pub)
+    hist = tmp_path / "indices" / "curva_ntnb_anbima.json"
+    man = _Manifesto(_downloads())
+    anb._gravar_indice(pub / anb.SUBPASTA, {"2026-10-05": anb.SEM_ARQUIVO, "2026-09-30": anb.SEM_ARQUIVO})
+    gravado = anb.atualizar_historico(pub / anb.SUBPASTA, hist)
+    assert list(gravado) == ["2026-09-30", "2026-10-01", "2026-10-02"]           # o 05/10 vem depois da última curva: fica de fora
+    assert gravado["2026-09-30"] == anb.SEM_ARQUIVO and gravado["2026-10-01"][0] == ("2029-05-15", 5.8)
+    com = deb.montar(FIX, pub, EMISSORES, hoje="2026-10-22", manifesto=man, snd=SND, historico=hist)
+    shutil.rmtree(pub / anb.SUBPASTA)                                             # data/raw/ perdido
+    sem = deb.montar(FIX, pub, EMISSORES, hoje="2026-12-01", manifesto=man, snd=SND, historico=hist)
+    assert json.dumps(com, sort_keys=True) == json.dumps(sem, sort_keys=True)
+    assert com["macro"]["ntnb"] and sem["pendencias"]["series_indisponiveis"] == []
+    nota = next(f for f in sem["fonte"] if f["nome"].startswith("ANBIMA — Taxas indicativas"))["nota"]
+    assert ("A ANBIMA mantém online só os arquivos dos últimos dias; os spreads de dias anteriores ao primeiro download "
+            "(01/10/2026) ficam sem curva.") in nota
+    # sem cache e sem histórico: sem curva (spread "—"), como antes
+    nada = deb.montar(FIX, pub, EMISSORES, hoje="2026-10-22", manifesto=_Manifesto(_downloads()), snd=SND)
+    assert nada["macro"]["ntnb"] == []
 
 
 def test_curadoria_nao_vai_para_o_html(tmp_path):

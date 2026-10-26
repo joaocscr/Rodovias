@@ -323,6 +323,11 @@ def pasta_curva(pasta=PASTA):
     return _anbima.PASTA if Path(pasta) == PASTA else Path(pasta) / _anbima.SUBPASTA
 
 
+def historico_curva(pasta=PASTA):
+    """Arquivo versionado da curva da ANBIMA: o de verdade para o domínio, um arquivo da pasta de teste para as outras."""
+    return _anbima.HISTORICO if Path(pasta) == PASTA else Path(pasta) / "curva_historico.json"
+
+
 def _fetch_curva(pasta, cache, hist, hoje, proprio):
     """Baixa a curva da ANBIMA dos dias da série que faltam no cache. Com `proprio` (execução de verdade), registra os
     arquivos no manifesto do domínio debentures, o dono da pasta."""
@@ -592,11 +597,13 @@ def _tickers(path=DEBENTURES):
         return None
 
 
-def build(pasta=PASTA, out=OUT, debentures=DEBENTURES, curvas_pasta=None, manifesto=None, historico=HISTORICO):
+def build(pasta=PASTA, out=OUT, debentures=DEBENTURES, curvas_pasta=None, manifesto=None, historico=HISTORICO,
+          curvas_historico=None):
     """Lê o cache e as carteiras de data/raw/ida/ e o histórico versionado (nada de rede), grava o histórico atualizado e
     data/intel/ida.json. Sem o cache e sem histórico: FileNotFoundError (o `atualizar` pula o domínio e diz para baixar).
     Sem as carteiras (data/raw/ perdido), os papéis ficam como estavam no bloco anterior. `curvas_pasta`: o cache da curva da
-    ANBIMA (padrão, `pasta_curva`)."""
+    ANBIMA (padrão, `pasta_curva`); `curvas_historico`: o arquivo versionado
+    da curva, que o build atualiza e que vale quando o cache se perde (padrão, `historico_curva`)."""
     pasta, out = Path(pasta), Path(out)
     cache, hist = _ler_cache(pasta), ler_historico(historico)
     if not cache and not hist:
@@ -605,7 +612,10 @@ def build(pasta=PASTA, out=OUT, debentures=DEBENTURES, curvas_pasta=None, manife
                  for ind, (data, caminho) in carteiras_baixadas(pasta).items()}
     datas = {d for ind in INDICES for d in (cache.get(ind) or {})} | {d for ind in INDICES for d in (hist.get(ind) or {})} \
         | {d for d, _ in carteiras.values()}
-    curvas = _anbima.curvas(datas, curvas_pasta or pasta_curva(pasta))
+    curvas_pasta = curvas_pasta or pasta_curva(pasta)
+    curvas_historico = curvas_historico or historico_curva(pasta)
+    _anbima.atualizar_historico(curvas_pasta, curvas_historico)         # a curva de cada dia fica no git
+    curvas = _anbima.curvas(datas, curvas_pasta, curvas_historico)
     proprio = manifesto is None
     manifesto = Manifest("ida") if proprio else manifesto
     registrar(manifesto, pasta)

@@ -39,6 +39,7 @@ e `fetch` baixa só os dias que faltam.
 import datetime as dt
 import json
 import sys
+import time
 from collections import defaultdict
 from pathlib import Path
 
@@ -296,7 +297,7 @@ def _baixado(manifesto, urls):
     return max(datas) if datas else None
 
 
-def _macro(publico, hoje, manifesto):
+def _macro(publico, hoje, manifesto, historico=None):
     """(macro, curvas, séries ausentes). Vale o último valor até o dia em que o arquivo da série foi baixado (a Selic
     meta vem publicada para os dias seguintes, até a próxima reunião do Copom: nunca vale uma data posterior ao
     download); sem registro do download no manifesto, até `hoje`. Assim o resultado depende do arquivo, não do dia em
@@ -326,7 +327,7 @@ def _macro(publico, hoje, manifesto):
     else:
         macro["focus_ipca"] = None
         ausentes.append("focus")
-    curvas = _anbima.curvas(None, publico / _anbima.SUBPASTA)
+    curvas = _anbima.curvas(None, publico / _anbima.SUBPASTA, historico)
     if not curvas:
         ausentes.append("curva")
     ultima = max(curvas) if curvas else None   # o último dia com arquivo da ANBIMA
@@ -437,7 +438,8 @@ def _fontes(telas, mov, macro, curvas, dias_usados, manifesto, acesso_corretora,
                             "taxa da debênture IPCA+ − taxa indicativa da NTN-B interpolada pelo vencimento (não pela "
                             "duration), em linha reta entre os dois vencimentos vizinhos na curva do mesmo dia. Sem "
                             "curva no dia, ou com vencimento fora da curva, o spread fica sem valor: não há "
-                            "extrapolação."})
+                            "extrapolação. A ANBIMA mantém online só os arquivos dos últimos dias; os spreads de dias "
+                            f"anteriores ao primeiro download ({_br(min(curvas))}) ficam sem curva."})
     return out
 
 
@@ -458,12 +460,13 @@ def _ler_cadastro(caminho):
 
 
 def montar(pasta=PASTA, publico=PUBLICO, emissores=EMISSORES, ler_telas=ler_telas, ler_negocios=ler_negocios,
-           hoje=None, manifesto=None, snd=None):
+           hoje=None, manifesto=None, snd=None, historico=None):
     """Bloco data/intel/debentures.json a partir das planilhas de `pasta`, das séries de `publico` e da classificação
     `emissores` (caminho). `ler_telas`/`ler_negocios`: leitores trocáveis (ver o início do arquivo). `hoje`: data de
     referência de planilha vista pela primeira vez e das séries sem registro de download (AAAA-MM-DD; padrão, hoje).
     `manifesto`: onde ficam o dia em que cada planilha foi vista e o do download das séries (padrão, o do domínio; quem
-    chama grava com `save`). `snd`: arquivo do cadastro do SND (padrão, snd_caracteristicas.txt em `publico`). Sem
+    chama grava com `save`). `snd`: arquivo do cadastro do SND (padrão, snd_caracteristicas.txt em `publico`).
+    `historico`: arquivo versionado da curva da ANBIMA (curva_anbima.py), junto com o cache de `publico` (padrão, só o cache). Sem
     planilhas: FileNotFoundError."""
     arquivos = planilhas(pasta)
     if not arquivos:
@@ -484,7 +487,7 @@ def montar(pasta=PASTA, publico=PUBLICO, emissores=EMISSORES, ler_telas=ler_tela
     classe, pend = _universo(telas, mov, emis)
     pasta_curva = Path(publico) / _anbima.SUBPASTA
     _anbima.registrar(manifesto, pasta_curva, hoje)
-    macro, curvas, ausentes = _macro(publico, hoje, manifesto)
+    macro, curvas, ausentes = _macro(publico, hoje, manifesto, historico)
     cadastro, cadastro_de = _ler_cadastro(snd or Path(publico) / SND_ARQUIVO)
     emissoes = _emissoes(telas, classe, cadastro)
 
@@ -543,6 +546,47 @@ def _rel(p):
         return str(p)
 
 
+ESPERA_INVALIDA = (2, 4)  # resposta que não é a série (o Banco Central às vezes devolve uma página de erro com HTTP 200)
+
+
+def _valida_sgs(path):
+    """ValueError se `path` não é uma série do SGS: lista não vazia de {data, valor}."""
+    dados = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not (isinstance(dados, list) and dados and all(isinstance(d, dict) and "data" in d and "valor" in d for d in dados)):
+        raise ValueError("a resposta não é uma série do SGS (lista de {data, valor})")
+
+
+def _valida_focus(path):
+    """ValueError se `path` não é a resposta do Olinda: {"value": [{Data, Mediana}, …]} com ao menos uma linha."""
+    dados = json.loads(Path(path).read_text(encoding="utf-8"))
+    vals = dados.get("value") if isinstance(dados, dict) else None
+    if not (isinstance(vals, list) and vals and all(isinstance(v, dict) and "Data" in v and "Mediana" in v for v in vals)):
+        raise ValueError("a resposta não é a do Boletim Focus ({value: [{Data, Mediana}]})")
+
+
+def _baixar_valido(url, dest, tentativas, validar, dormir=None):
+    """Baixa `url` para um arquivo ao lado de `dest` e só o põe no lugar se `validar` o aceita; resposta inválida (JSON
+    ilegível ou de outra forma) é pedida de novo, e depois das esperas de `ESPERA_INVALIDA` o arquivo anterior fica como
+    está e sobe ValueError. RuntimeError se o download em si falha."""
+    dormir = dormir or time.sleep
+    dest = Path(dest)
+    novo = dest.with_name(dest.name + ".novo")
+    erro = None
+    for k in range(len(ESPERA_INVALIDA) + 1):
+        try:
+            _fetch(url, novo, tries=tentativas, force=True)
+            validar(novo)
+            novo.replace(dest)
+            return dest
+        except (ValueError, OSError) as e:       # JSONDecodeError é ValueError
+            erro = e
+        finally:
+            novo.unlink(missing_ok=True)
+        if k < len(ESPERA_INVALIDA):
+            dormir(ESPERA_INVALIDA[k])
+    raise ValueError(f"resposta inválida de {url}: {erro}; o arquivo anterior ficou")
+
+
 def dias_da_curva(pasta=PASTA, hoje=None):
     """Dias (AAAA-MM-DD) de que o painel precisa da curva das NTN-B: os dos negócios e das intenções, o da tela e o último
     dia útil. Lê as planilhas; sem planilhas, só o último dia útil."""
@@ -580,14 +624,14 @@ def fetch(force=False):  # noqa: ARG001 — `force` existe pela interface comum;
     ANBIMA baixa só os dias que faltam (`_fetch_curva`); sem a curva, o spread fica "—"."""
     m = Manifest("debentures")
     bcb = "Dados abertos do Banco Central do Brasil"
-    alvos = [(SGS.format(c, n), arq, f"Banco Central, SGS série {c} ({ROTULO_SERIE[k].split(' (')[0]})", 5, bcb)
+    alvos = [(SGS.format(c, n), arq, f"Banco Central, SGS série {c} ({ROTULO_SERIE[k].split(' (')[0]})", 5, bcb, _valida_sgs)
              for k, (c, n, arq) in SERIES.items()]
-    alvos += [(FOCUS_URL, FOCUS, "Banco Central, expectativas de mercado (Focus): IPCA 12 meses", 5, bcb)]
+    alvos += [(FOCUS_URL, FOCUS, "Banco Central, expectativas de mercado (Focus): IPCA 12 meses", 5, bcb, _valida_focus)]
     falhas = []
-    for url, arq, descricao, tentativas, licenca in alvos:
+    for url, arq, descricao, tentativas, licenca, validar in alvos:
         try:
-            dest = _fetch(url, PUBLICO / arq, tries=tentativas, force=True)
-        except RuntimeError as e:
+            dest = _baixar_valido(url, PUBLICO / arq, tentativas, validar)
+        except (RuntimeError, ValueError) as e:
             falhas.append(arq)
             print(f"AVISO: {e}", file=sys.stderr)
             continue
@@ -603,7 +647,8 @@ def fetch(force=False):  # noqa: ARG001 — `force` existe pela interface comum;
 
 def build():
     manifesto = Manifest("debentures")
-    doc = montar(manifesto=manifesto)
+    _anbima.atualizar_historico(PUBLICO / _anbima.SUBPASTA, _anbima.HISTORICO)   # a curva de cada dia fica no git
+    doc = montar(manifesto=manifesto, historico=_anbima.HISTORICO)
     manifesto.save()
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(doc, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")

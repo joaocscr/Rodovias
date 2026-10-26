@@ -14,6 +14,10 @@ que o site já apagou não volta (por isso a pasta de cache, fora do git, não d
   fica para a próxima vez.
 - `curvas`: lê só o cache (nada de rede) → {dia: [(vencimento, taxa)]}, a interface de `debentures.curva_ntnb` e
   `debentures.spread`.
+- `data/indices/curva_ntnb_anbima.json` (versionado, gerado pelos builds): a curva de cada dia já visto, uma linha por dia,
+  e os dias sem arquivo ("sem_arquivo") anteriores ao último dia com curva. `data/raw/` não vai para o git, e o site da ANBIMA
+  só guarda os últimos dias úteis: o histórico é o único lugar onde a série sobrevive. `curvas` o junta ao cache (o cache e o
+  dia novo valem mais); sem o cache, o resultado é o mesmo. `atualizar_historico` grava a junção.
 - `registrar`: põe os arquivos do cache no manifesto (caminho, SHA-256 e `acesso`, o dia em que o conteúdo foi visto pela
   primeira vez: o mesmo SHA-256 mantém a data, então o bloco não muda quando o comando roda em outro dia).
 """
@@ -42,6 +46,7 @@ PAUSA = 0.5
 ESPERAS = (5, 30)            # entre as 3 tentativas de cada dia
 DIAS_RECENTES = 5            # "sem_arquivo" nos últimos 5 dias úteis pode ser publicação atrasada: pede de novo
 DIAS_SEGUIDOS = 2            # dias seguidos que falham em todas as tentativas: o site está fora do ar, o resto fica para depois
+HISTORICO = ROOT / "data" / "indices" / "curva_ntnb_anbima.json"
 COLUNAS = {"vencimento": "Data Vencimento", "taxa": "Tx. Indicativas", "referencia": "Data Referencia"}
 
 
@@ -139,9 +144,7 @@ def _no_cache(pasta, data):
     return p.is_file() and p.stat().st_size > 0
 
 
-def curvas(datas, pasta=PASTA):
-    """{dia: [(vencimento, taxa)]} dos arquivos do cache `pasta` (só leitura, nada de rede). `datas`: só esses dias; None, todos
-    os que estão na pasta. Dia sem arquivo, ou com arquivo ilegível, fica de fora."""
+def _do_cache(datas, pasta):
     pasta = Path(pasta)
     dias = sorted(datas) if datas is not None else sorted(d for d in map(data_do_arquivo, (p.name for p in pasta.glob("ms*.txt"))) if d)
     out = {}
@@ -154,6 +157,54 @@ def curvas(datas, pasta=PASTA):
         if pontos:
             out[d] = pontos
     return out
+
+
+def ler_historico(path=HISTORICO):
+    """{dia: [(vencimento, taxa)] | "sem_arquivo"} do arquivo versionado; ausente ou ilegível, vazio."""
+    try:
+        dados = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    if not isinstance(dados, dict):
+        return {}
+    return {d: (SEM_ARQUIVO if v == SEM_ARQUIVO else [(p[0], p[1]) for p in v])
+            for d, v in dados.items() if v == SEM_ARQUIVO or (isinstance(v, list) and v)}
+
+
+def mesclar(historico, do_cache, indice):
+    """{dia: [(vencimento, taxa)] | "sem_arquivo"}: o histórico mais o cache (o cache vale mais) e os 404 do `indice` de
+    dias úteis. O "sem_arquivo" nunca apaga uma curva e só fica antes do último dia com curva: depois dele o arquivo pode
+    ainda não ter sido publicado. Fim de semana não entra."""
+    out = dict(historico)
+    out.update(do_cache)
+    for d, v in indice.items():
+        if v == SEM_ARQUIVO and d not in out and dt.date.fromisoformat(d).weekday() < 5:
+            out[d] = SEM_ARQUIVO
+    ultimo = max((d for d, v in out.items() if v != SEM_ARQUIVO), default="")
+    return {d: v for d, v in sorted(out.items()) if v != SEM_ARQUIVO or d < ultimo}
+
+
+def _junto(pasta, historico):
+    return mesclar(ler_historico(historico) if historico else {}, _do_cache(None, pasta), _ler_indice(pasta))
+
+
+def curvas(datas, pasta=PASTA, historico=None):
+    """{dia: [(vencimento, taxa)]} dos arquivos do cache `pasta` (só leitura, nada de rede), junto com o histórico versionado
+    `historico` (caminho; None, só o cache). O cache vale mais. `datas`: só esses dias; None, todos. Dia sem arquivo, ou com
+    arquivo ilegível, fica de fora."""
+    juntas = _junto(pasta, historico) if historico else _do_cache(None, pasta)
+    return {d: v for d, v in sorted(juntas.items()) if v != SEM_ARQUIVO and (datas is None or d in datas)}
+
+
+def atualizar_historico(pasta=PASTA, historico=HISTORICO):
+    """Grava em `historico` a junção do arquivo atual com o cache e o índice de `pasta` (um dia por linha, em ordem, diferenças
+    legíveis no git). Devolve o conteúdo gravado."""
+    juntas = _junto(pasta, historico)
+    linhas = ",\n".join(f' "{d}":{json.dumps(v, ensure_ascii=False, separators=(",", ":"))}' for d, v in juntas.items())
+    historico = Path(historico)
+    historico.parent.mkdir(parents=True, exist_ok=True)
+    historico.write_text("{\n" + linhas + "\n}\n", encoding="utf-8")
+    return juntas
 
 
 # ---------- download ----------
@@ -253,7 +304,7 @@ def rel(p):
 def registrar(manifesto, pasta=PASTA, acesso=None, dominio="debentures"):
     """Registra no manifesto os arquivos do cache `pasta` (caminho, SHA-256 e `acesso`). `acesso` (padrão, hoje) vale só
     para arquivo novo ou alterado: o mesmo SHA-256 mantém o dia em que foi visto pela primeira vez. Arquivo que saiu da
-    pasta sai do manifesto. Só mexe nos itens desta pasta."""
+    pasta (o `data/raw/` se perdeu) continua no manifesto, versionado, com a sua data. Só mexe nos itens desta pasta."""
     pasta = Path(pasta)
     acesso = acesso or dt.date.today().isoformat()
     prefixo = rel(pasta) + "/"
@@ -270,7 +321,8 @@ def registrar(manifesto, pasta=PASTA, acesso=None, dominio="debentures"):
                       "url": url(d), "arquivo": arq, "bytes": p.stat().st_size, "sha256": sha, "periodo": br,
                       "licenca": LICENCA,
                       "acesso": a["acesso"] if a and a.get("sha256") == sha and a.get("acesso") else acesso})
-    manifesto.items = [i for i in manifesto.items if not i.get("arquivo", "").startswith(prefixo)] + novos
+    todos = {**antes, **{i["arquivo"]: i for i in novos}}            # os que saíram da pasta ficam como estavam
+    manifesto.items = [i for i in manifesto.items if i not in antes.values()] + [todos[a] for a in sorted(todos)]
 
 
 def acesso_dos_dias(manifesto, dias, pasta=PASTA):

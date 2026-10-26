@@ -418,8 +418,8 @@ def _curva_ms(tmp_path, dias):
 
 
 def _build(tmp_path, **kw):
-    return ida.build(pasta=tmp_path, out=tmp_path / "ida.json", debentures=tmp_path / "sem.json",
-                     manifesto=_Manifesto(), historico=tmp_path / "historico.json", **kw)
+    kw.setdefault("debentures", tmp_path / "sem.json")
+    return ida.build(pasta=tmp_path, out=tmp_path / "ida.json", manifesto=_Manifesto(), historico=tmp_path / "historico.json", **kw)
 
 
 def _historico(tmp_path):
@@ -482,6 +482,25 @@ def test_spread_e_recalculado_quando_a_curva_chega_e_sobrevive_ao_cache_perdido(
     assert _historico(tmp_path)[ida.INFRA][dia]["spread_medio"] == esperado
     (tmp_path / "cache.json").unlink()                                        # sem cache e sem curva: fica o do histórico
     assert _build(tmp_path)["indices"][ida.INFRA]["serie"][-1]["spread_medio"] == esperado
+
+
+def test_curva_perdida_vale_o_historico_versionado_da_curva(tmp_path):
+    """Apagado o cache da curva da ANBIMA (data/raw/, fora do git), o build refaz o mesmo bloco: a curva de cada dia está no
+    histórico versionado, que o build atualiza a cada rodada. O IDA e os papéis usam a mesma curva."""
+    import shutil
+    rodar(tmp_path, "2026-10-21")
+    dias = {d: (6.0 + k / 10, 7.0 + k / 10) for k, d in enumerate(sorted(d for d, v in cache_de(tmp_path)[ida.INFRA].items() if v != ida.SEM_DADO))}
+    _curva_ms(tmp_path, dias)
+    deb = tmp_path / "debentures.json"
+    deb.write_text(json.dumps({"emissoes": [{"ticker": "TSTR11"}]}), encoding="utf-8")
+    com = _build(tmp_path, debentures=deb)
+    hist = ida.historico_curva(tmp_path)
+    assert hist == tmp_path / "curva_historico.json" and sorted(anb.ler_historico(hist)) == sorted(dias)
+    assert any(p["spread_medio"] is not None for p in com["indices"][ida.INFRA]["serie"]) and com["papeis"]["TSTR11"]["spread"] is not None
+    shutil.rmtree(tmp_path / anb.SUBPASTA)
+    (tmp_path / "historico.json").unlink()                      # nem o histórico do IDA ajuda: só o cache do IDA e o da curva
+    sem = _build(tmp_path, debentures=deb)
+    assert json.dumps(com) == json.dumps(sem)
 
 
 def test_bloco_do_historico_nao_depende_do_dia(tmp_path):

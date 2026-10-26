@@ -53,7 +53,7 @@
   "url": "https://www.debentures.com.br/exploreosnd/consultaadados/emissoesdedebentures/caracteristicas_e.asp?tip_deb=publicas&op_exc=False",
   "arquivo": "data/raw/debentures/publico/snd_caracteristicas.txt",
   "bytes": 2873866,
-  "sha256": "8c4b94bd19adeaca9ca912878e41bff4578048701aafdb47c02150e6d990b542",
+  "sha256": "aa113460ae5a009b1cbf8c2af65e28510cacd1746107022f0b44905868773616",
   "periodo": "",
   "licenca": "Consulta pública do SND (debentures.com.br, ANBIMA); a página não declara licença de reuso",
   "acesso": "2026-10-26",
