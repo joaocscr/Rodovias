@@ -8,8 +8,10 @@ Entradas
   cabeçalho, não pelo nome: tela BTG (com "Setor"), tela XP (com "Índice" e "Rating"), negócios fechados BTG (com
   "transact_time") e intenções de compra e venda XP (com "Direção" e "Taxa Bruta").
 - Séries públicas, baixadas por `fetch` para data/raw/debentures/publico/: Banco Central (SGS: Selic meta 432, CDI 12
-  e IPCA 12 meses 13522; Olinda: expectativa Focus do IPCA 12 meses) e Tesouro Nacional (taxas do Tesouro Direto, de
-  onde sai a curva diária das NTN-B).
+  e IPCA 12 meses 13522; Olinda: expectativa Focus do IPCA 12 meses) e ANBIMA (taxas indicativas dos títulos públicos,
+  um arquivo por dia útil em data/raw/debentures/publico/anbima_ms/, de onde sai a curva diária das NTN-B; ver
+  curva_anbima.py). A curva só é baixada para os dias de que o painel precisa: os dos negócios e das intenções, o da tela
+  e o último dia útil.
 - Cadastro de debêntures do SND (ANBIMA), baixado por `fetch` para data/raw/debentures/publico/snd_caracteristicas.txt e
   lido por snd.py: data de emissão, coordenador líder e incentivo fiscal (Lei 12.431) de cada papel, casados pelo código.
   Sem o arquivo, os campos ficam None e cada papel vira item de curadoria.
@@ -29,7 +31,8 @@ Troca das planilhas pela API interna
   usuário". Os conversores de texto comuns ficam em debentures_texto.py.
 
 Séries públicas: são dados diários, então `fetch` (o `--baixar` do atualizar.py) sempre baixa de novo; se uma fonte
-não responde, fica o arquivo anterior e o aviso.
+não responde, fica o arquivo anterior e o aviso. A curva das NTN-B é a exceção: arquivo de um dia já publicado não muda,
+e `fetch` baixa só os dias que faltam.
 
     python scripts/intel/debentures.py [fetch|build|all]
 """
@@ -41,9 +44,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from intel import curva_anbima as _anbima  # noqa: E402
 from intel import debentures_planilhas as _planilhas  # noqa: E402
 from intel.debentures_planilhas import ler_negocios, ler_telas  # noqa: E402,F401 — leitores padrão de `montar`
-from intel.debentures_texto import normalizar, para_data, taxa_pct  # noqa: E402
+from intel.debentures_texto import normalizar, para_data  # noqa: E402
 from intel import snd as _snd  # noqa: E402
 from intel.fontes import RAW, ROOT, Manifest, fetch as _fetch, sha256  # noqa: E402
 
@@ -72,16 +76,10 @@ FOCUS_URL = ("https://olinda.bcb.gov.br/olinda/servico/Expectativas/versao/v1/od
              "?%24top=20&%24filter=Indicador%20eq%20'IPCA'%20and%20Suavizada%20eq%20'S'%20and%20baseCalculo%20eq%200"
              "&%24orderby=Data%20desc&%24format=json")
 FOCUS = "focus_ipca12m.json"
-TESOURO_URL = ("https://www.tesourotransparente.gov.br/ckan/dataset/df56aa42-484a-4a59-8184-7676580c81e3/resource/"
-               "796d2059-14e9-44e3-80c9-2d9e30b405c1/download/precotaxatesourodireto.csv")
-TESOURO_PAGINA = "https://www.tesourotransparente.gov.br/ckan/dataset/taxas-dos-titulos-ofertados-pelo-tesouro-direto"
-TESOURO = "tesouro_direto.csv"
-NTNB = {"Tesouro IPCA+ com Juros Semestrais": "NTN-B", "Tesouro IPCA+": "NTN-B Principal"}
-TENTATIVAS_TESOURO = 7  # o site devolve 429 (Retry-After 30 s) em rajadas: espera 2, 4, …, 128 s
 
 ROTULO_SERIE = {"selic": "Selic meta (SGS 432)", "cdi": "CDI (SGS 12)", "ipca12m": "IPCA 12 meses (SGS 13522)",
-                "focus": "Focus, IPCA 12 meses", "tesouro": "Tesouro Direto (NTN-B)"}
-ARQUIVO_SERIE = {**{k: v[2] for k, v in SERIES.items()}, "focus": FOCUS, "tesouro": TESOURO}
+                "focus": "Focus, IPCA 12 meses", "curva": "Taxa indicativa das NTN-B (ANBIMA)"}
+ARQUIVO_SERIE = {**{k: v[2] for k, v in SERIES.items()}, "focus": FOCUS, "curva": _anbima.SUBPASTA}
 
 
 # ---------- entradas ----------
@@ -121,29 +119,10 @@ def classificar(nome, emissores):
 
 # ---------- curva das NTN-B e spread ----------
 
-def ler_tesouro(path, datas=None):
-    """{data: [(vencimento, taxa, título)]} das NTN-B (com juros semestrais e principal) do CSV do Tesouro Direto,
-    com a taxa de compra da manhã. No mesmo vencimento vale a NTN-B com juros semestrais. `datas`: só esses dias."""
-    import csv
-    brutos = defaultdict(dict)
-    with open(path, encoding="utf-8", errors="replace", newline="") as f:
-        for r in csv.DictReader(f, delimiter=";"):
-            titulo = NTNB.get((r.get("Tipo Titulo") or "").strip())
-            data = para_data(r.get("Data Base"))
-            if not titulo or not data or (datas is not None and data not in datas):
-                continue
-            venc, taxa = para_data(r.get("Data Vencimento")), taxa_pct(r.get("Taxa Compra Manha"))
-            if venc is None or taxa is None:
-                continue
-            atual = brutos[data].get(venc)
-            if atual is None or titulo == "NTN-B":
-                brutos[data][venc] = (taxa, titulo)
-    return {d: sorted((v, t, tit) for v, (t, tit) in pontos.items()) for d, pontos in brutos.items()}
-
-
 def curva_ntnb(data, curvas):
-    """[(vencimento, taxa)] da curva das NTN-B do dia, em ordem de vencimento; [] se o Tesouro não tem o dia."""
-    return [(v, t) for v, t, _ in curvas.get(data, [])]
+    """[(vencimento, taxa)] da curva das NTN-B do dia, em ordem de vencimento; [] se a ANBIMA não tem o dia. `curvas`:
+    de `curva_anbima.curvas`."""
+    return list(curvas.get(data, []))
 
 
 def spread(taxa, vencimento, curva, indexador="IPCA+"):
@@ -347,13 +326,11 @@ def _macro(publico, hoje, manifesto):
     else:
         macro["focus_ipca"] = None
         ausentes.append("focus")
-    curvas = {}
-    if (publico / TESOURO).exists():
-        curvas = ler_tesouro(publico / TESOURO)
-    else:
-        ausentes.append("tesouro")
-    ultima = max(curvas) if curvas else None
-    macro["ntnb"] = [{"vencimento": v, "taxa": t, "data": ultima, "titulo": tit} for v, t, tit in curvas.get(ultima, [])]
+    curvas = _anbima.curvas(None, publico / _anbima.SUBPASTA)
+    if not curvas:
+        ausentes.append("curva")
+    ultima = max(curvas) if curvas else None   # o último dia com arquivo da ANBIMA
+    macro["ntnb"] = [{"vencimento": v, "taxa": t, "data": ultima, "titulo": _anbima.TITULO} for v, t in curvas.get(ultima, [])]
     return macro, curvas, ausentes
 
 
@@ -388,10 +365,11 @@ def registrar_planilhas(manifesto, arquivos, hoje):
     return acessos
 
 
-def _fontes(telas, mov, macro, curvas, dias_usados, manifesto, acesso_corretora, hoje, emissoes=(), cadastro_de=None):
+def _fontes(telas, mov, macro, curvas, dias_usados, manifesto, acesso_corretora, hoje, emissoes=(), cadastro_de=None,
+            pasta_curva=_anbima.PASTA):
     """Fontes do bloco. Datas das planilhas vêm dos dados (data da tela, horário dos negócios e das intenções); o acesso
     de cada corretora é o dia em que se viu pela primeira vez a planilha mais recente que a traz (`acesso_corretora`), o
-    das séries públicas é o do último download (manifesto). Nenhuma data vem do dia em que o bloco é gerado."""
+    das séries públicas é o do último download (manifesto) e o da curva da ANBIMA, o do primeiro dia em que se viu o arquivo."""
     tela_btg = _intervalo(t["data"] for t in telas if t["origem"] == "BTG")
     tela_xp = _intervalo(t["data"] for t in telas if t["origem"] == "XP")
     xp_sem_data = not tela_xp  # a tela XP traz só a hora da atualização: vale a data da tela BTG (dito na nota da fonte)
@@ -450,13 +428,13 @@ def _fontes(telas, mov, macro, curvas, dias_usados, manifesto, acesso_corretora,
                     "nota": "Mediana das expectativas das instituições pesquisadas para o IPCA dos próximos 12 meses "
                             "(série suavizada), na data mais recente."})
     if curvas:
-        out.append({"nome": "Tesouro Nacional — Taxas dos títulos ofertados pelo Tesouro Direto (NTN-B)",
-                    "url": TESOURO_PAGINA, "acesso": _baixado(manifesto, {TESOURO_URL}) or hoje,
-                    "periodo": _intervalo(dias_usados | {max(curvas)}),
-                    "licenca": "Licença Aberta para Bases de Dados (ODbL) do Open Data Commons", "tipo": "medido",
-                    "nota": "Taxa de compra da manhã do Tesouro IPCA+ com Juros Semestrais (NTN-B) e do Tesouro IPCA+ "
-                            "(NTN-B Principal); no mesmo vencimento vale a NTN-B com juros. Spread = taxa da debênture "
-                            "IPCA+ − NTN-B (Tesouro Direto, taxa de compra) interpolada pelo vencimento (não pela "
+        dias = dias_usados | {max(curvas)}
+        out.append({"nome": "ANBIMA — Taxas indicativas dos títulos públicos (NTN-B)", "url": _anbima.PAGINA,
+                    "acesso": _anbima.acesso_dos_dias(manifesto, dias, pasta_curva) or max(dias),
+                    "periodo": _intervalo(dias), "licenca": _anbima.LICENCA, "tipo": "medido",
+                    "nota": "Taxa indicativa das NTN-B do arquivo diário \"Mercado secundário de títulos públicos\" da "
+                            "ANBIMA, um arquivo por dia útil. É a referência de todos os spreads do painel: spread = "
+                            "taxa da debênture IPCA+ − taxa indicativa da NTN-B interpolada pelo vencimento (não pela "
                             "duration), em linha reta entre os dois vencimentos vizinhos na curva do mesmo dia. Sem "
                             "curva no dia, ou com vencimento fora da curva, o spread fica sem valor: não há "
                             "extrapolação."})
@@ -504,6 +482,8 @@ def montar(pasta=PASTA, publico=PUBLICO, emissores=EMISSORES, ler_telas=ler_tela
             acesso_corretora[o] = max(acesso_corretora.get(o, ""), acessos[Path(p)])
     emis = carregar_emissores(emissores)
     classe, pend = _universo(telas, mov, emis)
+    pasta_curva = Path(publico) / _anbima.SUBPASTA
+    _anbima.registrar(manifesto, pasta_curva, hoje)
     macro, curvas, ausentes = _macro(publico, hoje, manifesto)
     cadastro, cadastro_de = _ler_cadastro(snd or Path(publico) / SND_ARQUIVO)
     emissoes = _emissoes(telas, classe, cadastro)
@@ -531,7 +511,8 @@ def montar(pasta=PASTA, publico=PUBLICO, emissores=EMISSORES, ler_telas=ler_tela
     agreg = lambda ls, d=False: _conjunto([{**l, "emissor": l["emissor_classe"]} for l in ls], d)  # noqa: E731
     datas = [l["data"] for t in ("negocios", "intencoes") for l in mov[t] if l["data"]]
     return {
-        "fonte": _fontes(telas, mov, macro, curvas, dias_usados, manifesto, acesso_corretora, hoje, emissoes, cadastro_de),
+        "fonte": _fontes(telas, mov, macro, curvas, dias_usados, manifesto, acesso_corretora, hoje, emissoes, cadastro_de,
+                         pasta_curva),
         "tipo": "medido",
         "macro": macro,
         "emissoes": emissoes,
@@ -562,18 +543,46 @@ def _rel(p):
         return str(p)
 
 
+def dias_da_curva(pasta=PASTA, hoje=None):
+    """Dias (AAAA-MM-DD) de que o painel precisa da curva das NTN-B: os dos negócios e das intenções, o da tela e o último
+    dia útil. Lê as planilhas; sem planilhas, só o último dia útil."""
+    dias = {_anbima.ultimos_dias_uteis(hoje or dt.date.today(), 1)[0]}
+    for p in planilhas(pasta):
+        mov = ler_negocios(p)
+        dias |= {l["data"] for g in ("negocios", "intencoes") for l in mov[g] if l["data"]}
+        dias |= {t["data"] for t in ler_telas(p) if t["data"]}
+    return dias
+
+
+def _fetch_curva(m, hoje=None):
+    """Baixa os arquivos da curva da ANBIMA que faltam para `dias_da_curva` e os registra em `m`. Se o último dia útil
+    não tem arquivo (feriado, ou ainda não publicado), baixa o dia útil anterior, até 5 dias para trás, para que a curva do
+    cenário de juros seja a do último dia com arquivo."""
+    hoje = hoje or dt.date.today()
+    pasta = PUBLICO / _anbima.SUBPASTA
+    dias = dias_da_curva(PASTA, hoje)
+    saida = _anbima.fetch(dias, pasta, hoje=hoje)
+    ultimo = _anbima.ultimos_dias_uteis(hoje, 1)[0]
+    if not saida.get(ultimo):
+        recuar = [d for d in reversed(_anbima.ultimos_dias_uteis(hoje, _anbima.DIAS_RECENTES)) if d < ultimo]
+        for d in recuar:
+            if _anbima.fetch({d}, pasta, hoje=hoje)[d]:
+                break
+    _anbima.registrar(m, pasta, hoje.isoformat())
+    return saida
+
+
 def fetch(force=False):  # noqa: ARG001 — `force` existe pela interface comum; aqui sempre se baixa de novo
-    """Baixa de novo as séries públicas (dados diários: Selic, CDI, IPCA, Focus e o histórico do Tesouro Direto) e o
-    cadastro de debêntures do SND (snd.py) para data/raw/debentures/publico/ e registra no manifesto, com ou sem `force`. Série que não responde depois das novas
-    tentativas não interrompe as outras: fica o arquivo anterior (o download vai para um arquivo temporário) e o aviso;
-    sem arquivo nenhum, o `build` gera o bloco sem ela e a curadoria pede nova tentativa (sem o Tesouro, spread "—")."""
+    """Baixa de novo as séries públicas (dados diários: Selic, CDI, IPCA e Focus) e o cadastro de debêntures do SND
+    (snd.py) para data/raw/debentures/publico/ e registra no manifesto, com ou sem `force`. Série que não responde depois
+    das novas tentativas não interrompe as outras: fica o arquivo anterior (o download vai para um arquivo temporário) e o
+    aviso; sem arquivo nenhum, o `build` gera o bloco sem ela e a curadoria pede nova tentativa. A curva das NTN-B da
+    ANBIMA baixa só os dias que faltam (`_fetch_curva`); sem a curva, o spread fica "—"."""
     m = Manifest("debentures")
     bcb = "Dados abertos do Banco Central do Brasil"
     alvos = [(SGS.format(c, n), arq, f"Banco Central, SGS série {c} ({ROTULO_SERIE[k].split(' (')[0]})", 5, bcb)
              for k, (c, n, arq) in SERIES.items()]
-    alvos += [(FOCUS_URL, FOCUS, "Banco Central, expectativas de mercado (Focus): IPCA 12 meses", 5, bcb),
-              (TESOURO_URL, TESOURO, "Tesouro Nacional, preço e taxa dos títulos do Tesouro Direto (histórico)",
-               TENTATIVAS_TESOURO, "Licença Aberta para Bases de Dados (ODbL) do Open Data Commons")]
+    alvos += [(FOCUS_URL, FOCUS, "Banco Central, expectativas de mercado (Focus): IPCA 12 meses", 5, bcb)]
     falhas = []
     for url, arq, descricao, tentativas, licenca in alvos:
         try:
@@ -585,6 +594,8 @@ def fetch(force=False):  # noqa: ARG001 — `force` existe pela interface comum;
         m.add(url, dest, descricao, licenca=licenca)["baixado"] = dt.date.today().isoformat()
     if not _snd.fetch(PUBLICO / SND_ARQUIVO, manifesto=m):
         falhas.append(SND_ARQUIVO)
+    _fetch_curva(m)
+    m.items = [i for i in m.items if not i.get("arquivo", "").endswith("/tesouro_direto.csv")]   # o Tesouro deixou de ser fonte
     m.save()
     if falhas:
         print(f"AVISO: séries públicas sem download: {', '.join(falhas)}", file=sys.stderr)

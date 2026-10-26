@@ -363,14 +363,14 @@
     "id": "ntn-b",
     "termo": "Nota do Tesouro Nacional, série B",
     "sigla": "NTN-B",
-    "definicao": "Título público federal que paga uma taxa fixa mais a variação do IPCA (no Tesouro Direto, o Tesouro IPCA+ com juros semestrais). Como é considerado o investimento de menor risco com essa remuneração, sua taxa é a referência para precificar debêntures IPCA+.",
-    "fonte": { "nome": "Tesouro Direto", "url": "https://www.tesourodireto.com.br/" },
+    "definicao": "Título público federal que paga uma taxa fixa mais a variação do IPCA. Como é considerado o investimento de menor risco com essa remuneração, sua taxa é a referência para precificar debêntures IPCA+. No painel vale a taxa indicativa da ANBIMA, publicada a cada dia útil para o mercado secundário.",
+    "fonte": { "nome": "ANBIMA, taxas indicativas dos títulos públicos", "url": "https://www.anbima.com.br/informacoes/merc-sec/default.asp" },
     "categorias": ["Debêntures e juros"]
   },
   {
     "id": "spread",
     "termo": "Spread",
-    "definicao": "Diferença entre a taxa de um título e a taxa de referência de mesmo prazo. Nas debêntures IPCA+, é a taxa da debênture menos a da NTN-B no mesmo prazo, interpolada na curva das NTN-B pelo vencimento da debênture; mede o prêmio que o investidor exige pelo risco da empresa.",
+    "definicao": "Diferença entre a taxa de um título e a taxa de referência de mesmo prazo. Nas debêntures IPCA+, é a taxa da debênture menos a taxa indicativa da ANBIMA da NTN-B no mesmo prazo, interpolada na curva das NTN-B do mesmo dia pelo vencimento da debênture; mede o prêmio que o investidor exige pelo risco da empresa.",
     "categorias": ["Debêntures e juros"]
   },
   {

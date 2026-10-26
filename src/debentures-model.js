@@ -174,11 +174,11 @@ const DebenturesModel = (() => {
   function notaCurva(bloco) {
     const ate = curvaAte(bloco), fim = bloco && bloco.secundario && bloco.secundario.periodo && bloco.secundario.periodo.ate;
     return ate && fim && fim > ate
-      ? `O Tesouro Nacional publicou a curva até ${fmtData(ate)}: nos negócios dos dias seguintes (até ${fmtData(fim)}) o spread aparece como “${DASH}”.` : '';
+      ? `A ANBIMA publicou a curva até ${fmtData(ate)}: nos negócios dos dias seguintes (até ${fmtData(fim)}) o spread aparece como “${DASH}”.` : '';
   }
   // Linha "Fonte:" curta dos cartões: quem forneceu e o período; nome completo, licença e nota ficam na aba Fontes.
   // o.corretoras: ['BTG', 'XP'] (as que existem no bloco); o.periodo: 'dados' (período dos negócios e intenções), 'tela'
-  // (data da tela) ou 'intencoes'; o.bcb: Banco Central; o.tesouro: curva das NTN-B (com o.curva, "curva de dd/mm/aaaa").
+  // (data da tela) ou 'intencoes'; o.bcb: Banco Central; o.anbima: curva das NTN-B (com o.curva, "curva de dd/mm/aaaa").
   function fonteCurta(bloco, o = {}) {
     const list = bloco && bloco.fonte ? (Array.isArray(bloco.fonte) ? bloco.fonte : [bloco.fonte]) : [];
     const acha = re => list.find(x => x && re.test(x.nome || ''));
@@ -193,7 +193,7 @@ const DebenturesModel = (() => {
       partes.push(per ? `${nome}, ${per}` : nome);
     }
     if (o.bcb && (acha(/Banco Central/))) partes.push('Banco Central do Brasil');
-    if (o.tesouro && acha(/Tesouro Nacional/)) partes.push(o.curva && curvaAte(bloco) ? `Tesouro Nacional, curva de ${fmtData(curvaAte(bloco))}` : 'Tesouro Nacional (curva das NTN-B)');
+    if (o.anbima && acha(/^ANBIMA .*NTN-B/)) partes.push(o.curva && curvaAte(bloco) ? `ANBIMA, curva de ${fmtData(curvaAte(bloco))}` : 'ANBIMA (curva das NTN-B)');
     return partes.join('; ') || DASH;
   }
   const periodoTexto = p => (p && p.de && p.ate ? `${fmtData(p.de)} a ${fmtData(p.ate)}` : '');
@@ -432,14 +432,14 @@ const DebenturesModel = (() => {
 
   // Comparação do spread sobre a NTN-B: debêntures de transporte (do painel), IDA-IPCA Infraestrutura e IDEX-Infra Geral. Cada linha
   // traz o último dia com valor (spread_pp, data) e, se as três séries têm dias em comum, a média simples nesses dias
-  // (media_comum_pp, dias_comuns, periodo_comum). `ate`: último dia da série, que pode ser posterior ao do valor (dia sem curva do
-  // Tesouro não tem spread).
+  // (media_comum_pp, dias_comuns, periodo_comum). `ate`: último dia da série, que pode ser posterior ao do valor (dia sem curva da
+  // ANBIMA não tem spread).
   function comparacaoSpread(bloco, ida, idex, { somado = false } = {}) {
     const pontos = (lista, dia, val) => lista.filter(x => x && dia(x) && num(val(x))).map(x => ({ data: dia(x), v: val(x) })).sort(porData);
     const transporte = series(bloco, { somado }).porDia;
     const defs = [
       { rotulo: `Debêntures de transporte (${somado ? 'negócios + intenções' : 'negócios'})`, curto: somado ? 'Transporte + intenções' : 'Transporte (negócios)', todas: transporte,
-        pts: pontos(transporte, x => x.data, x => x.spread_medio), fonte: fonteCurta(bloco, { corretoras: CORRETORAS, periodo: 'dados', tesouro: true }) },
+        pts: pontos(transporte, x => x.data, x => x.spread_medio), fonte: fonteCurta(bloco, { corretoras: CORRETORAS, periodo: 'dados', anbima: true }) },
       { rotulo: nomeIda(R_IDA, indicesIda(ida)[R_IDA]), curto: nomeIda(R_IDA, indicesIda(ida)[R_IDA]), todas: serieIda(ida, R_IDA), pts: pontos(serieIda(ida, R_IDA), x => x.data, x => x.spread_medio),
         fonte: fonteIda(ida) },
       { rotulo: nomeIdex(R_IDEX), curto: nomeIdex(R_IDEX), todas: (idex && idex.spread) || [], pts: pontos(spreadIdex(idex), x => x.data, x => x.spread_pp),

@@ -1,5 +1,7 @@
 """Gera as planilhas sintéticas de tests/fixtures/debentures/ (telas.xlsx e negocios.xlsx), no formato das planilhas
-das corretoras (abas BTG e XP). Emissores, papéis e números são inventados.
+das corretoras (abas BTG e XP), e os arquivos de taxas indicativas da ANBIMA de publico/anbima_ms/ (msAAMMDD.txt, texto
+latin-1 separado por `@`, com 4 NTN-B por dia e uma LTN e uma NTN-F que o leitor deve ignorar). Emissores, papéis e números
+são inventados.
 
 Uso: python tests/fixtures/debentures/gerar.py
 """
@@ -75,6 +77,24 @@ INTENCOES_XP = (["Solicitado em", "Ativo", "Emissor/Risco", "Direção", "Quanti
 ])
 
 
+CABECALHO_MS = ("Titulo@Data Referencia@Codigo SELIC@Data Base/Emissao@Data Vencimento@Tx. Compra@Tx. Venda@Tx. Indicativas@PU@"
+                "Desvio padrao@Interv. Ind. Inf. (D0)@Interv. Ind. Sup. (D0)@Interv. Ind. Inf. (D+1)@Interv. Ind. Sup. (D+1)@Criterio")
+# dia -> [(vencimento AAAAMMDD, taxa indicativa)] das NTN-B
+NTNB_MS = {
+    "20261001": [("20290515", "5,8000"), ("20300815", "6,0000"), ("20350515", "6,5000"), ("20350815", "6,5500")],
+    "20261002": [("20290515", "5,7000"), ("20300815", "6,1000"), ("20350515", "6,4000"), ("20350815", "6,4500")],
+}
+
+
+def _ms(dia, ntnb):
+    linhas = ["ANBIMA - Associação Brasileira das Entidades dos Mercados Financeiro e de Capitais", "", CABECALHO_MS,
+              f"LTN@{dia}@100000@20230101@20270701@9,9900@9,9800@9,9850@900,000000@0,00100000000000@9,9@10,1@9,9@10,1@Calculado"]
+    linhas += [f"NTN-B@{dia}@760199@20000715@{v}@{t}@{t}@{t}@4000,000000@0,00100000000000@5,0@7,0@5,0@7,0@Calculado"
+               for v, t in ntnb]
+    linhas.append(f"NTN-F@{dia}@950199@20000101@20310101@12,9000@12,8000@12,8500@900,000000@0,00100000000000@12,5@13,0@12,5@13,0@Calculado")
+    return "\r\n".join(linhas) + "\r\n"
+
+
 def _salva(caminho, abas):
     wb = openpyxl.Workbook()
     wb.remove(wb.active)
@@ -89,6 +109,10 @@ def _salva(caminho, abas):
 def main():
     _salva(AQUI / "telas.xlsx", {"BTG": TELA_BTG, "XP": TELA_XP})
     _salva(AQUI / "negocios.xlsx", {"BTG": NEGOCIOS_BTG, "XP": INTENCOES_XP})
+    pasta = AQUI / "publico" / "anbima_ms"
+    pasta.mkdir(parents=True, exist_ok=True)
+    for dia, ntnb in NTNB_MS.items():
+        (pasta / f"ms{dia[2:]}.txt").write_bytes(_ms(dia, ntnb).encode("latin-1"))
 
 
 if __name__ == "__main__":

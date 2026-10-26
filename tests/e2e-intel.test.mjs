@@ -2277,7 +2277,7 @@ test('Debêntures: cartões com fonte, período e legenda; indicadores e curva v
   assert.ok((await page.textContent('#card-d-kpis')).includes(per));
   const sp = limpa(await page.textContent('#deb-spread'));
   assert.match(sp, /spread = taxa do papel − taxa da NTN-B interpolada pelo vencimento/);
-  assert.match(sp, /Tesouro Direto, taxa de compra; só para papéis IPCA\+; “—” quando não há curva no dia/);
+  assert.match(sp, /taxa indicativa da ANBIMA; só para papéis IPCA\+; “—” quando não há curva no dia/);
   // links do glossário: os termos pedidos aparecem e existem no arquivo embutido
   const gl = await page.$$eval('#page-debentures a.glossario-link', as => as.map(a => decodeURIComponent(a.getAttribute('href').replace('#glossario/', ''))));
   for (const t of ['debenture', 'debenture-incentivada', 'debenture-infraestrutura', 'ntn-b', 'spread', 'duration', 'ipca-mais', 'cdi', 'selic', 'focus', 'mercado-secundario',

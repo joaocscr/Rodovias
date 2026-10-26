@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 import build  # noqa: E402
 import curadoria  # noqa: E402
+from intel import curva_anbima as anb  # noqa: E402
 from intel import debentures as deb  # noqa: E402
 from intel import debentures_planilhas as dp  # noqa: E402
 from intel import debentures_texto as tx  # noqa: E402
@@ -21,6 +22,7 @@ from intel import snd as snd_mod  # noqa: E402
 
 FIX = ROOT / "tests" / "fixtures" / "debentures"
 PUBLICO = FIX / "publico"
+CURVAS = PUBLICO / anb.SUBPASTA
 SND = FIX / "snd.txt"
 EMISSORES = FIX / "emissores.json"
 BLOCO = ROOT / "data" / "intel" / "debentures.json"
@@ -48,7 +50,7 @@ class _Manifesto:
 
 def _downloads(dia="2026-10-22"):
     """Registros de download das séries públicas, como o `fetch` grava no manifesto."""
-    urls = [deb.SGS.format(c, n) for c, n, _ in deb.SERIES.values()] + [deb.FOCUS_URL, deb.TESOURO_URL, snd_mod.URL]
+    urls = [deb.SGS.format(c, n) for c, n, _ in deb.SERIES.values()] + [deb.FOCUS_URL, snd_mod.URL]
     return [{"url": u, "acesso": dia, "baixado": dia, "sha256": u[-8:]} for u in urls]
 
 
@@ -177,10 +179,10 @@ def test_emissor_sem_classificacao_vai_para_curadoria(bloco):
 # ---------- spread ----------
 
 def test_spread_interpola_entre_as_ntnb_vizinhas():
-    curvas = deb.ler_tesouro(PUBLICO / "tesouro_direto.csv")
+    curvas = anb.curvas(None, CURVAS)
     c1 = deb.curva_ntnb("2026-10-01", curvas)
-    # no mesmo vencimento vale a NTN-B com juros semestrais (6,50), não a principal (9,90); Educa+ e Selic ficam de fora
-    assert c1 == [("2029-05-15", 5.8), ("2030-08-15", 6.0), ("2035-05-15", 6.5)]
+    # só as NTN-B do arquivo da ANBIMA, pela taxa indicativa; a LTN e a NTN-F do arquivo ficam de fora
+    assert c1 == [("2029-05-15", 5.8), ("2030-08-15", 6.0), ("2035-05-15", 6.5), ("2035-08-15", 6.55)]
     esperado = 7.0 - _ntnb("2032-05-15", [("2030-08-15", 6.0), ("2035-05-15", 6.5)])
     assert deb.spread(7.0, "2032-05-15", c1) == pytest.approx(esperado)
     assert deb.spread(6.0, "2030-08-15", c1) == pytest.approx(0.0)            # no vértice
@@ -190,7 +192,7 @@ def test_spread_interpola_entre_as_ntnb_vizinhas():
 
 
 def test_spread_sem_curva_do_dia(bloco, tmp_path):
-    curvas = deb.ler_tesouro(PUBLICO / "tesouro_direto.csv")
+    curvas = anb.curvas(None, CURVAS)
     assert deb.curva_ntnb("2026-10-05", curvas) == []
     assert deb.spread(7.3, "2032-05-15", []) is None
     ult = {(u["ticker"], u["origem"]): u for u in bloco["secundario"]["ultimo_por_ticker"]}
@@ -198,24 +200,24 @@ def test_spread_sem_curva_do_dia(bloco, tmp_path):
     assert bloco["pendencias"]["dias_sem_curva"] == ["2026-10-05"]
     dia = _por(bloco["secundario"]["negocios"]["por_dia"], "data")["2026-10-05"]
     assert dia["spread_medio"] is None and dia["volume_spread"] == 0 and dia["taxa_media"] == {"IPCA+": 7.3}
-    # Tesouro fora do ar (arquivo ausente): spread "—" em tudo, aviso na curadoria, nenhum zero
+    # curva da ANBIMA ausente (nenhum arquivo baixado): spread "—" em tudo, aviso na curadoria, nenhum zero
     pub = tmp_path / "publico"
     shutil.copytree(PUBLICO, pub)
-    (pub / "tesouro_direto.csv").unlink()
+    shutil.rmtree(pub / anb.SUBPASTA)
     sem = deb.montar(FIX, pub, EMISSORES)
     sec = sem["secundario"]
     linhas = [r for grupo in ("negocios", "intencoes") for v in sec[grupo].values() for r in v]
     assert all(r["spread_medio"] is None and r["volume_spread"] == 0 for r in linhas)
     assert all(u["spread"] is None for u in sec["ultimo_por_ticker"])
     assert sem["macro"]["ntnb"] == []
-    assert [s["serie"] for s in sem["pendencias"]["series_indisponiveis"]] == ["Tesouro Direto (NTN-B)"]
-    assert not any(f["url"].startswith("https://www.tesourotransparente") for f in sem["fonte"])
+    assert [s["serie"] for s in sem["pendencias"]["series_indisponiveis"]] == ["Taxa indicativa das NTN-B (ANBIMA)"]
+    assert not any(f["url"] == anb.PAGINA for f in sem["fonte"])
     itens = curadoria.itens({}, {"debentures": sem}, {}, HOJE)
-    assert any(i["tipo"] == "debentures_sem_serie" and "Tesouro" in i["item"] for i in itens)
+    assert any(i["tipo"] == "debentures_sem_serie" and "ANBIMA" in i["item"] for i in itens)
 
 
 def test_pre_e_di_sem_spread(bloco):
-    curva = deb.curva_ntnb("2026-10-02", deb.ler_tesouro(PUBLICO / "tesouro_direto.csv"))
+    curva = deb.curva_ntnb("2026-10-02", anb.curvas(None, CURVAS))
     assert deb.spread(13.5, "2032-05-15", curva, "PRÉ") is None
     assert deb.spread(1.2, "2032-05-15", curva, "DI+") is None
     ult = {(u["ticker"], u["origem"]): u for u in bloco["secundario"]["ultimo_por_ticker"]}
@@ -226,10 +228,10 @@ def test_pre_e_di_sem_spread(bloco):
 # ---------- agregados ----------
 
 def test_agregados_batem_com_somas_manuais(bloco):
-    curvas = deb.ler_tesouro(PUBLICO / "tesouro_direto.csv")
+    curvas = anb.curvas(None, CURVAS)
     ntnb1 = _ntnb("2032-05-15", [("2030-08-15", 6.0), ("2035-05-15", 6.5)])
     ntnb2 = _ntnb("2032-05-15", [("2030-08-15", 6.1), ("2035-05-15", 6.4)])
-    assert deb.curva_ntnb("2026-10-02", curvas)[1:] == [("2030-08-15", 6.1), ("2035-05-15", 6.4)]
+    assert deb.curva_ntnb("2026-10-02", curvas)[1:3] == [("2030-08-15", 6.1), ("2035-05-15", 6.4)]
     neg = bloco["secundario"]["negocios"]
     dia = _por(neg["por_dia"], "data")
     assert list(dia) == ["2026-10-01", "2026-10-02", "2026-10-05"]
@@ -327,7 +329,7 @@ def test_sem_cadastro_snd_data_fica_nula():
     b = deb.montar(FIX, PUBLICO, EMISSORES, hoje="2026-10-22", manifesto=_Manifesto(_downloads()))
     assert b["emissoes"] and all(e["data_emissao"] is None and e["coordenador_lider"] is None for e in b["emissoes"])
     assert all("SND" not in e["fontes"] for e in b["emissoes"])
-    assert not any(f["nome"].startswith("ANBIMA") for f in b["fonte"])
+    assert not any(f["nome"].startswith("ANBIMA — cadastro") for f in b["fonte"])
     itens = [i for i in curadoria.itens({}, {"debentures": b}, {}, HOJE) if i["tipo"] == "emissao_sem_cadastro_snd"]
     assert [i["item"] for i in itens] == sorted(e["ticker"] for e in b["emissoes"])
     assert all("snd_caracteristicas.txt" in i["motivo"] and "--baixar" in i["motivo"] for i in itens)
@@ -361,7 +363,9 @@ def test_emissoes_e_macro(bloco):
     assert m["ipca12m"] == {"valor": 4.58, "data": "2026-09"}
     assert m["focus_ipca"] == {"valor": 4.51, "data": "2026-10-02"}
     assert [(n["vencimento"], n["taxa"], n["data"]) for n in m["ntnb"]] == [
-        ("2029-05-15", 5.7, "2026-10-02"), ("2030-08-15", 6.1, "2026-10-02"), ("2035-05-15", 6.4, "2026-10-02")]
+        ("2029-05-15", 5.7, "2026-10-02"), ("2030-08-15", 6.1, "2026-10-02"), ("2035-05-15", 6.4, "2026-10-02"),
+        ("2035-08-15", 6.45, "2026-10-02")]
+    assert {n["titulo"] for n in m["ntnb"]} == {"NTN-B"}
     assert bloco["pendencias"]["series_indisponiveis"] == []
 
 
@@ -393,6 +397,9 @@ def test_bloco_nao_depende_do_dia_do_build(tmp_path):
     assert json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
     btg = next(f for f in b["fonte"] if f["nome"].startswith("BTG"))
     assert btg["acesso"] == "2026-10-22"
+    # a curva da ANBIMA: o acesso é o do primeiro dia em que o arquivo foi visto (guardado com o SHA-256)
+    assert next(f for f in b["fonte"] if f["nome"].startswith("ANBIMA — Taxas indicativas"))["acesso"] == "2026-10-22"
+    assert {i["acesso"] for i in man.items if "anbima_ms" in i.get("arquivo", "")} == {"2026-10-22"}
     # planilha alterada (outro conteúdo): data nova; a outra continua com a antiga
     shutil.copy(FIX / "negocios.xlsx", pasta / "negocios2.xlsx")
     wb = pasta / "negocios2.xlsx"
@@ -455,8 +462,10 @@ def test_fontes_do_bloco(bloco):
     assert cadastro["url"] == "https://www.debentures.com.br/" and cadastro["acesso"] == "2026-10-22"
     assert cadastro["periodo"] == "cadastro de 23/10/2026"       # dia em que o SND gerou o arquivo, não o do build
     assert "data de emissão" in cadastro["nota"] and "coordenador líder" in cadastro["nota"]
-    tesouro = next(f for f in fontes if "Tesouro" in f["nome"])
-    assert "taxa de compra) interpolada pelo vencimento (não pela duration)" in tesouro["nota"]
+    curva = next(f for f in fontes if f["nome"].startswith("ANBIMA — Taxas indicativas"))
+    assert curva["url"] == anb.PAGINA and curva["periodo"] == "01/10/2026 a 02/10/2026"
+    assert "taxa indicativa da NTN-B interpolada pelo vencimento (não pela duration)" in curva["nota"]
+    assert "Tesouro" not in json.dumps(fontes, ensure_ascii=False)
 
 
 def test_datas_nao_dependem_da_data_do_arquivo(tmp_path, bloco):
@@ -474,8 +483,6 @@ def test_baixar_sempre_renova_as_series_publicas(monkeypatch, tmp_path):
 
     def falso(url, dest, tries=5, force=False):
         chamadas.append((Path(dest).name, force))
-        if "tesouro" in url:
-            raise RuntimeError("429")
         Path(dest).parent.mkdir(parents=True, exist_ok=True)
         Path(dest).write_text("[]", encoding="utf-8")
         return dest
@@ -492,13 +499,18 @@ def test_baixar_sempre_renova_as_series_publicas(monkeypatch, tmp_path):
     cadastro = []
     monkeypatch.setattr(deb, "_fetch", falso)
     monkeypatch.setattr(deb, "Manifest", Manif)
+    curva = []
     monkeypatch.setattr(deb, "PUBLICO", tmp_path)
+    monkeypatch.setattr(deb, "PASTA", tmp_path / "sem_planilhas")          # sem planilhas: só o último dia útil
+    monkeypatch.setattr(anb, "fetch", lambda datas, pasta, **k: curva.append((set(datas), Path(pasta))) or {d: True for d in datas})
     monkeypatch.setattr(snd_mod, "fetch", lambda dest, manifesto=None: cadastro.append((Path(dest), manifesto)) or True)
     deb.fetch()                                         # sem force: o --baixar comum
     assert [c[0] for c in cadastro] == [tmp_path / "snd_caracteristicas.txt"]      # o cadastro do SND vem junto
     assert cadastro[0][1] is not None                                              # e é registrado no mesmo manifesto
     assert sorted(chamadas) == sorted([("sgs_432.json", True), ("sgs_12.json", True), ("sgs_13522.json", True),
-                                       ("focus_ipca12m.json", True), ("tesouro_direto.csv", True)])
+                                       ("focus_ipca12m.json", True)])                  # o Tesouro não é mais baixado
+    assert len(curva) == 1 and curva[0][1] == tmp_path / "anbima_ms"               # a curva da ANBIMA, só os dias que faltam
+    assert curva[0][0] == {anb.ultimos_dias_uteis(dt.date.today(), 1)[0]}
 
 
 def test_curadoria_nao_vai_para_o_html(tmp_path):
@@ -555,7 +567,7 @@ def test_bloco_confere_com_as_planilhas_do_usuario():
     total = sum(r["volume"] for r in gravado["secundario"]["negocios"]["por_dia"])
     assert total == pytest.approx(sum(n["volume"] or 0 for n in neg), abs=0.05)
     assert sum(r["n"] for r in gravado["secundario"]["negocios"]["por_dia"]) == len(neg)
-    curvas = deb.ler_tesouro(deb.PUBLICO / deb.TESOURO)
+    curvas = anb.curvas(None, deb.PUBLICO / anb.SUBPASTA)
     ult = {u["ticker"]: u for u in gravado["secundario"]["ultimo_por_ticker"] if u["origem"] == "negocio"}
     for u in ult.values():
         esperado = deb.spread(u["taxa"], u["vencimento"], deb.curva_ntnb(u["data"], curvas), u["indexador"])

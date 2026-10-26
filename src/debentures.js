@@ -61,11 +61,11 @@ const Debentures = (() => {
     const pts = DM.curvaNtnb(bloco);
     if (!pts.length) return '';
     const dataCurva = DM.fmtData(DM.curvaAte(bloco));
-    return card('ntnb', `Taxa das NTN-B por vencimento, em ${dataCurva}`, 'Taxa de compra do Tesouro Direto, em % ao ano, por ano de vencimento; o eixo vertical não começa em zero', { wide: true,
-      legend: legenda('Taxa de compra (% ao ano)', C.deep),
+    return card('ntnb', `Taxa das NTN-B por vencimento, em ${dataCurva}`, 'Taxa indicativa da ANBIMA, em % ao ano, por ano de vencimento; o eixo vertical não começa em zero', { wide: true,
+      legend: legenda('Taxa indicativa (% ao ano)', C.deep),
       html: '<div id="chart-d-ntnb-linha"></div><div class="table-wrap table-wrap--static" id="deb-ntnb-tabela"></div>',
-      note: `A ${Glossario.link('ntn-b', 'NTN-B')} é o título público federal que paga inflação (IPCA) mais uma taxa fixa, vendido a pessoas físicas pelo Tesouro Direto. Sua curva é a referência de juro real sem risco: o spread das debêntures IPCA+ é a taxa delas menos a da NTN-B de mesmo vencimento. “NTN-B Principal” é a versão sem juros semestrais (paga tudo no vencimento); entra onde não há NTN-B com juros no mesmo vencimento.`,
-      fonte: fonteCurta({ tesouro: true, curva: true }) });
+      note: `A ${Glossario.link('ntn-b', 'NTN-B')} é o título público federal que paga inflação (IPCA) mais uma taxa fixa. Sua curva é a referência de juro real sem risco: o spread das debêntures IPCA+ é a taxa delas menos a da NTN-B de mesmo vencimento. A taxa é a indicativa que a ANBIMA publica a cada dia útil para o mercado secundário.`,
+      fonte: fonteCurta({ anbima: true, curva: true }) });
   }
 
   // A nota do modelo é texto puro; aqui "incentivada(s) (Lei 12.431)" ganha o link para o Glossário (um só link por termo na aba)
@@ -153,13 +153,13 @@ const Debentures = (() => {
     if (!sec) return '';
     const p = per();
     const lead = `<p class="page__lead">O ${Glossario.link('mercado-secundario', 'mercado secundário')} é onde investidores negociam entre si debêntures já emitidas. Os dados vêm das telas das corretoras XP e BTG${p ? `, de ${esc(p)}` : ''}; aqui aparecem só os totais por dia, emissor e subsetor e o último negócio de cada papel. Um ${Glossario.link('negocio-intencao', 'negócio')} é uma operação fechada; uma intenção é um pedido de compra ou de venda, que pode não ter virado negócio. Taxas são ${Glossario.link('taxa-media-ponderada', 'médias ponderadas pelo volume')}, calculadas separadamente por indexador (${Glossario.link('ipca-mais', 'IPCA+')}, ${Glossario.link('di-mais', 'DI+')}, % do DI e ${Glossario.link('prefixado', 'prefixada')} não se misturam).</p>
-      <p class="page__lead deb-spread" id="deb-spread">Como o spread é calculado: ${Glossario.link('spread', 'spread')} = taxa do papel − taxa da NTN-B interpolada pelo vencimento (não pela ${Glossario.link('duration', 'duration')}), Tesouro Direto, taxa de compra; só para papéis IPCA+; “${DM.DASH}” quando não há curva no dia. O spread é dado em pontos percentuais (p.p.).${DM.notaCurva(bloco) ? ` ${esc(DM.notaCurva(bloco))}` : ''}</p>`;
+      <p class="page__lead deb-spread" id="deb-spread">Como o spread é calculado: ${Glossario.link('spread', 'spread')} = taxa do papel − taxa da NTN-B interpolada pelo vencimento (não pela ${Glossario.link('duration', 'duration')}), taxa indicativa da ANBIMA; só para papéis IPCA+; “${DM.DASH}” quando não há curva no dia. O spread é dado em pontos percentuais (p.p.).${DM.notaCurva(bloco) ? ` ${esc(DM.notaCurva(bloco))}` : ''}</p>`;
     const controle = `<div class="deb-controle" id="deb-controle">
       <button type="button" role="switch" id="deb-somado" class="switch" aria-checked="false" aria-describedby="deb-somado-desc"><span class="switch__trilho" aria-hidden="true"><span class="switch__bola"></span></span><span class="switch__texto">Ver somado</span></button>
       <p class="deb-controle__desc" id="deb-somado-desc">Desligado, os cartões abaixo mostram só os negócios fechados e as intenções ficam à parte, no último cartão. Ligado, as intenções de compra e venda entram nos números e gráficos como se fossem negócios.</p>
       <p class="deb-controle__estado" id="deb-status" aria-live="polite"></p></div>`;
     const cards = [
-      card('kpis', 'Mercado secundário em números', `Totais de ${esc(p)} para debêntures de rodovias e infraestrutura de transporte`, { wide: true, afetado: true, html: '', fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'dados', tesouro: true }) }),
+      card('kpis', 'Mercado secundário em números', `Totais de ${esc(p)} para debêntures de rodovias e infraestrutura de transporte`, { wide: true, afetado: true, html: '', fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'dados', anbima: true }) }),
       card('dia-vol', 'Volume negociado por dia', 'Soma do valor financeiro de cada dia, em R$ milhões', { afetado: true,
         legend: legenda('Volume do dia (R$ milhões)', C.deep), fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'dados' }) }),
       card('dia-n', 'Número de negócios por dia', 'Quantidade registrada em cada dia', { afetado: true,
@@ -167,11 +167,11 @@ const Debentures = (() => {
       card('subsetor', 'Taxa média e spread sobre a NTN-B por subsetor', 'Média de cada subsetor (rodovias, ferrovias, portos e terminais, aeroportos, hidrovias, mobilidade urbana), só dos papéis IPCA+, ponderada pelo volume', { wide: true, afetado: true,
         html: `<div class="duo"><div><h4 class="duo__title">Taxa média (% ao ano, IPCA + taxa)</h4>${legenda('Taxa média IPCA+', C.deep)}<div id="chart-d-subsetor-taxa"></div></div>
           <div><h4 class="duo__title">Spread médio sobre a NTN-B (p.p.)</h4>${legenda('Spread médio IPCA+', C.bright)}<div id="chart-d-subsetor-spread"></div></div></div>`,
-        fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'dados', tesouro: true }) }),
+        fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'dados', anbima: true }) }),
       card('emissor', 'Taxa média e spread sobre a NTN-B por emissor', 'Uma linha por empresa emissora; taxa média por indexador e spread médio sobre a NTN-B (p.p.) dos papéis IPCA+. Clique no cabeçalho para ordenar', { wide: true, afetado: true,
-        html: '<div id="deb-emissor-tabela"></div>', fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'dados', tesouro: true }) }),
+        html: '<div id="deb-emissor-tabela"></div>', fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'dados', anbima: true }) }),
       card('ultimo', 'Último negócio de cada papel', 'Data, hora e taxa do registro mais recente de cada papel no período; o spread sobre a NTN-B (p.p.) só existe para papéis IPCA+ em dias com curva', { wide: true, afetado: true,
-        html: '<div id="deb-ultimo-tabela"></div>', fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'dados', tesouro: true }) }),
+        html: '<div id="deb-ultimo-tabela"></div>', fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'dados', anbima: true }) }),
       card('intencoes', 'Intenções de compra e venda, à parte dos negócios', `Pedidos de compra e de venda registrados na tela da corretora XP, de ${esc(p)}; não são negócios fechados. Com “ver somado” ligado eles também entram nos cartões acima`, { wide: true,
         html: `<div class="duo"><div><h4 class="duo__title">Por direção</h4><div id="chart-d-int-dir"></div></div>
           <div><h4 class="duo__title">Volume por dia (R$ milhões)</h4>${legendaCV}<div id="chart-d-int-dia"></div></div></div>
@@ -262,7 +262,7 @@ const Debentures = (() => {
   const ressalvas = (id, avisos) => (avisos.length ? `<div id="${id}">${avisos.map(a => `<p class="deb-nota deb-aviso deb-ressalva">${esc(a.texto)}</p>`).join('')}</div>` : '');
 
   function indicesCards() {
-    const spreadSub = 'Em p.p. (pontos percentuais); o spread do IDEX-Infra, dado em pontos-base, é dividido por 100. Sem a curva do Tesouro no dia, o spread do painel e o do IDA ficam sem valor, e vale o último dia que tem. “Ver somado” (no mercado secundário, acima) muda só a linha de transporte';
+    const spreadSub = 'Em p.p. (pontos percentuais); o spread do IDEX-Infra, dado em pontos-base, é dividido por 100. Sem a curva da ANBIMA no dia, o spread do painel e o do IDA ficam sem valor, e vale o último dia que tem. “Ver somado” (no mercado secundário, acima) muda só a linha de transporte';
     const datas = DM.tabelaIndices(bloco, ida, idex).datas;
     const dePapel = [datas.anbima && `taxa ANBIMA de ${DM.fmtData(datas.anbima)}`, datas.idex && `spread IDEX de ${DM.fmtData(datas.idex)}`].filter(Boolean).join('; ');
     return [
@@ -272,8 +272,8 @@ const Debentures = (() => {
         fonte: [temIda() && DM.fonteIda(ida), temIdex() && DM.fonteIdex(idex)].filter(Boolean).join('; ') || DM.DASH }),
       card('ind-spread', 'Spread sobre a NTN-B: debêntures de transporte, IDA-IPCA Infraestrutura e IDEX-Infra', spreadSub, { wide: true, afetado: true, semRotulo: true,
         html: '<div id="deb-ind-spread"></div>',
-        note: 'Spread = taxa menos a da NTN-B de mesmo vencimento (Tesouro Direto, taxa de compra). A média nos dias em comum é a média simples dos spreads diários dos dias em que as três séries têm valor.',
-        fonte: [DM.fonteCurta(bloco, { corretoras: CORRETORAS, periodo: 'dados', tesouro: true }), temIda() && DM.fonteIda(ida), temIdex() && DM.fonteIdex(idex, 'spread')].filter(f => f && f !== DM.DASH).join('; ') }),
+        note: 'Spread = taxa menos a da NTN-B de mesmo vencimento (taxa indicativa da ANBIMA). A média nos dias em comum é a média simples dos spreads diários dos dias em que as três séries têm valor.',
+        fonte: [DM.fonteCurta(bloco, { corretoras: CORRETORAS, periodo: 'dados', anbima: true }), temIda() && DM.fonteIda(ida), temIdex() && DM.fonteIdex(idex, 'spread')].filter(f => f && f !== DM.DASH).join('; ') }),
       card('ind-papel', 'Por papel: spread sobre a NTN-B no painel e no IDEX-Infra, e taxa indicativa da ANBIMA',
         `Um papel da tabela de emissões por linha${dePapel ? ` (${dePapel})` : ''}; “${DM.DASH}” onde o papel não está no índice ou não tem spread. Clique no cabeçalho para ordenar`, { wide: true,
           html: '<div id="deb-ind-papel-tabela"></div>',
@@ -365,7 +365,7 @@ const Debentures = (() => {
     const dia = d => (estreito ? DM.fmtDiaMes(d) : DM.fmtData(d));
     const sem = [!temIdex() && AGUARDA_IDEX, !temIda() && AGUARDA_IDA].filter(Boolean);
     const defasadas = c.filter(l => l.data && l.ate && l.ate > l.data)
-      .map(l => `${l.rotulo}: último valor em ${DM.fmtData(l.data)}; a série vai até ${DM.fmtData(l.ate)}, mas sem curva do Tesouro nos dias seguintes.`);
+      .map(l => `${l.rotulo}: último valor em ${DM.fmtData(l.data)}; a série vai até ${DM.fmtData(l.ate)}, mas sem curva da ANBIMA nos dias seguintes.`);
     const n = c[0].dias_comuns;
     const tComum = n === 1 ? `Valor no dia em comum às três séries (${c[0].periodo_comum})` : `Média nos ${nf0.format(n)} dias em comum às três séries (${c[0].periodo_comum})`;
     const principal = comum
@@ -383,7 +383,7 @@ const Debentures = (() => {
     u.innerHTML = Charts.hbarsSvg(c.map(l => ({ label: `${l.rotulo_curto} · ${l.data ? dia(l.data) : 'sem valor'}`, value: l.spread_pp, detail: l.data ? `em ${DM.fmtData(l.data)}` : 'sem valor' })),
       Object.assign({}, opts, { width: width(u), big: !comum, title: 'Spread sobre a NTN-B no último dia com valor' }));
     const m = document.getElementById('chart-d-ind-spread-comum');
-    if (m) m.innerHTML = Charts.hbarsSvg(c.map(l => ({ label: `${l.rotulo_curto} · ${n === 1 ? (estreito ? l.periodo_comum.slice(0, 5) : l.periodo_comum) : `média de ${nf0.format(n)} dias`}`, value: l.media_comum_pp,
+    if (m) m.innerHTML = Charts.hbarsSvg(c.map(l => ({ label: `${l.rotulo_curto} · ${n === 1 ? (estreito ? l.periodo_comum.slice(0, 5) : l.periodo_comum) : `${estreito ? '' : 'média de '}${nf0.format(n)} dias`}`, value: l.media_comum_pp,
       detail: `${n === 1 ? 'dia' : 'média de ' + nf0.format(n) + ' dias'} ${l.periodo_comum}` })), Object.assign({}, opts, { width: width(m), big: true, title: 'Spread sobre a NTN-B nos dias em comum' }));
   }
 
@@ -419,7 +419,7 @@ const Debentures = (() => {
     el.innerHTML = Charts.linesSvg([{ name: 'NTN-B', points: pts.map(p => ({ x: Number(p.vencimento.slice(0, 4)), y: p.taxa })) }],
       { width: width(el), unit: '% ao ano', format: v => nf2.format(v), formatX: x => String(x), stepX: width(el) >= 560 ? 3 : 6, yMin: min - (max - min) * 0.2,
         title: 'Taxa das NTN-B por ano de vencimento (eixo vertical não começa em zero)' });
-    document.getElementById('deb-ntnb-tabela').innerHTML = `<table class="grid grid--static" id="deb-ntnb" data-csv-name="debentures-curva-ntnb"><thead><tr><th>Vencimento</th><th>Título</th><th class="num">Taxa de compra (% ao ano)</th><th class="num">Data da taxa</th></tr></thead><tbody>${
+    document.getElementById('deb-ntnb-tabela').innerHTML = `<table class="grid grid--static" id="deb-ntnb" data-csv-name="debentures-curva-ntnb"><thead><tr><th>Vencimento</th><th>Título</th><th class="num">Taxa indicativa (% ao ano)</th><th class="num">Data da taxa</th></tr></thead><tbody>${
       pts.map(p => `<tr class="is-static"><td>${esc(DM.fmtData(p.vencimento))}</td><td>${esc(p.titulo || DM.DASH)}</td><td class="num">${esc(nf2.format(p.taxa))}</td><td class="num">${esc(DM.fmtData(p.data))}</td></tr>`).join('')}</tbody></table>`;
   }
 

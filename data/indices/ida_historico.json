@@ -22,13 +22,14 @@
  "2026-10-09":"sem_dado",
  "2026-10-12":"sem_dado",
  "2026-10-13":"sem_dado",
- "2026-10-14":{"numero_indice":2688.544554,"var_dia":-0.6092,"var_mes":3.0309,"var_ano":7.3273,"var_12m":7.9986,"var_24m":20.2827,"duration_du":1324.0,"valor_mercado":357021.26,"spread_medio":1.133},
+ "2026-10-14":{"numero_indice":2688.544554,"var_dia":-0.6092,"var_mes":3.0309,"var_ano":7.3273,"var_12m":7.9986,"var_24m":20.2827,"duration_du":1324.0,"valor_mercado":357021.26,"spread_medio":1.0375},
  "2026-10-15":"sem_dado",
- "2026-10-16":{"numero_indice":2668.309858,"var_dia":-0.2556,"var_mes":2.2555,"var_ano":6.5195,"var_12m":7.3609,"var_24m":19.8261,"duration_du":1328.0,"valor_mercado":350990.21,"spread_medio":null},
- "2026-10-19":{"numero_indice":2668.856644,"var_dia":0.0205,"var_mes":2.2764,"var_ano":6.5413,"var_12m":7.7232,"var_24m":20.3168,"duration_du":1327.0,"valor_mercado":351062.13,"spread_medio":null},
- "2026-10-20":{"numero_indice":2678.716288,"var_dia":0.3694,"var_mes":2.6543,"var_ano":6.9349,"var_12m":7.8549,"var_24m":20.7613,"duration_du":1327.0,"valor_mercado":352359.07,"spread_medio":null},
- "2026-10-21":{"numero_indice":2686.419822,"var_dia":0.2876,"var_mes":2.9495,"var_ano":7.2425,"var_12m":8.4205,"var_24m":21.0833,"duration_du":1328.0,"valor_mercado":353372.4,"spread_medio":null},
- "2026-10-22":{"numero_indice":2695.893814,"var_dia":0.3527,"var_mes":3.3125,"var_ano":7.6207,"var_12m":8.7995,"var_24m":21.5139,"duration_du":1330.0,"valor_mercado":354618.61,"spread_medio":null}
+ "2026-10-16":{"numero_indice":2668.309858,"var_dia":-0.2556,"var_mes":2.2555,"var_ano":6.5195,"var_12m":7.3609,"var_24m":19.8261,"duration_du":1328.0,"valor_mercado":350990.21,"spread_medio":1.0971},
+ "2026-10-19":{"numero_indice":2668.856644,"var_dia":0.0205,"var_mes":2.2764,"var_ano":6.5413,"var_12m":7.7232,"var_24m":20.3168,"duration_du":1327.0,"valor_mercado":351062.13,"spread_medio":1.0939},
+ "2026-10-20":{"numero_indice":2678.716288,"var_dia":0.3694,"var_mes":2.6543,"var_ano":6.9349,"var_12m":7.8549,"var_24m":20.7613,"duration_du":1327.0,"valor_mercado":352359.07,"spread_medio":1.0834},
+ "2026-10-21":{"numero_indice":2686.419822,"var_dia":0.2876,"var_mes":2.9495,"var_ano":7.2425,"var_12m":8.4205,"var_24m":21.0833,"duration_du":1328.0,"valor_mercado":353372.4,"spread_medio":1.0735},
+ "2026-10-22":{"numero_indice":2695.893814,"var_dia":0.3527,"var_mes":3.3125,"var_ano":7.6207,"var_12m":8.7995,"var_24m":21.5139,"duration_du":1330.0,"valor_mercado":354618.61,"spread_medio":1.063},
+ "2026-10-23":{"numero_indice":2711.759728,"var_dia":0.5885,"var_mes":3.9205,"var_ano":8.254,"var_12m":9.5246,"var_24m":22.5408,"duration_du":1333.0,"valor_mercado":356705.61,"spread_medio":1.0274}
 },
 "IPCA":{
  "2026-09-14":"sem_dado",
@@ -59,7 +60,8 @@
  "2026-10-19":{"numero_indice":4884.147333,"var_dia":0.0207,"var_mes":2.3006,"var_ano":6.7741,"var_12m":8.0337,"var_24m":20.6325,"duration_du":1313.0,"valor_mercado":362345.01},
  "2026-10-20":{"numero_indice":4902.138194,"var_dia":0.3684,"var_mes":2.6775,"var_ano":7.1674,"var_12m":8.1733,"var_24m":21.0769,"duration_du":1313.0,"valor_mercado":363679.72},
  "2026-10-21":{"numero_indice":4915.968023,"var_dia":0.2821,"var_mes":2.9671,"var_ano":7.4698,"var_12m":8.7232,"var_24m":21.3886,"duration_du":1314.0,"valor_mercado":364705.72},
- "2026-10-22":{"numero_indice":4932.926072,"var_dia":0.345,"var_mes":3.3223,"var_ano":7.8405,"var_12m":9.088,"var_24m":21.809,"duration_du":1315.0,"valor_mercado":365963.81}
+ "2026-10-22":{"numero_indice":4932.926072,"var_dia":0.345,"var_mes":3.3223,"var_ano":7.8405,"var_12m":9.088,"var_24m":21.809,"duration_du":1315.0,"valor_mercado":365963.81},
+ "2026-10-23":{"numero_indice":4961.274395,"var_dia":0.5747,"var_mes":3.9161,"var_ano":8.4602,"var_12m":9.7873,"var_24m":22.8135,"duration_du":1319.0,"valor_mercado":368066.91}
 },
 "GERAL":{
  "2026-09-14":"sem_dado",
@@ -90,7 +92,8 @@
  "2026-10-19":{"numero_indice":4804.826833,"var_dia":0.035,"var_mes":1.4376,"var_ano":9.297,"var_12m":11.4861,"var_24m":25.8787,"duration_du":1000.0,"valor_mercado":755379.97},
  "2026-10-20":{"numero_indice":4815.015777,"var_dia":0.2121,"var_mes":1.6527,"var_ano":9.5288,"var_12m":11.5492,"var_24m":26.1457,"duration_du":1001.0,"valor_mercado":756455.1},
  "2026-10-21":{"numero_indice":4822.646379,"var_dia":0.1585,"var_mes":1.8138,"var_ano":9.7024,"var_12m":11.8295,"var_24m":26.2927,"duration_du":1002.0,"valor_mercado":757322.9},
- "2026-10-22":{"numero_indice":4832.107074,"var_dia":0.1962,"var_mes":2.0136,"var_ano":9.9176,"var_12m":12.0375,"var_24m":26.5169,"duration_du":1003.0,"valor_mercado":758702.39}
+ "2026-10-22":{"numero_indice":4832.107074,"var_dia":0.1962,"var_mes":2.0136,"var_ano":9.9176,"var_12m":12.0375,"var_24m":26.5169,"duration_du":1003.0,"valor_mercado":758702.39},
+ "2026-10-23":{"numero_indice":4847.713195,"var_dia":0.323,"var_mes":2.343,"var_ano":10.2726,"var_12m":12.4403,"var_24m":27.0239,"duration_du":1004.0,"valor_mercado":760940.95}
 },
 "DI":{
  "2026-09-14":"sem_dado",
@@ -121,6 +124,7 @@
  "2026-10-19":{"numero_indice":4981.373638,"var_dia":0.0524,"var_mes":0.612,"var_ano":11.599,"var_12m":14.6859,"var_24m":31.0428,"duration_du":708.0,"valor_mercado":380611.88},
  "2026-10-20":{"numero_indice":4984.644418,"var_dia":0.0657,"var_mes":0.6781,"var_ano":11.6723,"var_12m":14.667,"var_24m":31.1288,"duration_du":709.0,"valor_mercado":380335.09},
  "2026-10-21":{"numero_indice":4986.589218,"var_dia":0.039,"var_mes":0.7173,"var_ano":11.7159,"var_12m":14.6845,"var_24m":31.1092,"duration_du":709.0,"valor_mercado":380152.49},
- "2026-10-22":{"numero_indice":4989.322931,"var_dia":0.0548,"var_mes":0.7726,"var_ano":11.7771,"var_12m":14.7348,"var_24m":31.1383,"duration_du":708.0,"valor_mercado":380254.73}
+ "2026-10-22":{"numero_indice":4989.322931,"var_dia":0.0548,"var_mes":0.7726,"var_ano":11.7771,"var_12m":14.7348,"var_24m":31.1383,"duration_du":708.0,"valor_mercado":380254.73},
+ "2026-10-23":{"numero_indice":4993.732725,"var_dia":0.0884,"var_mes":0.8616,"var_ano":11.8759,"var_12m":14.8482,"var_24m":31.1988,"duration_du":706.0,"valor_mercado":380379.01}
 }
 }

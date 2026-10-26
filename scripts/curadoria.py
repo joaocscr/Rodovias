@@ -234,7 +234,7 @@ def _consorcios(conc):
 def _debentures(bloco):
     """Pendências do bloco de debêntures (scripts/intel/debentures.py): emissor das planilhas sem classificação (fica
     fora da página), papel fora do cadastro do SND, série pública ausente e dias de negócio ou intenção IPCA+ sem curva das
-    NTN-B do Tesouro."""
+    NTN-B da ANBIMA."""
     pend = (bloco or {}).get("pendencias") or {}
     refazer = "depois rode `python scripts/atualizar.py --dominios debentures`"
     out = [("emissor_sem_classificacao", p["nome"],
@@ -251,15 +251,15 @@ def _debentures(bloco):
              "data/raw/debentures/")
             for p in pend.get("emissoes_sem_snd") or []]
     out += [("debentures_sem_serie", s["serie"],
-             f"sem arquivo em {s['arquivo']} (a fonte não respondeu): o indicador fica \"—\" e, sem o Tesouro, todos os "
+             f"sem arquivo em {s['arquivo']} (a fonte não respondeu): o indicador fica \"—\" e, sem a curva da ANBIMA, todos os "
              "spreads também; rode `python scripts/atualizar.py --baixar --dominios debentures` mais tarde")
             for s in pend.get("series_indisponiveis") or []]
     dias = pend.get("dias_sem_curva") or []
     if dias:
-        out.append(("debentures_sem_serie", "Curva das NTN-B (Tesouro Direto)",
-                    f"sem taxas do Tesouro Direto em {', '.join(_fmt(d) for d in dias)} (feriado, ou o arquivo do "
-                    "Tesouro ainda não chegou a esses dias): o spread dos negócios e intenções desses dias fica \"—\"; "
-                    "rode `python scripts/atualizar.py --renovar debentures` quando o Tesouro publicar"))
+        out.append(("debentures_sem_serie", "Curva das NTN-B (taxa indicativa da ANBIMA)",
+                    f"sem arquivo da ANBIMA em {', '.join(_fmt(d) for d in dias)} (feriado, dia ainda não "
+                    "publicado ou mais antigo que os últimos dias úteis que o site da ANBIMA guarda): o spread dos negócios e intenções desses dias fica \"—\"; "
+                    "rode `python scripts/atualizar.py --baixar --dominios debentures` quando a ANBIMA publicar"))
     for t in pend.get("taxas_descartadas") or []:
         taxa = f"{t['taxa']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
         out.append(("taxa_fora_do_intervalo", f"{t['ticker']} ({t['origem']})",

@@ -26,8 +26,10 @@ carteira teórica do dia (código, vencimento, indexador, taxa indicativa e peso
   dia é recalculado quando o cache tem a carteira e a curva do dia existe; senão fica o que já estava no histórico.
 - `build` nunca vai à rede. "Hoje", para a janela de amostragem, é o último dia com resultado, não o relógio: o bloco não
   muda com o dia em que o comando roda.
-- Spread = taxa indicativa − NTN-B do Tesouro Direto (taxa de compra) do mesmo dia, interpolada pelo vencimento
-  (`debentures.spread`). Média ponderada pelo peso na carteira; dia sem curva fica sem valor.
+- Spread = taxa indicativa − taxa indicativa da NTN-B da ANBIMA do mesmo dia, interpolada pelo vencimento
+  (`debentures.spread`). Média ponderada pelo peso na carteira; dia sem curva fica sem valor. A curva vem do arquivo
+  diário da ANBIMA (`curva_anbima.py`): o `fetch` baixa, depois dos índices, a curva dos dias da série que faltam no cache
+  (data/raw/debentures/publico/anbima_ms/, a mesma pasta do domínio debentures) e o `build` só a lê.
 """
 import datetime as dt
 import json
@@ -40,6 +42,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from intel import curva_anbima as _anbima  # noqa: E402
 from intel import debentures as _deb  # noqa: E402
 from intel.debentures_texto import numero, para_data  # noqa: E402
 from intel.fontes import RAW, ROOT, UA, Manifest  # noqa: E402
@@ -310,6 +313,27 @@ class _SiteForaDoAr(Exception):
     pass
 
 
+def _dias_da_serie(cache, hist):
+    """Dias com resultado (AAAA-MM-DD) de qualquer índice, no cache ou no histórico: os dias da série, que precisam da curva."""
+    return {d for ind in INDICES for fonte in (cache, hist) for d in _dias_com_dado(fonte.get(ind) or {})}
+
+
+def pasta_curva(pasta=PASTA):
+    """Cache da curva da ANBIMA: o do domínio debentures; para uma pasta de teste, uma subpasta dela."""
+    return _anbima.PASTA if Path(pasta) == PASTA else Path(pasta) / _anbima.SUBPASTA
+
+
+def _fetch_curva(pasta, cache, hist, hoje, proprio):
+    """Baixa a curva da ANBIMA dos dias da série que faltam no cache. Com `proprio` (execução de verdade), registra os
+    arquivos no manifesto do domínio debentures, o dono da pasta."""
+    destino = pasta_curva(pasta)
+    _anbima.fetch(_dias_da_serie(cache, hist), destino, hoje=hoje)
+    if proprio:
+        m = Manifest("debentures")
+        _anbima.registrar(m, destino)
+        m.save()
+
+
 def fetch(force=False, consultar=_consultar, hoje=None, pausa=PAUSA, dormir=time.sleep, pasta=PASTA, manifesto=None,
           indices=tuple(INDICES), log=print, completo=None, historico=HISTORICO):
     """Baixa os dias que faltam (ver o topo do arquivo). De rotina: os dias úteis depois do último dia que o histórico ou
@@ -320,7 +344,8 @@ def fetch(force=False, consultar=_consultar, hoje=None, pausa=PAUSA, dormir=time
     recente para a mais antiga e a volta termina depois de `SEMANAS_VAZIAS` semanas seguidas sem resultado nenhum (o site
     só guarda os dias recentes). Pedido que falha em 3 tentativas não derruba os outros: o dia fica de fora do cache e a curadoria avisa;
     `FALHAS_SEGUIDAS` pedidos assim, um depois do outro, dão o site como fora do ar: o índice e os que faltam ficam para
-    a próxima vez (sem rede, não se gasta o tempo das tentativas de cada índice). Devolve o número de pedidos feitos."""
+    a próxima vez (sem rede, não se gasta o tempo das tentativas de cada índice). Por fim baixa a curva das NTN-B da
+    ANBIMA dos dias da série que faltam no cache (`curva_anbima.fetch`; ela não conta nos pedidos). Devolve o número de pedidos feitos."""
     pasta = Path(pasta)
     hoje = _data(hoje) if hoje else dt.date.today()
     cache = _ler_cache(pasta)
@@ -436,6 +461,7 @@ def fetch(force=False, consultar=_consultar, hoje=None, pausa=PAUSA, dormir=time
                     velho.unlink()
     for f in falhas:
         print(f"AVISO: IDA sem download: {f}", file=sys.stderr)
+    _fetch_curva(pasta, cache, hist, hoje, proprio=manifesto is None)
     if manifesto is None:
         manifesto = Manifest("ida")
         registrar(manifesto, pasta)
@@ -513,7 +539,7 @@ def _acesso(manifesto, fim):
 def montar(cache, carteiras, tickers, curvas, manifesto=None, historico=None, mesclado=None):
     """Bloco do IDA. `cache`: o de `fetch`; `historico`: o arquivo versionado (ver `mesclar`: o cache vale mais);
     `carteiras`: {índice: (data, [papel])} da carteira mais recente de cada índice; `tickers`: papéis de transporte;
-    `curvas`: de `debentures.ler_tesouro`; `mesclado`: o resultado de `mesclar`, se quem chama já o tem. A janela parte do
+    `curvas`: de `curva_anbima.curvas`; `mesclado`: o resultado de `mesclar`, se quem chama já o tem. A janela parte do
     último dia com resultado; nada aqui depende do relógio. `tickers` None: a lista de papéis de transporte não estava
     disponível (vira pendência e `papeis` fica vazio)."""
     cache, historico = cache or {}, historico or {}
@@ -548,7 +574,7 @@ def montar(cache, carteiras, tickers, curvas, manifesto=None, historico=None, me
                       "Na série entram o último dia útil de cada semana e todos os dias dos últimos 31 dias, e o "
                       "número-índice é rebaseado em 100 no primeiro ponto. O spread médio do "
                       "IDA-IPCA Infraestrutura é a média, ponderada pelo peso na carteira, de taxa indicativa − NTN-B "
-                      "(Tesouro Direto, taxa de compra) do mesmo dia, interpolada pelo vencimento; sem curva no dia, "
+                      "(taxa indicativa da ANBIMA) do mesmo dia, interpolada pelo vencimento; sem curva no dia, "
                       "fica sem valor. Das carteiras ficam só os papéis de transporte da tabela de emissões."}]
     pendencias = {"dias_sem_download": sem_download}
     if tickers is None:
@@ -566,20 +592,20 @@ def _tickers(path=DEBENTURES):
         return None
 
 
-def build(pasta=PASTA, out=OUT, debentures=DEBENTURES, tesouro=None, manifesto=None, historico=HISTORICO):
+def build(pasta=PASTA, out=OUT, debentures=DEBENTURES, curvas_pasta=None, manifesto=None, historico=HISTORICO):
     """Lê o cache e as carteiras de data/raw/ida/ e o histórico versionado (nada de rede), grava o histórico atualizado e
     data/intel/ida.json. Sem o cache e sem histórico: FileNotFoundError (o `atualizar` pula o domínio e diz para baixar).
-    Sem as carteiras (data/raw/ perdido), os papéis ficam como estavam no bloco anterior."""
+    Sem as carteiras (data/raw/ perdido), os papéis ficam como estavam no bloco anterior. `curvas_pasta`: o cache da curva da
+    ANBIMA (padrão, `pasta_curva`)."""
     pasta, out = Path(pasta), Path(out)
     cache, hist = _ler_cache(pasta), ler_historico(historico)
     if not cache and not hist:
         raise FileNotFoundError(str(pasta / "cache.json"))
     carteiras = {ind: (data, ler_csv(Path(caminho).read_bytes().decode("latin-1"))["carteira"])
                  for ind, (data, caminho) in carteiras_baixadas(pasta).items()}
-    tesouro = Path(tesouro or _deb.PUBLICO / _deb.TESOURO)
     datas = {d for ind in INDICES for d in (cache.get(ind) or {})} | {d for ind in INDICES for d in (hist.get(ind) or {})} \
         | {d for d, _ in carteiras.values()}
-    curvas = _deb.ler_tesouro(tesouro, datas) if tesouro.exists() else {}
+    curvas = _anbima.curvas(datas, curvas_pasta or pasta_curva(pasta))
     proprio = manifesto is None
     manifesto = Manifest("ida") if proprio else manifesto
     registrar(manifesto, pasta)

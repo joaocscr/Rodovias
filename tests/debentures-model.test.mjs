@@ -10,7 +10,7 @@ const bloco = {
   macro: {
     selic: { valor: 13.75, data: '2026-10-22' }, cdi: { valor: 13.65, data: '2026-10-21' },
     ipca12m: { valor: 4.58, data: '2026-09' }, focus_ipca: { valor: 4.51, data: '2026-10-16' },
-    ntnb: [{ vencimento: '2032-08-15', taxa: 6.79, data: '2026-10-15', titulo: 'NTN-B' }, { vencimento: '2029-05-15', taxa: 6.77, data: '2026-10-15', titulo: 'NTN-B Principal' }],
+    ntnb: [{ vencimento: '2032-08-15', taxa: 6.79, data: '2026-10-15', titulo: 'NTN-B' }, { vencimento: '2029-05-15', taxa: 6.77, data: '2026-10-15', titulo: 'NTN-B' }],
   },
   emissoes: [
     { ticker: 'AAA11', emissor: 'Alfa', subsetor: 'rodovias', grupo: 'G', indexador: 'IPCA+', taxa_emissao: 5.1, vencimento: '2030-01-15', volume_emitido: 450e6, incentivada: true, rating: 'AA', data_emissao: null, coordenador_lider: null },
@@ -189,7 +189,7 @@ test('macro, curva de NTN-B e aviso de dias sem curva vêm dos dados', () => {
     ['ipca12m', '4,58%', 'set/2026'], ['focus_ipca', '4,51%', '16/10/2026']]);
   assert.deepEqual(D.curvaNtnb(bloco).map(p => p.vencimento), ['2029-05-15', '2032-08-15']);
   assert.equal(D.curvaAte(bloco), '2026-10-15');
-  assert.equal(D.notaCurva(bloco), 'O Tesouro Nacional publicou a curva até 15/10/2026: nos negócios dos dias seguintes (até 21/10/2026) o spread aparece como “—”.');
+  assert.equal(D.notaCurva(bloco), 'A ANBIMA publicou a curva até 15/10/2026: nos negócios dos dias seguintes (até 21/10/2026) o spread aparece como “—”.');
   const completo = JSON.parse(JSON.stringify(bloco));
   completo.secundario.periodo.ate = '2026-10-15';
   assert.equal(D.notaCurva(completo), '');
@@ -294,17 +294,17 @@ test('fonteCurta: quem forneceu e o período, sem tipo, licença nem nome comple
       { nome: 'BTG — tela de debêntures e negócios fechados no mercado secundário', periodo: 'tela de 21/10/2026 a 22/10/2026; negócios de 01/10/2026 a 05/10/2026', tipo: 'medido' },
       { nome: 'XP — tela de debêntures e intenções de compra e venda', periodo: 'tela de 21/10/2026 a 22/10/2026; intenções de 01/10/2026 a 03/10/2026', tipo: 'medido' },
       { nome: 'Banco Central do Brasil — Sistema Gerenciador de Séries Temporais (Selic, CDI e IPCA)', periodo: 'Selic meta: 02/10/2026' },
-      { nome: 'Tesouro Nacional — Taxas dos títulos ofertados pelo Tesouro Direto (NTN-B)', periodo: '01/10/2026 a 02/10/2026' },
+      { nome: 'ANBIMA — Taxas indicativas dos títulos públicos (NTN-B)', periodo: '01/10/2026 a 02/10/2026' },
     ],
     secundario: { periodo: { de: '2026-10-01', ate: '2026-10-05' } },
     macro: { ntnb: [{ vencimento: '2030-08-15', taxa: 6.1, data: '2026-10-02' }] },
   };
   assert.equal(D.fonteCurta(b, { corretoras: ['BTG', 'XP'], periodo: 'dados' }), 'Corretoras BTG e XP, 01/10/2026 a 05/10/2026');
-  assert.equal(D.fonteCurta(b, { corretoras: ['BTG', 'XP'], periodo: 'dados', tesouro: true }), 'Corretoras BTG e XP, 01/10/2026 a 05/10/2026; Tesouro Nacional (curva das NTN-B)');
+  assert.equal(D.fonteCurta(b, { corretoras: ['BTG', 'XP'], periodo: 'dados', anbima: true }), 'Corretoras BTG e XP, 01/10/2026 a 05/10/2026; ANBIMA (curva das NTN-B)');
   assert.equal(D.fonteCurta(b, { corretoras: ['XP'], periodo: 'intencoes' }), 'Corretora XP, intenções de 01/10/2026 a 03/10/2026');
   assert.equal(D.fonteCurta(b, { corretoras: ['BTG', 'XP'], periodo: 'tela' }), 'Corretoras BTG e XP, telas de 21/10/2026 a 22/10/2026');
   assert.equal(D.fonteCurta(b, { bcb: true }), 'Banco Central do Brasil');
-  assert.equal(D.fonteCurta(b, { tesouro: true, curva: true }), 'Tesouro Nacional, curva de 02/10/2026');
+  assert.equal(D.fonteCurta(b, { anbima: true, curva: true }), 'ANBIMA, curva de 02/10/2026');
   assert.equal(D.fonteCurta({}, { corretoras: ['XP'], bcb: true }), '—');
 });
 

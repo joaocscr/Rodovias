@@ -1,4 +1,4 @@
-# Atualização dos dados — 23/10/2026
+# Atualização dos dados — 26/10/2026
 
 Gerado por `python scripts/atualizar.py` (sem --baixar). Diferenças em relação à versão de `data/intel/` no último commit do git.
 
@@ -31,10 +31,10 @@ Registros: itens das coleções principais de cada bloco (valores preenchidos); 
 | agro | 5.571 | 5.571 | 210,5 | 210,5 | não |
 | antt | 1.938 | 1.938 | 399,2 | 399,2 | não |
 | carga | 4.312 | 4.312 | 141,3 | 141,3 | não |
-| debentures | 236 | 236 | 96,3 | 96,3 | não |
+| debentures | 236 | 236 | 96,3 | 96,6 | sim (+300 bytes) |
 | estaduais | 16.238 | 16.238 | 2.949,8 | 2.949,8 | não |
-| fontes | 57 | 57 | 31,0 | 31,0 | não |
-| ida | 99 | 99 | 11,0 | 11,0 | não |
+| fontes | 57 | 57 | 31,0 | 30,9 | sim (−41 bytes) |
+| ida | 99 | 99 | 11,0 | 11,5 | sim (+575 bytes) |
 | idex | 116 | 116 | 9,8 | 9,8 | não |
 | multimodal | 3.188 | 3.188 | 413,9 | 413,9 | não |
 | municipios | 5.571 | 5.571 | 1.687,6 | 1.687,6 | não |
@@ -81,7 +81,7 @@ Registros: itens das coleções principais de cada bloco (valores preenchidos); 
 
 ### Debêntures sem série pública ou sem curva das NTN-B (indicador ou spread "—") (1)
 
-- **Curva das NTN-B (Tesouro Direto)** — sem taxas do Tesouro Direto em 16/10/2026, 19/10/2026, 20/10/2026, 21/10/2026 (feriado, ou o arquivo do Tesouro ainda não chegou a esses dias): o spread dos negócios e intenções desses dias fica "—"; rode `python scripts/atualizar.py --renovar debentures` quando o Tesouro publicar
+- **Curva das NTN-B (taxa indicativa da ANBIMA)** — sem arquivo da ANBIMA em 01/10/2026, 02/10/2026, 05/10/2026, 06/10/2026, 07/10/2026, 08/10/2026, 09/10/2026, 13/10/2026, 15/10/2026 (feriado, dia ainda não publicado ou mais antigo que os últimos dias úteis que o site da ANBIMA guarda): o spread dos negócios e intenções desses dias fica "—"; rode `python scripts/atualizar.py --baixar --dominios debentures` quando a ANBIMA publicar
 
 ### Taxas de debêntures fora do intervalo plausível (fora das médias) (2)
 

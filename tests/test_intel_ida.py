@@ -11,6 +11,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
+from intel import curva_anbima as anb  # noqa: E402
 from intel import ida  # noqa: E402
 
 FIX = ROOT / "tests" / "fixtures" / "ida"
@@ -18,6 +19,16 @@ A = (FIX / "ipca_infra_a.csv").read_bytes().decode("latin-1")
 B = (FIX / "ipca_infra_b.csv").read_bytes().decode("latin-1")
 # curva sintética: vencimentos nos mesmos dias dos papéis da fixture, para a conta manual não depender de interpolação
 CURVA = [("2030-01-01", 6.0), ("2040-01-01", 7.0)]
+
+
+@pytest.fixture(autouse=True)
+def curva_sem_rede(monkeypatch):
+    """O `fetch` do IDA baixa também a curva da ANBIMA: aqui o download é simulado e os pedidos ficam em `anb.pedidos`
+    ({"datas", "pasta"}); nenhum teste vai à rede."""
+    pedidos = []
+    monkeypatch.setattr(anb, "fetch", lambda datas, pasta, **k: pedidos.append({"datas": set(datas), "pasta": Path(pasta)})
+                        or {d: False for d in datas})
+    return pedidos
 
 
 class _Manifesto:
@@ -229,7 +240,7 @@ def test_base100_parte_do_primeiro_ponto_da_janela():
 
 
 def test_spread_medio_so_no_infra_e_sem_curva_fica_nulo():
-    curvas = {"2026-10-19": [(v, t, "NTN-B") for v, t in CURVA], "2026-10-21": [(v, t, "NTN-B") for v, t in CURVA]}
+    curvas = {"2026-10-19": CURVA, "2026-10-21": CURVA}
     bloco = ida.montar(_cache_curto(), {}, [], curvas)
     spreads = {p["data"]: p["spread_medio"] for p in bloco["indices"][ida.INFRA]["serie"]}
     assert spreads == {"2026-10-19": pytest.approx((2 * 1.0 + 1 * 1.5) / 3, abs=1e-4), "2026-10-20": None,
@@ -240,7 +251,7 @@ def test_spread_medio_so_no_infra_e_sem_curva_fica_nulo():
 
 def test_papeis_so_do_universo():
     carteira = ida.ler_csv(A)["carteira"]
-    curvas = {"2026-10-19": [(v, t, "NTN-B") for v, t in CURVA]}
+    curvas = {"2026-10-19": CURVA}
     bloco = ida.montar(_cache_curto(), {ida.INFRA: ("2026-10-19", carteira)}, ["TSTR11", "TSTR21", "SEM_NA_CARTEIRA"], curvas)
     assert bloco["papeis"] == {"TSTR11": {"taxa_indicativa": 7.0, "spread": 1.0, "data": "2026-10-19"},
                                "TSTR21": {"taxa_indicativa": 8.5, "spread": 1.5, "data": "2026-10-19"}}   # OUTR11 fica de fora
@@ -260,7 +271,7 @@ def test_bloco_ida_nao_depende_do_dia(tmp_path):
     cache = cache_de(tmp_path)
     cart = {ind: (d, ida.ler_csv(p.read_bytes().decode("latin-1"))["carteira"]) for ind, (d, p) in ida.carteiras_baixadas(tmp_path).items()}
     man = _Manifesto([{"arquivo": "data/raw/ida/cache.json", "acesso": "2026-10-21", "sha256": "x"}])
-    curvas = {"2026-10-20": [(v, t, "NTN-B") for v, t in CURVA]}
+    curvas = {"2026-10-20": CURVA}
     a = ida.montar(cache, cart, ["TSTR11"], curvas, manifesto=man)
     b = ida.montar(cache, cart, ["TSTR11"], curvas, manifesto=man)
     assert json.dumps(a) == json.dumps(b)
@@ -291,10 +302,10 @@ def test_build_le_so_o_cache(tmp_path, monkeypatch):
     deb = tmp_path / "debentures.json"
     deb.write_text(json.dumps({"emissoes": [{"ticker": "TSTR11"}]}), encoding="utf-8")
     out = tmp_path / "saida" / "ida.json"
-    doc = ida.build(pasta=tmp_path, out=out, debentures=deb, tesouro=tmp_path / "nao_existe.csv", manifesto=_Manifesto(),
+    doc = ida.build(pasta=tmp_path, out=out, debentures=deb, manifesto=_Manifesto(),
                     historico=tmp_path / "historico.json")
     assert json.loads(out.read_text(encoding="utf-8")) == doc
-    assert set(doc["papeis"]) == {"TSTR11"} and doc["papeis"]["TSTR11"]["spread"] is None   # sem o arquivo do Tesouro
+    assert set(doc["papeis"]) == {"TSTR11"} and doc["papeis"]["TSTR11"]["spread"] is None   # sem arquivo da curva da ANBIMA
     assert set(doc["indices"]) == {ida.INFRA, "IPCA"}
 
 
@@ -374,29 +385,41 @@ def test_spread_do_bloco_confere_com_calculo_manual_de_dois_dias():
     cache = _cache_curto()
     cache[ida.INFRA] = {"2026-10-19": {**cache[ida.INFRA]["2026-10-19"], "carteira": enxuta(A)},
                         "2026-10-20": {**cache[ida.INFRA]["2026-10-20"], "carteira": enxuta(B)}}
-    curvas = {"2026-10-19": [("2030-01-01", 6.0, "NTN-B"), ("2040-01-01", 7.0, "NTN-B")],
-              "2026-10-20": [("2030-01-01", 6.5, "NTN-B"), ("2040-01-01", 7.5, "NTN-B")]}
+    curvas = {"2026-10-19": [("2030-01-01", 6.0), ("2040-01-01", 7.0)],
+              "2026-10-20": [("2030-01-01", 6.5), ("2040-01-01", 7.5)]}
     serie = ida.montar(cache, {}, [], curvas)["indices"][ida.INFRA]["serie"]
     assert [p["spread_medio"] for p in serie] == [round((2 * 1.0 + 1 * 1.5) / 3, 4), round((2 * 0.6 + 1 * 1.1) / 3, 4)]
     assert [p["spread_medio"] for p in serie] == [1.1667, 0.7667]
 
 
+def test_fetch_pede_a_curva_da_anbima_dos_dias_da_serie(tmp_path, curva_sem_rede):
+    """Depois dos índices, o `fetch` pede à ANBIMA a curva das NTN-B de cada dia com resultado (nunca dia sem resultado:
+    fim de semana, feriado), na pasta do cache da curva."""
+    rodar(tmp_path, "2026-10-21", consultar=servidor(feriados=("2026-10-20",)))
+    dias_com_dado = {d for dias in cache_de(tmp_path).values() for d, v in dias.items() if v != ida.SEM_DADO}
+    assert len(curva_sem_rede) == 1 and curva_sem_rede[0]["pasta"] == tmp_path / anb.SUBPASTA
+    assert curva_sem_rede[0]["datas"] == dias_com_dado and "2026-10-20" not in dias_com_dado and "2026-10-21" in dias_com_dado
+    assert ida.pasta_curva(ida.PASTA) == anb.PASTA              # a pasta de verdade é a do domínio debentures
+
+
 # ---------- histórico versionado ----------
 
-def _tesouro(tmp_path, dias):
-    """CSV mínimo do Tesouro Direto (colunas que `ler_tesouro` lê): curva de 2 vértices nos vencimentos das fixtures."""
-    linhas = ["Tipo Titulo;Data Vencimento;Data Base;Taxa Compra Manha"]
-    for br, (t1, t2) in dias.items():
-        linhas += [f"Tesouro IPCA+ com Juros Semestrais;01/01/2030;{br};{str(t1).replace('.', ',')}",
-                   f"Tesouro IPCA+ com Juros Semestrais;01/01/2040;{br};{str(t2).replace('.', ',')}"]
-    caminho = tmp_path / "tesouro.csv"
-    caminho.write_text("\n".join(linhas) + "\n", encoding="utf-8")
-    return caminho
+def _curva_ms(tmp_path, dias):
+    """Arquivos msAAMMDD.txt mínimos da ANBIMA no cache da curva do IDA (tmp_path/anbima_ms): 2 NTN-B nos vencimentos das
+    fixtures. `dias`: {AAAA-MM-DD: (taxa de 01/01/2030, taxa de 01/01/2040)}."""
+    pasta = tmp_path / anb.SUBPASTA
+    pasta.mkdir(exist_ok=True)
+    for dia, (t1, t2) in dias.items():
+        compacta = dia.replace("-", "")
+        texto = ("Titulo@Data Referencia@Codigo SELIC@Data Base/Emissao@Data Vencimento@Tx. Compra@Tx. Venda@Tx. Indicativas\n"
+                 + "".join(f"NTN-B@{compacta}@760199@20000715@{v}@0,0@0,0@{str(t).replace('.', ',')}\n"
+                           for v, t in (("20300101", t1), ("20400101", t2))))
+        (pasta / anb.nome(dia)).write_bytes(texto.encode("latin-1"))
 
 
-def _build(tmp_path, tesouro=None, **kw):
+def _build(tmp_path, **kw):
     return ida.build(pasta=tmp_path, out=tmp_path / "ida.json", debentures=tmp_path / "sem.json",
-                     tesouro=tesouro or tmp_path / "sem.csv", manifesto=_Manifesto(), historico=tmp_path / "historico.json", **kw)
+                     manifesto=_Manifesto(), historico=tmp_path / "historico.json", **kw)
 
 
 def _historico(tmp_path):
@@ -452,8 +475,8 @@ def test_spread_e_recalculado_quando_a_curva_chega_e_sobrevive_ao_cache_perdido(
     dia = "2026-10-20"
     sem_curva = _build(tmp_path)
     assert sem_curva["indices"][ida.INFRA]["serie"][-1]["spread_medio"] is None
-    curva = _tesouro(tmp_path, {"20/10/2026": (6.0, 7.0)})
-    com_curva = _build(tmp_path, tesouro=curva)
+    _curva_ms(tmp_path, {"2026-10-20": (6.0, 7.0)})
+    com_curva = _build(tmp_path)
     esperado = round((2 * (7.0 - 6.0) + 1 * (8.5 - 7.0)) / 3, 4)             # carteira das fixtures (dia A) sobre a curva
     assert com_curva["indices"][ida.INFRA]["serie"][-1]["spread_medio"] == esperado
     assert _historico(tmp_path)[ida.INFRA][dia]["spread_medio"] == esperado
@@ -591,6 +614,6 @@ def test_sem_lista_de_papeis_vira_pendencia_e_item_de_curadoria(tmp_path):
     assert len(itens) == 1 and "debentures" in itens[0]["motivo"]
     deb = tmp_path / "debentures.json"
     deb.write_text(json.dumps({"emissoes": [{"ticker": "TSTR11"}]}), encoding="utf-8")
-    ok = ida.build(pasta=tmp_path, out=tmp_path / "ida.json", debentures=deb, tesouro=tmp_path / "sem.csv",
+    ok = ida.build(pasta=tmp_path, out=tmp_path / "ida.json", debentures=deb,
                    manifesto=_Manifesto(), historico=tmp_path / "historico.json")
     assert "sem_lista_de_papeis" not in ok["pendencias"] and "TSTR11" in ok["papeis"]
