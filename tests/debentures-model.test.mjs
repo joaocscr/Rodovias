@@ -274,6 +274,57 @@ test('filtrarSubsetor: só rodovias, só os outros, ou todos; não altera a list
   for (const f of ['todos', 'rodovias', 'outros']) assert.equal(D.filtrarSubsetor(tres, f).length, c[f]);
 });
 
+const papeis = [
+  { ticker: 'RDV01', emissor: 'Concessionária Rota Verde', subsetor: 'rodovias' },
+  { ticker: 'RDV02', emissor: 'Rodovia do Café S.A.', subsetor: 'rodovias' },
+  { ticker: 'MTR11', emissor: 'Metrô Linha Sul', subsetor: 'mobilidade urbana' },
+  { ticker: 'PRT21', emissor: 'Porto Açu Operações', subsetor: 'portos e terminais' },
+  { ticker: 'SEM01', emissor: null, subsetor: null },
+];
+const tk = ls => ls.map(l => l.ticker);
+
+test('filtrarLinhas: sem filtro devolve tudo (cópia); subsetor e busca se combinam; "outros" é todo subsetor diferente de rodovias', () => {
+  assert.deepEqual(tk(D.filtrarLinhas(papeis)), tk(papeis));
+  assert.deepEqual(tk(D.filtrarLinhas(papeis, {})), tk(papeis));
+  assert.notEqual(D.filtrarLinhas(papeis), papeis, 'cópia, não a mesma lista');
+  assert.deepEqual(tk(D.filtrarLinhas(papeis, { subsetor: 'rodovias' })), ['RDV01', 'RDV02']);
+  // inclui o subsetor desconhecido ou ausente, como contagemSubsetor
+  assert.deepEqual(tk(D.filtrarLinhas(papeis, { subsetor: 'outros' })), ['MTR11', 'PRT21', 'SEM01']);
+  const c = D.contagemSubsetor(papeis);
+  for (const f of ['todos', 'rodovias', 'outros']) assert.equal(D.filtrarLinhas(papeis, { subsetor: f }).length, c[f], f);
+  // os dois filtros juntos: a interseção, na ordem de entrada
+  assert.deepEqual(tk(D.filtrarLinhas(papeis, { subsetor: 'rodovias', busca: 'cafe' })), ['RDV02']);
+  assert.deepEqual(tk(D.filtrarLinhas(papeis, { subsetor: 'outros', busca: 'rdv' })), []);
+  assert.equal(papeis.length, 5, 'a lista de entrada não muda');
+  assert.deepEqual(D.filtrarLinhas(undefined, { busca: 'x' }), []);
+});
+
+test('filtrarLinhas: busca por papel ou emissor, sem caixa nem acento ("Metrô" acha "metro"), cada palavra tem de aparecer', () => {
+  assert.deepEqual(tk(D.filtrarLinhas(papeis, { busca: 'metro' })), ['MTR11']);
+  assert.deepEqual(tk(D.filtrarLinhas(papeis, { busca: 'METRÔ' })), ['MTR11']);
+  assert.deepEqual(tk(D.filtrarLinhas(papeis, { busca: 'acu' })), ['PRT21']);
+  assert.deepEqual(tk(D.filtrarLinhas(papeis, { busca: 'cafe' })), ['RDV02']);
+  assert.deepEqual(tk(D.filtrarLinhas(papeis, { busca: 'rdv0' })), ['RDV01', 'RDV02'], 'pelo papel');
+  assert.deepEqual(tk(D.filtrarLinhas(papeis, { busca: 'rota verde' })), ['RDV01']);
+  assert.deepEqual(tk(D.filtrarLinhas(papeis, { busca: 'verde rota' })), ['RDV01'], 'a ordem das palavras não importa');
+  assert.deepEqual(tk(D.filtrarLinhas(papeis, { busca: '  rota   verde  ' })), ['RDV01'], 'espaços sobrando');
+  assert.deepEqual(tk(D.filtrarLinhas(papeis, { busca: '   ' })), tk(papeis), 'só espaços = sem busca');
+  assert.deepEqual(tk(D.filtrarLinhas(papeis, { busca: 'inexistente' })), []);
+  // a busca não olha o subsetor nem outros campos: "rodovias" só acha quem tem a palavra no papel ou no emissor
+  assert.deepEqual(tk(D.filtrarLinhas(papeis, { busca: 'mobilidade' })), []);
+  // linha sem emissor ou sem papel não quebra
+  assert.equal(D.filtrarLinhas([{ emissor: 'Só Emissor', subsetor: 'rodovias' }], { busca: 'emissor' }).length, 1);
+  assert.equal(D.filtrarLinhas(papeis, { busca: 'null' }).length, 0, 'campo ausente não vira o texto "null"');
+});
+
+test('tabelaIndices: cada linha traz o subsetor do papel, para o filtro da tabela', () => {
+  const t = D.tabelaIndices(bloco, ida, idex);
+  assert.deepEqual(t.linhas.map(l => [l.ticker, l.subsetor]), bloco.emissoes.map(e => [e.ticker, e.subsetor]));
+  const c = D.contagemSubsetor(t.linhas);
+  assert.equal(c.todos, bloco.emissoes.length);
+  assert.equal(c.rodovias, bloco.emissoes.filter(e => e.subsetor === 'rodovias').length);
+});
+
 test('notaIncentivadas: só incentivadas, ou quantas há de cada tipo', () => {
   assert.equal(D.notaIncentivadas(tres), 'Somente debêntures incentivadas (Lei 12.431): as telas recebidas são de debêntures isentas.');
   const mista = [...tres, { ticker: 'D1', subsetor: 'rodovias', incentivada: false }, { ticker: 'D2', subsetor: 'rodovias', incentivada: false }];

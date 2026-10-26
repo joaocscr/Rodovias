@@ -271,6 +271,19 @@ const DebenturesModel = (() => {
     const ls = emissoes || [];
     return filtro === 'rodovias' ? ls.filter(ehRodovia) : filtro === 'outros' ? ls.filter(l => !ehRodovia(l)) : [...ls];
   }
+  // Texto sem acento nem caixa, para a busca ("Metrô" acha "metro").
+  const semAcento = s => String(s == null ? '' : s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+  // Filtro de qualquer tabela de papéis ou emissores: subsetor (todos, rodovias ou outros: todo subsetor diferente de rodovias) e
+  // busca por papel ou emissor (cada palavra digitada tem de aparecer no código ou no nome, sem acento nem caixa). Os dois se combinam;
+  // a lista de entrada não muda e a ordem se mantém.
+  function filtrarLinhas(linhas, { subsetor = 'todos', busca = '' } = {}) {
+    const termos = semAcento(busca).split(' ').filter(Boolean);
+    return filtrarSubsetor(linhas, subsetor).filter(l => {
+      if (!termos.length) return true;
+      const alvo = semAcento(`${l.ticker == null ? '' : l.ticker} ${l.emissor == null ? '' : l.emissor}`);
+      return termos.every(t => alvo.includes(t));
+    });
+  }
   // Indicação acima da tabela: a frase muda sozinha se aparecer uma emissão não incentivada. Papel sem a informação
   // (incentivada nula, "—" na tabela) não conta como "não incentivada": é dito à parte.
   function notaIncentivadas(emissoes) {
@@ -506,8 +519,8 @@ const DebenturesModel = (() => {
   // A tabela do cartão: as linhas acima, com o indexador (para escrever a taxa como o mercado a escreve). Cabeçalhos curtos; a data
   // de cada índice vai em `datas`, para o texto do cartão.
   function tabelaIndices(bloco, ida, idex) {
-    const indexador = new Map(((bloco && bloco.emissoes) || []).map(e => [e.ticker, e.indexador]));
-    const linhas = tabelaIndicesPorPapel(bloco, ida, idex).map(l => Object.assign({ indexador: indexador.get(l.ticker) || null }, l));
+    const emissao = new Map(((bloco && bloco.emissoes) || []).map(e => [e.ticker, e]));
+    const linhas = tabelaIndicesPorPapel(bloco, ida, idex).map(l => Object.assign({ indexador: (emissao.get(l.ticker) || {}).indexador || null, subsetor: (emissao.get(l.ticker) || {}).subsetor || null }, l));
     const maisRecente = papeis => Object.values(papeis || {}).map(p => p && p.data).filter(Boolean).sort().pop();
     const dA = maisRecente(ida && ida.papeis), dX = maisRecente(idex && idex.papeis);
     return { datas: { anbima: dA || null, idex: dX || null }, linhas, colunas: [
@@ -521,7 +534,7 @@ const DebenturesModel = (() => {
 
   return { CORRETORAS, lacunasIda, janelasDiferentes, coberturaIda, coberturaIdex, evolucaoIda, variacoesIda, periodoIda, retornosIdex, spreadIdex, periodoIdex, avisosIdex, comparacaoRetorno12m, comparacaoSpread, tabelaIndicesPorPapel, tabelaIndices,
     fonteIda, fonteIdex, diaNum, mesNum, rotuloMes, ROTULO_NEGOCIOS, ROTULO_SOMADO, DASH, mediaDe, somaLinha, mesclar, series, kpis, intencoes, macro, curvaNtnb, curvaAte, notaCurva, periodoTexto, fonteCurta,
-    FILTROS_SUBSETOR, SUBSETORES, contagemSubsetor, filtrarSubsetor, dispersao, fonteDispersao, notaIncentivadas, tabelaEmissoes, tabelaEmissores, tabelaUltimo, serieIncentivadas, taxaIpca, taxaTexto, taxaMediaTexto, rotuloIndexador,
+    FILTROS_SUBSETOR, SUBSETORES, contagemSubsetor, filtrarSubsetor, filtrarLinhas, semAcento, dispersao, fonteDispersao, notaIncentivadas, tabelaEmissoes, tabelaEmissores, tabelaUltimo, serieIncentivadas, taxaIpca, taxaTexto, taxaMediaTexto, rotuloIndexador,
     fmtPct, fmtPp, fmtInt, fmtVolume, fmtData, fmtDiaMes };
 })();
 
