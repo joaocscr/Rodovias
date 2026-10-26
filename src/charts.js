@@ -107,21 +107,27 @@ const Charts = (() => {
     return frame(w, h, body, o.title, o.clickable ? 'group' : 'img');
   }
 
+  // Dispersão. Ponto {x, y, label?, color?, group?, tip?}: color pinta o ponto (sem ela, o azul de sempre), group vai em data-grupo
+  // (para quem liga cor e legenda) e tip é a dica inteira (sem ela: "rótulo: x unidade · y"). o.xLabel: unidade do eixo x, escrita
+  // abaixo dele; o.yLabel: unidade do eixo y, escrita acima dele. Com y negativo, o eixo y desce abaixo de zero; sem, parte de zero.
   function scatterSvg(data, o = {}) {
     const w = o.width || 640, h = o.height || 300;
     const pts = data.filter(d => num(d.x) && num(d.y));
     if (!pts.length) return empty(w, h);
     const fx = o.formatX || (v => nf1.format(v)), fy = o.formatY || (v => nf1.format(v) + '%');
-    const L = 64, R = 16, T = 16, B = 48, pw = w - L - R, ph = h - T - B;
-    const tx = ticks(Math.max(...pts.map(p => p.x))), ty = ticks(Math.max(...pts.map(p => p.y)));
-    const mx = tx[tx.length - 1] || 1, my = ty[ty.length - 1] || 1;
-    const xOf = v => L + (v / mx) * pw, yOf = v => T + ph - (v / my) * ph;
-    let body = yAxis(ty, L, w - R, yOf, fy);
+    const L = 64, R = 16, T = o.yLabel ? 36 : 16, B = 48, pw = w - L - R, ph = h - T - B;
+    const ymin = Math.min(...pts.map(p => p.y)), ymax = Math.max(...pts.map(p => p.y));
+    const tx = ticks(Math.max(...pts.map(p => p.x))), ty = ymin < 0 ? ticksFrom(ymin, Math.max(ymax, 0)) : ticks(ymax);
+    const mx = tx[tx.length - 1] || 1, y0 = ymin < 0 ? ty[0] : 0, my = ty[ty.length - 1] || 1;
+    const xOf = v => L + (v / mx) * pw, yOf = v => T + ph - ((v - y0) / ((my - y0) || 1)) * ph;
+    let body = (o.yLabel ? `<text class="ylabel" x="4" y="16" fill="${C.grey}">${esc(o.yLabel)}</text>` : '') + yAxis(ty, L, w - R, yOf, fy);
     body += tx.map(t => `<text x="${xOf(t)}" y="${h - B + 24}" text-anchor="middle" fill="${C.grey}">${esc(fx(t))}</text>`).join('');
     if (o.xLabel) body += `<text x="${L + pw / 2}" y="${h - 4}" text-anchor="middle" fill="${C.grey}">${esc(o.xLabel)}</text>`;
     pts.forEach(p => {
-      body += `<circle cx="${xOf(p.x).toFixed(1)}" cy="${yOf(p.y).toFixed(1)}" r="6" fill="${C.bright}" fill-opacity="0.7" stroke="${C.deep}" stroke-width="1.5">` +
-        `<title>${esc(p.label || '')}: ${esc(fx(p.x))} ${esc(o.xLabel || '')} · ${esc(fy(p.y))}</title></circle>`;
+      const fill = p.color ? `fill="${p.color}" fill-opacity="0.7" stroke="${p.color}"` : `fill="${C.bright}" fill-opacity="0.7" stroke="${C.deep}"`;
+      const tip = p.tip != null ? p.tip : `${p.label || ''}: ${fx(p.x)} ${o.xLabel || ''} · ${fy(p.y)}`;
+      body += `<circle cx="${xOf(p.x).toFixed(1)}" cy="${yOf(p.y).toFixed(1)}" r="6" ${fill} stroke-width="1.5"${p.group != null ? ` data-grupo="${esc(p.group)}"` : ''}>` +
+        `<title>${esc(tip)}</title></circle>`;
     });
     return frame(w, h, body, o.title);
   }

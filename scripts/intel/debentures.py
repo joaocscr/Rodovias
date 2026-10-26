@@ -22,7 +22,10 @@ formato de agregado (`volume`, `n`, `taxa_media` e `volume_taxa` por indexador, 
 para a tela poder somá-los. Spread só para IPCA+: taxa − NTN-B do mesmo dia interpolada em linha reta pelo vencimento;
 sem curva no dia ou fora dela, None (nunca extrapola, nunca zero). Emissor que não casa com a classificação e não é
 sabidamente de outro setor fica fora e vai para `pendencias` (relatório de curadoria), assim como série pública ausente
-e dia sem curva.
+e dia sem curva (também o das telas, de que depende a dispersão).
+
+`dispersao`: um ponto por papel IPCA+ do universo, com a duration (anos, como as telas publicam) e a taxa indicativa da
+ANBIMA da tela BTG (da XP, se a BTG não traz) e o spread sobre a curva do dia da tela; ver `dispersao`.
 
 Troca das planilhas pela API interna
   O formato das planilhas fica só em debentures_planilhas.py (`planilhas`, `ler_telas`, `ler_negocios`), cujo início
@@ -282,6 +285,50 @@ def _emissoes(telas, classe, cadastro=None):
     return sorted(out, key=lambda e: (e["emissor"], e["vencimento"] or "", e["ticker"]))
 
 
+# ---------- dispersão spread × duration ----------
+
+def _dispersao(telas, emissoes, curvas):
+    """(bloco, dias com curva, dias sem curva); ver `dispersao`. Os dias são os da curva consultada por papel com duration
+    e taxa, para o bloco dizer de que dia vieram os spreads e a curadoria saber o que falta baixar."""
+    por = defaultdict(dict)
+    for t in telas:
+        por[t["ticker"]].setdefault(t["origem"], t)
+    do_btg = [t["data"] for t in telas if t["origem"] == "BTG" and t["data"]]
+    dia = max(do_btg or [t["data"] for t in telas if t["data"]], default=None)    # o dia da tela BTG; sem ela, o da XP
+    pontos, excluidos, com_curva, sem_curva = [], 0, set(), set()
+    for e in emissoes:
+        if e["indexador"] != "IPCA+":
+            continue
+        linhas = [l for l in (por.get(e["ticker"], {}).get(o) for o in ("BTG", "XP")) if l]    # a tela BTG vale primeiro
+        duracao = next((l["duration"] for l in linhas if l.get("duration")), None)
+        origem = next((l for l in linhas if l.get("taxa_indicativa") is not None), None)
+        taxa = origem["taxa_indicativa"] if origem else None
+        if not duracao or taxa is None or not plausivel(taxa, "IPCA+") or not dia:
+            excluidos += 1
+            continue
+        d = origem["data"] or dia          # a tela XP traz só a hora: vale o dia da tela BTG
+        curva = curva_ntnb(d, curvas)
+        (com_curva if curva else sem_curva).add(d)
+        s = spread(taxa, e["vencimento"], curva, "IPCA+")
+        if s is None:
+            excluidos += 1
+            continue
+        pontos.append({"ticker": e["ticker"], "emissor": e["emissor"], "subsetor": e["subsetor"],
+                       "duration_anos": _r(duracao, 4), "taxa_indicativa": _r(taxa, 4), "spread": _r(s, 4)})
+    pontos.sort(key=lambda p: (p["emissor"], p["ticker"]))
+    return {"data": dia, "pontos": pontos, "excluidos": excluidos}, com_curva, sem_curva
+
+
+def dispersao(telas, emissoes, curvas):
+    """Bloco `dispersao` do gráfico spread × duration: {data, pontos: [{ticker, emissor, subsetor, duration_anos,
+    taxa_indicativa, spread}], excluidos}. `telas`: de `ler_telas`; `emissoes`: as do universo (`_emissoes`); `curvas`: de
+    `curva_anbima.curvas`. Entram só os papéis IPCA+. Duration (anos, como a tela publica) e taxa indicativa ANBIMA vêm da
+    tela BTG e, quando ela não os traz, da XP. O spread é a taxa menos a NTN-B interpolada pelo vencimento, na curva do dia
+    da tela (`data`: o da tela BTG, a mais recente). Papel IPCA+ sem duration, sem taxa, sem curva no dia ou com vencimento
+    fora da curva não vira ponto e conta em `excluidos`; papel de outro indexador nem entra na conta."""
+    return _dispersao(telas, emissoes, curvas)[0]
+
+
 # ---------- séries públicas ----------
 
 def _ler_json(path):
@@ -386,7 +433,7 @@ def _fontes(telas, mov, macro, curvas, dias_usados, manifesto, acesso_corretora,
          "acesso": acesso_corretora.get("BTG") or hoje,
          "licenca": "Dados de corretora, fornecidos ao projeto; uso restrito", "tipo": "medido",
          "nota": usuario + " Da tela vêm emissor, setor, indexador, taxa de emissão, vencimento, volume emitido e se a "
-                 "debênture é incentivada. O universo são os emissores de transporte classificados à mão a partir do "
+                 "debênture é incentivada; para a dispersão, a duration em anos e a taxa indicativa da ANBIMA. O universo são os emissores de transporte classificados à mão a partir do "
                  "setor Transporte da tela e dos nomes que aparecem nas planilhas (a tela põe algumas concessionárias "
                  "de rodovia em outros setores). Os negócios fechados entram só somados por dia, emissor e subsetor, "
                  "com o último negócio de cada papel; registros com volume zero contam no número de negócios, mas "
@@ -395,7 +442,8 @@ def _fontes(telas, mov, macro, curvas, dias_usados, manifesto, acesso_corretora,
          "periodo": f"tela de {tela_xp}; intenções de {inten}" if inten else f"tela de {tela_xp}",
          "acesso": acesso_corretora.get("XP") or hoje,
          "licenca": "Dados de corretora, fornecidos ao projeto; uso restrito", "tipo": "medido",
-         "nota": usuario + " Da tela vêm a taxa de emissão e a nota de crédito (rating). As intenções são pedidos de "
+         "nota": usuario + " Da tela vêm a taxa de emissão, a nota de crédito (rating) e, onde a tela BTG não os traz, a duration "
+                 "e a taxa indicativa da ANBIMA. As intenções são pedidos de "
                  "compra ou venda, não negócios realizados: ficam à parte, somadas por direção, dia, emissor e "
                  "subsetor, com o último pedido de cada papel."
                  + (" A tela da XP traz só a hora da atualização, não a data; vale a data da tela da BTG." if xp_sem_data else "")},
@@ -512,6 +560,9 @@ def montar(pasta=PASTA, publico=PUBLICO, emissores=EMISSORES, ler_telas=ler_tela
                            "spread": spread(l["taxa"], l["vencimento"], curva, l["indexador"])})
         universo[tipo] = linhas
     agreg = lambda ls, d=False: _conjunto([{**l, "emissor": l["emissor_classe"]} for l in ls], d)  # noqa: E731
+    disp, dias_tela, dias_tela_sem = _dispersao(telas, emissoes, curvas)
+    dias_usados |= dias_tela
+    dias_sem_curva |= dias_tela_sem
     datas = [l["data"] for t in ("negocios", "intencoes") for l in mov[t] if l["data"]]
     return {
         "fonte": _fontes(telas, mov, macro, curvas, dias_usados, manifesto, acesso_corretora, hoje, emissoes, cadastro_de,
@@ -519,6 +570,7 @@ def montar(pasta=PASTA, publico=PUBLICO, emissores=EMISSORES, ler_telas=ler_tela
         "tipo": "medido",
         "macro": macro,
         "emissoes": emissoes,
+        "dispersao": disp,
         "secundario": {
             "periodo": {"de": min(datas), "ate": max(datas)} if datas else {"de": None, "ate": None},
             "negocios": agreg(universo["negocios"]),

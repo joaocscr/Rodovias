@@ -87,6 +87,16 @@ def test_taxas_normalizadas_em_pct_ao_ano():
     assert t[("BTG", "TSTR11")]["setor"] == "Transporte" and t[("XP", "TSTR11")]["setor"] is None
 
 
+def test_telas_trazem_duration_em_anos_e_taxa_indicativa_anbima():
+    t = {(x["origem"], x["ticker"]): x for x in dp.ler_telas(FIX / "telas.xlsx")}
+    assert (t[("BTG", "TSTR11")]["duration"], t[("BTG", "TSTR11")]["taxa_indicativa"]) == (4.1, 6.9)    # BTG: Duration, Taxa Indicativa Anbima
+    assert (t[("XP", "LOCA11")]["duration"], t[("XP", "LOCA11")]["taxa_indicativa"]) == (3.0, 7.3)      # XP: Duration, Anbima (já em %)
+    assert (t[("BTG", "FERX11")]["duration"], t[("BTG", "FERX11")]["taxa_indicativa"]) == (9.0, 7.1)
+    # célula vazia ou "-" na planilha: None, nunca zero
+    assert dp._duracao("-") is None and dp._duracao("") is None and dp._duracao(None) is None
+    assert dp._duracao("3,5") == 3.5 and dp._duracao(0) is None
+
+
 def test_numeros_e_taxas_em_texto():
     assert tx.numero("1.000") == 1000 and tx.numero("1.000.000") == 1_000_000 and tx.numero("5.408,11") == 5408.11
     assert tx.numero("1234.5") == 1234.5 and tx.numero(14713.2) == 14713.2 and tx.numero("-") is None
@@ -197,7 +207,7 @@ def test_spread_sem_curva_do_dia(bloco, tmp_path):
     assert deb.spread(7.3, "2032-05-15", []) is None
     ult = {(u["ticker"], u["origem"]): u for u in bloco["secundario"]["ultimo_por_ticker"]}
     assert ult[("TSTR11", "negocio")]["data"] == "2026-10-05" and ult[("TSTR11", "negocio")]["spread"] is None
-    assert bloco["pendencias"]["dias_sem_curva"] == ["2026-10-05"]
+    assert bloco["pendencias"]["dias_sem_curva"] == ["2026-10-05", "2026-10-21", "2026-10-22"]   # os dois últimos: dias das telas
     dia = _por(bloco["secundario"]["negocios"]["por_dia"], "data")["2026-10-05"]
     assert dia["spread_medio"] is None and dia["volume_spread"] == 0 and dia["taxa_media"] == {"IPCA+": 7.3}
     # curva da ANBIMA ausente (nenhum arquivo baixado): spread "—" em tudo, aviso na curadoria, nenhum zero
@@ -223,6 +233,114 @@ def test_pre_e_di_sem_spread(bloco):
     ult = {(u["ticker"], u["origem"]): u for u in bloco["secundario"]["ultimo_por_ticker"]}
     assert ult[("TSTR21", "negocio")]["spread"] is None and ult[("FERX99", "intencao")]["spread"] is None
     assert ult[("FERX11", "negocio")]["spread"] is None    # IPCA+ com vencimento além da última NTN-B
+
+
+# ---------- dispersão spread × duration ----------
+
+CURVA_DISP = {"2026-10-22": [("2029-05-15", 5.8), ("2030-08-15", 6.0), ("2035-05-15", 6.5), ("2035-08-15", 6.55)]}
+
+
+def _emi(ticker, indexador="IPCA+", venc="2032-05-15", subsetor="rodovias"):
+    return {"ticker": ticker, "emissor": f"Emissor {ticker}", "subsetor": subsetor, "grupo": None, "indexador": indexador,
+            "vencimento": venc}
+
+
+def _tela(origem, ticker, duration, taxa, data="2026-10-22", indexador="IPCA+", venc="2032-05-15"):
+    return {"origem": origem, "ticker": ticker, "emissor": f"Emissor {ticker}", "setor": None, "indexador": indexador,
+            "taxa_emissao": 6.0, "vencimento": venc, "volume_emitido": None, "incentivada": None, "rating": None, "data": data,
+            "duration": duration, "taxa_indicativa": taxa}
+
+
+def test_dispersao_calcula_o_spread_a_mao_com_a_curva_do_dia_da_tela():
+    d = deb.dispersao([_tela("BTG", "AAA11", 4.1, 7.0)], [_emi("AAA11")], CURVA_DISP)
+    esperado = 7.0 - _ntnb("2032-05-15", [("2030-08-15", 6.0), ("2035-05-15", 6.5)])
+    assert d["data"] == "2026-10-22" and d["excluidos"] == 0
+    assert d["pontos"] == [{"ticker": "AAA11", "emissor": "Emissor AAA11", "subsetor": "rodovias", "duration_anos": 4.1,
+                            "taxa_indicativa": 7.0, "spread": round(esperado, 4)}]
+    assert round(esperado, 4) == pytest.approx(7.0 - (6.0 + 0.5 * 639 / 1734), abs=1e-4)   # 639 de 1.734 dias entre os vértices
+
+
+def test_dispersao_exclui_sem_duration():
+    telas = [_tela("BTG", "OK1111", 4.0, 7.0),
+             _tela("BTG", "SEMDUR", None, 7.0),                       # sem duration em nenhuma tela
+             _tela("BTG", "SEMTAX", 4.0, None),                       # sem taxa indicativa
+             _tela("BTG", "ZERODU", 0.0, 7.0),                        # duration zero não é duration
+             _tela("BTG", "FORACV", 9.0, 7.0, venc="2040-05-15"),     # vencimento além da curva: sem spread
+             _tela("BTG", "ABSURD", 4.0, 120.0)]                      # taxa fora do plausível: erro de planilha
+    emis = [_emi(t["ticker"], venc=t["vencimento"]) for t in telas]
+    d = deb.dispersao(telas, emis, CURVA_DISP)
+    assert [p["ticker"] for p in d["pontos"]] == ["OK1111"] and d["excluidos"] == 5
+    # papel que nenhuma tela traz também fica de fora (e conta)
+    d = deb.dispersao(telas[:1], [*emis[:1], _emi("SEMTEL")], CURVA_DISP)
+    assert [p["ticker"] for p in d["pontos"]] == ["OK1111"] and d["excluidos"] == 1
+
+
+def test_dispersao_prefere_btg():
+    telas = [_tela("XP", "AAA11", 3.9, 7.1), _tela("BTG", "AAA11", 4.1, 7.0),       # a ordem das telas não importa
+             _tela("XP", "BBB11", 5.9, 7.3), _tela("BTG", "BBB11", None, None),     # BTG sem os campos: vale a XP
+             _tela("XP", "CCC11", 2.5, 6.9)]                                         # só na XP
+    d = deb.dispersao(telas, [_emi("AAA11"), _emi("BBB11"), _emi("CCC11")], CURVA_DISP)
+    p = {x["ticker"]: x for x in d["pontos"]}
+    assert (p["AAA11"]["duration_anos"], p["AAA11"]["taxa_indicativa"]) == (4.1, 7.0)
+    assert (p["BBB11"]["duration_anos"], p["BBB11"]["taxa_indicativa"]) == (5.9, 7.3)
+    assert (p["CCC11"]["duration_anos"], p["CCC11"]["taxa_indicativa"]) == (2.5, 6.9)
+    assert d["excluidos"] == 0
+
+
+def test_dispersao_so_ipca():
+    telas = [_tela("BTG", "IPCA11", 4.0, 7.0), _tela("BTG", "PRE111", 3.0, 13.6, indexador="PRÉ"),
+             _tela("XP", "DI1111", 3.0, 1.3, indexador="DI+"), _tela("BTG", "PCT111", 3.0, 105.0, indexador="% DI")]
+    emis = [_emi("IPCA11"), _emi("PRE111", "PRÉ"), _emi("DI1111", "DI+"), _emi("PCT111", "% DI")]
+    d = deb.dispersao(telas, emis, CURVA_DISP)
+    assert [p["ticker"] for p in d["pontos"]] == ["IPCA11"]
+    assert d["excluidos"] == 0          # quem não é IPCA+ nunca esteve no gráfico: não conta como excluído
+
+
+def test_dispersao_usa_a_curva_do_dia_da_tela_e_sem_curva_nao_ha_ponto():
+    telas = [_tela("BTG", "AAA11", 4.0, 7.0), _tela("XP", "BBB11", 3.0, 7.0, data=None)]
+    emis = [_emi("AAA11"), _emi("BBB11")]
+    d = deb.dispersao(telas, emis, {"2026-10-21": CURVA_DISP["2026-10-22"]})        # a curva existe, mas é de outro dia
+    assert d["pontos"] == [] and d["excluidos"] == 2 and d["data"] == "2026-10-22"
+    # a tela XP traz só a hora: vale a data da tela BTG
+    d = deb.dispersao(telas, emis, CURVA_DISP)
+    assert [p["ticker"] for p in d["pontos"]] == ["AAA11", "BBB11"]
+    # sem nenhuma data nas telas: nada a desenhar
+    d = deb.dispersao([_tela("XP", "AAA11", 4.0, 7.0, data=None)], [_emi("AAA11")], CURVA_DISP)
+    assert d == {"data": None, "pontos": [], "excluidos": 1}
+
+
+def _arquivo_anbima(dia, ntnb):
+    linhas = ["ANBIMA - Associação Brasileira das Entidades dos Mercados Financeiro e de Capitais", "",
+              "Titulo@Data Referencia@Codigo SELIC@Data Base/Emissao@Data Vencimento@Tx. Compra@Tx. Venda@Tx. Indicativas@PU"]
+    linhas += [f"NTN-B@{dia}@760199@20000715@{v}@{t}@{t}@{t}@4000,0" for v, t in ntnb]
+    return "\r\n".join(linhas).encode("latin-1")
+
+
+def test_dispersao_no_bloco(tmp_path):
+    """Planilhas de teste + um arquivo da ANBIMA no dia das telas (22/10): o bloco traz os papéis IPCA+ com duration e taxa."""
+    pub = tmp_path / "publico"
+    shutil.copytree(PUBLICO, pub)
+    (pub / anb.SUBPASTA / "ms261022.txt").write_bytes(_arquivo_anbima("20261022", [("20300815", "6,0000"), ("20350515", "6,5000")]))
+    b = deb.montar(FIX, pub, EMISSORES, hoje="2026-10-22", manifesto=_Manifesto(_downloads()), snd=SND)
+    disp = b["dispersao"]
+    assert set(disp) == {"data", "pontos", "excluidos"} and disp["data"] == "2026-10-22"
+    # TSTR11 (BTG e XP, duration 4,1, taxa 6,9, vence em 2032) entra; TSTR21 é prefixado e FERX99 é DI+: não são IPCA+;
+    # FERX11 (IPCA+, 2040) vence além da curva e fica de fora, com data da tela de 21/10 (sem curva nesse dia)
+    assert [p["ticker"] for p in disp["pontos"]] == ["TSTR11"] and disp["excluidos"] == 1
+    esperado = 6.9 - _ntnb("2032-05-15", [("2030-08-15", 6.0), ("2035-05-15", 6.5)])
+    assert disp["pontos"][0] == {"ticker": "TSTR11", "emissor": "Emissora Teste Rodovias", "subsetor": "rodovias",
+                                 "duration_anos": 4.1, "taxa_indicativa": 6.9, "spread": round(esperado, 4)}
+    # o dia da tela entra no período da fonte da curva e o dia de FERX11, sem curva, vai para a curadoria
+    curva = next(f for f in b["fonte"] if f["nome"].startswith("ANBIMA — Taxas indicativas"))
+    assert "22/10/2026" in curva["periodo"]
+    assert b["pendencias"]["dias_sem_curva"] == ["2026-10-05", "2026-10-21"]
+
+
+def test_dispersao_sem_curva_no_dia_das_telas_fica_vazia(bloco):
+    """Sem curva no dia das telas (as fixtures só têm 01 e 02/10), todos os IPCA+ ficam de fora; nada de zero."""
+    disp = bloco["dispersao"]
+    assert disp["pontos"] == [] and disp["excluidos"] == 2 and disp["data"] == "2026-10-22"
+    assert bloco["pendencias"]["dias_sem_curva"] == ["2026-10-05", "2026-10-21", "2026-10-22"]
 
 
 # ---------- agregados ----------
@@ -619,7 +737,7 @@ def test_bloco_gerado_estrutura():
     if not BLOCO.exists():
         pytest.skip("data/intel/debentures.json ainda não gerado")
     b = json.loads(BLOCO.read_text(encoding="utf-8"))
-    assert set(b) == {"fonte", "tipo", "macro", "emissoes", "secundario", "pendencias"}
+    assert set(b) == {"fonte", "tipo", "macro", "emissoes", "dispersao", "secundario", "pendencias"}
     assert set(b["secundario"]["negocios"]) == {"por_dia", "por_emissor", "por_subsetor"}
     assert b["emissoes"] and b["secundario"]["ultimo_por_ticker"]
     chaves = [(u["ticker"], u["origem"]) for u in b["secundario"]["ultimo_por_ticker"]]

@@ -13,6 +13,7 @@ const DebenturesModel = (() => {
   const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
   const INDEXADORES = ['IPCA+', 'DI+', '% DI', 'PRÉ'];  // ordem de exibição; outros indexadores vêm depois, em ordem alfabética
   const CORRETORAS = ['BTG', 'XP'];  // corretoras das telas de emissões e negócios; os cartões citam as que existem no bloco
+  const SUBSETORES = ['rodovias', 'ferrovias', 'portos e terminais', 'aeroportos', 'hidrovias', 'mobilidade urbana'];  // ordem fixa: cor e legenda não mudam com o filtro
   const MEDIDAS = ['volume', 'n', 'taxa_media', 'volume_taxa', 'spread_medio', 'volume_spread', 'por_direcao'];
 
   // ---------- formatação ----------
@@ -197,6 +198,33 @@ const DebenturesModel = (() => {
     return partes.join('; ') || DASH;
   }
   const periodoTexto = p => (p && p.de && p.ate ? `${fmtData(p.de)} a ${fmtData(p.ate)}` : '');
+
+  // ---------- dispersão spread × duration ----------
+  // Gráfico de dispersão das emissões IPCA+ do universo (bloco.dispersao: um ponto por papel, com duration em anos, taxa indicativa
+  // da ANBIMA e spread sobre a NTN-B do dia da tela). O filtro de subsetor é o da tabela de emissões (filtrarSubsetor); os subsetores
+  // com ponto saem na ordem fixa de SUBSETORES, os desconhecidos depois, em ordem alfabética. `nota`: quantos papéis IPCA+ ficaram de
+  // fora (sem duration, taxa ou spread) dentro do filtro escolhido; vazia quando nenhum.
+  const dicaDispersao = p => `${p.ticker} — ${p.emissor || DASH} · duration ${fmtNum2(p.duration_anos)} anos · taxa ${fmtPct(p.taxa_indicativa)} · spread ${fmtPp(p.spread)}`;
+  const plural = (n, um, varios) => (n === 1 ? um : varios);
+  function dispersao(bloco, filtro = 'todos') {
+    const d = (bloco && bloco.dispersao) || {};
+    const validos = (d.pontos || []).filter(p => p && p.ticker && num(p.duration_anos) && num(p.spread));
+    const pontos = filtrarSubsetor(validos, filtro).map(p => Object.assign({}, p, { dica: dicaDispersao(p) }));
+    const subsetores = ordena([...new Set(pontos.map(p => p.subsetor))], SUBSETORES);
+    const emissoes = (bloco && bloco.emissoes) || [];
+    const noGrafico = new Set(validos.map(p => p.ticker));
+    const fora = filtro === 'todos' || !emissoes.length ? (num(d.excluidos) ? d.excluidos : 0)
+      : filtrarSubsetor(emissoes, filtro).filter(e => e.indexador === 'IPCA+' && !noGrafico.has(e.ticker)).length;
+    return { pontos, subsetores, data: d.data || null,
+      nota: fora > 0 ? `${nf0.format(fora)} ${plural(fora, 'papel sem duration ou taxa ficou', 'papéis sem duration ou taxa ficaram')} de fora` : '' };
+  }
+  // Fonte do gráfico: as telas das corretoras e a curva das NTN-B da ANBIMA do dia da tela, tudo tirado do bloco.
+  function fonteDispersao(bloco) {
+    const d = bloco && bloco.dispersao;
+    if (!d || !d.pontos) return DASH;
+    const corr = fonteCurta(bloco, { corretoras: CORRETORAS, periodo: 'tela' });
+    return [corr !== DASH && corr, d.data && `ANBIMA, taxas indicativas das NTN-B de ${fmtData(d.data)}`].filter(Boolean).join('; ') || DASH;
+  }
 
   // ---------- tabelas ----------
   // Cada coluna: k (chave da linha, também a de ordenação), rotulo, num (alinha à direita) e fmt(linha) -> texto.
@@ -485,7 +513,7 @@ const DebenturesModel = (() => {
 
   return { CORRETORAS, lacunasIda, janelasDiferentes, coberturaIda, coberturaIdex, evolucaoIda, variacoesIda, periodoIda, retornosIdex, spreadIdex, periodoIdex, avisosIdex, comparacaoRetorno12m, comparacaoSpread, tabelaIndicesPorPapel, tabelaIndices,
     fonteIda, fonteIdex, diaNum, mesNum, rotuloMes, ROTULO_NEGOCIOS, ROTULO_SOMADO, DASH, mediaDe, somaLinha, mesclar, series, kpis, intencoes, macro, curvaNtnb, curvaAte, notaCurva, periodoTexto, fonteCurta,
-    FILTROS_SUBSETOR, contagemSubsetor, filtrarSubsetor, notaIncentivadas, tabelaEmissoes, tabelaEmissores, tabelaUltimo, serieIncentivadas, taxaIpca, taxaTexto, taxaMediaTexto, rotuloIndexador,
+    FILTROS_SUBSETOR, SUBSETORES, contagemSubsetor, filtrarSubsetor, dispersao, fonteDispersao, notaIncentivadas, tabelaEmissoes, tabelaEmissores, tabelaUltimo, serieIncentivadas, taxaIpca, taxaTexto, taxaMediaTexto, rotuloIndexador,
     fmtPct, fmtPp, fmtInt, fmtVolume, fmtData, fmtDiaMes };
 })();
 

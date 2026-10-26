@@ -1,5 +1,6 @@
-// Aba Debêntures: juros e inflação de referência, curva de NTN-B, emissões, mercado secundário (negócios, com a opção de somar
-// as intenções de compra e venda) e a série de debêntures incentivadas para rodovias do RoadShow. Números, períodos e fontes
+// Aba Debêntures, na ordem da tela: juros e inflação de referência com a curva de NTN-B, índices de debêntures (IDA e IDEX-Infra),
+// emissões (dispersão spread × duration e tabela, com o mesmo filtro de subsetor), mercado secundário (negócios, com a opção de
+// somar as intenções de compra e venda) e a série de debêntures incentivadas para rodovias do RoadShow. Números, períodos e fontes
 // vêm do bloco window.INTEL.debentures e de conc.mercado (via DebenturesModel); aqui só a montagem.
 const Debentures = (() => {
   const DM = DebenturesModel, IM = IntelModel;
@@ -73,19 +74,41 @@ const Debentures = (() => {
     return String(texto).split(/(incentivadas? \(Lei 12\.431\))/).map((parte, i) => (i % 2 ? Glossario.link('debenture-incentivada', parte) : esc(parte))).join('');
   }
 
+  // Filtro de subsetor: uma barra só, acima da dispersão e da tabela, que valem os dois com o mesmo filtro.
+  function barraSubsetor(linhas) {
+    const c = DM.contagemSubsetor(linhas);
+    return `<div class="toolbar" id="deb-em-barra"><span class="sub" id="deb-em-sub-rotulo">Subsetor</span>
+      <div class="chips" role="radiogroup" id="deb-em-sub" aria-labelledby="deb-em-sub-rotulo">${
+        DM.FILTROS_SUBSETOR.map(([id, rotulo]) => `<button type="button" class="chip" role="radio" data-filtro="${id}" id="deb-em-sub-${id}" aria-checked="false" tabindex="-1">${rotulo} (${nf0.format(c[id])})</button>`).join('')}</div>
+      <span class="page__src" id="deb-em-n" aria-live="polite"></span></div>`;
+  }
+
   function emissoesCard() {
     const t = DM.tabelaEmissoes(bloco);
-    if (!t.linhas.length) return '';
     return card('emissoes', 'Emissões de debêntures de rodovias e infraestrutura de transporte',
       `Um papel (série de debênture) por linha, de emissores de rodovias, ferrovias, portos e terminais, aeroportos, hidrovias e mobilidade urbana que aparecem nas telas das corretoras. Taxa na emissão conforme o ${Glossario.link('indexador', 'indexador')}; “incentivada” = benefício da Lei 12.431 (${Glossario.link('debenture-infraestrutura', 'debênture de infraestrutura')} é a de 2024); “${DM.DASH}” quando a fonte não traz o campo. Clique no cabeçalho para ordenar`, {
         wide: true,
         note: `Nota de crédito (${Glossario.link('rating', 'rating')}) como informada na tela da corretora.${t.colunas.some(c => c.k === 'coordenador_lider') ? ` Coordenador líder: ${Glossario.link('coordenador', 'coordenador')} que lidera a oferta da emissão.` : ''}${t.ocultas.length ? ` Colunas que a fonte não preenche em nenhum papel ficam ocultas (agora: ${esc(t.ocultas.join(' e '))}) e aparecem sozinhas quando uma fonte trouxer o dado.` : ''}`,
-        legend: `<p class="deb-nota" id="deb-em-incentivadas">${notaIncentivadasHtml(DM.notaIncentivadas(t.linhas))}</p>
-          <div class="toolbar"><span class="sub" id="deb-em-sub-rotulo">Subsetor</span>
-          <div class="chips" role="radiogroup" id="deb-em-sub" aria-labelledby="deb-em-sub-rotulo">${
-            DM.FILTROS_SUBSETOR.map(([id, rotulo]) => `<button type="button" class="chip" role="radio" data-filtro="${id}" id="deb-em-sub-${id}" aria-checked="false" tabindex="-1">${rotulo} (${nf0.format(DM.contagemSubsetor(t.linhas)[id])})</button>`).join('')}</div>
-          <span class="page__src" id="deb-em-n" aria-live="polite"></span></div>`,
+        legend: `<p class="deb-nota" id="deb-em-incentivadas">${notaIncentivadasHtml(DM.notaIncentivadas(t.linhas))}</p>`,
         html: '<div id="deb-em-tabela"></div>', fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'tela' }) });
+  }
+
+  // Dispersão: um ponto por debênture IPCA+, cor por subsetor. Existe quando o bloco traz `dispersao`, mesmo que nenhum papel tenha
+  // entrado (a nota diz quantos ficaram de fora).
+  function dispersaoCard() {
+    const d = bloco.dispersao;
+    if (!d || !Array.isArray(d.pontos)) return '';
+    return card('dispersao', 'Spread sobre a NTN-B × duration das debêntures de transporte',
+      `Cada ponto é uma debênture IPCA+ das telas das corretoras${d.data ? `, na tela de ${esc(DM.fmtData(d.data))}` : ''}. Passe o mouse sobre um ponto para ver o papel, o emissor e os números. O filtro de subsetor acima vale também aqui`, { wide: true,
+        legend: '<div id="deb-disp-legenda"></div>',
+        note: 'Duration: prazo médio, em anos, dos pagamentos do papel, como a tela da corretora publica (não é a duration em dias úteis do IDA). Taxa: taxa indicativa da ANBIMA do papel. Spread: essa taxa menos a da NTN-B de mesmo vencimento, na curva indicativa da ANBIMA do dia da tela, em pontos percentuais (p.p.); o eixo vertical pode ir abaixo de zero.',
+        foot: '<div id="deb-disp-rodape"></div>', fonte: DM.fonteDispersao(bloco) });
+  }
+
+  function emissoesHtml() {
+    const t = DM.tabelaEmissoes(bloco);
+    if (!t.linhas.length) return '';
+    return `<h2 class="resumo-h2" id="deb-h-emissoes">Emissões</h2>${barraSubsetor(t.linhas)}<div class="grid-cards">${dispersaoCard()}${emissoesCard()}</div>`;
   }
 
   // ---------- tabelas ordenáveis ----------
@@ -126,6 +149,20 @@ const Debentures = (() => {
       b.tabIndex = on ? 0 : -1;
     });
     document.getElementById('deb-em-n').textContent = `${nf0.format(mostra.linhas.length)} de ${nf0.format(t.linhas.length)} papéis`;
+    desenhaDispersao();
+  }
+
+  // Cor de cada subsetor: um slot fixo da paleta de dados, na ordem fixa do modelo, para a cor não mudar com o filtro.
+  const corSubsetor = sub => DATA_SLOTS[Math.max(0, DM.SUBSETORES.indexOf(sub)) % DATA_SLOTS.length];
+  function desenhaDispersao() {
+    const el = box('dispersao');
+    if (!el) return;
+    const d = DM.dispersao(bloco, st.emissoes.filtro);
+    document.getElementById('deb-disp-legenda').innerHTML = Charts.legendHtml(d.subsetores.map(sub => ({ label: sub, color: corSubsetor(sub), shape: 'dot' })));
+    el.innerHTML = Charts.scatterSvg(d.pontos.map(p => ({ x: p.duration_anos, y: p.spread, color: corSubsetor(p.subsetor), group: p.subsetor, tip: p.dica })),
+      { width: width(el), height: width(el) < 520 ? 320 : 380, xLabel: 'Duration (anos)', yLabel: 'Spread sobre a NTN-B (p.p.)', formatX: v => nf1.format(v), formatY: v => nf1.format(v),
+        title: 'Spread sobre a NTN-B por duration, uma debênture por ponto, colorida por subsetor' });
+    document.getElementById('deb-disp-rodape').innerHTML = `<p class="src" id="deb-disp-n">${esc(plural(d.pontos.length, 'papel no gráfico', 'papéis no gráfico'))}</p>${d.nota ? `<p class="src" id="deb-disp-nota">${esc(d.nota)}</p>` : ''}`;
   }
 
   // Grupo de botões de rádio (setas movem e escolhem; só o escolhido entra na ordem do Tab).
@@ -428,15 +465,14 @@ const Debentures = (() => {
     const el = document.getElementById('page-debentures');
     const temBloco = !!(bloco && (bloco.emissoes || bloco.secundario || bloco.macro));
     const rs = roadshowCard();
-    const lead = `<p class="page__lead">${Glossario.link('debenture', 'Debêntures')} são títulos de dívida que empresas emitem para se financiar. Esta aba reúne as de concessionárias de rodovias e de outras infraestruturas de transporte (ferrovias, portos e terminais, aeroportos, hidrovias e mobilidade urbana sobre trilhos, isto é, metrô e trens): o cenário de juros, as emissões, o que se negocia entre investidores e as emissões incentivadas para rodovias. Os dados de emissões e de negociação vêm das <b>telas</b> das corretoras XP e BTG: as listas de debêntures, com taxas e negócios, que elas publicam para os clientes, aqui recebidas em planilhas. Passe o mouse sobre os gráficos para ver os valores exatos.</p>`;
+    const lead = `<p class="page__lead">${Glossario.link('debenture', 'Debêntures')} são títulos de dívida que empresas emitem para se financiar. Esta aba reúne as de concessionárias de rodovias e de outras infraestruturas de transporte (ferrovias, portos e terminais, aeroportos, hidrovias e mobilidade urbana sobre trilhos, isto é, metrô e trens): o cenário de juros, os índices de debêntures, as emissões (com o spread de cada papel contra a duration), o que se negocia entre investidores e as emissões incentivadas para rodovias. Os dados de emissões e de negociação vêm das <b>telas</b> das corretoras XP e BTG: as listas de debêntures, com taxas e negócios, que elas publicam para os clientes, aqui recebidas em planilhas. Passe o mouse sobre os gráficos para ver os valores exatos.</p>`;
     let corpo = '';
     if (temBloco) {
       const macro = [macroCard(), ntnbCard()].join('');
       corpo += `${macro ? `<h2 class="resumo-h2" id="deb-h-juros">Cenário de juros</h2><div class="grid-cards">${macro}</div>` : ''}`;
-      const em = emissoesCard();
-      corpo += em ? `<h2 class="resumo-h2" id="deb-h-emissoes">Emissões</h2><div class="grid-cards">${em}</div>` : '';
-      corpo += mercadoHtml();
       corpo += indicesHtml();
+      corpo += emissoesHtml();
+      corpo += mercadoHtml();
     } else {
       corpo = '<p class="empty">Os dados de mercado das debêntures (bloco debentures) não estão neste arquivo.</p>';
     }

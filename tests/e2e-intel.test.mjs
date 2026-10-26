@@ -2219,6 +2219,7 @@ async function abreDeb() {
   if ((await page.getAttribute('#deb-em-sub-todos', 'aria-checked')) !== 'true') await page.click('#deb-em-sub-todos');
 }
 const AFETADOS = ['kpis', 'dia-vol', 'dia-n', 'subsetor', 'emissor', 'ultimo', 'ind-spread'];
+const AFETADOS_NA_TELA = ['ind-spread', 'kpis', 'dia-vol', 'dia-n', 'subsetor', 'emissor', 'ultimo'];   // na ordem em que os cartões aparecem na aba
 // Média ponderada recombinada à mão a partir das linhas cruas (independente do modelo).
 const recombina = (linhas, ix) => {
   let a = 0, w = 0;
@@ -2233,7 +2234,7 @@ const fotoDeb = p => p.evaluate(afetados => {
     kpis: t('#chart-d-kpis .kpi-tile'), volTitulos: t('#chart-d-dia-vol rect.cbar title'), nTitulos: t('#chart-d-dia-n rect.cbar title'),
     tituloN: t('#titulo-d-dia-n')[0], tituloUltimo: t('#titulo-d-ultimo')[0], taxaSub: t('#chart-d-subsetor-taxa g.hrow-tip > title'), spreadSub: t('#chart-d-subsetor-spread g.hrow-tip > title'),
     emissor: t('#deb-emissores tbody tr'), ultimo: t('#deb-ultimo tbody tr'), cabEmissor: t('#deb-emissores thead th'),
-    fixos: ['card-d-intencoes', 'card-d-emissoes', 'card-d-macro', 'card-d-ntnb', 'card-d-incentivadas', 'card-d-ind-evolucao', 'card-d-ind-papel'].map(id => document.getElementById(id).innerHTML) };
+    fixos: ['card-d-intencoes', 'card-d-emissoes', 'card-d-dispersao', 'card-d-macro', 'card-d-ntnb', 'card-d-incentivadas', 'card-d-ind-evolucao', 'card-d-ind-papel'].map(id => document.getElementById(id).innerHTML) };
 }, AFETADOS);
 
 test('Debêntures: cartões com fonte, período e legenda; indicadores e curva vêm do bloco; sem NaN', async () => {
@@ -2242,8 +2243,9 @@ test('Debêntures: cartões com fonte, período e legenda; indicadores e curva v
   // cartões presentes segundo o modelo: indicadores e curva só com dado; a série do RoadShow só se a base a traz
   const ids = await page.evaluate(() => {
     const b = window.INTEL.debentures;
-    return [DebenturesModel.macro(b).length && 'macro', DebenturesModel.curvaNtnb(b).length && 'ntnb', 'emissoes', 'kpis', 'dia-vol', 'dia-n', 'subsetor',
-      'emissor', 'ultimo', 'intencoes', 'ind-evolucao', 'ind-spread', 'ind-papel', DebenturesModel.serieIncentivadas(window.CONC.mercado) && 'incentivadas'].filter(Boolean);
+    // a ordem da aba: cenário de juros, índices, emissões (dispersão e tabela), mercado secundário e a série do RoadShow
+    return [DebenturesModel.macro(b).length && 'macro', DebenturesModel.curvaNtnb(b).length && 'ntnb', 'ind-evolucao', 'ind-spread', 'ind-papel', b.dispersao && 'dispersao', 'emissoes',
+      'kpis', 'dia-vol', 'dia-n', 'subsetor', 'emissor', 'ultimo', 'intencoes', DebenturesModel.serieIncentivadas(window.CONC.mercado) && 'incentivadas'].filter(Boolean);
   });
   assert.ok(ids.length >= 8, ids.join());
   assert.deepEqual(await page.$$eval('#page-debentures .ccard', cs => cs.map(c => c.id)), ids.map(i => 'card-d-' + i));
@@ -2441,7 +2443,7 @@ test('Debêntures: números do mercado secundário batem com o modelo, com e sem
   const rotulo = 'negócios + intenções (somados como se fossem negócios)';
   assert.equal(som.aria, 'true');
   assert.equal(som.status, `Mostrando: ${rotulo}`);
-  assert.deepEqual(som.rotulos, AFETADOS.map(id => `card-d-${id}|${rotulo}`));
+  assert.deepEqual(som.rotulos, AFETADOS_NA_TELA.map(id => `card-d-${id}|${rotulo}`));
   const dias = [...new Set([...neg.por_dia, ...int.por_dia].map(d => d.data))].sort();
   const dia = (l, d) => l.find(x => x.data === d);
   const soma = (d, c) => ((dia(neg.por_dia, d) || {})[c] || 0) + ((dia(int.por_dia, d) || {})[c] || 0);
@@ -2547,20 +2549,113 @@ test('Debêntures: celular 390 px, com e sem somar, sem rolagem lateral e sem re
   await p.context().close();
 });
 
+// ---------- Aba Debêntures: dispersão spread × duration ----------
+const dataBr = d => d.split('-').reverse().join('/');
+const modeloDisp = (p, f) => p.evaluate(filtro => JSON.parse(JSON.stringify(DebenturesModel.dispersao(window.INTEL.debentures, filtro))), f);
+
+test('Debêntures: dispersão spread × duration bate com o modelo (pontos, cores e legenda por subsetor, dica, eixos, fonte e nota)', async () => {
+  await abreDeb();
+  const m = await modeloDisp(page, 'todos');
+  assert.ok(m.pontos.length > 0, 'o bloco traz papéis na dispersão: sem eles este teste não verificaria nada');
+  assert.equal(await page.textContent('#card-d-dispersao h3'), 'Spread sobre a NTN-B × duration das debêntures de transporte');
+  // acima da tabela de emissões, no mesmo cartão-grade
+  assert.ok(await page.evaluate(() => document.getElementById('card-d-dispersao').compareDocumentPosition(document.getElementById('card-d-emissoes')) & Node.DOCUMENT_POSITION_FOLLOWING));
+  // um círculo por ponto do modelo, na ordem do modelo, com a dica do modelo
+  assert.equal(await page.locator('#chart-d-dispersao circle').count(), m.pontos.length);
+  assert.deepEqual(await page.$$eval('#chart-d-dispersao circle title', ts => ts.map(t => t.textContent)), m.pontos.map(p => p.dica));
+  for (const p of m.pontos) assert.match(p.dica, new RegExp(`^${p.ticker} — .+ · duration [\\d.,]+ anos · taxa [\\d.,]+% · spread -?[\\d.,]+ p\\.p\\.$`));
+  // legenda: um item por subsetor com ponto, na ordem do modelo; a cor de cada ponto é a do item do seu subsetor
+  assert.deepEqual(await page.$$eval('#deb-disp-legenda .chart-legend span', ss => ss.map(x => x.textContent)), m.subsetores);
+  const cores = await page.$$eval('#deb-disp-legenda .chart-legend span', ss => ss.map(x => x.querySelector('circle').getAttribute('fill')));
+  assert.equal(new Set(cores).size, cores.length, 'uma cor para cada subsetor');
+  const porSub = await page.$$eval('#chart-d-dispersao circle', cs => cs.map(c => [c.getAttribute('data-grupo'), c.getAttribute('fill')]));
+  assert.deepEqual(porSub.map(x => x[0]), m.pontos.map(p => p.subsetor));
+  for (const [sub, cor] of porSub) assert.equal(cor, cores[m.subsetores.indexOf(sub)], sub);
+  // eixos com unidade; sem NaN; posição de cada ponto dentro da área do gráfico
+  const textos = await page.$$eval('#chart-d-dispersao svg text', ts => ts.map(t => t.textContent));
+  assert.ok(textos.includes('Duration (anos)') && textos.includes('Spread sobre a NTN-B (p.p.)'), textos.join('|'));
+  assert.doesNotMatch(await page.innerHTML('#card-d-dispersao'), /NaN|undefined|null|Infinity/);
+  const caixa = await page.evaluate(() => { const s = document.querySelector('#chart-d-dispersao svg'); return { w: +s.getAttribute('width'), h: +s.getAttribute('height') }; });
+  for (const [cx, cy] of await page.$$eval('#chart-d-dispersao circle', cs => cs.map(c => [+c.getAttribute('cx'), +c.getAttribute('cy')]))) assert.ok(cx > 0 && cx < caixa.w && cy > 0 && cy < caixa.h, `${cx},${cy}`);
+  // a posição vertical segue o spread: o maior spread fica no ponto mais alto, o menor no mais baixo
+  const cys = await page.$$eval('#chart-d-dispersao circle', cs => cs.map(c => +c.getAttribute('cy')));
+  const alto = m.pontos.reduce((a, p, i) => (p.spread > m.pontos[a].spread ? i : a), 0), baixo = m.pontos.reduce((a, p, i) => (p.spread < m.pontos[a].spread ? i : a), 0);
+  assert.equal(cys[alto], Math.min(...cys)); assert.equal(cys[baixo], Math.max(...cys));
+  // contagem, nota de papéis de fora e fonte, tudo do modelo e do bloco
+  const b = await blocoDeb(page);
+  assert.equal(await page.textContent('#deb-disp-n'), `${m.pontos.length} ${m.pontos.length === 1 ? 'papel' : 'papéis'} no gráfico`);
+  if (m.nota) assert.equal(await page.textContent('#deb-disp-nota'), m.nota); else assert.equal(await page.locator('#deb-disp-nota').count(), 0);
+  assert.equal(b.dispersao.excluidos > 0, !!m.nota);
+  const fonte = await page.locator('#card-d-dispersao .src').last().textContent();
+  assert.equal(fonte, `Fonte: ${await page.evaluate(() => DebenturesModel.fonteDispersao(window.INTEL.debentures))}`);
+  assert.ok(fonte.includes(dataBr(b.dispersao.data)), fonte);
+  assert.ok((await page.textContent('#card-d-dispersao .sub')).includes(dataBr(b.dispersao.data)));
+});
+
+test('Debêntures: o filtro de subsetor muda a dispersão junto com a tabela de emissões', async () => {
+  await abreDeb();
+  for (const f of ['rodovias', 'outros', 'todos']) {
+    await page.click('#deb-em-sub-' + f);
+    const m = await modeloDisp(page, f);
+    const nTabela = await page.locator('#deb-emissoes tbody tr').count();
+    assert.equal(nTabela, await page.evaluate(x => DebenturesModel.filtrarSubsetor(window.INTEL.debentures.emissoes, x).length, f));
+    assert.equal(await page.locator('#chart-d-dispersao circle').count(), m.pontos.length, f);
+    assert.deepEqual(await page.$$eval('#chart-d-dispersao circle title', ts => ts.map(t => t.textContent)), m.pontos.map(p => p.dica), f);
+    assert.deepEqual(await page.$$eval('#deb-disp-legenda .chart-legend span', ss => ss.map(x => x.textContent)), m.subsetores, f);
+    assert.ok(m.pontos.length <= nTabela, 'nunca há mais pontos que papéis na tabela');
+    if (m.nota) assert.equal(await page.textContent('#deb-disp-nota'), m.nota, f); else assert.equal(await page.locator('#deb-disp-nota').count(), 0, f);
+    // cada papel do gráfico está na tabela filtrada
+    const tickers = await page.$$eval('#deb-emissoes tbody tr td:first-child', tds => tds.map(t => t.textContent));
+    assert.ok(m.pontos.every(p => tickers.includes(p.ticker)), f);
+    if (f === 'rodovias') assert.deepEqual(m.subsetores, ['rodovias']);
+    if (f === 'outros') assert.ok(!m.subsetores.includes('rodovias'));
+  }
+  // a cor de um subsetor não muda quando o filtro muda
+  const corDe = async f => { await page.click('#deb-em-sub-' + f); return page.$$eval('#deb-disp-legenda .chart-legend span', ss => Object.fromEntries(ss.map(x => [x.textContent, x.querySelector('circle').getAttribute('fill')]))); };
+  const todos = await corDe('todos'), outros = await corDe('outros');
+  for (const [sub, cor] of Object.entries(outros)) assert.equal(todos[sub], cor, sub);
+  await page.click('#deb-em-sub-todos');
+});
+
+test('Debêntures: a dispersão aparece também a 390 px, sem rolagem lateral, sem NaN e sem rede', async () => {
+  const errs = [], ext = [];
+  const p = await openPage(errs, ext, null, { width: 390, height: 844 });
+  await goTab(p, '#debentures');
+  for (const f of ['todos', 'rodovias']) {
+    await p.click('#deb-em-sub-' + f);
+    const m = await modeloDisp(p, f);
+    assert.equal(await p.locator('#chart-d-dispersao circle').count(), m.pontos.length, f);
+    const w = await p.evaluate(() => {
+      const pg = document.querySelector('.page:not([hidden])');
+      const svg = document.querySelector('#chart-d-dispersao svg').getBoundingClientRect(), caixa = document.getElementById('chart-d-dispersao').getBoundingClientRect();
+      return { sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, aba: pg.scrollWidth - pg.clientWidth,
+        pw: Math.max(...[...pg.querySelectorAll('*')].filter(e => !e.closest('.table-wrap, .chart-box')).map(e => e.scrollWidth - e.clientWidth)),
+        gw: svg.width, bw: caixa.width, rol: document.getElementById('chart-d-dispersao').scrollWidth - document.getElementById('chart-d-dispersao').clientWidth };
+    });
+    assert.ok(w.sw <= w.cw && w.aba <= 0 && w.pw <= 0, `${f}: ${JSON.stringify(w)}`);
+    assert.ok(w.gw <= w.bw + 0.5 && w.rol <= 0, `${f}: o gráfico cabe no cartão ${JSON.stringify(w)}`);
+  }
+  assert.doesNotMatch(await p.textContent('#card-d-dispersao'), /NaN|undefined|null|Infinity/);
+  assert.deepEqual(errs, []);
+  assert.deepEqual(ext, []);
+  await p.context().close();
+});
+
 // ---------- Aba Debêntures: índices IDA e IDEX-Infra ----------
 const brData = d => d.split('-').reverse().join('/');
 const pct2 = v => `${fmt2(v)}%`;
 const pp2 = v => `${fmt2(v)} p.p.`;
 const blocosIdx = p => p.evaluate(() => ({ ida: JSON.parse(JSON.stringify(window.INTEL.ida || null)), idex: JSON.parse(JSON.stringify(window.INTEL.idex || null)) }));
 
-test('Debêntures: seção de índices entre o mercado secundário e o RoadShow, com o número de séries do modelo', async () => {
+test('Debêntures: seção de índices logo abaixo do cenário de juros, com o número de séries do modelo', async () => {
   await abreDeb();
   const { ida, idex } = await blocosIdx(page);
   assert.ok(ida && idex, 'o HTML embute os blocos ida e idex');
-  // posição: título depois do mercado secundário e antes da série do RoadShow
+  // posição: cenário de juros, índices, emissões, mercado secundário e, por último, a série do RoadShow
   const ordem = await page.$$eval('#page-debentures h2', hs => hs.map(h => h.id));
-  assert.ok(ordem.indexOf('deb-h-secundario') < ordem.indexOf('deb-h-indices'), ordem.join());
-  if (ordem.includes('deb-h-roadshow')) assert.ok(ordem.indexOf('deb-h-indices') < ordem.indexOf('deb-h-roadshow'));
+  assert.deepEqual(ordem, ['deb-h-juros', 'deb-h-indices', 'deb-h-emissoes', 'deb-h-secundario', ...(ordem.includes('deb-h-roadshow') ? ['deb-h-roadshow'] : [])]);
+  assert.deepEqual(await page.$$eval('#page-debentures h2', hs => hs.map(h => h.textContent)), ['Cenário de juros', 'Índices de debêntures (IDA e IDEX-Infra)', 'Emissões', 'Mercado secundário',
+    ...(ordem.includes('deb-h-roadshow') ? ['Debêntures incentivadas para rodovias (RoadShow)'] : [])]);
   assert.equal(await page.textContent('#deb-h-indices'), 'Índices de debêntures (IDA e IDEX-Infra)');
   assert.deepEqual(await page.$$eval('#page-debentures .ccard', cs => cs.map(c => c.id).filter(i => i.startsWith('card-d-ind-'))), ['card-d-ind-evolucao', 'card-d-ind-spread', 'card-d-ind-papel']);
   // a linha de abertura liga os quatro termos ao Glossário (ids que existem no arquivo embutido)

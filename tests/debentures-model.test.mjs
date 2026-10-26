@@ -308,6 +308,74 @@ test('fonteCurta: quem forneceu e o período, sem tipo, licença nem nome comple
   assert.equal(D.fonteCurta({}, { corretoras: ['XP'], bcb: true }), '—');
 });
 
+// Dispersão spread × duration: cinco pontos em quatro subsetores, dois deles declarados fora de ordem; dois IPCA+ ficaram de fora.
+const ponto = (ticker, subsetor, d, taxa, spread) => ({ ticker, emissor: `Emissor ${ticker}`, subsetor, duration_anos: d, taxa_indicativa: taxa, spread });
+const blocoDisp = {
+  fonte: [{ nome: 'BTG — tela de debêntures e negócios fechados no mercado secundário', periodo: 'tela de 22/10/2026; negócios de 01/10/2026 a 05/10/2026' },
+    { nome: 'XP — tela de debêntures e intenções de compra e venda', periodo: 'tela de 22/10/2026; intenções de 01/10/2026 a 03/10/2026' }],
+  emissoes: [
+    { ticker: 'R1', subsetor: 'rodovias', indexador: 'IPCA+' }, { ticker: 'R2', subsetor: 'rodovias', indexador: 'IPCA+' }, { ticker: 'R3', subsetor: 'rodovias', indexador: 'IPCA+' },
+    { ticker: 'P1', subsetor: 'portos e terminais', indexador: 'IPCA+' }, { ticker: 'F1', subsetor: 'ferrovias', indexador: 'IPCA+' }, { ticker: 'F2', subsetor: 'ferrovias', indexador: 'IPCA+' },
+    { ticker: 'A1', subsetor: 'aeroportos', indexador: 'IPCA+' }, { ticker: 'X1', subsetor: 'ferrovias', indexador: 'DI+' }],
+  dispersao: { data: '2026-10-22', excluidos: 2, pontos: [
+    ponto('P1', 'portos e terminais', 3.5, 7.1, 0.9), ponto('R1', 'rodovias', 6.21, 7.4306, 1.2345), ponto('A1', 'aeroportos', 5, 7.9, 1.6),
+    ponto('R2', 'rodovias', 4.2, 6.9, -0.1), ponto('F1', 'ferrovias', 9.8, 8.2, 1.75)] },
+};
+
+test('dispersao: todos os pontos, subsetores na ordem fixa (não na ordem em que aparecem) e dica com ticker, emissor, duration, taxa e spread', () => {
+  const d = D.dispersao(blocoDisp, 'todos');
+  assert.equal(d.pontos.length, 5);
+  assert.deepEqual(d.subsetores, ['rodovias', 'ferrovias', 'portos e terminais', 'aeroportos']);
+  assert.deepEqual(D.dispersao(blocoDisp).subsetores, d.subsetores, 'o padrão é "todos"');
+  const r1 = d.pontos.find(p => p.ticker === 'R1');
+  assert.equal(r1.dica, 'R1 — Emissor R1 · duration 6,21 anos · taxa 7,43% · spread 1,23 p.p.');
+  assert.equal(d.pontos.find(p => p.ticker === 'R2').dica, 'R2 — Emissor R2 · duration 4,20 anos · taxa 6,90% · spread -0,10 p.p.');
+  assert.equal(r1.spread, 1.2345, 'os números do bloco seguem como vieram: o arredondamento é só do texto');
+});
+
+test('dispersao: o filtro de subsetor da tabela reduz os pontos e a legenda', () => {
+  const rod = D.dispersao(blocoDisp, 'rodovias'), out = D.dispersao(blocoDisp, 'outros');
+  assert.deepEqual(rod.pontos.map(p => p.ticker).sort(), ['R1', 'R2']);
+  assert.deepEqual(rod.subsetores, ['rodovias']);
+  assert.deepEqual(out.pontos.map(p => p.ticker).sort(), ['A1', 'F1', 'P1']);
+  assert.deepEqual(out.subsetores, ['ferrovias', 'portos e terminais', 'aeroportos']);
+  // a mesma regra da tabela: o que o filtro deixa nas emissões é o que o gráfico mostra
+  for (const f of ['todos', 'rodovias', 'outros']) {
+    const nas = new Set(D.filtrarSubsetor(blocoDisp.emissoes, f).map(e => e.ticker));
+    assert.deepEqual(D.dispersao(blocoDisp, f).pontos.map(p => p.ticker).sort(), blocoDisp.dispersao.pontos.map(p => p.ticker).filter(t => nas.has(t)).sort(), f);
+  }
+  assert.equal(blocoDisp.dispersao.pontos.length, 5, 'o bloco não é alterado');
+});
+
+test('dispersao: a nota diz quantos papéis ficaram de fora (no filtro escolhido) e some quando nenhum ficou', () => {
+  // dois IPCA+ ficaram de fora: R3 (rodovias) e F2 (ferrovias)
+  assert.equal(D.dispersao(blocoDisp, 'todos').nota, '2 papéis sem duration ou taxa ficaram de fora');
+  assert.equal(D.dispersao(blocoDisp, 'rodovias').nota, '1 papel sem duration ou taxa ficou de fora');
+  assert.equal(D.dispersao(blocoDisp, 'outros').nota, '1 papel sem duration ou taxa ficou de fora');
+  const sem = JSON.parse(JSON.stringify(blocoDisp));
+  sem.dispersao.excluidos = 0;
+  sem.emissoes = sem.emissoes.filter(e => e.ticker !== 'R3' && e.ticker !== 'F2');
+  for (const f of ['todos', 'rodovias', 'outros']) assert.equal(D.dispersao(sem, f).nota, '');
+  // sem a lista de emissões, vale o número do bloco
+  delete sem.emissoes;
+  sem.dispersao.excluidos = 3;
+  assert.equal(D.dispersao(sem, 'rodovias').nota, '3 papéis sem duration ou taxa ficaram de fora');
+});
+
+test('dispersao: bloco ausente, vazio ou com ponto inválido não quebra nem entra no gráfico', () => {
+  for (const b of [undefined, null, {}, { dispersao: null }, { dispersao: { pontos: [] } }]) {
+    assert.deepEqual(D.dispersao(b, 'todos'), { pontos: [], subsetores: [], nota: '', data: null });
+  }
+  const ruim = { dispersao: { data: '2026-10-22', excluidos: 0, pontos: [ponto('A', 'rodovias', 4, 7, 1), ponto('B', 'rodovias', null, 7, 1), ponto('C', 'rodovias', 4, 7, NaN), ponto('D', 'rodovias', 4, 7, null)] } };
+  assert.deepEqual(D.dispersao(ruim).pontos.map(p => p.ticker), ['A']);
+});
+
+test('dispersao: a data e a fonte vêm dos dados', () => {
+  assert.equal(D.dispersao(blocoDisp).data, '2026-10-22');
+  assert.equal(D.fonteDispersao(blocoDisp), 'Corretoras BTG e XP, telas de 22/10/2026; ANBIMA, taxas indicativas das NTN-B de 22/10/2026');
+  assert.equal(D.fonteDispersao({}), '—');
+});
+
 test('filtros de subsetor: uma só lista de [id, rótulo], na ordem da tela', () => {
   assert.deepEqual(D.FILTROS_SUBSETOR, [['todos', 'Todos'], ['rodovias', 'Rodovias'], ['outros', 'Outros transportes']]);
   assert.deepEqual(D.FILTROS_SUBSETOR.map(f => f[0]), Object.keys(D.contagemSubsetor(tres)));

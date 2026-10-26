@@ -210,8 +210,9 @@ def test_bloco_nao_depende_do_dia(tmp_path):
     c = deb.montar(pasta, pub, EMISSORES, hoje="2026-12-01", manifesto=man, snd=SND)
     datas = {i["arquivo"].rsplit("/", 1)[-1]: i["acesso"] for i in man.items if "/anbima_ms/" in i.get("arquivo", "")}
     assert datas == {"ms261001.txt": "2026-10-22", "ms261002.txt": "2026-10-22", "ms261005.txt": "2026-12-01"}
-    # 05/10 agora tem curva, mas só com um vértice (2030): o papel de 2032 fica fora dela, "—"
-    assert c["pendencias"]["dias_sem_curva"] == []
+    # 05/10 agora tem curva, mas só com um vértice (2030): o papel de 2032 fica fora dela, "—"; só os dias das telas
+    # (21 e 22/10, sem arquivo nas fixtures) seguem sem curva
+    assert c["pendencias"]["dias_sem_curva"] == ["2026-10-21", "2026-10-22"]
     assert next(f for f in c["fonte"] if f["nome"].startswith("ANBIMA — Taxas indicativas"))["acesso"] == "2026-12-01"
     # sem registro no manifesto, a data vem dos dados (último dia com curva), nunca do relógio
     d = deb.montar(pasta, pub, EMISSORES, hoje="2027-03-01", manifesto=_Manifesto(_downloads()), snd=SND)

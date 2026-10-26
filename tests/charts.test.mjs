@@ -23,6 +23,36 @@ test('scatterSvg', () => {
   assert.equal((svg.match(/<circle/g) || []).length, 2);
   assert.ok(!/NaN/.test(svg));
 });
+test('scatterSvg: sem as opções novas a saída é a de sempre (um só estilo, dica com rótulo e valores)', () => {
+  const svg = Charts.scatterSvg([{ x: 2, y: 18.25, label: 'Lote 1' }], { xLabel: 'Concorrentes' });
+  assert.match(svg, /fill="#0071BB" fill-opacity="0.7" stroke="#183C80"/);
+  assert.match(svg, /<title>Lote 1: 2 Concorrentes · 18,3%<\/title>/);
+  assert.ok(!/data-grupo|class="ylabel"/.test(svg));
+});
+test('scatterSvg: cor por ponto, grupo, dica própria e unidades nos dois eixos', () => {
+  const svg = Charts.scatterSvg([
+    { x: 4.1, y: 0.8, color: '#C0392B', group: 'rodovias', tip: 'AAA11 — Alfa · duration 4,10 anos · taxa 7,00% · spread 0,80 p.p.' },
+    { x: 9, y: 1.7, color: '#2E7D32', group: 'ferrovias', tip: 'BBB11 — Beta <b>' },
+  ], { xLabel: 'Duration (anos)', yLabel: 'Spread sobre a NTN-B (p.p.)', formatY: v => `${v}`.replace('.', ',') });
+  assert.equal((svg.match(/<circle/g) || []).length, 2);
+  assert.match(svg, /<circle [^>]*fill="#C0392B"[^>]*stroke="#C0392B"[^>]*data-grupo="rodovias"/);
+  assert.match(svg, /<circle [^>]*fill="#2E7D32"[^>]*data-grupo="ferrovias"/);
+  assert.match(svg, /<title>AAA11 — Alfa · duration 4,10 anos · taxa 7,00% · spread 0,80 p.p.<\/title>/);
+  assert.match(svg, /<title>BBB11 — Beta &lt;b&gt;<\/title>/, 'a dica é escapada');
+  assert.match(svg, />Duration \(anos\)</);
+  assert.match(svg, /class="ylabel"[^>]*>Spread sobre a NTN-B \(p\.p\.\)</);
+  assert.ok(!/NaN/.test(svg));
+});
+test('scatterSvg: y negativo abre o eixo para baixo do zero, e os pontos ficam dentro do gráfico', () => {
+  const svg = Charts.scatterSvg([{ x: 2, y: -0.4, tip: 'a' }, { x: 6, y: 1.6, tip: 'b' }], { width: 600, height: 300 });
+  const cy = [...svg.matchAll(/<circle [^>]*cy="([\d.]+)"/g)].map(m => +m[1]);
+  assert.equal(cy.length, 2);
+  assert.ok(cy.every(v => v >= 16 && v <= 300 - 48), cy.join());
+  assert.ok(cy[0] > cy[1], 'o ponto negativo fica abaixo do positivo');
+  const rotulos = [...svg.matchAll(/text-anchor="end"[^>]*>([^<]+)</g)].map(m => m[1]);
+  assert.ok(rotulos.some(t => t.startsWith('-')), rotulos.join());
+  assert.ok(!/NaN/.test(svg));
+});
 test('linesSvg', () => {
   const svg = Charts.linesSvg([{ name: 'Privada', points: [{ x: 2011, y: 10 }, { x: 2026, y: 30 }] }, { name: 'Direta', points: [{ x: 2011, y: 50 }, { x: 2026, y: 40 }], dash: true }], {});
   assert.equal((svg.match(/<path class="line/g) || []).length, 2);
