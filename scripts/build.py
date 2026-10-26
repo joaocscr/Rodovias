@@ -74,7 +74,7 @@ def assemble(payload, conc, intel, out):
 
 # partes de um bloco que servem só ao relatório de curadoria (scripts/curadoria.py, que lê data/intel/ direto) e não
 # vão para o HTML
-SO_CURADORIA = {"debentures": ("pendencias",)}
+SO_CURADORIA = {"debentures": ("pendencias",), "ida": ("pendencias",), "idex": ("pendencias",)}
 
 
 def load_intel(intel_dir=INTEL):

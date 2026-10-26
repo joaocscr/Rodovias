@@ -22,9 +22,16 @@ TIPOS = {
     "consorcio_sem_composicao": "Consórcios vencedores sem composição na base de consórcios",
     "consorcio_fora_da_ata": "Consórcios que a ata do leilão não lista",
     "emissor_sem_classificacao": "Emissores de debêntures sem classificação",
+    "emissao_sem_cadastro_snd": "Debêntures fora do cadastro do SND (data de emissão e coordenador líder \"—\")",
     "debentures_sem_serie": "Debêntures sem série pública ou sem curva das NTN-B (indicador ou spread \"—\")",
     "taxa_fora_do_intervalo": "Taxas de debêntures fora do intervalo plausível (fora das médias)",
     "linha_sem_data": "Linhas das planilhas de debêntures sem data legível (fora dos totais)",
+    "ida_dias_com_falha": "Dias do IDA (ANBIMA) que não foram baixados (faltam na série)",
+    "ida_desatualizado": "IDA (ANBIMA) com o último dia muito antes do fim dos dados de debêntures",
+    "ida_sem_papeis": "IDA sem a lista de papéis de transporte (taxa indicativa dos papéis fica de fora)",
+    "idex_arquivo_antigo": "Planilha do IDEX-Infra com o último dia muito antes dos dados de debêntures",
+    "idex_relatorio_ilegivel": "Relatórios mensais do IDEX-Infra que não puderam ser lidos",
+    "idex_reconciliacao": "Retornos mensais do IDEX-Infra que não fecham com o acumulado do ano impresso",
 }
 # status do pipeline cuja data ainda é uma previsão (leilão; no "leiloado", a assinatura prevista)
 PREVISTOS = ("estudo", "consulta_publica", "tcu", "edital", "leilao_agendado", "leiloado")
@@ -36,6 +43,8 @@ ACESSO_CURADO = {
     "pipeline": "revise as fontes e as linhas de data/intel/pipeline.csv e atualize ACESSO e FONTE em "
                 "scripts/intel/pipeline.py",
     "base": "revise a fonte e atualize ACESSO e BASE em scripts/intel/fontes_bloco.py",
+    "idex": "os arquivos vêm do usuário: salve a planilha de dados e o relatório mensal novos do IDEX-Infra em data/raw/idex/ e "
+            "rode `python scripts/atualizar.py --dominios idex`",
     "vmda2025": "o arquivo vem do Google Drive do usuário: troque o zip em data/raw/trafego/vmda2025/ por uma versão nova "
                 "e rode `python scripts/atualizar.py --baixar --dominios vmda2025`",
 }
@@ -45,6 +54,8 @@ ACESSO_CURADO_FONTE_DO_USUARIO = ("a data é a de quando a planilha das corretor
 # bloco de data/intel/ → domínio (script de scripts/intel/) que o gera, quando o nome difere
 DOMINIO_DO_BLOCO = {"municipios": "agro"}
 DIAS_FONTE_ANTIGA = 365
+DIAS_UTEIS_IDA_ANTIGO = 10  # último dia do IDA × data do bloco de debêntures (dias úteis, sem contar feriados)
+DIAS_IDEX_ANTIGO = 45  # último dia da planilha do IDEX × data do bloco de debêntures
 # o que conta como registro em cada bloco: caminhos (a.b) de listas — conta os valores preenchidos — ou de dicionários
 # — conta as chaves. Bloco fora daqui: listas de primeiro nível e `linhas` dos sub-blocos (sem `fonte`).
 REGISTROS = {
@@ -52,7 +63,9 @@ REGISTROS = {
     "antt": ["pracas.linhas", "sats.linhas", "capas", "series", "obras.linhas"],
     "carga": ["gsa"],
     "debentures": ["emissoes", "secundario.ultimo_por_ticker"],
+    "ida": ["indices", "papeis"],
     "estaduais": ["malha.linhas", "entidades"],
+    "idex": ["spread", "papeis"],
     "fontes": ["fontes", "indisponiveis", "base"],
     "multimodal": ["ferrovias", "portos", "siade", "exportacao.linhas", "fretes.linhas"],
     "municipios": ["ids"],
@@ -220,7 +233,8 @@ def _consorcios(conc):
 
 def _debentures(bloco):
     """Pendências do bloco de debêntures (scripts/intel/debentures.py): emissor das planilhas sem classificação (fica
-    fora da página), série pública ausente e dias de negócio ou intenção IPCA+ sem curva das NTN-B do Tesouro."""
+    fora da página), papel fora do cadastro do SND, série pública ausente e dias de negócio ou intenção IPCA+ sem curva das
+    NTN-B da ANBIMA."""
     pend = (bloco or {}).get("pendencias") or {}
     refazer = "depois rode `python scripts/atualizar.py --dominios debentures`"
     out = [("emissor_sem_classificacao", p["nome"],
@@ -229,16 +243,30 @@ def _debentures(bloco):
             f"grafia em `nomes` de um emissor que já existe) ou, se não for de transporte, ponha o nome em "
             f"`fora_do_universo`; {refazer}")
            for p in pend.get("emissores_sem_classificacao") or []]
+    out += [("emissao_sem_cadastro_snd", p["ticker"],
+             f"{p['emissor']}: o papel não está no cadastro de debêntures do SND (data/raw/debentures/publico/"
+             "snd_caracteristicas.txt), então a data de emissão e o coordenador líder ficam \"—\"; rode "
+             "`python scripts/atualizar.py --baixar --dominios debentures` (série recém-registrada pode demorar a entrar "
+             "no cadastro) e, se o código da planilha estiver diferente do da ANBIMA, corrija a planilha em "
+             "data/raw/debentures/")
+            for p in pend.get("emissoes_sem_snd") or []]
     out += [("debentures_sem_serie", s["serie"],
-             f"sem arquivo em {s['arquivo']} (a fonte não respondeu): o indicador fica \"—\" e, sem o Tesouro, todos os "
+             f"sem arquivo em {s['arquivo']} (a fonte não respondeu): o indicador fica \"—\" e, sem a curva da ANBIMA, todos os "
              "spreads também; rode `python scripts/atualizar.py --baixar --dominios debentures` mais tarde")
             for s in pend.get("series_indisponiveis") or []]
-    dias = pend.get("dias_sem_curva") or []
+    desde = ((bloco or {}).get("macro") or {}).get("curva_desde")        # primeiro dia com curva: antes dele o site já apagou
+    dias = [d for d in pend.get("dias_sem_curva") or [] if not (desde and d < desde)]
+    antigos = [d for d in pend.get("dias_sem_curva") or [] if desde and d < desde]
     if dias:
-        out.append(("debentures_sem_serie", "Curva das NTN-B (Tesouro Direto)",
-                    f"sem taxas do Tesouro Direto em {', '.join(_fmt(d) for d in dias)} (feriado, ou o arquivo do "
-                    "Tesouro ainda não chegou a esses dias): o spread dos negócios e intenções desses dias fica \"—\"; "
-                    "rode `python scripts/atualizar.py --renovar debentures` quando o Tesouro publicar"))
+        out.append(("debentures_sem_serie", "Curva das NTN-B (taxa indicativa da ANBIMA)",
+                    f"sem arquivo da ANBIMA em {', '.join(_fmt(d) for d in dias)} (feriado ou dia ainda não "
+                    "publicado): o spread dos negócios e intenções desses dias fica \"—\"; "
+                    "rode `python scripts/atualizar.py --baixar --dominios debentures` quando a ANBIMA publicar"))
+    if antigos:
+        out.append(("debentures_sem_serie", "Curva das NTN-B, dias anteriores ao primeiro arquivo (sem ação)",
+                    f"sem arquivo da ANBIMA em {', '.join(_fmt(d) for d in antigos)}: são anteriores a {_fmt(desde)}, o primeiro "
+                    "dia com curva, e o site da ANBIMA só guarda os arquivos recentes, então não voltam a ser publicados; "
+                    "o spread desses dias fica \"—\" de forma permanente e não há o que baixar"))
     for t in pend.get("taxas_descartadas") or []:
         taxa = f"{t['taxa']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
         out.append(("taxa_fora_do_intervalo", f"{t['ticker']} ({t['origem']})",
@@ -248,6 +276,71 @@ def _debentures(bloco):
     out += [("linha_sem_data", s["origem"],
              f"{s['n']} linha(s) com data e hora ilegíveis ficaram fora dos totais: confira a coluna de horário da "
              f"planilha em data/raw/debentures/ e rode de novo") for s in pend.get("linhas_sem_data") or []]
+    return out
+
+
+def _dias_uteis_apos(de, ate):
+    """Segundas a sextas em (de, ate]; os feriados contam como dia útil (a conta é só um limite de atraso)."""
+    return sum(1 for k in range(1, (ate - de).days + 1) if (de + dt.timedelta(days=k)).weekday() < 5)
+
+
+def _ida(bloco, debentures=None):
+    """Pendências do bloco do IDA (scripts/intel/ida.py): último dia do IDA muito antes do fim dos dados de debêntures
+    (a janela do bloco acompanha o último dia com dado, então uma queda longa do site não deixa outra pista), dias úteis
+    recentes que nem o cache nem o histórico têm (o `fetch` não conseguiu baixar, ou ainda não pediu), por índice, e a
+    falta da lista de papéis de transporte."""
+    pend = (bloco or {}).get("pendencias") or {}
+    desatualizado = []
+    ultimos = [(i.get("ultimo") or {}).get("data") for i in ((bloco or {}).get("indices") or {}).values()]
+    ultimo = max((u for u in ultimos if _data(u)), default=None)
+    ate = (((debentures or {}).get("secundario") or {}).get("periodo") or {}).get("ate")
+    if ultimo and _data(ate) and _dias_uteis_apos(_data(ultimo), _data(ate)) > DIAS_UTEIS_IDA_ANTIGO:
+        n = _dias_uteis_apos(_data(ultimo), _data(ate))
+        desatualizado = [("ida_desatualizado", "Série do IDA",
+                          f"o último dia do IDA é {_fmt(ultimo)}, {n} dias úteis antes do fim dos dados de debêntures "
+                          f"({_fmt(ate)}): a série do IDA ficou para trás (o site da ANBIMA pode ter ficado fora do ar ou "
+                          "respondido \"muitas requisições\" por muito tempo); rode `python scripts/atualizar.py --baixar "
+                          "--dominios ida` quando o site responder")]
+    dias = pend.get("dias_sem_download") or []
+    por_indice = {}
+    for d in dias:
+        por_indice.setdefault(d["indice"], []).append(d["data"])
+    sem_lista = [("ida_sem_papeis", "Papéis de transporte do IDA",
+                  "data/intel/debentures.json não existe ou não se lê, então o bloco do IDA ficou sem os papéis de transporte "
+                  "(`papeis` vazio); gere as debêntures antes e rode `python scripts/atualizar.py --dominios debentures,ida`")
+                 ] if pend.get("sem_lista_de_papeis") else []
+    return desatualizado + sem_lista + [("ida_dias_com_falha", ind,
+             f"{len(datas)} dia(s) útil(eis) recente(s) sem resultado no histórico nem no cache ({', '.join(_fmt(d) for d in datas[:6])}"
+             f"{', …' if len(datas) > 6 else ''}): a série fica sem esses pontos; rode "
+             "`python scripts/atualizar.py --baixar --dominios ida` (o site da ANBIMA responde \"muitas requisições\" "
+             "em rajadas; só os dias que faltam são pedidos de novo)")
+            for ind, datas in sorted(por_indice.items())]
+
+
+def _idex(bloco, debentures):
+    """Pendências do bloco do IDEX-Infra (scripts/intel/idex.py): planilha com o último dia muito antes do fim dos dados de
+    debêntures, relatório mensal que não se lê e ano cujos retornos mensais não fecham com o acumulado impresso."""
+    bloco = bloco or {}
+    pend = bloco.get("pendencias") or {}
+    salvar = "salve o arquivo certo em data/raw/idex/ e rode `python scripts/atualizar.py --dominios idex`"
+    out = []
+    ultimo = ((bloco.get("spread") or [{}])[-1] or {}).get("data")
+    ate = (((debentures or {}).get("secundario") or {}).get("periodo") or {}).get("ate")
+    if _data(ultimo) and _data(ate) and (_data(ate) - _data(ultimo)).days > DIAS_IDEX_ANTIGO:
+        out.append(("idex_arquivo_antigo", "Planilha de dados do IDEX-Infra",
+                    f"o último dia da planilha é {_fmt(ultimo)}, {(_data(ate) - _data(ultimo)).days} dias antes do fim dos "
+                    f"dados de debêntures ({_fmt(ate)}): o spread do IDEX-Infra ficou para trás; exporte a planilha de "
+                    f"dados mais recente e {salvar}"))
+    out += [("idex_relatorio_ilegivel", p["arquivo"],
+             f"o relatório não pôde ser lido ({p['motivo']}); os retornos mensais saem sem ele: confira se é o relatório "
+             f"mensal do IDEX-Infra com a página \"Histórico de performance\" e {salvar}")
+            for p in pend.get("relatorios_ilegiveis") or []]
+    out += [("idex_reconciliacao", f"{p['nome']}, {p['ano']}",
+             f"os retornos mensais de {p['ano']} compõem {_n(p['produto'], 2)}%, mas o relatório ({p['arquivo']}) imprime "
+             f"{_n(p['acumulado'], 2)}% de acumulado no ano (tolerância de 0,05 ponto percentual): provável erro de "
+             "digitação no relatório; confira com a IDEX Analytics. Os retornos mensais são usados como estão e o "
+             "acumulado de 12 meses sai do produto deles")
+            for p in pend.get("reconciliacao") or []]
     return out
 
 
@@ -263,7 +356,8 @@ def itens(conc_aplicado, intel, verif, hoje=None):
     ents_federais = {e.get("id") for e in conc_aplicado.get("entidades") or []}
     brutos = (_pipeline_atrasado(lista, rotulo, hoje, ents_federais) + _leilao_sem_verificacao(conc_aplicado, lista, verif, hoje)
               + _estado_vencido(conc_aplicado, hoje) + _pipeline_nao_verificado(lista) + _fonte_antiga(intel.get("fontes") or {}, hoje)
-              + _nome_sem_grupo(conc_aplicado, verif) + _consorcios(conc_aplicado) + _debentures(intel.get("debentures")))
+              + _nome_sem_grupo(conc_aplicado, verif) + _consorcios(conc_aplicado) + _debentures(intel.get("debentures"))
+              + _ida(intel.get("ida"), intel.get("debentures")) + _idex(intel.get("idex"), intel.get("debentures")))
     ordem = {t: k for k, t in enumerate(TIPOS)}
     brutos.sort(key=lambda x: (ordem[x[0]], x[1]))
     return [{"tipo": t, "item": i, "motivo": m} for t, i, m in brutos]

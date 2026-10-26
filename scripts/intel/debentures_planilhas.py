@@ -14,7 +14,9 @@ Contrato (o que o resto do domínio recebe)
       origem: "BTG" | "XP", ticker: str, emissor: str (grafia da fonte), setor: str | None (só a tela BTG),
       indexador: "IPCA+" | "PRÉ" | "DI+" | "% DI" | outro texto, taxa_emissao: float | None (% a.a.; no DI+, a sobretaxa),
       vencimento: "AAAA-MM-DD" | None, volume_emitido: float | None (R$), incentivada: bool | None,
-      rating: str | None, data: "AAAA-MM-DD" | None (data da tela, quando a fonte traz)}]
+      rating: str | None, data: "AAAA-MM-DD" | None (data da tela, quando a fonte traz),
+      duration: float | None (anos, como a tela publica; não a duration em dias úteis do IDA),
+      taxa_indicativa: float | None (% a.a., taxa indicativa da ANBIMA do papel)}]
 - `ler_negocios(path)` → {"negocios": [{
       ticker, emissor, indexador, vencimento (como acima), taxa: float | None (% a.a.), volume: float | None (R$),
       data: "AAAA-MM-DD" | None (horário de Brasília), hora: "HH:MM" | None}],
@@ -72,6 +74,12 @@ def _indexador(v):
     return s or None
 
 
+def _duracao(v):
+    """Duration em anos da célula da tela; vazio, "-" e zero (que não é duration) viram None."""
+    d = numero(v)
+    return d if d and d > 0 else None
+
+
 def _sim(v):
     k = normalizar(v)
     return True if k in ("S", "SIM") else False if k in ("N", "NAO") else None
@@ -114,7 +122,8 @@ def ler_telas(path):
                             "setor": _texto(r["Setor"]), "indexador": _indexador(r["Indexador"]),
                             "taxa_emissao": taxa_pct(r["Taxa Emissão"]), "vencimento": para_data(r["Vencimento"]),
                             "volume_emitido": numero(r.get("Volume Emitido")), "incentivada": _sim(r.get("Incentivado")),
-                            "rating": None, "data": para_data(str(r.get("Última Atualização Book") or "")[:10])})
+                            "rating": None, "data": para_data(str(r.get("Última Atualização Book") or "")[:10]),
+                            "duration": _duracao(r.get("Duration")), "taxa_indicativa": taxa_pct(r.get("Taxa Indicativa Anbima"))})
         elif {"Ticker", "Emissor", "Índice", "Taxa Emissão", "Vencimento", "Rating"} <= cab:
             for r in linhas:
                 taxa = taxa_pct(r["Taxa Emissão"])  # a tela XP traz a taxa em fração (0,0645 = 6,45% a.a.)
@@ -123,7 +132,8 @@ def ler_telas(path):
                             "taxa_emissao": None if taxa is None else round(taxa * 100, 6),
                             "vencimento": para_data(r["Vencimento"]), "volume_emitido": None,
                             "incentivada": _sim(r.get("Isento")), "rating": _texto(r.get("Rating")),
-                            "data": para_data(r.get("Atualização"))})  # só quando a coluna traz a data, não só a hora
+                            "data": para_data(r.get("Atualização")),  # só quando a coluna traz a data, não só a hora
+                            "duration": _duracao(r.get("Duration")), "taxa_indicativa": taxa_pct(r.get("Anbima"))})
     return out
 
 

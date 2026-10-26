@@ -1,0 +1,8 @@
+ANBIMA – Associação Brasileira das Entidades dos Mercados Financeiro e de Capitais.
+Índice de Debêntures ANBIMA - IDA - IPCA Infraestrutura
+Data;Número Índice;Variação Diária (%);Variação no Mês (%);Variação no Ano (%);Variação 12 meses (%);Variação 24 meses (%);Duration (d.u.);Peso (%);Valor de Mercado (R$ milhões)
+19/10/2026;2.000,500000;0,1000;1,2000;3,4000;5,6000;7,8000;1.234;45,00;123.456,70
+Data;Código;Nome do Emissor;Código ISIN;Data de Vencimento;Indexador;Taxa Indicativa (% a.a.);PU (R$);PU de Evento (R$);Tipo de Evento;Peso (%);Quantidade Teórica;Valor de Mercado (R$ milhões);Duration (d.u.);
+19/10/2026;TSTR11;EMISSORA TESTE UM S.A.;BRTSTRDBS001;01/01/2030;IPCA;7,0000;1.000,000000;0,000000;--;2,00;0,00100000;100,00;1.100;
+19/10/2026;TSTR21;EMISSORA TESTE DOIS S.A.;BRTSTRDBS002;01/01/2040;IPCA;8,5000;1.000,000000;0,000000;--;1,00;0,00050000;50,00;2.200;
+19/10/2026;OUTR11;OUTRA EMISSORA TESTE S.A.;BRTSTRDBS003;15/06/2050;IPCA;9,0000;1.000,000000;0,000000;--;3,00;0,00150000;150,00;3.300;

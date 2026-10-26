@@ -35,16 +35,20 @@ import curadoria  # noqa: E402
 ROOT = Path(__file__).resolve().parent.parent
 INTEL = ROOT / "data" / "intel"
 MANIFESTO = ROOT / "data" / "manifest"
+INDICES = ROOT / "data" / "indices"  # históricos versionados (IDA e IDEX), gravados pelos builds junto dos blocos
 BASE = ROOT / "data" / "base"
 ROADSHOW = ROOT / "data" / "roadshow"
 SAIDA = ROOT / "data" / "atualizacao.md"
 HTML = ROOT / "mapa-rodovias.html"
 PDF_ROADSHOW = ROOT / "data" / "raw" / "roadshow.pdf"
 # vmda2025 lê a malha estadual (estaduais.json); pipeline confere `ent` contra conc.json e estaduais.json; debentures lê
-# as planilhas do usuário (data/raw/debentures/*.xlsx) e baixa as séries públicas
-ORDEM = ("trafego", "antt", "carga", "agro", "multimodal", "pipeline", "debentures", "estaduais", "vmda2025", "rotas")
-# o zip do VMDa 2025 vem do Drive do usuário: não há o que baixar de novo
-RENOVAVEIS = tuple(d for d in ORDEM if d != "vmda2025")
+# as planilhas do usuário (data/raw/debentures/*.xlsx) e baixa as séries públicas; ida lê os papéis de debentures.json e a
+# curva das NTN-B baixada por debentures; idex lê os arquivos do IDEX-Infra salvos pelo usuário (data/raw/idex/)
+ORDEM = ("trafego", "antt", "carga", "agro", "multimodal", "pipeline", "debentures", "ida", "idex", "estaduais",
+         "vmda2025", "rotas")
+# o zip do VMDa 2025 vem do Drive do usuário e os arquivos do IDEX-Infra também: não há o que baixar de novo
+SO_DO_USUARIO = ("vmda2025", "idex")
+RENOVAVEIS = tuple(d for d in ORDEM if d not in SO_DO_USUARIO)
 PASSO_HTML = "build.py (HTML)"
 
 
@@ -126,6 +130,9 @@ def passos_dominios(dominios, baixar, importar=importlib.import_module, renovar=
             elif d == "debentures" and not m.planilhas():
                 raise Pular(f"faltam as planilhas de telas e negócios em {_rel(m.PASTA)}/ (arquivos do usuário; ver "
                             "README, \"Debêntures\"); debentures.json ficou como estava")
+            elif d == "idex" and not any(m.arquivos().values()):
+                raise Pular(f"faltam os arquivos do IDEX-Infra em {_rel(m.PASTA)}/ (a planilha de dados *datafile*.xlsx e o "
+                            "relatório mensal em PDF, arquivos do usuário; ver README); idex.json ficou como estava")
             elif d in renovar:
                 renova(d, m)
                 return
@@ -165,12 +172,12 @@ def _restaura(pastas, antes):
             p.write_bytes(conteudo)
 
 
-def executar(passos, intel_dir=INTEL, baixar=False, log=print, manifest_dir=MANIFESTO, critico=False):
+def executar(passos, intel_dir=INTEL, baixar=False, log=print, manifest_dir=MANIFESTO, critico=False, indices_dir=INDICES):
     """Roda cada passo; um passo pulado ou que falha não interrompe os seguintes e tem os JSON de `intel_dir` e o
-    manifesto (`manifest_dir`) restaurados. `baixar`: True/False, ou o conjunto dos passos que baixam (para eles,
+    manifesto (`manifest_dir`) e os históricos de `indices_dir` restaurados. `baixar`: True/False, ou o conjunto dos passos que baixam (para eles,
     arquivo ausente é falha). `critico` (o HTML): nunca é pulado; qualquer resultado que não seja ok é falha, sem a
     dica de --baixar. Devolve [{passo, estado ('ok' | 'pulado' | 'falhou'), detalhe}]."""
-    out, pastas = [], (intel_dir, manifest_dir)
+    out, pastas = [], (intel_dir, manifest_dir, indices_dir)
     for nome, rodar in passos:
         log(f"== {nome}")
         baixou = baixar if isinstance(baixar, bool) else nome in baixar
@@ -274,7 +281,7 @@ SEM_NOVIDADE = "renovado: nenhum arquivo mudou (a fonte não publicou dado novo 
 
 def atualizar(dominios=ORDEM, baixar=False, html=True, hoje=None, intel_dir=INTEL, saida=SAIDA, renovar=(),
               manifest_dir=MANIFESTO, importar=importlib.import_module, validar=validar_camada, construir=construir_html,
-              fontes=fontes_bloco, anterior=versao_anterior, log=print):
+              fontes=fontes_bloco, anterior=versao_anterior, log=print, indices_dir=INDICES):
     """Roda a atualização e escreve o relatório em `saida`; devolve o código de saída (0, ou 1 se a validação ou o
     HTML falharem). `renovar`: domínios baixados de novo (fetch com force). As funções injetáveis existem para os
     testes."""
@@ -284,7 +291,7 @@ def atualizar(dominios=ORDEM, baixar=False, html=True, hoje=None, intel_dir=INTE
     shas_antes = {d: _shas(manifest_dir, d) for d in renovar}
     baixam = set(ORDEM) if baixar else renovar
     passos = executar(passos_dominios(dominios, baixar, importar, renovar, manifest_dir) + [("fontes_bloco", fontes)],
-                      intel_dir, baixam, log, manifest_dir)
+                      intel_dir, baixam, log, manifest_dir, indices_dir=indices_dir)
     sem_novidade = []
     for p in passos:
         d = p["passo"]
@@ -304,7 +311,7 @@ def atualizar(dominios=ORDEM, baixar=False, html=True, hoje=None, intel_dir=INTE
     elif not html:
         passos.append({"passo": PASSO_HTML, "estado": "pulado", "detalhe": "--sem-html"})
     else:
-        (r,) = executar([(PASSO_HTML, construir)], intel_dir, False, log, None, critico=True)
+        (r,) = executar([(PASSO_HTML, construir)], intel_dir, False, log, None, critico=True, indices_dir=None)
         if r["estado"] != "ok":  # o HTML nunca é "pulado": qualquer resultado que não seja ok é falha
             r["detalhe"] = f"o HTML não foi gerado: {r['detalhe']}"
             log(f"ERRO: {r['detalhe']}")
@@ -357,6 +364,9 @@ def main(argv=None):
         renovar = lista(args.renovar) or [d for d in dominios if d in RENOVAVEIS]
         if "vmda2025" in renovar:
             ap.error("vmda2025 vem do Google Drive do usuário: troque o zip em data/raw/trafego/vmda2025/ e rode sem "
+                     "--renovar")
+        if "idex" in renovar:
+            ap.error("idex vem de arquivos do usuário: salve a planilha e o relatório novos em data/raw/idex/ e rode sem "
                      "--renovar")
         ruins = [d for d in renovar if d not in ORDEM]
         if ruins:

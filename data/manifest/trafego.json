@@ -4,11 +4,11 @@
   "descricao": "VMDa 2023 por subtrecho de modelagem (Leves/Pesados), tabela `data`, SNV 202401A",
   "url": "https://geo.infrasa.gov.br/server/rest/services/Hosted/VMDa_2023/FeatureServer/3",
   "arquivo": "data/raw/trafego/infrasa/vmda2023_data.json",
-  "bytes": 14217554,
-  "sha256": "cb0afcf012c6a6038c89f3aad26d2ff984d2bb7a09dab043e89a7b8e7ca7083c",
+  "bytes": 14204900,
+  "sha256": "26abcbd57ca9e60952d95b1fa98530966d0055455f111d6772a38a2bfa23418b",
   "periodo": "2023",
   "licenca": "Dados abertos Infra S.A.",
-  "acesso": "2026-10-20"
+  "acesso": "2026-10-23"
  },
  {
   "dominio": "trafego",

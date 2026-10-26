@@ -93,6 +93,33 @@ def _ok_html(path, marca):
         return False
 
 
+MARCA_FICHA = "Topo e base"        # rótulo que o leitor da ficha usa; a página de bloqueio do site não o tem
+PAUSAS_FICHA = (10, 30, 60)       # segundos antes de cada nova tentativa; o site limita pedidos em sequência
+PAUSA_ENTRE_FICHAS = 3
+
+
+def baixar_ficha(url, dest, marca=MARCA_FICHA, pausas=PAUSAS_FICHA, baixar=None, dormir=None):
+    """Baixa a ficha para um arquivo temporário e só a aceita se trouxer `marca` (o site responde HTTP 200 com uma página
+    de bloqueio quando limita os pedidos). Tenta de novo depois de cada pausa de `pausas`. Aceita: troca o arquivo e
+    devolve True. Falha: o arquivo anterior fica como estava e devolve False."""
+    baixar, dormir = baixar or _fetch, dormir or time.sleep
+    dest = Path(dest)
+    novo = dest.with_name(dest.name + ".novo")
+    for k in range(len(pausas) + 1):
+        novo.unlink(missing_ok=True)
+        try:
+            baixar(url, novo, tries=2, extra=("-A", CHROME_UA), force=True)   # Incapsula exige UA de navegador
+        except RuntimeError:
+            pass
+        if _ok_html(novo, marca):
+            novo.replace(dest)
+            return True
+        novo.unlink(missing_ok=True)
+        if k < len(pausas):
+            dormir(pausas[k])
+    return False
+
+
 def fetch(force=False):
     """Baixa o que falta em data/raw/estaduais/ e registra tudo no manifesto (não rebaixa o que existe; com `force`,
     baixa tudo de novo)."""
@@ -113,14 +140,20 @@ def fetch(force=False):
         dest = _fetch(url, DIR / "artesp" / "dl" / f"{lote}.kmz", force=force)
         m.add(url, dest, f"ARTESP — KMZ do lote {lote[1:]} (CKAN malha-rodoviaria)", periodo="2026",
               licenca="CC-BY (portal de dados abertos da ARTESP)")
+    sem_ficha = []
     for slug, *_ in SP:
         dest = DIR / "artesp" / "fichas" / f"{slug}.html"
         url = ARTESP_FICHA.format(slug)
-        if force or not _ok_html(dest, "Topo e base"):
-            dest.unlink(missing_ok=True)
-            _fetch(url, dest, extra=("-A", CHROME_UA))   # Incapsula exige UA de navegador e pausa entre pedidos
-            time.sleep(3)
-        m.add(url, dest, f"ARTESP — ficha da concessionária {slug}", periodo="2026", licenca="Página pública ARTESP")
+        if force or not _ok_html(dest, MARCA_FICHA):
+            ok = baixar_ficha(url, dest)
+            if not ok:
+                print(f"aviso: a ficha ARTESP {slug} não veio ({'o arquivo anterior fica' if _ok_html(dest, MARCA_FICHA) else 'sem arquivo válido'}); "
+                      "o site pode ter bloqueado o pedido")
+            time.sleep(PAUSA_ENTRE_FICHAS)
+        if _ok_html(dest, MARCA_FICHA):
+            m.add(url, dest, f"ARTESP — ficha da concessionária {slug}", periodo="2026", licenca="Página pública ARTESP")
+        else:
+            sem_ficha.append(slug)
     for url, dest, desc in ((AGERGS_XLSX, DIR / "agergs" / "trechos-rsm-e-csg.xlsx", "AGERGS — trechos SRE RSC-287 e Bloco 3"),
                             (AGERGS_PAGE, DIR / "agergs" / "rodovias-concedidas.html", "AGERGS — rodovias concedidas"),
                             (AGER_MT, DIR / "mt" / "ager_rodovias_pedagiadas.html", "Ager-MT — rodovias pedagiadas")):
@@ -140,6 +173,9 @@ def fetch(force=False):
             time.sleep(1)
         m.add(e["link"], dest, f"ABCR — ficha {e['slug']}", periodo="2026", licenca="Página pública ABCR")
     m.save()
+    if sem_ficha:
+        raise RuntimeError(f"fichas ARTESP sem conteúdo válido (bloqueio do site?): {', '.join(sem_ficha)}; rode de novo "
+                           "com --baixar mais tarde")
     return m
 
 
@@ -986,10 +1022,12 @@ def _junta_nota(*partes):
 
 
 def _entidades_sp(abcr, hoje):
-    ents = []
+    ents, ilegiveis = [], []
     for slug, lote, eid, nome, geo, grupo, aslug in SP:
         p = DIR / "artesp" / "fichas" / f"{slug}.html"
         f = parse_ficha_artesp(p) if p.exists() else None
+        if p.exists() and f is None:   # arquivo que não é a ficha (página de bloqueio do site): não vale tratar como vazio
+            ilegiveis.append(slug)
         f = f or {}
         a = abcr.get(aslug) if aslug else None
         cur = CURADO_SP.get(eid, {})
@@ -1035,6 +1073,9 @@ def _entidades_sp(abcr, hoje):
             "fonte_url": ARTESP_FICHA.format(slug), "abcr_url": a["link"] if a else None,
             "nota": _junta_nota(NOTA_SP.get(eid), *av, *av2), "_sel": sel,
         })
+    if ilegiveis:
+        raise ValueError(f"fichas ARTESP ilegíveis (bloqueio do site?): {', '.join(ilegiveis)}; confira os arquivos de "
+                         "data/raw/estaduais/artesp/fichas/ e rode de novo com --baixar")
     return ents
 
 

@@ -39,12 +39,15 @@ def _modulos(chamadas, tmp_path, falha=None, sem_bruto=None, zip_existe=True, re
             m = types.SimpleNamespace(build=build, ZIP=zip_, registrar=lambda: chamadas.append("vmda2025.registrar"))
         if d == "debentures":  # com planilha na pasta de entrada
             m = types.SimpleNamespace(build=build, fetch=fetch, PASTA=tmp_path, planilhas=lambda: [tmp_path / "a.xlsx"])
+        if d == "idex":  # com arquivos na pasta de entrada
+            m = types.SimpleNamespace(build=build, fetch=fetch, PASTA=tmp_path,
+                                      arquivos=lambda: {"datafiles": [tmp_path / "a.xlsx"], "relatorios": []})
         mods[f"intel.{d}"] = m
     return mods.__getitem__
 
 
 def _roda(passos, tmp_path):
-    return atualizar.executar(passos, intel_dir=tmp_path, manifest_dir=None)
+    return atualizar.executar(passos, intel_dir=tmp_path, manifest_dir=None, indices_dir=None)
 
 
 def test_ordem_fixa_e_so_build_sem_baixar(tmp_path):
@@ -261,6 +264,29 @@ def test_passo_que_falha_restaura_tambem_o_manifesto(tmp_path):
 
     (r,) = atualizar.executar([("antt", estraga)], intel_dir=intel, manifest_dir=md_dir)
     assert r["estado"] == "falhou" and (md_dir / "antt.json").read_text(encoding="utf-8") == "[1]"
+
+
+def test_passo_que_falha_restaura_tambem_os_historicos_de_indices(tmp_path):
+    intel, hist = tmp_path / "intel", tmp_path / "indices"
+    intel.mkdir()
+    hist.mkdir()
+    (hist / "ida_historico.json").write_text("[1]", encoding="utf-8")
+
+    def estraga():
+        (hist / "ida_historico.json").write_text("[2]", encoding="utf-8")
+        (hist / "novo.json").write_text("{}", encoding="utf-8")
+        raise RuntimeError("build quebrou depois de gravar o histórico")
+
+    def grava():
+        (hist / "ida_historico.json").write_text("[3]", encoding="utf-8")
+
+    res = atualizar.executar([("ida", estraga), ("idex", grava)], intel_dir=intel, manifest_dir=None, indices_dir=hist)
+    assert [r["estado"] for r in res] == ["falhou", "ok"]
+    assert sorted(p.name for p in hist.glob("*.json")) == ["ida_historico.json"]
+    assert (hist / "ida_historico.json").read_text(encoding="utf-8") == "[3]"
+    # só o passo que falhou é desfeito
+    (r,) = atualizar.executar([("ida", estraga)], intel_dir=intel, manifest_dir=None, indices_dir=hist)
+    assert r["estado"] == "falhou" and (hist / "ida_historico.json").read_text(encoding="utf-8") == "[3]"
 
 
 def test_html_que_falha_por_arquivo_ausente_nao_e_pulado(tmp_path):

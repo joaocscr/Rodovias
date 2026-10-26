@@ -15,7 +15,7 @@ TERMOS_OBRIGATORIOS = {
     "vmda", "vmd", "sat", "praca-de-pedagio", "free-flow", "pam", "pnl", "medido-modelado", "snv", "trecho-fisico", "desagio",
     "aporte-recursos-vinculados", "otimizacao-contratual", "relicitacao", "capex", "opex", "vpl", "wacc", "tir", "tkm", "data-base",
     "roadshow", "debenture-incentivada", "debenture-infraestrutura", "ntn-b", "spread", "duration", "ipca-mais", "cdi", "selic", "focus",
-    "taxa-indicativa-anbima",
+    "taxa-indicativa-anbima", "ida", "idex-infra", "carteira-teorica", "ponto-base",
 }
 # Glossario.link('id') e Glossario.link("id", ...): só ids literais entram na checagem
 LINK = re.compile(r"""Glossario\.link\(\s*(['"])([^'"]+)\1""")

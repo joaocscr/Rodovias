@@ -1,5 +1,6 @@
-// Aba Debêntures: juros e inflação de referência, curva de NTN-B, emissões, mercado secundário (negócios, com a opção de somar
-// as intenções de compra e venda) e a série de debêntures incentivadas para rodovias do RoadShow. Números, períodos e fontes
+// Aba Debêntures, na ordem da tela: juros e inflação de referência com a curva de NTN-B, índices de debêntures (IDA e IDEX-Infra),
+// emissões (dispersão spread × duration e tabela, cada uma com o seu filtro de subsetor), mercado secundário (negócios, com a opção de
+// somar as intenções de compra e venda) e a série de debêntures incentivadas para rodovias do RoadShow. Números, períodos e fontes
 // vêm do bloco window.INTEL.debentures e de conc.mercado (via DebenturesModel); aqui só a montagem.
 const Debentures = (() => {
   const DM = DebenturesModel, IM = IntelModel;
@@ -8,15 +9,20 @@ const Debentures = (() => {
   const nf2 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const nf0 = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
   const C = Charts.C;
-  const WRAP = new Set(['emissor', 'grupo', 'coordenadores', 'rating', 'taxa_ipca', 'tipo', 'subsetor']);
+  const WRAP = new Set(['emissor', 'grupo', 'coordenador_lider', 'rating', 'taxa_ipca', 'tipo', 'subsetor']);
+  const AGUARDA_IDEX = 'Aguardando os arquivos do IDEX-Infra (planilha de dados e relatório mensal) em data/raw/idex/.';
+  const AGUARDA_IDA = 'Aguardando o primeiro download do IDA, da ANBIMA (python scripts/atualizar.py --baixar).';
   const NOME_PAPEIS = { 'PRÉ': 'prefixados' };  // nos outros indexadores o papel leva o rótulo do indexador (DM.rotuloIndexador)
 
-  let bloco = null, conc = null, built = false;
+  let bloco = null, ida = null, idex = null, conc = null, built = false;
   const st = {
     somado: false,
-    emissoes: { key: 'emissor', dir: 'asc', subsetor: '' },
-    emissores: { key: 'volume', dir: 'desc' },
-    ultimo: { key: 'quando', dir: 'desc' },
+    // cada tabela guarda a própria ordenação, o próprio filtro de subsetor e a própria busca; a dispersão tem só o subsetor
+    emissoes: { key: 'emissor', dir: 'asc', filtro: 'todos', busca: '' },
+    emissores: { key: 'volume', dir: 'desc', filtro: 'todos', busca: '' },
+    ultimo: { key: 'quando', dir: 'desc', filtro: 'todos', busca: '' },
+    papeis: { key: 'emissor', dir: 'asc', filtro: 'todos', busca: '' },
+    dispersao: { filtro: 'todos' },
   };
   const box = id => document.getElementById('chart-d-' + id);
   const width = el => Math.max(280, (el && el.clientWidth) || 640);
@@ -24,15 +30,17 @@ const Debentures = (() => {
   // Cartão: título, subtítulo (subHtml já escapado), legenda, conteúdo e fonte. `afetado`: cartão que muda com "ver somado";
   // ele ganha, no subtítulo, o rótulo do que está sendo mostrado (negócios fechados ou negócios + intenções).
   function card(id, title, subHtml, o = {}) {
-    const rotulo = o.afetado ? ` <span class="deb-rotulo">${esc(st.somado ? DM.ROTULO_SOMADO : DM.ROTULO_NEGOCIOS)}</span>` : '';
+    // o.semRotulo: o cartão muda com "ver somado", mas o rótulo vai junto da linha afetada, não no subtítulo
+    const mostra = o.afetado && !o.semRotulo;
+    const rotulo = mostra ? ` <span class="deb-rotulo">${esc(st.somado ? DM.ROTULO_SOMADO : DM.ROTULO_NEGOCIOS)}</span>` : '';
     return `<article class="ccard${o.wide ? ' ccard--wide' : ''}${o.afetado ? ' ccard--afetado' : ''}" id="card-d-${id}"${o.afetado ? ' data-afetado="1"' : ''}>
-      <h3 id="titulo-d-${id}">${esc(title)}</h3>${subHtml || rotulo ? `<p class="sub">${subHtml || ''}${o.afetado ? `${subHtml ? ' · ' : ''}Mostrando:${rotulo}` : ''}</p>` : ''}
+      <h3 id="titulo-d-${id}">${esc(title)}</h3>${subHtml || rotulo ? `<p class="sub">${subHtml || ''}${mostra ? `${subHtml ? ' · ' : ''}Mostrando:${rotulo}` : ''}</p>` : ''}
       ${o.legend || ''}<div class="chart-box" id="chart-d-${id}">${o.html || ''}</div>${o.foot || ''}
       ${o.note ? `<p class="src">${o.note}</p>` : ''}<p class="src">Fonte: ${esc(o.fonte || DM.DASH)}</p></article>`;
   }
   // linha "Fonte:" curta (quem forneceu e o período); nome completo, licença e nota de cada fonte estão na aba Fontes
   const fonteCurta = o => DM.fonteCurta(bloco, o);
-  const CORRETORAS = ['BTG', 'XP'];
+  const CORRETORAS = DM.CORRETORAS;
   const per = () => DM.periodoTexto(bloco.secundario && bloco.secundario.periodo);
   const tile = (id, valor, rotuloHtml, nota = '') => `<div class="kpi-tile" id="${id}"><b>${esc(valor)}</b><span>${rotuloHtml}</span>${nota ? `<small class="kpi-nota">${esc(nota)}</small>` : ''}</div>`;
   const legenda = (nome, cor) => Charts.legendHtml([[nome, cor]]);
@@ -56,23 +64,87 @@ const Debentures = (() => {
     const pts = DM.curvaNtnb(bloco);
     if (!pts.length) return '';
     const dataCurva = DM.fmtData(DM.curvaAte(bloco));
-    return card('ntnb', `Taxa das NTN-B por vencimento, em ${dataCurva}`, 'Taxa de compra do Tesouro Direto, em % ao ano, por ano de vencimento; o eixo vertical não começa em zero', { wide: true,
-      legend: legenda('Taxa de compra (% ao ano)', C.deep),
+    return card('ntnb', `Taxa das NTN-B por vencimento, em ${dataCurva}`, 'Taxa indicativa da ANBIMA, em % ao ano, por ano de vencimento; o eixo vertical não começa em zero', { wide: true,
+      legend: legenda('Taxa indicativa (% ao ano)', C.deep),
       html: '<div id="chart-d-ntnb-linha"></div><div class="table-wrap table-wrap--static" id="deb-ntnb-tabela"></div>',
-      note: `A ${Glossario.link('ntn-b', 'NTN-B')} é o título público federal que paga inflação (IPCA) mais uma taxa fixa, vendido a pessoas físicas pelo Tesouro Direto. Sua curva é a referência de juro real sem risco: o spread das debêntures IPCA+ é a taxa delas menos a da NTN-B de mesmo vencimento. “NTN-B Principal” é a versão sem juros semestrais (paga tudo no vencimento); entra onde não há NTN-B com juros no mesmo vencimento.`,
-      fonte: fonteCurta({ tesouro: true, curva: true }) });
+      note: `A ${Glossario.link('ntn-b', 'NTN-B')} é o título público federal que paga inflação (IPCA) mais uma taxa fixa. Sua curva é a referência de juro real sem risco: o spread das debêntures IPCA+ é a taxa delas menos a da NTN-B de mesmo vencimento. A taxa é a indicativa que a ANBIMA publica a cada dia útil para o mercado secundário.`,
+      fonte: fonteCurta({ anbima: true, curva: true }) });
   }
+
+  // A nota do modelo é texto puro; aqui "incentivada(s) (Lei 12.431)" ganha o link para o Glossário (um só link por termo na aba)
+  function notaIncentivadasHtml(texto) {
+    return String(texto).split(/(incentivadas? \(Lei 12\.431\))/).map((parte, i) => (i % 2 ? Glossario.link('debenture-incentivada', parte) : esc(parte))).join('');
+  }
+
+  // ---------- filtros: cada tabela de papéis ou emissores e a dispersão têm a sua barra, dentro do próprio cartão ----------
+  // Grupo de botões de rádio com o subsetor ("Todos", "Rodovias", "Outros transportes"); a contagem de cada um entra em atualizaChips.
+  function chipsSubsetor(pref) {
+    return `<span class="sub" id="${pref}-sub-rotulo">Subsetor</span>
+      <div class="chips" role="radiogroup" id="${pref}-sub" aria-labelledby="${pref}-sub-rotulo">${
+        DM.FILTROS_SUBSETOR.map(([id, rotulo]) => `<button type="button" class="chip" role="radio" data-filtro="${id}" id="${pref}-sub-${id}" aria-checked="${id === 'todos'}" tabindex="${id === 'todos' ? 0 : -1}">${rotulo}</button>`).join('')}</div>`;
+  }
+  // Barra de uma tabela: subsetor, busca por papel ou emissor e "Mostrando X de Y". `pref` dá os ids (`${pref}-sub`, `${pref}-busca`, `${pref}-n`).
+  function barraTabela(pref) {
+    return `<div class="toolbar deb-filtros" id="${pref}-barra">${chipsSubsetor(pref)}
+      <input class="mini-input" type="search" id="${pref}-busca" placeholder="Buscar papel ou emissor" aria-label="Buscar papel ou emissor" autocomplete="off" spellcheck="false">
+      <span class="page__src" id="${pref}-n" aria-live="polite"></span></div>`;
+  }
+  // Marca o botão escolhido (só ele entra na ordem do Tab) e escreve a contagem de cada um, a das linhas da própria tabela.
+  function atualizaChips(pref, filtro, contagem) {
+    document.querySelectorAll(`#${pref}-sub [role="radio"]`).forEach(b => {
+      const on = b.dataset.filtro === filtro;
+      b.setAttribute('aria-checked', String(on));
+      b.tabIndex = on ? 0 : -1;
+      b.textContent = `${DM.FILTROS_SUBSETOR.find(f => f[0] === b.dataset.filtro)[1]} (${nf0.format(contagem[b.dataset.filtro])})`;
+    });
+  }
+  // Grupo de botões de rádio (setas movem e escolhem; só o escolhido entra na ordem do Tab).
+  function ligaChips(pref, estado, redesenha) {
+    const grupo = document.getElementById(pref + '-sub');
+    const escolhe = id => { estado.filtro = id; redesenha(); };
+    grupo.addEventListener('click', ev => {
+      const b = ev.target.closest('[data-filtro]');
+      if (b) escolhe(b.dataset.filtro);
+    });
+    grupo.addEventListener('keydown', ev => {
+      const passo = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[ev.key];
+      if (!passo && ev.key !== 'Home' && ev.key !== 'End') return;
+      ev.preventDefault();
+      const ids = DM.FILTROS_SUBSETOR.map(f => f[0]), i = ids.indexOf(estado.filtro);
+      const novo = ev.key === 'Home' ? ids[0] : ev.key === 'End' ? ids[ids.length - 1] : ids[(i + passo + ids.length) % ids.length];
+      escolhe(novo);
+      document.getElementById(`${pref}-sub-${novo}`).focus();
+    });
+  }
+  // Contêiner de uma tabela filtrável: a barra (que não se refaz, para a busca não perder o foco) e o corpo, que se redesenha.
+  const blocoTabela = pref => `<div id="${pref}-tabela">${barraTabela(pref)}<div id="${pref}-corpo"></div></div>`;
 
   function emissoesCard() {
     const t = DM.tabelaEmissoes(bloco);
-    if (!t.linhas.length) return '';
     return card('emissoes', 'Emissões de debêntures de rodovias e infraestrutura de transporte',
       `Um papel (série de debênture) por linha, de emissores de rodovias, ferrovias, portos e terminais, aeroportos, hidrovias e mobilidade urbana que aparecem nas telas das corretoras. Taxa na emissão conforme o ${Glossario.link('indexador', 'indexador')}; “incentivada” = benefício da Lei 12.431 (${Glossario.link('debenture-infraestrutura', 'debênture de infraestrutura')} é a de 2024); “${DM.DASH}” quando a fonte não traz o campo. Clique no cabeçalho para ordenar`, {
         wide: true,
-        note: `Nota de crédito (${Glossario.link('rating', 'rating')}) como informada na tela da corretora.${t.colunas.some(c => c.k === 'coordenadores') ? ` Coordenadores: ${Glossario.link('coordenador', 'coordenadores da oferta')} da emissão.` : ''}${t.ocultas.length ? ` Colunas que a fonte não preenche em nenhum papel ficam ocultas (agora: ${esc(t.ocultas.join(' e '))}) e aparecem sozinhas quando uma fonte trouxer o dado.` : ''}`,
-        legend: `<div class="toolbar"><label class="sub" for="deb-em-sub">Subsetor</label><select id="deb-em-sub"><option value="">Todos</option>${
-          t.subsetores.map(s => `<option>${esc(s)}</option>`).join('')}</select><span class="page__src" id="deb-em-n"></span></div>`,
-        html: '<div id="deb-em-tabela"></div>', fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'tela' }) });
+        note: `Nota de crédito (${Glossario.link('rating', 'rating')}) como informada na tela da corretora.${t.colunas.some(c => c.k === 'coordenador_lider') ? ` Coordenador líder: ${Glossario.link('coordenador', 'coordenador')} que lidera a oferta da emissão.` : ''}${t.ocultas.length ? ` Colunas que a fonte não preenche em nenhum papel ficam ocultas (agora: ${esc(t.ocultas.join(' e '))}) e aparecem sozinhas quando uma fonte trouxer o dado.` : ''}`,
+        legend: `<p class="deb-nota" id="deb-em-incentivadas">${notaIncentivadasHtml(DM.notaIncentivadas(t.linhas))}</p>`,
+        html: blocoTabela('deb-em'), fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'tela' }) });
+  }
+
+  // Dispersão: um ponto por debênture IPCA+, cor por subsetor. Existe quando o bloco traz `dispersao`, mesmo que nenhum papel tenha
+  // entrado (a nota diz quantos ficaram de fora).
+  function dispersaoCard() {
+    const d = bloco.dispersao;
+    if (!d || !Array.isArray(d.pontos)) return '';
+    return card('dispersao', 'Spread sobre a NTN-B × duration das debêntures de transporte',
+      `Cada ponto é uma debênture IPCA+ das telas das corretoras${d.data ? `, na tela de ${esc(DM.fmtData(d.data))}` : ''}. Passe o mouse sobre um ponto para ver o papel, o emissor e os números. Os botões de subsetor filtram só este gráfico`, { wide: true,
+        legend: `<div class="toolbar deb-filtros" id="deb-disp-barra">${chipsSubsetor('deb-disp')}</div><div id="deb-disp-legenda"></div>`,
+        note: 'Duration: prazo médio, em anos, dos pagamentos do papel, como a tela da corretora publica (não é a duration em dias úteis do IDA). Taxa: taxa indicativa da ANBIMA do papel. Spread: essa taxa menos a da NTN-B de mesmo vencimento, na curva indicativa da ANBIMA do dia da tela, em pontos percentuais (p.p.); o eixo vertical pode ir abaixo de zero.',
+        foot: '<div id="deb-disp-rodape"></div>', fonte: DM.fonteDispersao(bloco) });
+  }
+
+  function emissoesHtml() {
+    const t = DM.tabelaEmissoes(bloco);
+    if (!t.linhas.length) return '';
+    return `<h2 class="resumo-h2" id="deb-h-emissoes">Emissões</h2><div class="grid-cards">${dispersaoCard()}${emissoesCard()}</div>`;
   }
 
   // ---------- tabelas ordenáveis ----------
@@ -98,15 +170,49 @@ const Debentures = (() => {
       if (novo) novo.focus();
     });
   }
-  const TEXTO_EMISSOES = new Set(['ticker', 'emissor', 'subsetor', 'grupo', 'indexador', 'coordenadores', 'incentivada', 'rating']);
+  const TEXTO_EMISSOES = new Set(['ticker', 'emissor', 'subsetor', 'grupo', 'indexador', 'coordenador_lider', 'incentivada', 'rating']);
   const TEXTO_EMISSORES = new Set(['emissor', 'subsetor']);
   const TEXTO_ULTIMO = new Set(['ticker', 'emissor', 'subsetor', 'indexador', 'tipo']);
 
-  function desenhaEmissoes() {
-    const t = DM.tabelaEmissoes(bloco);
-    const todas = t.linhas, mostra = Object.assign({}, t, { linhas: todas.filter(l => !st.emissoes.subsetor || l.subsetor === st.emissoes.subsetor) });
-    document.getElementById('deb-em-tabela').innerHTML = tabela('deb-emissoes', 'debentures-emissoes', mostra, st.emissoes);
-    document.getElementById('deb-em-n').textContent = `${nf0.format(mostra.linhas.length)} de ${nf0.format(todas.length)} papéis`;
+  // Desenha o corpo de uma tabela filtrável. `c`: pref (ids da barra), id da tabela, estado (ordem, subsetor e busca), dados() (a tabela
+  // inteira, com `linhas` e `colunas`), csv() (nome base do arquivo) e unidade (singular e plural do que a linha é). O que se vê, a
+  // contagem e o CSV são sempre as linhas filtradas; o nome do arquivo leva o filtro para não se confundir com o da tabela inteira.
+  function desenhaFiltrada(c) {
+    const t = c.dados(), e = c.estado, total = t.linhas.length;
+    const mostra = Object.assign({}, t, { linhas: DM.filtrarLinhas(t.linhas, { subsetor: e.filtro, busca: e.busca }) });
+    const sufixo = [e.filtro !== 'todos' && e.filtro, e.busca.trim() && 'busca'].filter(Boolean).join('-');
+    document.getElementById(c.pref + '-corpo').innerHTML = tabela(c.id, sufixo ? `${c.csv()}-${sufixo}` : c.csv(), mostra, e)
+      + (total && !mostra.linhas.length ? `<p class="empty" id="${c.pref}-vazio">Nenhum ${c.unidade[0]} com esse filtro.</p>` : '');
+    atualizaChips(c.pref, e.filtro, DM.contagemSubsetor(t.linhas));
+    document.getElementById(c.pref + '-n').textContent = `Mostrando ${nf0.format(mostra.linhas.length)} de ${plural(total, c.unidade[0], c.unidade[1])}`;
+  }
+  // Liga a barra, a ordenação por cabeçalho e a busca de uma tabela filtrável, e a desenha.
+  function ligaFiltrada(c, texto) {
+    const redesenha = () => desenhaFiltrada(c);
+    ligaChips(c.pref, c.estado, redesenha);
+    document.getElementById(c.pref + '-busca').addEventListener('input', ev => { c.estado.busca = ev.target.value; redesenha(); });
+    ordenavel(document.getElementById(c.pref + '-corpo'), c.estado, redesenha, texto);
+    redesenha();
+  }
+  const FILTRADAS = {
+    emissoes: { pref: 'deb-em', id: 'deb-emissoes', estado: st.emissoes, unidade: ['papel', 'papéis'], csv: () => 'debentures-emissoes', dados: () => DM.tabelaEmissoes(bloco) },
+    papeis: { pref: 'deb-ind-papel', id: 'deb-ind-papel', estado: st.papeis, unidade: ['papel', 'papéis'], csv: () => 'debentures-indices-por-papel', dados: () => DM.tabelaIndices(bloco, ida, idex) },
+    emissores: { pref: 'deb-emissor', id: 'deb-emissores', estado: st.emissores, unidade: ['emissor', 'emissores'], csv: () => csvNome('debentures-por-emissor'), dados: () => DM.tabelaEmissores(serie()) },
+    ultimo: { pref: 'deb-ultimo', id: 'deb-ultimo', estado: st.ultimo, unidade: ['papel', 'papéis'], csv: () => csvNome('debentures-ultimo-por-papel'), dados: () => DM.tabelaUltimo(serie()) },
+  };
+
+  // Cor de cada subsetor: um slot fixo da paleta de dados, na ordem fixa do modelo, para a cor não mudar com o filtro.
+  const corSubsetor = sub => DATA_SLOTS[Math.max(0, DM.SUBSETORES.indexOf(sub)) % DATA_SLOTS.length];
+  function desenhaDispersao() {
+    const el = box('dispersao');
+    if (!el) return;
+    const d = DM.dispersao(bloco, st.dispersao.filtro);
+    atualizaChips('deb-disp', st.dispersao.filtro, DM.contagemSubsetor(DM.dispersao(bloco, 'todos').pontos));
+    document.getElementById('deb-disp-legenda').innerHTML = Charts.legendHtml(d.subsetores.map(sub => ({ label: sub, color: corSubsetor(sub), shape: 'dot' })));
+    el.innerHTML = Charts.scatterSvg(d.pontos.map(p => ({ x: p.duration_anos, y: p.spread, color: corSubsetor(p.subsetor), group: p.subsetor, tip: p.dica })),
+      { width: width(el), height: width(el) < 520 ? 320 : 380, xLabel: 'Duration (anos)', yLabel: 'Spread sobre a NTN-B (p.p.)', formatX: v => nf1.format(v), formatY: v => nf1.format(v),
+        title: 'Spread sobre a NTN-B por duration, uma debênture por ponto, colorida por subsetor' });
+    document.getElementById('deb-disp-rodape').innerHTML = `<p class="src" id="deb-disp-n">${esc(plural(d.pontos.length, 'papel no gráfico', 'papéis no gráfico'))}</p>${d.nota ? `<p class="src" id="deb-disp-nota">${esc(d.nota)}</p>` : ''}`;
   }
 
   // ---------- mercado secundário ----------
@@ -115,13 +221,13 @@ const Debentures = (() => {
     if (!sec) return '';
     const p = per();
     const lead = `<p class="page__lead">O ${Glossario.link('mercado-secundario', 'mercado secundário')} é onde investidores negociam entre si debêntures já emitidas. Os dados vêm das telas das corretoras XP e BTG${p ? `, de ${esc(p)}` : ''}; aqui aparecem só os totais por dia, emissor e subsetor e o último negócio de cada papel. Um ${Glossario.link('negocio-intencao', 'negócio')} é uma operação fechada; uma intenção é um pedido de compra ou de venda, que pode não ter virado negócio. Taxas são ${Glossario.link('taxa-media-ponderada', 'médias ponderadas pelo volume')}, calculadas separadamente por indexador (${Glossario.link('ipca-mais', 'IPCA+')}, ${Glossario.link('di-mais', 'DI+')}, % do DI e ${Glossario.link('prefixado', 'prefixada')} não se misturam).</p>
-      <p class="page__lead deb-spread" id="deb-spread">Como o spread é calculado: ${Glossario.link('spread', 'spread')} = taxa do papel − taxa da NTN-B interpolada pelo vencimento (não pela ${Glossario.link('duration', 'duration')}), Tesouro Direto, taxa de compra; só para papéis IPCA+; “${DM.DASH}” quando não há curva no dia. O spread é dado em pontos percentuais (p.p.).${DM.notaCurva(bloco) ? ` ${esc(DM.notaCurva(bloco))}` : ''}</p>`;
+      <p class="page__lead deb-spread" id="deb-spread">Como o spread é calculado: ${Glossario.link('spread', 'spread')} = taxa do papel − taxa da NTN-B interpolada pelo vencimento (não pela ${Glossario.link('duration', 'duration')}), taxa indicativa da ANBIMA; só para papéis IPCA+; “${DM.DASH}” quando não há curva no dia. O spread é dado em pontos percentuais (p.p.).${DM.notaCurva(bloco) ? ` ${esc(DM.notaCurva(bloco))}` : ''}</p>`;
     const controle = `<div class="deb-controle" id="deb-controle">
       <button type="button" role="switch" id="deb-somado" class="switch" aria-checked="false" aria-describedby="deb-somado-desc"><span class="switch__trilho" aria-hidden="true"><span class="switch__bola"></span></span><span class="switch__texto">Ver somado</span></button>
-      <p class="deb-controle__desc" id="deb-somado-desc">Desligado, os cartões abaixo mostram só os negócios fechados e as intenções ficam à parte, no último cartão. Ligado, as intenções de compra e venda entram nos números e gráficos como se fossem negócios.</p>
+      <p class="deb-controle__desc" id="deb-somado-desc">Desligado, os cartões abaixo e a linha de transporte do comparativo de spread, na seção de índices, mostram só os negócios fechados e as intenções ficam à parte, no último cartão. Ligado, as intenções de compra e venda entram nos números e gráficos como se fossem negócios.</p>
       <p class="deb-controle__estado" id="deb-status" aria-live="polite"></p></div>`;
     const cards = [
-      card('kpis', 'Mercado secundário em números', `Totais de ${esc(p)} para debêntures de rodovias e infraestrutura de transporte`, { wide: true, afetado: true, html: '', fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'dados', tesouro: true }) }),
+      card('kpis', 'Mercado secundário em números', `Totais de ${esc(p)} para debêntures de rodovias e infraestrutura de transporte`, { wide: true, afetado: true, html: '', fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'dados', anbima: true }) }),
       card('dia-vol', 'Volume negociado por dia', 'Soma do valor financeiro de cada dia, em R$ milhões', { afetado: true,
         legend: legenda('Volume do dia (R$ milhões)', C.deep), fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'dados' }) }),
       card('dia-n', 'Número de negócios por dia', 'Quantidade registrada em cada dia', { afetado: true,
@@ -129,11 +235,11 @@ const Debentures = (() => {
       card('subsetor', 'Taxa média e spread sobre a NTN-B por subsetor', 'Média de cada subsetor (rodovias, ferrovias, portos e terminais, aeroportos, hidrovias, mobilidade urbana), só dos papéis IPCA+, ponderada pelo volume', { wide: true, afetado: true,
         html: `<div class="duo"><div><h4 class="duo__title">Taxa média (% ao ano, IPCA + taxa)</h4>${legenda('Taxa média IPCA+', C.deep)}<div id="chart-d-subsetor-taxa"></div></div>
           <div><h4 class="duo__title">Spread médio sobre a NTN-B (p.p.)</h4>${legenda('Spread médio IPCA+', C.bright)}<div id="chart-d-subsetor-spread"></div></div></div>`,
-        fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'dados', tesouro: true }) }),
+        fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'dados', anbima: true }) }),
       card('emissor', 'Taxa média e spread sobre a NTN-B por emissor', 'Uma linha por empresa emissora; taxa média por indexador e spread médio sobre a NTN-B (p.p.) dos papéis IPCA+. Clique no cabeçalho para ordenar', { wide: true, afetado: true,
-        html: '<div id="deb-emissor-tabela"></div>', fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'dados', tesouro: true }) }),
+        html: blocoTabela('deb-emissor'), fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'dados', anbima: true }) }),
       card('ultimo', 'Último negócio de cada papel', 'Data, hora e taxa do registro mais recente de cada papel no período; o spread sobre a NTN-B (p.p.) só existe para papéis IPCA+ em dias com curva', { wide: true, afetado: true,
-        html: '<div id="deb-ultimo-tabela"></div>', fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'dados', tesouro: true }) }),
+        html: blocoTabela('deb-ultimo'), fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'dados', anbima: true }) }),
       card('intencoes', 'Intenções de compra e venda, à parte dos negócios', `Pedidos de compra e de venda registrados na tela da corretora XP, de ${esc(p)}; não são negócios fechados. Com “ver somado” ligado eles também entram nos cartões acima`, { wide: true,
         html: `<div class="duo"><div><h4 class="duo__title">Por direção</h4><div id="chart-d-int-dir"></div></div>
           <div><h4 class="duo__title">Volume por dia (R$ milhões)</h4>${legendaCV}<div id="chart-d-int-dia"></div></div></div>
@@ -162,12 +268,8 @@ const Debentures = (() => {
   const serie = () => DM.series(bloco, { somado: st.somado });
   // o arquivo CSV de quem soma as intenções leva "-somado" no nome, para não se confundir com o dos negócios
   const csvNome = base => (st.somado ? `${base}-somado` : base);
-  function desenhaEmissores() {
-    document.getElementById('deb-emissor-tabela').innerHTML = tabela('deb-emissores', csvNome('debentures-por-emissor'), DM.tabelaEmissores(serie()), st.emissores);
-  }
-  function desenhaUltimo() {
-    document.getElementById('deb-ultimo-tabela').innerHTML = tabela('deb-ultimo', csvNome('debentures-ultimo-por-papel'), DM.tabelaUltimo(serie()), st.ultimo);
-  }
+  const desenhaEmissores = () => desenhaFiltrada(FILTRADAS.emissores);
+  const desenhaUltimo = () => desenhaFiltrada(FILTRADAS.ultimo);
   function desenhaMercado() {
     const s = serie(), k = DM.kpis(bloco, { somado: st.somado });
     const op = st.somado ? 'negócios + intenções' : 'negócios';
@@ -190,6 +292,7 @@ const Debentures = (() => {
       { width: width(spread), labelWidth: 150, format: v => `${nf2.format(v)} p.p.`, title: 'Spread médio por subsetor' });
     desenhaEmissores();
     desenhaUltimo();
+    desenhaSpreadIndices();
   }
 
   function desenhaIntencoes() {
@@ -205,6 +308,150 @@ const Debentures = (() => {
     em.innerHTML = Charts.hstackSvg(i.porEmissor.slice(0, 15).map(e => ({ label: e.emissor, parts: [e.compra.volume / 1e6, e.venda.volume / 1e6], detail: `${nf0.format(e.n)} intenções` })),
       { width: width(em), labelWidth: Math.min(280, width(em) * 0.4), names: ['Compra', 'Venda'], unit: 'R$ mi', format: fmtMi, title: 'Intenções por emissor' });
   }
+
+  // ---------- índices de debêntures: IDA e IDEX-Infra ----------
+  const fmtPct2 = v => (typeof v === 'number' && isFinite(v) ? `${nf2.format(v)}%` : DM.DASH);
+  const temIda = () => !!(ida && ida.indices && Object.keys(ida.indices).length);
+  const temIdex = () => !!(idex && ((idex.spread && idex.spread.length) || (idex.retornos && Object.keys(idex.retornos).length)));
+  const plural = (n, um, varios) => `${nf0.format(n)} ${n === 1 ? um : varios}`;
+  // Eixo x de série diária ou mensal: passo dos rótulos que cabe na largura (cerca de um rótulo a cada `px` pixels).
+  const passoX = (xs, w, px) => Math.max(1, Math.ceil((Math.max(...xs) - Math.min(...xs)) / Math.max(2, Math.floor((w - 88) / px))));
+  const diaCurto = x => DM.fmtDiaMes(new Date(x * 864e5).toISOString().slice(0, 10));
+
+  function indicesLead() {
+    return `<p class="page__lead" id="deb-ind-lead">Dois índices de mercado servem de régua para as debêntures de transporte. O ${Glossario.link('ida', 'IDA')} (Índice de Debêntures ANBIMA) acompanha uma ${Glossario.link('carteira-teorica', 'carteira teórica')} de debêntures privadas e tem quatro subíndices: IDA-IPCA Infraestrutura (o mais próximo destas debêntures), IDA-IPCA, IDA-Geral e IDA-DI. O ${Glossario.link('idex-infra', 'IDEX-Infra')}, da IDEX Analytics, é um índice de debêntures de infraestrutura, em duas versões, Geral e Core; seu spread vem em ${Glossario.link('ponto-base', 'pontos-base')}, e o painel o converte em p.p. (100 pontos-base = 1 p.p.).</p>`;
+  }
+
+  // Uma linha por ano que não fecha (relatório do IDEX-Infra): o dado segue como publicado e a tela diz isso.
+  const ressalvas = (id, avisos) => (avisos.length ? `<div id="${id}">${avisos.map(a => `<p class="deb-nota deb-aviso deb-ressalva">${esc(a.texto)}</p>`).join('')}</div>` : '');
+
+  function indicesCards() {
+    const spreadSub = 'Em p.p. (pontos percentuais); o spread do IDEX-Infra, dado em pontos-base, é dividido por 100. Sem a curva da ANBIMA no dia, o spread do painel e o do IDA ficam sem valor, e vale o último dia que tem. “Ver somado” (na seção Mercado secundário, mais abaixo) muda só a linha de transporte';
+    const datas = DM.tabelaIndices(bloco, ida, idex).datas;
+    const dePapel = [datas.anbima && `taxa ANBIMA de ${DM.fmtData(datas.anbima)}`, datas.idex && `spread IDEX de ${DM.fmtData(datas.idex)}`].filter(Boolean).join('; ');
+    return [
+      card('ind-evolucao', 'Evolução dos índices', 'IDA rebaseado em 100 no primeiro dia da série; retorno acumulado e spread do IDEX-Infra', { wide: true,
+        html: '<div id="deb-ind-evolucao"></div>',
+        note: 'Retorno acumulado do IDEX-Infra = os retornos mensais compostos desde o primeiro mês: um mês de 1% seguido de outro de 2% dá 3,02%, não 3%. Os eixos verticais dos gráficos de linha não começam em zero.',
+        fonte: [temIda() && DM.fonteIda(ida), temIdex() && DM.fonteIdex(idex)].filter(Boolean).join('; ') || DM.DASH }),
+      card('ind-spread', 'Spread sobre a NTN-B: debêntures de transporte, IDA-IPCA Infraestrutura e IDEX-Infra', spreadSub, { wide: true, afetado: true, semRotulo: true,
+        html: '<div id="deb-ind-spread"></div>',
+        note: 'Spread = taxa menos a da NTN-B de mesmo vencimento (taxa indicativa da ANBIMA). A média nos dias em comum é a média simples dos spreads diários dos dias em que as três séries têm valor.',
+        fonte: [DM.fonteCurta(bloco, { corretoras: CORRETORAS, periodo: 'dados', anbima: true }), temIda() && DM.fonteIda(ida), temIdex() && DM.fonteIdex(idex, 'spread')].filter(f => f && f !== DM.DASH).join('; ') }),
+      card('ind-papel', 'Por papel: spread sobre a NTN-B no painel e no IDEX-Infra, e taxa indicativa da ANBIMA',
+        `Um papel da tabela de emissões por linha${dePapel ? ` (${dePapel})` : ''}; “${DM.DASH}” onde o papel não está no índice ou não tem spread. Clique no cabeçalho para ordenar`, { wide: true,
+          html: blocoTabela('deb-ind-papel'),
+          note: 'Spread painel: o do último negócio do papel (só IPCA+, em dia com curva), que pode ser de um dia anterior ao dos índices. Taxa ANBIMA: taxa indicativa da carteira do IDA. Spread IDEX: spread sobre a NTN-B do IDEX-Infra, de pontos-base para p.p.',
+          fonte: [temIda() && DM.fonteIda(ida), temIdex() && DM.fonteIdex(idex, 'spread'), DM.fonteCurta(bloco, { corretoras: CORRETORAS, periodo: 'dados' })].filter(f => f && f !== DM.DASH).join('; ') || DM.DASH }),
+    ].join('');
+  }
+
+  function indicesHtml() {
+    return `<h2 class="resumo-h2" id="deb-h-indices">Índices de debêntures (IDA e IDEX-Infra)</h2>${indicesLead()}<div class="grid-cards">${indicesCards()}</div>`;
+  }
+
+  // Cores do IDA: fichas categóricas distintas (os dois subíndices IPCA andam quase juntos; o IDA-IPCA vai tracejado)
+  const COR_IDA = [DATA_SLOTS[0], DATA_SLOTS[1], DATA_SLOTS[2], DATA_SLOTS[6]];
+
+  // Cartão 1: à esquerda o IDA (linhas e variações publicadas), à direita o IDEX-Infra (retorno acumulado e spread diário).
+  function desenhaEvolucao() {
+    const el = document.getElementById('deb-ind-evolucao');
+    if (!el) return;
+    // ---- IDA
+    let esq = '';
+    if (!temIda()) esq += `<h4 class="duo__title">IDA</h4><p class="empty" id="deb-ida-aviso">${esc(AGUARDA_IDA)}</p>`;
+    else {
+      const ev = DM.evolucaoIda(ida), per = DM.periodoIda(ida), dias = Math.max(0, ...ev.map(s => s.pontos.length));
+      esq += `<h4 class="duo__title" id="deb-ida-titulo">IDA: ${esc(DM.coberturaIda(ida))}; número-índice rebaseado em 100 no primeiro dia</h4>`;
+      if (dias >= 2) {
+        esq += `${Charts.legendHtml(ev.map((s, k) => [s.nome, COR_IDA[k % 4], 1, k === 1]))}<div id="chart-d-ind-ida"></div>`;
+      } else esq += `<p class="empty" id="deb-ida-pouco">A série tem só ${plural(dias, 'dia', 'dias')}; o gráfico aparece a partir do segundo.</p>`;
+      esq += `<p class="src" id="deb-ida-serie">Série diária acumulada desde ${esc(DM.fmtData(per && per.de))} (primeiro download); cresce a cada atualização.</p>`;
+      const lac = dias >= 2 ? DM.lacunasIda(ida) : [];
+      if (lac.length) esq += `<p class="src" id="deb-ida-lacunas">Sem ponto na série ${lac.length <= 5 ? `em ${esc(lac.map(DM.fmtData).join(', '))}` : `em ${nf0.format(lac.length)} dias úteis`} (feriado ou dia sem resultado publicado); a linha é interrompida nesses dias.</p>`;
+      const v = DM.variacoesIda(ida), datas = [...new Set(v.map(x => x.data))].sort();
+      if (v.length) {
+        esq += `<h4 class="duo__title">${datas.length === 1 ? `Variação publicada pela ANBIMA em ${esc(DM.fmtData(datas[0]))}` : 'Variação publicada pela ANBIMA no último dia de cada índice'}</h4>
+          <div class="table-wrap table-wrap--static"><table class="grid grid--static" id="deb-ida-variacoes" data-csv-name="debentures-ida-variacoes"><thead><tr><th>Índice</th>${datas.length > 1 ? '<th class="num">Data</th>' : ''}<th class="num">No mês</th><th class="num">No ano</th><th class="num">Em 12 meses</th><th class="num">Em 24 meses</th></tr></thead><tbody>${
+            v.map(x => `<tr class="is-static"><td>${esc(x.nome)}</td>${datas.length > 1 ? `<td class="num">${esc(DM.fmtData(x.data))}</td>` : ''}${['var_mes', 'var_ano', 'var_12m', 'var_24m'].map(k => `<td class="num">${esc(fmtPct2(x[k]))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+      }
+    }
+    // ---- IDEX-Infra
+    let dir = '';
+    if (!temIdex()) dir = `<h4 class="duo__title">IDEX-Infra</h4><p class="empty" id="deb-idex-aviso">${esc(AGUARDA_IDEX)}</p>`;
+    else {
+      const ret = DM.retornosIdex(idex), sp = DM.spreadIdex(idex), cob = DM.coberturaIdex(idex);
+      dir += `<h4 class="duo__title" id="deb-idex-ret-titulo">IDEX-Infra: retorno acumulado, ${esc(cob.retornos)}</h4>`;
+      dir += ret.length ? `${Charts.legendHtml(ret.map((r, k) => [r.nome, [C.deep, C.bright][k % 2]]))}<div id="chart-d-ind-idex-ret"></div>${ressalvas('deb-idex-ret-ressalvas', DM.avisosIdex(idex, 'serie'))}` : '<p class="empty">Sem retornos mensais.</p>';
+      dir += `<h4 class="duo__title" id="deb-idex-spread-titulo">IDEX-Infra Geral: spread médio diário sobre a NTN-B (p.p.), ${esc(cob.spread)}</h4>`;
+      dir += sp.length ? `${legenda('Spread médio ponderado (p.p.)', C.deep)}<div id="chart-d-ind-idex-spread"></div>` : '<p class="empty">Sem spread diário.</p>';
+    }
+    // ---- retorno em 12 meses lado a lado: cada janela dita no próprio cartão, com o peso do número
+    const r12 = DM.comparacaoRetorno12m(ida, idex);
+    const tiles = r12.length ? `<h4 class="duo__title" style="margin-top:24px">Retorno em 12 meses</h4><div class="kpis" id="deb-ind-12m">${r12.map((x, k) =>
+      `<div class="kpi-tile" id="deb-ind-12m-${k}"><b>${esc(fmtPct2(x.pct))}</b><b class="kpi-janela">${esc(x.janela)}</b><span>${esc(x.origem)}</span></div>`).join('')}</div>${ressalvas('deb-ind-12m-ressalvas', DM.avisosIdex(idex, '12m'))}${
+      DM.janelasDiferentes(r12) ? '<p class="deb-nota deb-aviso" id="deb-ind-12m-aviso">Janelas diferentes: os números não são diretamente comparáveis.</p>' : ''}` : '';
+    el.innerHTML = `<div class="duo"><div id="deb-ind-ida">${esq}</div><div id="deb-ind-idex">${dir}</div></div>${tiles}`;
+
+    const ida$ = document.getElementById('chart-d-ind-ida');
+    if (ida$) {
+      const ev = DM.evolucaoIda(ida), xs = ev.flatMap(s => s.pontos.map(p => DM.diaNum(p.data))), ys = ev.flatMap(s => s.pontos.map(p => p.base100));
+      const min = Math.min(...ys), max = Math.max(...ys), wi = width(ida$);
+      ida$.innerHTML = Charts.linesSvg(ev.map((s, k) => ({ name: s.nome, color: COR_IDA[k % 4], dash: k === 1, points: s.pontos.map(p => ({ x: DM.diaNum(p.data), y: p.base100, quebra: p.quebra })) })),
+        { width: wi, unit: '(base 100)', yLabel: 'Base 100', format: v => nf2.format(v), formatX: diaCurto, stepX: passoX(xs, wi, 64), yMin: min - (max - min) * 0.2,
+          title: 'IDA: número-índice rebaseado em 100 (eixo vertical não começa em zero)' });
+    }
+    const ret$ = document.getElementById('chart-d-ind-idex-ret');
+    if (ret$) {
+      const ret = DM.retornosIdex(idex), xs = ret.flatMap(r => r.pontos.map(p => DM.mesNum(p.mes))), ys = ret.flatMap(r => r.pontos.map(p => p.acumulado_pct)), wr = width(ret$);
+      ret$.innerHTML = Charts.linesSvg(ret.map(r => ({ name: r.nome, points: r.pontos.map(p => ({ x: DM.mesNum(p.mes), y: p.acumulado_pct })) })),
+        { width: wr, unit: '% acumulado', yLabel: '% acumulado', format: v => nf2.format(v), formatX: DM.rotuloMes, stepX: passoX(xs, wr, 80), yMin: Math.min(0, ...ys),
+          title: 'IDEX-Infra: retorno acumulado desde o primeiro mês' });
+    }
+    const esp$ = document.getElementById('chart-d-ind-idex-spread');
+    if (esp$) {
+      const sp = DM.spreadIdex(idex), xs = sp.map(d => DM.diaNum(d.data)), ys = sp.map(d => d.spread_pp), wi = width(esp$);
+      const min = Math.min(...ys), max = Math.max(...ys);
+      esp$.innerHTML = Charts.linesSvg([{ name: 'IDEX-Infra Geral', points: sp.map(d => ({ x: DM.diaNum(d.data), y: d.spread_pp })) }],
+        { width: wi, unit: 'p.p.', yLabel: 'p.p.', format: v => nf2.format(v), formatX: diaCurto, stepX: passoX(xs, wi, 64), yMin: min - (max - min) * 0.2,
+          title: 'IDEX-Infra Geral: spread médio diário sobre a NTN-B (eixo vertical não começa em zero)' });
+    }
+  }
+
+  // Cartão 2 (responde a "ver somado"; só a linha de transporte muda). Havendo dias em comum às três séries, o gráfico principal é a
+  // média neles (mesma base) e o do último dia de cada série, com datas diferentes, vem em segundo. Todo rótulo de barra traz a data.
+  function desenhaSpreadIndices() {
+    const el = document.getElementById('deb-ind-spread');
+    if (!el) return;
+    const c = DM.comparacaoSpread(bloco, ida, idex, { somado: st.somado });
+    const comum = c[0].dias_comuns > 0, estreito = width(el) < 520;
+    const fmt = v => `${nf2.format(v)} p.p.`;
+    const dia = d => (estreito ? DM.fmtDiaMes(d) : DM.fmtData(d));
+    const sem = [!temIdex() && AGUARDA_IDEX, !temIda() && AGUARDA_IDA].filter(Boolean);
+    const defasadas = c.filter(l => l.data && l.ate && l.ate > l.data)
+      .map(l => `${l.rotulo}: último valor em ${DM.fmtData(l.data)}; a série vai até ${DM.fmtData(l.ate)}, mas sem curva da ANBIMA nos dias seguintes.`);
+    const n = c[0].dias_comuns;
+    const tComum = n === 1 ? `Valor no dia em comum às três séries (${c[0].periodo_comum})` : `Média nos ${nf0.format(n)} dias em comum às três séries (${c[0].periodo_comum})`;
+    const principal = comum
+      ? `<h4 class="duo__title" id="deb-ind-comum-titulo">${esc(tComum)}</h4><div id="chart-d-ind-spread-comum"></div>
+         <h4 class="duo__title" id="deb-ind-ultimo-titulo">Último dia com valor de cada série (datas diferentes)</h4><div id="chart-d-ind-spread-ultimo"></div>`
+      : `<p class="src" id="deb-ind-comum-nao">As três séries ainda não têm dias com spread em comum; vale o último dia de cada uma.</p>
+         <h4 class="duo__title" id="deb-ind-ultimo-titulo">Último dia com valor de cada série (datas diferentes)</h4><div id="chart-d-ind-spread-ultimo"></div>`;
+    el.innerHTML = `${legenda('Spread médio sobre a NTN-B (p.p.)', C.deep)}${principal}
+      <div class="table-wrap table-wrap--static"><table class="grid grid--static" id="deb-ind-spread-tabela" data-csv-name="${csvNome('debentures-indices-spread')}"><thead><tr><th>Série</th><th class="num">Spread sobre a NTN-B (último dia com valor)</th><th class="num">Data</th><th class="num">Média nos dias em comum (sobre a NTN-B)</th></tr></thead><tbody>${
+        c.map((l, k) => `<tr class="is-static"><td class="wrap"><span class="deb-nome">${esc(l.rotulo)}</span>${k === 0 ? `<br><small>Mostrando: <span class="deb-rotulo">${esc(st.somado ? DM.ROTULO_SOMADO : DM.ROTULO_NEGOCIOS)}</span></small>` : ''}</td><td class="num">${esc(DM.fmtPp(l.spread_pp))}</td><td class="num">${esc(l.data ? DM.fmtData(l.data) : DM.DASH)}</td><td class="num">${esc(DM.fmtPp(l.media_comum_pp))}</td></tr>`).join('')}</tbody></table></div>
+      <p class="src" id="deb-ind-ponderacao">Transporte: média ponderada pelo volume negociado; IDA e IDEX: ponderada pela participação de cada papel no índice.</p>
+      ${sem.concat(defasadas).map(t => `<p class="src deb-ind-aviso">${esc(t)}</p>`).join('')}`;
+    const opts = { width: 0, labelAbove: estreito, labelWidth: 380, format: fmt };
+    const u = document.getElementById('chart-d-ind-spread-ultimo');
+    u.innerHTML = Charts.hbarsSvg(c.map(l => ({ label: `${l.rotulo_curto} · ${l.data ? dia(l.data) : 'sem valor'}`, value: l.spread_pp, detail: l.data ? `em ${DM.fmtData(l.data)}` : 'sem valor' })),
+      Object.assign({}, opts, { width: width(u), big: !comum, title: 'Spread sobre a NTN-B no último dia com valor' }));
+    const m = document.getElementById('chart-d-ind-spread-comum');
+    if (m) m.innerHTML = Charts.hbarsSvg(c.map(l => ({ label: `${l.rotulo_curto} · ${n === 1 ? (estreito ? l.periodo_comum.slice(0, 5) : l.periodo_comum) : `${estreito ? '' : 'média de '}${nf0.format(n)} dias`}`, value: l.media_comum_pp,
+      detail: `${n === 1 ? 'dia' : 'média de ' + nf0.format(n) + ' dias'} ${l.periodo_comum}` })), Object.assign({}, opts, { width: width(m), big: true, title: 'Spread sobre a NTN-B nos dias em comum' }));
+  }
+
+  const TEXTO_PAPEIS = new Set(['ticker', 'emissor']);
 
   // ---------- série do RoadShow ----------
   function roadshowCard() {
@@ -232,7 +479,7 @@ const Debentures = (() => {
     el.innerHTML = Charts.linesSvg([{ name: 'NTN-B', points: pts.map(p => ({ x: Number(p.vencimento.slice(0, 4)), y: p.taxa })) }],
       { width: width(el), unit: '% ao ano', format: v => nf2.format(v), formatX: x => String(x), stepX: width(el) >= 560 ? 3 : 6, yMin: min - (max - min) * 0.2,
         title: 'Taxa das NTN-B por ano de vencimento (eixo vertical não começa em zero)' });
-    document.getElementById('deb-ntnb-tabela').innerHTML = `<table class="grid grid--static" id="deb-ntnb" data-csv-name="debentures-curva-ntnb"><thead><tr><th>Vencimento</th><th>Título</th><th class="num">Taxa de compra (% ao ano)</th><th class="num">Data da taxa</th></tr></thead><tbody>${
+    document.getElementById('deb-ntnb-tabela').innerHTML = `<table class="grid grid--static" id="deb-ntnb" data-csv-name="debentures-curva-ntnb"><thead><tr><th>Vencimento</th><th>Título</th><th class="num">Taxa indicativa (% ao ano)</th><th class="num">Data da taxa</th></tr></thead><tbody>${
       pts.map(p => `<tr class="is-static"><td>${esc(DM.fmtData(p.vencimento))}</td><td>${esc(p.titulo || DM.DASH)}</td><td class="num">${esc(nf2.format(p.taxa))}</td><td class="num">${esc(DM.fmtData(p.data))}</td></tr>`).join('')}</tbody></table>`;
   }
 
@@ -241,13 +488,13 @@ const Debentures = (() => {
     const el = document.getElementById('page-debentures');
     const temBloco = !!(bloco && (bloco.emissoes || bloco.secundario || bloco.macro));
     const rs = roadshowCard();
-    const lead = `<p class="page__lead">${Glossario.link('debenture', 'Debêntures')} são títulos de dívida que empresas emitem para se financiar. Esta aba reúne as de concessionárias de rodovias e de outras infraestruturas de transporte (ferrovias, portos e terminais, aeroportos, hidrovias e mobilidade urbana sobre trilhos, isto é, metrô e trens): o cenário de juros, as emissões, o que se negocia entre investidores e as emissões ${Glossario.link('debenture-incentivada', 'incentivadas')} para rodovias. Os dados de emissões e de negociação vêm das <b>telas</b> das corretoras XP e BTG: as listas de debêntures, com taxas e negócios, que elas publicam para os clientes, aqui recebidas em planilhas. Passe o mouse sobre os gráficos para ver os valores exatos.</p>`;
+    const lead = `<p class="page__lead">${Glossario.link('debenture', 'Debêntures')} são títulos de dívida que empresas emitem para se financiar. Esta aba reúne as de concessionárias de rodovias e de outras infraestruturas de transporte (ferrovias, portos e terminais, aeroportos, hidrovias e mobilidade urbana sobre trilhos, isto é, metrô e trens): o cenário de juros, os índices de debêntures, as emissões (com o spread de cada papel contra a duration), o que se negocia entre investidores e as emissões incentivadas para rodovias. Os dados de emissões e de negociação vêm das <b>telas</b> das corretoras XP e BTG: as listas de debêntures, com taxas e negócios, que elas publicam para os clientes, aqui recebidas em planilhas. Passe o mouse sobre os gráficos para ver os valores exatos.</p>`;
     let corpo = '';
     if (temBloco) {
       const macro = [macroCard(), ntnbCard()].join('');
       corpo += `${macro ? `<h2 class="resumo-h2" id="deb-h-juros">Cenário de juros</h2><div class="grid-cards">${macro}</div>` : ''}`;
-      const em = emissoesCard();
-      corpo += em ? `<h2 class="resumo-h2" id="deb-h-emissoes">Emissões</h2><div class="grid-cards">${em}</div>` : '';
+      corpo += indicesHtml();
+      corpo += emissoesHtml();
       corpo += mercadoHtml();
     } else {
       corpo = '<p class="empty">Os dados de mercado das debêntures (bloco debentures) não estão neste arquivo.</p>';
@@ -257,18 +504,22 @@ const Debentures = (() => {
     if (!temBloco) { desenhaIncentivadas(); return; }
 
     desenhaNtnb();
-    if (document.getElementById('deb-em-tabela')) {
-      desenhaEmissoes();
-      ordenavel(document.getElementById('deb-em-tabela'), st.emissoes, desenhaEmissoes, TEXTO_EMISSOES);
-      document.getElementById('deb-em-sub').addEventListener('change', ev => { st.emissoes.subsetor = ev.target.value; desenhaEmissoes(); });
+    if (document.getElementById('deb-em-corpo')) ligaFiltrada(FILTRADAS.emissoes, TEXTO_EMISSOES);
+    if (document.getElementById('deb-disp-sub')) {
+      ligaChips('deb-disp', st.dispersao, desenhaDispersao);
+      desenhaDispersao();
     }
     if (document.getElementById('deb-somado')) {
+      // as tabelas do mercado secundário se ligam antes do primeiro desenho, que as preenche junto com os gráficos
+      ligaFiltrada(FILTRADAS.emissores, TEXTO_EMISSORES);
+      ligaFiltrada(FILTRADAS.ultimo, TEXTO_ULTIMO);
       desenhaMercado();
       desenhaIntencoes();
-      ordenavel(document.getElementById('deb-emissor-tabela'), st.emissores, desenhaEmissores, TEXTO_EMISSORES);
-      ordenavel(document.getElementById('deb-ultimo-tabela'), st.ultimo, desenhaUltimo, TEXTO_ULTIMO);
       document.getElementById('deb-somado').addEventListener('click', () => { st.somado = !st.somado; desenhaMercado(); });
     }
+    desenhaEvolucao();
+    if (document.getElementById('deb-ind-papel-corpo')) ligaFiltrada(FILTRADAS.papeis, TEXTO_PAPEIS);
+    if (!document.getElementById('deb-somado')) desenhaSpreadIndices();
     desenhaIncentivadas();
   }
 
@@ -277,6 +528,8 @@ const Debentures = (() => {
     built = true;
     conc = concData;
     bloco = (intelData && intelData.debentures) || null;
+    ida = (intelData && intelData.ida) || null;
+    idex = (intelData && intelData.idex) || null;
     render();
   }
 
