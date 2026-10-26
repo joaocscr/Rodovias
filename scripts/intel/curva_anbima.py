@@ -11,7 +11,8 @@ que o site já apagou não volta (por isso a pasta de cache, fora do git, não d
 - `fetch`: baixa só os dias que faltam no cache (uma pasta de arquivos `msAAMMDD.txt`), com pausa entre pedidos e 3
   tentativas. Um 404 é "sem_arquivo": fica em `indice.json` e o dia não é pedido de novo, a não ser nos últimos 5 dias úteis
   (a ANBIMA publica no fim do dia). Fim de semana nem é pedido. Pedido que falha nas tentativas não entra no índice e
-  fica para a próxima vez.
+  fica para a próxima vez. `recuar` (dias de reserva, do mais novo ao mais antigo) vai na mesma chamada, para o freio valer
+  também para eles: só se pedem se o dia mais novo não tem arquivo, até o primeiro que tem.
 - `curvas`: lê só o cache (nada de rede) → {dia: [(vencimento, taxa)]}, a interface de `debentures.curva_ntnb` e
   `debentures.spread`.
 - `data/indices/curva_ntnb_anbima.json` (versionado, gerado pelos builds): a curva de cada dia já visto, uma linha por dia,
@@ -230,29 +231,35 @@ def _validar(corpo, data):
     return texto
 
 
-def fetch(datas, pasta=PASTA, consultar=_consultar, dormir=time.sleep, pausa=PAUSA, hoje=None, esperas=ESPERAS, log=None):
+def fetch(datas, pasta=PASTA, consultar=_consultar, dormir=time.sleep, pausa=PAUSA, hoje=None, esperas=ESPERAS, log=None,
+          recuar=()):
     """Baixa para `pasta` os arquivos dos `datas` (AAAA-MM-DD) que ainda não estão lá (ver o topo do arquivo). Devolve
     {dia: bool}: True se o dia tem arquivo no cache depois da chamada; False se a ANBIMA não tem arquivo (fim de semana,
-    feriado, ainda não publicado) ou o pedido falhou (o aviso sai em stderr). `consultar(url) -> (código, corpo)`."""
+    feriado, ainda não publicado) ou o pedido falhou (o aviso sai em stderr). `consultar(url) -> (código, corpo)`.
+    `recuar`: dias de reserva, do mais novo ao mais antigo; só se pedem depois dos `datas`, se o dia mais novo dos `datas` não
+    tem arquivo, e só até o primeiro que tem (para valer o último dia com curva). Ficam na mesma chamada para que o freio
+    do site fora do ar (`DIAS_SEGUIDOS`) valha para todos os pedidos; o dia de reserva só entra no resultado se foi
+    olhado."""
     pasta, hoje = Path(pasta), (hoje or dt.date.today())
     log = log or (lambda msg: print(msg, file=sys.stderr))
     indice, recentes = _ler_indice(pasta), set(ultimos_dias_uteis(hoje, DIAS_RECENTES))
-    out, mudou, seguidos = {}, False, 0
-    for d in sorted(set(datas)):
+    out, estado_geral = {}, {"mudou": False, "seguidos": 0}
+
+    def um(d):
         if _no_cache(pasta, d):
             out[d] = True
-            continue
+            return
         if dt.date.fromisoformat(d).weekday() >= 5:      # fim de semana: não há arquivo, nem se pede
             out[d] = False
             if indice.get(d) != SEM_ARQUIVO:
-                indice[d], mudou = SEM_ARQUIVO, True
-            continue
+                indice[d], estado_geral["mudou"] = SEM_ARQUIVO, True
+            return
         if indice.get(d) == SEM_ARQUIVO and d not in recentes:
             out[d] = False
-            continue
-        if seguidos >= DIAS_SEGUIDOS:                    # site fora do ar: o resto fica para a próxima vez
+            return
+        if estado_geral["seguidos"] >= DIAS_SEGUIDOS:    # site fora do ar: o resto fica para a próxima vez
             out[d] = False
-            continue
+            return
         estado, erro = None, None
         for k in range(len(esperas) + 1):
             try:
@@ -276,18 +283,28 @@ def fetch(datas, pasta=PASTA, consultar=_consultar, dormir=time.sleep, pausa=PAU
             if k < len(esperas):
                 dormir(esperas[k])
         if estado == "ok":
-            out[d], seguidos = True, 0
+            out[d], estado_geral["seguidos"] = True, 0
             if d in indice:
                 del indice[d]
-                mudou = True
+                estado_geral["mudou"] = True
         elif estado == SEM_ARQUIVO:
-            out[d], seguidos = False, 0
+            out[d], estado_geral["seguidos"] = False, 0
             if indice.get(d) != SEM_ARQUIVO:
-                indice[d], mudou = SEM_ARQUIVO, True
+                indice[d], estado_geral["mudou"] = SEM_ARQUIVO, True
         else:
-            out[d], seguidos = False, seguidos + 1
+            out[d], estado_geral["seguidos"] = False, estado_geral["seguidos"] + 1
             log(f"AVISO: curva ANBIMA de {d[8:]}/{d[5:7]}/{d[:4]} sem download: {erro}")
-    if mudou:
+
+    pedidos = sorted(set(datas))
+    for d in pedidos:
+        um(d)
+    if pedidos and not out[pedidos[-1]]:                 # o dia mais novo não tem arquivo: recua até achar um
+        for d in recuar:
+            if d not in out:
+                um(d)
+            if out[d]:
+                break
+    if estado_geral["mudou"]:
         _gravar_indice(pasta, indice)
     return out
 

@@ -54,7 +54,7 @@ NEGOCIOS_BTG = (["symbol", "asset", "maturity_date", "issuer", "linked_index", "
      "Buy", "2026-10-01T16:00:00.000000000Z"],
     ["ENRG11", "DEBENTURES", "2035-05-15", "ENERGIA FICTICIA S.A.", "IPCA+", 6.3, 10, 1000.0, 10000.0, "Buy",
      "2026-10-01T16:00:00.000000000Z"],
-    # dia sem curva do Tesouro no arquivo de exemplo
+    # dia sem curva da ANBIMA no arquivo de exemplo
     ["TSTR11", "DEBENTURES", "2032-05-15", "EMISSORA TESTE RODOVIAS S.A.", "IPCA+", 7.3, 20, 1000.0, 20000.0, "Buy",
      "2026-10-05T20:00:00.000000000Z"],
     # volume zero e taxa fora do lugar, depois do último negócio de verdade: conta em n, não vira o último

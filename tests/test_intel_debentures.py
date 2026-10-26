@@ -207,7 +207,7 @@ def test_spread_sem_curva_do_dia(bloco, tmp_path):
     assert deb.spread(7.3, "2032-05-15", []) is None
     ult = {(u["ticker"], u["origem"]): u for u in bloco["secundario"]["ultimo_por_ticker"]}
     assert ult[("TSTR11", "negocio")]["data"] == "2026-10-05" and ult[("TSTR11", "negocio")]["spread"] is None
-    assert bloco["pendencias"]["dias_sem_curva"] == ["2026-10-05", "2026-10-21", "2026-10-22"]   # os dois últimos: dias das telas
+    assert bloco["pendencias"]["dias_sem_curva"] == ["2026-10-05", "2026-10-22"]   # o último: o dia das telas
     dia = _por(bloco["secundario"]["negocios"]["por_dia"], "data")["2026-10-05"]
     assert dia["spread_medio"] is None and dia["volume_spread"] == 0 and dia["taxa_media"] == {"IPCA+": 7.3}
     # curva da ANBIMA ausente (nenhum arquivo baixado): spread "—" em tudo, aviso na curadoria, nenhum zero
@@ -309,6 +309,18 @@ def test_dispersao_usa_a_curva_do_dia_da_tela_e_sem_curva_nao_ha_ponto():
     assert d == {"data": None, "pontos": [], "excluidos": 1}
 
 
+def test_dispersao_todos_os_pontos_usam_a_curva_do_dia_da_tela():
+    """Um papel pouco negociado, com a data da própria linha anterior à tela, usa a curva do dia da tela, não a antiga."""
+    antiga = {"2026-10-20": [("2030-08-15", 3.0), ("2035-05-15", 3.5)]}
+    telas = [_tela("BTG", "AAA11", 4.0, 7.0), _tela("XP", "BBB11", 3.0, 7.0, data="2026-10-20")]
+    d = deb.dispersao(telas, [_emi("AAA11"), _emi("BBB11")], {**antiga, **CURVA_DISP})
+    por = {p["ticker"]: p["spread"] for p in d["pontos"]}
+    assert por["AAA11"] == por["BBB11"] == round(7.0 - _ntnb("2032-05-15", [("2030-08-15", 6.0), ("2035-05-15", 6.5)]), 4)
+    d = deb.dispersao([_tela("XP", "BBB11", 3.0, 7.0, data="2026-10-20"), _tela("BTG", "AAA11", 4.0, 7.0, data="2026-10-22")],
+                      [_emi("AAA11"), _emi("BBB11")], antiga)       # a curva só existe num dia antigo: nada no gráfico
+    assert d["pontos"] == [] and d["excluidos"] == 2
+
+
 def _arquivo_anbima(dia, ntnb):
     linhas = ["ANBIMA - Associação Brasileira das Entidades dos Mercados Financeiro e de Capitais", "",
               "Titulo@Data Referencia@Codigo SELIC@Data Base/Emissao@Data Vencimento@Tx. Compra@Tx. Venda@Tx. Indicativas@PU"]
@@ -333,14 +345,14 @@ def test_dispersao_no_bloco(tmp_path):
     # o dia da tela entra no período da fonte da curva e o dia de FERX11, sem curva, vai para a curadoria
     curva = next(f for f in b["fonte"] if f["nome"].startswith("ANBIMA — Taxas indicativas"))
     assert "22/10/2026" in curva["periodo"]
-    assert b["pendencias"]["dias_sem_curva"] == ["2026-10-05", "2026-10-21"]
+    assert b["pendencias"]["dias_sem_curva"] == ["2026-10-05"]
 
 
 def test_dispersao_sem_curva_no_dia_das_telas_fica_vazia(bloco):
     """Sem curva no dia das telas (as fixtures só têm 01 e 02/10), todos os IPCA+ ficam de fora; nada de zero."""
     disp = bloco["dispersao"]
     assert disp["pontos"] == [] and disp["excluidos"] == 2 and disp["data"] == "2026-10-22"
-    assert bloco["pendencias"]["dias_sem_curva"] == ["2026-10-05", "2026-10-21", "2026-10-22"]
+    assert bloco["pendencias"]["dias_sem_curva"] == ["2026-10-05", "2026-10-22"]
 
 
 # ---------- agregados ----------
@@ -703,7 +715,7 @@ def test_curva_sem_o_cache_cru_vale_o_historico_versionado(tmp_path):
     assert json.dumps(com, sort_keys=True) == json.dumps(sem, sort_keys=True)
     assert com["macro"]["ntnb"] and sem["pendencias"]["series_indisponiveis"] == []
     nota = next(f for f in sem["fonte"] if f["nome"].startswith("ANBIMA — Taxas indicativas"))["nota"]
-    assert ("A ANBIMA mantém online só os arquivos dos últimos dias; os spreads de dias anteriores ao primeiro download "
+    assert ("A ANBIMA mantém online só os arquivos dos últimos dias; os spreads de dias anteriores ao primeiro dia com curva "
             "(01/10/2026) ficam sem curva.") in nota
     # sem cache e sem histórico: sem curva (spread "—"), como antes
     nada = deb.montar(FIX, pub, EMISSORES, hoje="2026-10-22", manifesto=_Manifesto(_downloads()), snd=SND)

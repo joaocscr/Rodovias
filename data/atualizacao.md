@@ -31,9 +31,9 @@ Registros: itens das coleções principais de cada bloco (valores preenchidos); 
 | agro | 5.571 | 5.571 | 210,5 | 210,5 | não |
 | antt | 1.938 | 1.938 | 399,2 | 399,2 | não |
 | carga | 4.312 | 4.312 | 141,3 | 141,3 | não |
-| debentures | 236 | 236 | 96,7 | 111,4 | sim (+14,6 KB) |
+| debentures | 236 | 236 | 111,4 | 111,4 | sim (+32 bytes) |
 | estaduais | 16.238 | 16.238 | 2.949,8 | 2.949,8 | não |
-| fontes | 57 | 57 | 31,1 | 31,2 | sim (+142 bytes) |
+| fontes | 57 | 57 | 31,2 | 31,2 | sim (+5 bytes) |
 | ida | 99 | 99 | 11,5 | 11,5 | não |
 | idex | 116 | 116 | 9,8 | 9,8 | não |
 | multimodal | 3.188 | 3.188 | 413,9 | 413,9 | não |
@@ -45,7 +45,7 @@ Registros: itens das coleções principais de cada bloco (valores preenchidos); 
 
 ## Curadoria manual
 
-21 itens. Cada um diz o arquivo a editar; depois rode de novo o comando.
+22 itens. Cada um diz o arquivo a editar; depois rode de novo o comando.
 
 ### Pipeline com data passada ainda como previsto (1)
 
@@ -79,9 +79,10 @@ Registros: itens das coleções principais de cada bloco (valores preenchidos); 
 
 - **APOLLO 17** — aparece em intenções XP, tela XP (1 papel) e ficou fora da página: classifique-o em data/debentures/emissores.json (subsetor e grupo, numa entrada nova ou como grafia em `nomes` de um emissor que já existe) ou, se não for de transporte, ponha o nome em `fora_do_universo`; depois rode `python scripts/atualizar.py --dominios debentures`
 
-### Debêntures sem série pública ou sem curva das NTN-B (indicador ou spread "—") (1)
+### Debêntures sem série pública ou sem curva das NTN-B (indicador ou spread "—") (2)
 
-- **Curva das NTN-B (taxa indicativa da ANBIMA)** — sem arquivo da ANBIMA em 01/10/2026, 02/10/2026, 05/10/2026, 06/10/2026, 07/10/2026, 08/10/2026, 09/10/2026, 13/10/2026, 15/10/2026 (feriado, dia ainda não publicado ou mais antigo que os últimos dias úteis que o site da ANBIMA guarda): o spread dos negócios e intenções desses dias fica "—"; rode `python scripts/atualizar.py --baixar --dominios debentures` quando a ANBIMA publicar
+- **Curva das NTN-B (taxa indicativa da ANBIMA)** — sem arquivo da ANBIMA em 15/10/2026 (feriado ou dia ainda não publicado): o spread dos negócios e intenções desses dias fica "—"; rode `python scripts/atualizar.py --baixar --dominios debentures` quando a ANBIMA publicar
+- **Curva das NTN-B, dias anteriores ao primeiro arquivo (sem ação)** — sem arquivo da ANBIMA em 01/10/2026, 02/10/2026, 05/10/2026, 06/10/2026, 07/10/2026, 08/10/2026, 09/10/2026, 13/10/2026: são anteriores a 14/10/2026, o primeiro dia com curva, e o site da ANBIMA só guarda os arquivos recentes, então não voltam a ser publicados; o spread desses dias fica "—" de forma permanente e não há o que baixar
 
 ### Taxas de debêntures fora do intervalo plausível (fora das médias) (2)
 

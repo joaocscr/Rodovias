@@ -254,12 +254,19 @@ def _debentures(bloco):
              f"sem arquivo em {s['arquivo']} (a fonte não respondeu): o indicador fica \"—\" e, sem a curva da ANBIMA, todos os "
              "spreads também; rode `python scripts/atualizar.py --baixar --dominios debentures` mais tarde")
             for s in pend.get("series_indisponiveis") or []]
-    dias = pend.get("dias_sem_curva") or []
+    desde = ((bloco or {}).get("macro") or {}).get("curva_desde")        # primeiro dia com curva: antes dele o site já apagou
+    dias = [d for d in pend.get("dias_sem_curva") or [] if not (desde and d < desde)]
+    antigos = [d for d in pend.get("dias_sem_curva") or [] if desde and d < desde]
     if dias:
         out.append(("debentures_sem_serie", "Curva das NTN-B (taxa indicativa da ANBIMA)",
-                    f"sem arquivo da ANBIMA em {', '.join(_fmt(d) for d in dias)} (feriado, dia ainda não "
-                    "publicado ou mais antigo que os últimos dias úteis que o site da ANBIMA guarda): o spread dos negócios e intenções desses dias fica \"—\"; "
+                    f"sem arquivo da ANBIMA em {', '.join(_fmt(d) for d in dias)} (feriado ou dia ainda não "
+                    "publicado): o spread dos negócios e intenções desses dias fica \"—\"; "
                     "rode `python scripts/atualizar.py --baixar --dominios debentures` quando a ANBIMA publicar"))
+    if antigos:
+        out.append(("debentures_sem_serie", "Curva das NTN-B, dias anteriores ao primeiro arquivo (sem ação)",
+                    f"sem arquivo da ANBIMA em {', '.join(_fmt(d) for d in antigos)}: são anteriores a {_fmt(desde)}, o primeiro "
+                    "dia com curva, e o site da ANBIMA só guarda os arquivos recentes, então não voltam a ser publicados; "
+                    "o spread desses dias fica \"—\" de forma permanente e não há o que baixar"))
     for t in pend.get("taxas_descartadas") or []:
         taxa = f"{t['taxa']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
         out.append(("taxa_fora_do_intervalo", f"{t['ticker']} ({t['origem']})",

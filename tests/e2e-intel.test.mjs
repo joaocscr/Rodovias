@@ -2657,6 +2657,11 @@ test('Debêntures: seção de índices logo abaixo do cenário de juros, com o n
   assert.deepEqual(await page.$$eval('#page-debentures h2', hs => hs.map(h => h.textContent)), ['Cenário de juros', 'Índices de debêntures (IDA e IDEX-Infra)', 'Emissões', 'Mercado secundário',
     ...(ordem.includes('deb-h-roadshow') ? ['Debêntures incentivadas para rodovias (RoadShow)'] : [])]);
   assert.equal(await page.textContent('#deb-h-indices'), 'Índices de debêntures (IDA e IDEX-Infra)');
+  // os textos que apontam para o interruptor "Ver somado" seguem a ordem da aba: o interruptor está abaixo do comparativo de spread
+  const subSpread = await page.textContent('#card-d-ind-spread .sub');
+  assert.ok(subSpread.includes('mais abaixo') && !/\bacima\b/.test(subSpread), subSpread);
+  const descSomado = await page.textContent('#deb-somado-desc');
+  assert.ok(descSomado.includes('comparativo de spread') && descSomado.includes('seção de índices'), descSomado);
   assert.deepEqual(await page.$$eval('#page-debentures .ccard', cs => cs.map(c => c.id).filter(i => i.startsWith('card-d-ind-'))), ['card-d-ind-evolucao', 'card-d-ind-spread', 'card-d-ind-papel']);
   // a linha de abertura liga os quatro termos ao Glossário (ids que existem no arquivo embutido)
   const links = await page.$$eval('#deb-ind-lead a.glossario-link', as => as.map(a => decodeURIComponent(a.getAttribute('href').replace('#glossario/', ''))));

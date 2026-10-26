@@ -193,6 +193,13 @@ test('macro, curva de NTN-B e aviso de dias sem curva vêm dos dados', () => {
   const completo = JSON.parse(JSON.stringify(bloco));
   completo.secundario.periodo.ate = '2026-10-15';
   assert.equal(D.notaCurva(completo), '');
+  // antes do primeiro dia com curva (macro.curva_desde): a nota diz que o spread é "—" e fica fora das médias
+  const comInicio = JSON.parse(JSON.stringify(bloco));
+  comInicio.macro.curva_desde = '2026-10-14';
+  assert.equal(D.notaCurva(comInicio), 'A ANBIMA mantém online só os arquivos recentes: a curva começa em 14/10/2026, e nos negócios e intenções de dias anteriores (desde 01/10/2026) o spread aparece como “—” e fica fora das médias. '
+    + D.notaCurva(bloco));
+  comInicio.macro.curva_desde = '2026-10-01';                  // a curva cobre o período todo: sem aviso inicial
+  assert.equal(D.notaCurva(comInicio), D.notaCurva(bloco));
   assert.equal(D.periodoTexto(bloco.secundario.periodo), '01/10/2026 a 21/10/2026');
 });
 
@@ -349,9 +356,9 @@ test('dispersao: o filtro de subsetor da tabela reduz os pontos e a legenda', ()
 
 test('dispersao: a nota diz quantos papéis ficaram de fora (no filtro escolhido) e some quando nenhum ficou', () => {
   // dois IPCA+ ficaram de fora: R3 (rodovias) e F2 (ferrovias)
-  assert.equal(D.dispersao(blocoDisp, 'todos').nota, '2 papéis sem duration ou taxa ficaram de fora');
-  assert.equal(D.dispersao(blocoDisp, 'rodovias').nota, '1 papel sem duration ou taxa ficou de fora');
-  assert.equal(D.dispersao(blocoDisp, 'outros').nota, '1 papel sem duration ou taxa ficou de fora');
+  assert.equal(D.dispersao(blocoDisp, 'todos').nota, '2 papéis sem duration, taxa ou curva do dia ficaram de fora');
+  assert.equal(D.dispersao(blocoDisp, 'rodovias').nota, '1 papel sem duration, taxa ou curva do dia ficou de fora');
+  assert.equal(D.dispersao(blocoDisp, 'outros').nota, '1 papel sem duration, taxa ou curva do dia ficou de fora');
   const sem = JSON.parse(JSON.stringify(blocoDisp));
   sem.dispersao.excluidos = 0;
   sem.emissoes = sem.emissoes.filter(e => e.ticker !== 'R3' && e.ticker !== 'F2');
@@ -359,7 +366,7 @@ test('dispersao: a nota diz quantos papéis ficaram de fora (no filtro escolhido
   // sem a lista de emissões, vale o número do bloco
   delete sem.emissoes;
   sem.dispersao.excluidos = 3;
-  assert.equal(D.dispersao(sem, 'rodovias').nota, '3 papéis sem duration ou taxa ficaram de fora');
+  assert.equal(D.dispersao(sem, 'rodovias').nota, '3 papéis sem duration, taxa ou curva do dia ficaram de fora');
 });
 
 test('dispersao: bloco ausente, vazio ou com ponto inválido não quebra nem entra no gráfico', () => {

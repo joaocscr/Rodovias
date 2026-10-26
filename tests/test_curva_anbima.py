@@ -152,6 +152,31 @@ def test_pausa_entre_pedidos_e_tres_tentativas(tmp_path):
     assert [e for e in esperas if e != anb.PAUSA] == list(anb.ESPERAS)   # e a espera maior entre as tentativas do 13/10
 
 
+def test_recuar_vale_o_ultimo_dia_com_arquivo(tmp_path):
+    """Último dia útil (26/10) sem arquivo: recua dia a dia, na mesma chamada, até o primeiro que tem (22/10); os mais antigos
+    não são pedidos."""
+    site = _Site({"261022": (200, _arquivo("20261022"))})
+    recuar = [d for d in reversed(anb.ultimos_dias_uteis(SEGUNDA, anb.DIAS_RECENTES)) if d < "2026-10-26"]
+    assert recuar == ["2026-10-23", "2026-10-22", "2026-10-21", "2026-10-20"]
+    r = anb.fetch(["2026-10-26"], tmp_path / "ms", consultar=site, dormir=lambda _s: None, hoje=SEGUNDA, log=lambda _m: None, recuar=recuar)
+    assert site.pedidos == ["261026", "261023", "261022"]
+    assert r == {"2026-10-26": False, "2026-10-23": False, "2026-10-22": True}
+    assert (tmp_path / "ms" / "ms261022.txt").exists()
+    # com o dia mais novo no cache, o recuo nem começa
+    site.pedidos.clear()
+    r = anb.fetch(["2026-10-22"], tmp_path / "ms", consultar=site, dormir=lambda _s: None, hoje=SEGUNDA, log=lambda _m: None, recuar=["2026-10-21"])
+    assert site.pedidos == [] and r == {"2026-10-22": True}
+
+
+def test_recuar_com_o_site_fora_do_ar_respeita_o_freio(tmp_path):
+    """O recuo não zera o freio: com o site fora do ar, depois de dois dias que falham nada mais é pedido (3 tentativas cada)."""
+    site = _Site({d: (503, b"") for d in ("261026", "261023", "261022", "261021", "261020")})
+    recuar = ["2026-10-23", "2026-10-22", "2026-10-21", "2026-10-20"]
+    r = anb.fetch(["2026-10-26"], tmp_path / "ms", consultar=site, dormir=lambda _s: None, hoje=SEGUNDA, log=lambda _m: None, recuar=recuar)
+    assert site.pedidos == ["261026"] * 3 + ["261023"] * 3
+    assert not any(r.values())
+
+
 def test_ultimos_dias_uteis():
     assert anb.ultimos_dias_uteis(SEGUNDA, 5) == ["2026-10-20", "2026-10-21", "2026-10-22", "2026-10-23", "2026-10-26"]
     assert anb.ultimos_dias_uteis(dt.date(2026, 10, 25), 1) == ["2026-10-23"]      # domingo: a sexta
@@ -211,8 +236,9 @@ def test_bloco_nao_depende_do_dia(tmp_path):
     datas = {i["arquivo"].rsplit("/", 1)[-1]: i["acesso"] for i in man.items if "/anbima_ms/" in i.get("arquivo", "")}
     assert datas == {"ms261001.txt": "2026-10-22", "ms261002.txt": "2026-10-22", "ms261005.txt": "2026-12-01"}
     # 05/10 agora tem curva, mas só com um vértice (2030): o papel de 2032 fica fora dela, "—"; só os dias das telas
-    # (21 e 22/10, sem arquivo nas fixtures) seguem sem curva
-    assert c["pendencias"]["dias_sem_curva"] == ["2026-10-21", "2026-10-22"]
+    # (22/10, sem arquivo nas fixtures) segue sem curva
+    assert c["pendencias"]["dias_sem_curva"] == ["2026-10-22"]
+    assert c["macro"]["curva_desde"] == "2026-10-01"
     assert next(f for f in c["fonte"] if f["nome"].startswith("ANBIMA — Taxas indicativas"))["acesso"] == "2026-12-01"
     # sem registro no manifesto, a data vem dos dados (último dia com curva), nunca do relógio
     d = deb.montar(pasta, pub, EMISSORES, hoje="2027-03-01", manifesto=_Manifesto(_downloads()), snd=SND)

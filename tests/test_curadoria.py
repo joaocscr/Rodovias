@@ -125,6 +125,22 @@ def test_planilha_de_corretora_antiga_pede_planilha_nova():
     assert "data/raw/debentures/" in itens[0]["motivo"] and "--renovar" not in itens[0]["motivo"]
 
 
+def test_dias_sem_curva_antigos_nao_pedem_nova_baixa():
+    """Dia anterior ao primeiro dia com curva já saiu do site da ANBIMA: a curadoria só informa, sem mandar baixar; dia
+    recente sem arquivo continua pedindo nova baixa."""
+    conc, intel, verif = _em_dia()
+    intel["debentures"] = {"macro": {"curva_desde": "2026-10-14"},
+                           "pendencias": {"dias_sem_curva": ["2026-10-05", "2026-10-13", "2026-10-15", "2026-10-21"]}}
+    itens = [i for i in curadoria.itens(conc, intel, verif, hoje=HOJE) if i["tipo"] == "debentures_sem_serie"]
+    recente = next(i for i in itens if "sem ação" not in i["item"])
+    antigo = next(i for i in itens if "sem ação" in i["item"])
+    assert "15/10/2026, 21/10/2026" in recente["motivo"] and "05/10" not in recente["motivo"] and "--baixar" in recente["motivo"]
+    assert "05/10/2026, 13/10/2026" in antigo["motivo"] and "14/10/2026" in antigo["motivo"] and "--baixar" not in antigo["motivo"]
+    intel["debentures"]["pendencias"]["dias_sem_curva"] = ["2026-10-05"]
+    [so_antigo] = [i for i in curadoria.itens(conc, intel, verif, hoje=HOJE) if i["tipo"] == "debentures_sem_serie"]
+    assert "sem ação" in so_antigo["item"] and "--baixar" not in so_antigo["motivo"]
+
+
 def test_nome_sem_grupo():
     conc, intel, verif = _em_dia()
     conc["mercado"]["participantes"][0]["outros"].append({"grupo": "Consórcio Novo"})

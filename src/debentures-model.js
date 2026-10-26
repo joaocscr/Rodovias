@@ -172,10 +172,18 @@ const DebenturesModel = (() => {
   function curvaAte(bloco) {
     return curvaNtnb(bloco).map(p => p.data).filter(Boolean).sort().pop() || null;
   }
+  // O mesmo vale antes do primeiro dia com curva (macro.curva_desde): a ANBIMA guarda online só os arquivos recentes.
   function notaCurva(bloco) {
-    const ate = curvaAte(bloco), fim = bloco && bloco.secundario && bloco.secundario.periodo && bloco.secundario.periodo.ate;
-    return ate && fim && fim > ate
-      ? `A ANBIMA publicou a curva até ${fmtData(ate)}: nos negócios dos dias seguintes (até ${fmtData(fim)}) o spread aparece como “${DASH}”.` : '';
+    const ate = curvaAte(bloco), per = (bloco && bloco.secundario && bloco.secundario.periodo) || {}, fim = per.ate, ini = per.de;
+    const desde = bloco && bloco.macro && bloco.macro.curva_desde;
+    const partes = [];
+    if (desde && ini && ini < desde) {
+      partes.push(`A ANBIMA mantém online só os arquivos recentes: a curva começa em ${fmtData(desde)}, e nos negócios e intenções de dias anteriores (desde ${fmtData(ini)}) o spread aparece como “${DASH}” e fica fora das médias.`);
+    }
+    if (ate && fim && fim > ate) {
+      partes.push(`A ANBIMA publicou a curva até ${fmtData(ate)}: nos negócios dos dias seguintes (até ${fmtData(fim)}) o spread aparece como “${DASH}”.`);
+    }
+    return partes.join(' ');
   }
   // Linha "Fonte:" curta dos cartões: quem forneceu e o período; nome completo, licença e nota ficam na aba Fontes.
   // o.corretoras: ['BTG', 'XP'] (as que existem no bloco); o.periodo: 'dados' (período dos negócios e intenções), 'tela'
@@ -203,7 +211,7 @@ const DebenturesModel = (() => {
   // Gráfico de dispersão das emissões IPCA+ do universo (bloco.dispersao: um ponto por papel, com duration em anos, taxa indicativa
   // da ANBIMA e spread sobre a NTN-B do dia da tela). O filtro de subsetor é o da tabela de emissões (filtrarSubsetor); os subsetores
   // com ponto saem na ordem fixa de SUBSETORES, os desconhecidos depois, em ordem alfabética. `nota`: quantos papéis IPCA+ ficaram de
-  // fora (sem duration, taxa ou spread) dentro do filtro escolhido; vazia quando nenhum.
+  // fora (sem duration, taxa ou curva do dia) dentro do filtro escolhido; vazia quando nenhum.
   const dicaDispersao = p => `${p.ticker} — ${p.emissor || DASH} · duration ${fmtNum2(p.duration_anos)} anos · taxa ${fmtPct(p.taxa_indicativa)} · spread ${fmtPp(p.spread)}`;
   const plural = (n, um, varios) => (n === 1 ? um : varios);
   function dispersao(bloco, filtro = 'todos') {
@@ -216,7 +224,7 @@ const DebenturesModel = (() => {
     const fora = filtro === 'todos' || !emissoes.length ? (num(d.excluidos) ? d.excluidos : 0)
       : filtrarSubsetor(emissoes, filtro).filter(e => e.indexador === 'IPCA+' && !noGrafico.has(e.ticker)).length;
     return { pontos, subsetores, data: d.data || null,
-      nota: fora > 0 ? `${nf0.format(fora)} ${plural(fora, 'papel sem duration ou taxa ficou', 'papéis sem duration ou taxa ficaram')} de fora` : '' };
+      nota: fora > 0 ? `${nf0.format(fora)} ${plural(fora, 'papel sem duration, taxa ou curva do dia ficou', 'papéis sem duration, taxa ou curva do dia ficaram')} de fora` : '' };
   }
   // Fonte do gráfico: as telas das corretoras e a curva das NTN-B da ANBIMA do dia da tela, tudo tirado do bloco.
   function fonteDispersao(bloco) {

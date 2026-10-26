@@ -193,7 +193,7 @@ const Debentures = (() => {
       <p class="page__lead deb-spread" id="deb-spread">Como o spread é calculado: ${Glossario.link('spread', 'spread')} = taxa do papel − taxa da NTN-B interpolada pelo vencimento (não pela ${Glossario.link('duration', 'duration')}), taxa indicativa da ANBIMA; só para papéis IPCA+; “${DM.DASH}” quando não há curva no dia. O spread é dado em pontos percentuais (p.p.).${DM.notaCurva(bloco) ? ` ${esc(DM.notaCurva(bloco))}` : ''}</p>`;
     const controle = `<div class="deb-controle" id="deb-controle">
       <button type="button" role="switch" id="deb-somado" class="switch" aria-checked="false" aria-describedby="deb-somado-desc"><span class="switch__trilho" aria-hidden="true"><span class="switch__bola"></span></span><span class="switch__texto">Ver somado</span></button>
-      <p class="deb-controle__desc" id="deb-somado-desc">Desligado, os cartões abaixo mostram só os negócios fechados e as intenções ficam à parte, no último cartão. Ligado, as intenções de compra e venda entram nos números e gráficos como se fossem negócios.</p>
+      <p class="deb-controle__desc" id="deb-somado-desc">Desligado, os cartões abaixo e a linha de transporte do comparativo de spread, na seção de índices, mostram só os negócios fechados e as intenções ficam à parte, no último cartão. Ligado, as intenções de compra e venda entram nos números e gráficos como se fossem negócios.</p>
       <p class="deb-controle__estado" id="deb-status" aria-live="polite"></p></div>`;
     const cards = [
       card('kpis', 'Mercado secundário em números', `Totais de ${esc(p)} para debêntures de rodovias e infraestrutura de transporte`, { wide: true, afetado: true, html: '', fonte: fonteCurta({ corretoras: CORRETORAS, periodo: 'dados', anbima: true }) }),
@@ -299,7 +299,7 @@ const Debentures = (() => {
   const ressalvas = (id, avisos) => (avisos.length ? `<div id="${id}">${avisos.map(a => `<p class="deb-nota deb-aviso deb-ressalva">${esc(a.texto)}</p>`).join('')}</div>` : '');
 
   function indicesCards() {
-    const spreadSub = 'Em p.p. (pontos percentuais); o spread do IDEX-Infra, dado em pontos-base, é dividido por 100. Sem a curva da ANBIMA no dia, o spread do painel e o do IDA ficam sem valor, e vale o último dia que tem. “Ver somado” (no mercado secundário, acima) muda só a linha de transporte';
+    const spreadSub = 'Em p.p. (pontos percentuais); o spread do IDEX-Infra, dado em pontos-base, é dividido por 100. Sem a curva da ANBIMA no dia, o spread do painel e o do IDA ficam sem valor, e vale o último dia que tem. “Ver somado” (na seção Mercado secundário, mais abaixo) muda só a linha de transporte';
     const datas = DM.tabelaIndices(bloco, ida, idex).datas;
     const dePapel = [datas.anbima && `taxa ANBIMA de ${DM.fmtData(datas.anbima)}`, datas.idex && `spread IDEX de ${DM.fmtData(datas.idex)}`].filter(Boolean).join('; ');
     return [

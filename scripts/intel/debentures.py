@@ -306,9 +306,8 @@ def _dispersao(telas, emissoes, curvas):
         if not duracao or taxa is None or not plausivel(taxa, "IPCA+") or not dia:
             excluidos += 1
             continue
-        d = origem["data"] or dia          # a tela XP traz só a hora: vale o dia da tela BTG
-        curva = curva_ntnb(d, curvas)
-        (com_curva if curva else sem_curva).add(d)
+        curva = curva_ntnb(dia, curvas)    # todos os pontos usam a curva do dia da tela (a XP traz só a hora)
+        (com_curva if curva else sem_curva).add(dia)
         s = spread(taxa, e["vencimento"], curva, "IPCA+")
         if s is None:
             excluidos += 1
@@ -378,6 +377,7 @@ def _macro(publico, hoje, manifesto, historico=None):
     if not curvas:
         ausentes.append("curva")
     ultima = max(curvas) if curvas else None   # o último dia com arquivo da ANBIMA
+    macro["curva_desde"] = min(curvas) if curvas else None      # o primeiro dia com curva: antes dele o spread fica "—"
     macro["ntnb"] = [{"vencimento": v, "taxa": t, "data": ultima, "titulo": _anbima.TITULO} for v, t in curvas.get(ultima, [])]
     return macro, curvas, ausentes
 
@@ -487,7 +487,7 @@ def _fontes(telas, mov, macro, curvas, dias_usados, manifesto, acesso_corretora,
                             "duration), em linha reta entre os dois vencimentos vizinhos na curva do mesmo dia. Sem "
                             "curva no dia, ou com vencimento fora da curva, o spread fica sem valor: não há "
                             "extrapolação. A ANBIMA mantém online só os arquivos dos últimos dias; os spreads de dias "
-                            f"anteriores ao primeiro download ({_br(min(curvas))}) ficam sem curva."})
+                            f"anteriores ao primeiro dia com curva ({_br(min(curvas))}) ficam sem curva."})
     return out
 
 
@@ -657,13 +657,9 @@ def _fetch_curva(m, hoje=None):
     hoje = hoje or dt.date.today()
     pasta = PUBLICO / _anbima.SUBPASTA
     dias = dias_da_curva(PASTA, hoje)
-    saida = _anbima.fetch(dias, pasta, hoje=hoje)
     ultimo = _anbima.ultimos_dias_uteis(hoje, 1)[0]
-    if not saida.get(ultimo):
-        recuar = [d for d in reversed(_anbima.ultimos_dias_uteis(hoje, _anbima.DIAS_RECENTES)) if d < ultimo]
-        for d in recuar:
-            if _anbima.fetch({d}, pasta, hoje=hoje)[d]:
-                break
+    recuar = [d for d in reversed(_anbima.ultimos_dias_uteis(hoje, _anbima.DIAS_RECENTES)) if d < ultimo]
+    saida = _anbima.fetch(dias, pasta, hoje=hoje, recuar=recuar)      # uma chamada só: o freio do site fora do ar vale para todas
     _anbima.registrar(m, pasta, hoje.isoformat())
     return saida
 
