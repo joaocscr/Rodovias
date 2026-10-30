@@ -319,6 +319,33 @@
    ]
   },
   {
+   "nome": "Concessionária das Rodovias do Leste MS",
+   "subsetor": "rodovias",
+   "grupo": null,
+   "nomes": [
+    "CONCESSIONARIA DAS RODOVIAS DO LESTE MS S.A.",
+    "CONCESSIONARIA DAS RODOVIAS DO LESTE MS"
+   ]
+  },
+  {
+   "nome": "Concessionária Rota do Oeste",
+   "subsetor": "rodovias",
+   "grupo": null,
+   "nomes": [
+    "CONCESSIONARIA ROTA DO OESTE S.A.",
+    "CONCESSIONÁRIA ROTA DO OESTE"
+   ]
+  },
+  {
+   "nome": "EPR Litoral Pioneiro",
+   "subsetor": "rodovias",
+   "grupo": "EPR",
+   "nomes": [
+    "EPR LITORAL PIONEIRO S.A.",
+    "EPR LITORAL PIONEIRO"
+   ]
+  },
+  {
    "nome": "MRS Logística",
    "subsetor": "ferrovias",
    "grupo": "MRS",
@@ -505,6 +532,34 @@
   "AEGEA RIO SPE1",
   "AES TIETE",
   "AGUAS DO RIO 1 SPE S.A",
+  "ALARES",
+  "APIUNA",
+  "APOLLO 17",
+  "AXS ENERGIA 11",
+  "B3 S.A. - BRASIL BOLSA BALCAO",
+  "BRASIL TECNOLOGIA E PARTICIPAÇÕES S.A.",
+  "BTG PACTUAL",
+  "BTG PACTUAL COMMODITIES SERTRADING SA",
+  "CAMIL",
+  "COELBA",
+  "COSERN",
+  "CS BRASIL HOLDING E LOCACAO S.A",
+  "DELTA GERACAO DE ENERGIA",
+  "ENERGISA RONDÔNIA",
+  "FARO ENERGY IV",
+  "HAPVIDA",
+  "HIDRO FORTE",
+  "HYPERA S/A",
+  "IBIPAR S.A.",
+  "ITAÚSA",
+  "PRIO",
+  "RAIA DROGASIL",
+  "SANTA VITORIA DO PALMAR",
+  "SUNO ENERGIAS LIMPAS",
+  "UNIPAR CARBOCLORO",
+  "USINA SÃO DOMINGOS AÇUCAR E ETANOL S.A.",
+  "USINA SÃO JOSÉ",
+  "VILLA LOBOS SP",
   "ÁGUAS DO SERTÃO",
   "ALARES INTERNET PARTICIPAÇÕES S.A.",
   "ALGAR TELECOM",
@@ -639,6 +694,7 @@
   "WIZ SOLUCOES E CORRETAGEM DE SEGUROS S.A.",
   "WTE BIOGÁS FRANÇA",
   "YDUQS",
-  "YDUQS PARTICIPACOES S.A"
+  "YDUQS PARTICIPACOES S.A",
+  "ÂNIMA HOLDING"
  ]
 }

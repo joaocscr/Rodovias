@@ -762,7 +762,7 @@ def test_bloco_confere_com_as_planilhas_do_usuario():
     if not deb.planilhas(deb.PASTA) or not BLOCO.exists():
         pytest.skip("planilhas do usuário ausentes em data/raw/debentures/")
     gravado = json.loads(BLOCO.read_text(encoding="utf-8"))
-    novo = deb.montar()
+    novo = deb.montar(historico=anb.HISTORICO)    # como o build: cache cru mais a curva versionada (a ANBIMA só guarda os dias recentes)
     assert novo["secundario"] == gravado["secundario"], "dado mudou: rode python scripts/atualizar.py --dominios debentures"
     assert novo["emissoes"] == gravado["emissoes"]
     # volume e spread conferidos com uma conta direta sobre as linhas da planilha
@@ -776,7 +776,7 @@ def test_bloco_confere_com_as_planilhas_do_usuario():
     total = sum(r["volume"] for r in gravado["secundario"]["negocios"]["por_dia"])
     assert total == pytest.approx(sum(n["volume"] or 0 for n in neg), abs=0.05)
     assert sum(r["n"] for r in gravado["secundario"]["negocios"]["por_dia"]) == len(neg)
-    curvas = anb.curvas(None, deb.PUBLICO / anb.SUBPASTA)
+    curvas = anb.curvas(None, deb.PUBLICO / anb.SUBPASTA, anb.HISTORICO)
     ult = {u["ticker"]: u for u in gravado["secundario"]["ultimo_por_ticker"] if u["origem"] == "negocio"}
     for u in ult.values():
         esperado = deb.spread(u["taxa"], u["vencimento"], deb.curva_ntnb(u["data"], curvas), u["indexador"])

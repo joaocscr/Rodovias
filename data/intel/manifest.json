@@ -1,6 +1,6 @@
 {
- "arquivos": 289,
- "bytes": 1352183753,
+ "arquivos": 297,
+ "bytes": 1352608088,
  "itens": [
   {
    "dominio": "agro",
@@ -1148,6 +1148,50 @@
   },
   {
    "dominio": "debentures",
+   "descricao": "ANBIMA, taxas indicativas dos títulos públicos de 26/10/2026 (NTN-B)",
+   "url": "https://www.anbima.com.br/informacoes/merc-sec/arqs/ms261026.txt",
+   "arquivo": "data/raw/debentures/publico/anbima_ms/ms261026.txt",
+   "bytes": 6770,
+   "sha256": "86619f80ed678adca4c88305254081f13fcc566d4a6101ec764db9c1b3fda9c5",
+   "periodo": "26/10/2026",
+   "licenca": "Consulta pública do site da ANBIMA; a página não declara licença de reuso",
+   "acesso": "2026-10-30"
+  },
+  {
+   "dominio": "debentures",
+   "descricao": "ANBIMA, taxas indicativas dos títulos públicos de 27/10/2026 (NTN-B)",
+   "url": "https://www.anbima.com.br/informacoes/merc-sec/arqs/ms261027.txt",
+   "arquivo": "data/raw/debentures/publico/anbima_ms/ms261027.txt",
+   "bytes": 6673,
+   "sha256": "5793ee0b276d959bbcfcd6a617796fe9465e51f48042a07997a074b1470945ec",
+   "periodo": "27/10/2026",
+   "licenca": "Consulta pública do site da ANBIMA; a página não declara licença de reuso",
+   "acesso": "2026-10-30"
+  },
+  {
+   "dominio": "debentures",
+   "descricao": "ANBIMA, taxas indicativas dos títulos públicos de 28/10/2026 (NTN-B)",
+   "url": "https://www.anbima.com.br/informacoes/merc-sec/arqs/ms261028.txt",
+   "arquivo": "data/raw/debentures/publico/anbima_ms/ms261028.txt",
+   "bytes": 6653,
+   "sha256": "b77eecb1080bd9cbbeb9d20ce79ccbc588b0094df8b1d1c5d3f0e36bb54025a9",
+   "periodo": "28/10/2026",
+   "licenca": "Consulta pública do site da ANBIMA; a página não declara licença de reuso",
+   "acesso": "2026-10-30"
+  },
+  {
+   "dominio": "debentures",
+   "descricao": "ANBIMA, taxas indicativas dos títulos públicos de 29/10/2026 (NTN-B)",
+   "url": "https://www.anbima.com.br/informacoes/merc-sec/arqs/ms261029.txt",
+   "arquivo": "data/raw/debentures/publico/anbima_ms/ms261029.txt",
+   "bytes": 6676,
+   "sha256": "ab04cccde9c9f83c3d255f28fb5c05940d7a2c04fc18efedf260d864f1545df5",
+   "periodo": "29/10/2026",
+   "licenca": "Consulta pública do site da ANBIMA; a página não declara licença de reuso",
+   "acesso": "2026-10-30"
+  },
+  {
+   "dominio": "debentures",
    "descricao": "Banco Central, expectativas de mercado (Focus): IPCA 12 meses",
    "url": "https://olinda.bcb.gov.br/olinda/servico/Expectativas/versao/v1/odata/ExpectativasMercadoInflacao12Meses?%24top=20&%24filter=Indicador%20eq%20'IPCA'%20and%20Suavizada%20eq%20'S'%20and%20baseCalculo%20eq%200&%24orderby=Data%20desc&%24format=json",
    "arquivo": "data/raw/debentures/publico/focus_ipca12m.json",
@@ -1156,7 +1200,7 @@
    "periodo": "",
    "licenca": "Dados abertos do Banco Central do Brasil",
    "acesso": "2026-10-26",
-   "baixado": "2026-10-26"
+   "baixado": "2026-10-30"
   },
   {
    "dominio": "debentures",
@@ -1164,11 +1208,11 @@
    "url": "https://api.bcb.gov.br/dados/serie/bcdata.sgs.12/dados/ultimos/20?formato=json",
    "arquivo": "data/raw/debentures/publico/sgs_12.json",
    "bytes": 821,
-   "sha256": "58083f46d05d224b61f9d23eb0e6066cdfa9abc369705a3c8612d9e8ceabb96f",
+   "sha256": "a2a9d61be6b6584ef42f89d0c6dc248465a4c004218a1244776b5a8634e6fd17",
    "periodo": "",
    "licenca": "Dados abertos do Banco Central do Brasil",
-   "acesso": "2026-10-26",
-   "baixado": "2026-10-26"
+   "acesso": "2026-10-30",
+   "baixado": "2026-10-30"
   },
   {
    "dominio": "debentures",
@@ -1180,7 +1224,7 @@
    "periodo": "",
    "licenca": "Dados abertos do Banco Central do Brasil",
    "acesso": "2026-10-26",
-   "baixado": "2026-10-26"
+   "baixado": "2026-10-30"
   },
   {
    "dominio": "debentures",
@@ -1192,41 +1236,41 @@
    "periodo": "",
    "licenca": "Dados abertos do Banco Central do Brasil",
    "acesso": "2026-10-22",
-   "baixado": "2026-10-26"
+   "baixado": "2026-10-30"
   },
   {
    "dominio": "debentures",
    "descricao": "ANBIMA, cadastro de debêntures (SND): características das debêntures públicas",
    "url": "https://www.debentures.com.br/exploreosnd/consultaadados/emissoesdedebentures/caracteristicas_e.asp?tip_deb=publicas&op_exc=False",
    "arquivo": "data/raw/debentures/publico/snd_caracteristicas.txt",
-   "bytes": 2873866,
-   "sha256": "aa113460ae5a009b1cbf8c2af65e28510cacd1746107022f0b44905868773616",
+   "bytes": 2875526,
+   "sha256": "45cae952f69717d3fcc6055c6b107e42af29d8e1dee81b9ed9366c2a6a291aac",
    "periodo": "",
    "licenca": "Consulta pública do SND (debentures.com.br, ANBIMA); a página não declara licença de reuso",
-   "acesso": "2026-10-26",
-   "baixado": "2026-10-26"
+   "acesso": "2026-10-30",
+   "baixado": "2026-10-30"
   },
   {
    "dominio": "debentures",
    "descricao": "Planilha de debêntures das corretoras, fornecida ao projeto",
    "url": "",
    "arquivo": "data/raw/debentures/tela.xlsx",
-   "bytes": 233516,
-   "sha256": "69c99913e89034328a5a57531ffaffc7b8e8399e7d8fb050e20fd1007163c10e",
+   "bytes": 238442,
+   "sha256": "4095125e1730cc48bfb4aeb7002d3369f28f7d003ff842fd970e7b10832c22d0",
    "periodo": "",
    "licenca": "Dados de corretora, fornecidos ao projeto; uso restrito",
-   "acesso": "2026-10-23"
+   "acesso": "2026-10-30"
   },
   {
    "dominio": "debentures",
    "descricao": "Planilha de debêntures das corretoras, fornecida ao projeto",
    "url": "",
    "arquivo": "data/raw/debentures/trades.xlsx",
-   "bytes": 400189,
-   "sha256": "03a2abdd2c9bb3f43446bda664ab5ed941f1603f08683d0609ee0cd275d5be5b",
+   "bytes": 510419,
+   "sha256": "7e062102436be5fe2c14a55fe7ba2418462d5f4f9e69a35c598c8baf8c844f44",
    "periodo": "",
    "licenca": "Dados de corretora, fornecidos ao projeto; uso restrito",
-   "acesso": "2026-10-23"
+   "acesso": "2026-10-30"
   },
   {
    "dominio": "estaduais",
@@ -2751,11 +2795,11 @@
    "descricao": "ANBIMA, IDA: resultado diário dos quatro subíndices (dias baixados)",
    "url": "https://www.anbima.com.br/informacoes/ida/IDA_down.asp",
    "arquivo": "data/raw/ida/cache.json",
-   "bytes": 101424,
-   "sha256": "aa5fabba65387f78972b4a2c785b6773a5ad49f4b1d36b2ca7d582ec73e010ec",
-   "periodo": "14/10/2026 a 23/10/2026",
+   "bytes": 56398,
+   "sha256": "66c74d53584fd38659984690f6cb6052c37b8a3486c542e10936d1115bd4574d",
+   "periodo": "26/10/2026 a 29/10/2026",
    "licenca": "Consulta pública do site da ANBIMA; a página não declara licença de reuso",
-   "acesso": "2026-10-26"
+   "acesso": "2026-10-30"
   },
   {
    "dominio": "ida",
@@ -2781,6 +2825,17 @@
   },
   {
    "dominio": "ida",
+   "descricao": "ANBIMA, IDA: carteira teórica do IDA-DI em 29/10/2026",
+   "url": "https://www.anbima.com.br/informacoes/ida/IDA_down.asp",
+   "arquivo": "data/raw/ida/carteira_DI_2026-10-29.csv",
+   "bytes": 59199,
+   "sha256": "0cdbfac583e10fb6e4795fa4f728ae80ac6fe0bc00b8abd803bbdf6fc93be985",
+   "periodo": "29/10/2026",
+   "licenca": "Consulta pública do site da ANBIMA; a página não declara licença de reuso",
+   "acesso": "2026-10-30"
+  },
+  {
+   "dominio": "ida",
    "descricao": "ANBIMA, IDA: carteira teórica do IDA-Geral em 22/10/2026",
    "url": "https://www.anbima.com.br/informacoes/ida/IDA_down.asp",
    "arquivo": "data/raw/ida/carteira_GERAL_2026-10-22.csv",
@@ -2800,6 +2855,17 @@
    "periodo": "23/10/2026",
    "licenca": "Consulta pública do site da ANBIMA; a página não declara licença de reuso",
    "acesso": "2026-10-26"
+  },
+  {
+   "dominio": "ida",
+   "descricao": "ANBIMA, IDA: carteira teórica do IDA-Geral em 29/10/2026",
+   "url": "https://www.anbima.com.br/informacoes/ida/IDA_down.asp",
+   "arquivo": "data/raw/ida/carteira_GERAL_2026-10-29.csv",
+   "bytes": 129989,
+   "sha256": "8f02f940941a96020b4f8257f2af558175667884c1a993c54b3f88cffd65d6fd",
+   "periodo": "29/10/2026",
+   "licenca": "Consulta pública do site da ANBIMA; a página não declara licença de reuso",
+   "acesso": "2026-10-30"
   },
   {
    "dominio": "ida",
@@ -2825,6 +2891,17 @@
   },
   {
    "dominio": "ida",
+   "descricao": "ANBIMA, IDA: carteira teórica do IDA-IPCA em 29/10/2026",
+   "url": "https://www.anbima.com.br/informacoes/ida/IDA_down.asp",
+   "arquivo": "data/raw/ida/carteira_IPCA_2026-10-29.csv",
+   "bytes": 69357,
+   "sha256": "9fb00f0199e6d74e90154d7e777f23d325ade37bb36b9b63fbc2eb1b7559d076",
+   "periodo": "29/10/2026",
+   "licenca": "Consulta pública do site da ANBIMA; a página não declara licença de reuso",
+   "acesso": "2026-10-30"
+  },
+  {
+   "dominio": "ida",
    "descricao": "ANBIMA, IDA: carteira teórica do IDA-IPCA Infraestrutura em 22/10/2026",
    "url": "https://www.anbima.com.br/informacoes/ida/IDA_down.asp",
    "arquivo": "data/raw/ida/carteira_IPCA_INFRAESTRUTURA_2026-10-22.csv",
@@ -2844,6 +2921,17 @@
    "periodo": "23/10/2026",
    "licenca": "Consulta pública do site da ANBIMA; a página não declara licença de reuso",
    "acesso": "2026-10-26"
+  },
+  {
+   "dominio": "ida",
+   "descricao": "ANBIMA, IDA: carteira teórica do IDA-IPCA Infraestrutura em 29/10/2026",
+   "url": "https://www.anbima.com.br/informacoes/ida/IDA_down.asp",
+   "arquivo": "data/raw/ida/carteira_IPCA_INFRAESTRUTURA_2026-10-29.csv",
+   "bytes": 67228,
+   "sha256": "805ea952518117bfc4093dfb4b8e25e0df1bbd2bb3f10dff12665f562fd479e9",
+   "periodo": "29/10/2026",
+   "licenca": "Consulta pública do site da ANBIMA; a página não declara licença de reuso",
+   "acesso": "2026-10-30"
   },
   {
    "dominio": "idex",

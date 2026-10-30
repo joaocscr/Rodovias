@@ -45,17 +45,6 @@
  },
  {
   "dominio": "ida",
-  "descricao": "ANBIMA, IDA: resultado diário dos quatro subíndices (dias baixados)",
-  "url": "https://www.anbima.com.br/informacoes/ida/IDA_down.asp",
-  "arquivo": "data/raw/ida/cache.json",
-  "bytes": 101424,
-  "sha256": "aa5fabba65387f78972b4a2c785b6773a5ad49f4b1d36b2ca7d582ec73e010ec",
-  "periodo": "14/10/2026 a 23/10/2026",
-  "licenca": "Consulta pública do site da ANBIMA; a página não declara licença de reuso",
-  "acesso": "2026-10-26"
- },
- {
-  "dominio": "ida",
   "descricao": "ANBIMA, IDA: carteira teórica do IDA-DI em 23/10/2026",
   "url": "https://www.anbima.com.br/informacoes/ida/IDA_down.asp",
   "arquivo": "data/raw/ida/carteira_DI_2026-10-23.csv",
@@ -97,5 +86,60 @@
   "periodo": "23/10/2026",
   "licenca": "Consulta pública do site da ANBIMA; a página não declara licença de reuso",
   "acesso": "2026-10-26"
+ },
+ {
+  "dominio": "ida",
+  "descricao": "ANBIMA, IDA: resultado diário dos quatro subíndices (dias baixados)",
+  "url": "https://www.anbima.com.br/informacoes/ida/IDA_down.asp",
+  "arquivo": "data/raw/ida/cache.json",
+  "bytes": 56398,
+  "sha256": "66c74d53584fd38659984690f6cb6052c37b8a3486c542e10936d1115bd4574d",
+  "periodo": "26/10/2026 a 29/10/2026",
+  "licenca": "Consulta pública do site da ANBIMA; a página não declara licença de reuso",
+  "acesso": "2026-10-30"
+ },
+ {
+  "dominio": "ida",
+  "descricao": "ANBIMA, IDA: carteira teórica do IDA-DI em 29/10/2026",
+  "url": "https://www.anbima.com.br/informacoes/ida/IDA_down.asp",
+  "arquivo": "data/raw/ida/carteira_DI_2026-10-29.csv",
+  "bytes": 59199,
+  "sha256": "0cdbfac583e10fb6e4795fa4f728ae80ac6fe0bc00b8abd803bbdf6fc93be985",
+  "periodo": "29/10/2026",
+  "licenca": "Consulta pública do site da ANBIMA; a página não declara licença de reuso",
+  "acesso": "2026-10-30"
+ },
+ {
+  "dominio": "ida",
+  "descricao": "ANBIMA, IDA: carteira teórica do IDA-Geral em 29/10/2026",
+  "url": "https://www.anbima.com.br/informacoes/ida/IDA_down.asp",
+  "arquivo": "data/raw/ida/carteira_GERAL_2026-10-29.csv",
+  "bytes": 129989,
+  "sha256": "8f02f940941a96020b4f8257f2af558175667884c1a993c54b3f88cffd65d6fd",
+  "periodo": "29/10/2026",
+  "licenca": "Consulta pública do site da ANBIMA; a página não declara licença de reuso",
+  "acesso": "2026-10-30"
+ },
+ {
+  "dominio": "ida",
+  "descricao": "ANBIMA, IDA: carteira teórica do IDA-IPCA em 29/10/2026",
+  "url": "https://www.anbima.com.br/informacoes/ida/IDA_down.asp",
+  "arquivo": "data/raw/ida/carteira_IPCA_2026-10-29.csv",
+  "bytes": 69357,
+  "sha256": "9fb00f0199e6d74e90154d7e777f23d325ade37bb36b9b63fbc2eb1b7559d076",
+  "periodo": "29/10/2026",
+  "licenca": "Consulta pública do site da ANBIMA; a página não declara licença de reuso",
+  "acesso": "2026-10-30"
+ },
+ {
+  "dominio": "ida",
+  "descricao": "ANBIMA, IDA: carteira teórica do IDA-IPCA Infraestrutura em 29/10/2026",
+  "url": "https://www.anbima.com.br/informacoes/ida/IDA_down.asp",
+  "arquivo": "data/raw/ida/carteira_IPCA_INFRAESTRUTURA_2026-10-29.csv",
+  "bytes": 67228,
+  "sha256": "805ea952518117bfc4093dfb4b8e25e0df1bbd2bb3f10dff12665f562fd479e9",
+  "periodo": "29/10/2026",
+  "licenca": "Consulta pública do site da ANBIMA; a página não declara licença de reuso",
+  "acesso": "2026-10-30"
  }
 ]
