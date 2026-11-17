@@ -1,4 +1,4 @@
-"""Malha municipal (IBGE, TopoJSON mínimo + 3 polígonos MT 2025), PAM 2025 e Estoques 2º sem/2025.
+"""Malha municipal (IBGE, TopoJSON mínimo + 3 polígonos MT 2025), PAM 2025 e Estoques 1º sem/2026.
 
 Gera data/intel/municipios.json e data/intel/agro.json a partir de data/raw/graos/ (recon: memo graos §1–§3).
 
@@ -48,9 +48,9 @@ ARQUIVOS = [
     (f"{SIDRA}/t/1613/n6/all/v/214/p/2025/c82/2723,31619,31620", "sidra/pam1613_2025.json",
      "PAM tabela 1613: café total, arábica, canéfora (t)", "2025"),
     (f"{SIDRA}/t/5459/n6/all/v/152,153/p/last/c166/all/c11278/39324", "sidra/est5459_last.json",
-     "Pesquisa de Estoques tabela 5459 por município: estabelecimentos e capacidade útil (t)", "2º semestre 2025"),
+     "Pesquisa de Estoques tabela 5459 por município: estabelecimentos e capacidade útil (t)", "1º semestre 2026"),
     (f"{SIDRA}/t/5459/n1/all/n3/all/v/152,153/p/last/c166/114630/c11278/39324", "sidra/est5459_n1n3.json",
-     "Pesquisa de Estoques tabela 5459, Brasil e UF", "2º semestre 2025"),
+     "Pesquisa de Estoques tabela 5459, Brasil e UF", "1º semestre 2026"),
 ]
 MT_NOVOS = ("5101837", "5107925", "5106240")  # Boa Esperança do Norte, Sorriso, Nova Ubiratã
 SIMPLIFICA_GRAUS = 0.003
@@ -231,7 +231,7 @@ def build_agro(ids):
 
     est = {r["D1C"]: r["V"] for r in _load("sidra/est5459_last.json")[1:] if r["D2C"] == "153" and r["D4C"] == "114630"}
     periodo = next(r["D3N"] for r in _load("sidra/est5459_last.json")[1:])
-    assert periodo == "2º semestre 2025", periodo
+    assert periodo == "1º semestre 2026", periodo
     cap, sig = [], []
     for cd in ids:
         v, s = sidra_num(est[cd]) if cd in est else (0, 0)
@@ -244,13 +244,13 @@ def build_agro(ids):
         _fonte("IBGE — Produção Agrícola Municipal (PAM), SIDRA tabelas 1612, 839 e 1613", ARQUIVOS[4][0], "2025",
                "Quantidade produzida (t). Algodão herbáceo em caroço; café total (arábica e canéfora); milho por "
                "safra (tabela 839). Na fonte, '-' significa zero e '...' significa sem dado."),
-        _fonte("IBGE — Pesquisa de Estoques, SIDRA tabela 5459", ARQUIVOS[7][0], "2º semestre 2025",
+        _fonte("IBGE — Pesquisa de Estoques, SIDRA tabela 5459", ARQUIVOS[7][0], "1º semestre 2026",
                "Capacidade útil (t) de armazéns graneleiros ou granelizados e silos. Valores sigilosos ('X' na "
                "fonte) ficam sem valor e marcados como sigilo; município fora da tabela conta como zero. A soma "
                "municipal publicada fica abaixo do total do Brasil por causa do sigilo."),
     ]
     return {"fonte": fonte, "tipo": "medido", "ids": ids, "ano": 2025, "produtos": produtos,
-            "armazenagem": {"periodo": "2º sem/2025", "cap": cap, "sigilo": sig, "total_brasil": br}}
+            "armazenagem": {"periodo": "1º sem/2026", "cap": cap, "sigilo": sig, "total_brasil": br}}
 
 
 def _write(name, obj):

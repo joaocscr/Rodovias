@@ -179,14 +179,14 @@ def test_milho_safras(ag):
 
 def test_armazenagem(ag):
     a = ag["armazenagem"]
-    assert a["periodo"] == "2º sem/2025"
+    assert a["periodo"] == "1º sem/2026"
     assert len(a["cap"]) == len(a["sigilo"]) == 5571
     tot = sum(x or 0 for x in a["cap"])
     assert 180e6 <= tot <= 210.5e6
     assert all(s in (0, 1) for s in a["sigilo"])
     assert all(c is None for c, s in zip(a["cap"], a["sigilo"]) if s == 1)
     assert sum(a["sigilo"]) > 500  # 851 municípios com capacidade total em sigilo
-    assert a["cap"][ag["ids"].index("5107925")] == 5791707
+    assert a["cap"][ag["ids"].index("5107925")] == 5544437  # Sorriso, 1º semestre 2026
 
 
 @pytest.mark.skipif(not RAW.exists(), reason="sem data/raw/graos")

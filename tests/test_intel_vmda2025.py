@@ -202,8 +202,9 @@ def test_fonte_em_linguagem_clara(d):
     for f in d["fonte"]:
         for k in ("nome", "url", "periodo", "acesso", "licenca", "nota", "tipo"):
             assert f.get(k), k
-        assert f["url"] == DRIVE and f["tipo"] == "modelado" and "2025" in f["periodo"]
-        assert "fornecida pelo usuário" in f["nota"] and "uso restrito" in f["nota"]
+        assert f["url"] in (DRIVE, vmda2025.CAMADA) and f["tipo"] == "modelado" and "2025" in f["periodo"]
+        origem = "Infra S.A." if f["url"] == vmda2025.CAMADA else "fornecida pelo usuário"
+        assert origem in f["nota"] and "uso restrito" in f["nota"]
         for k in ("nome", "periodo", "nota", "licenca"):
             achado = PROIBIDOS.search(f[k])
             assert not achado, (k, achado.group(0))
@@ -225,3 +226,16 @@ def test_manifesto_registra_o_arquivo_do_drive():
 def test_bruto_do_drive_confere_com_o_manifesto():
     it = _item_do_drive()
     assert (ROOT / it["arquivo"]).stat().st_size == it["bytes"]
+
+
+def test_camada_da_infrasa_lida_como_o_shapefile(tmp_path):
+    """A camada aberta da Infra S.A. grava 0 nos sentidos onde o shapefile do Drive não tem valor (o shapefile nunca traz
+    0 nesses campos): o leitor devolve None, e as partes da linha viram uma sequência de pontos, como no shapefile.
+    Com os dois brutos, o bloco gerado de um e de outro foi conferido igual (17/11/2026)."""
+    p = tmp_path / "infrasa.json"
+    a = {"codigo_snv": "116BMG0010", "jurisdicao": "Federal", "tipo_link": "Rodovia", "extensao": 1.5,
+         "vmda_total": 900, "vmda_cresc": 0, "vmda_decre": 0, "classifica": "Simulável"}
+    p.write_text(json.dumps({"features": [{"a": a, "p": [[[-47.0, -20.0], [-47.1, -20.1]], [[-47.1, -20.1], [-47.2, -20.2]]]}]}))
+    (attrs, pts), = list(vmda2025._do_infrasa(p))
+    assert attrs["vmda_cresc"] is None and attrs["vmda_decre"] is None and attrs["vmda_total"] == 900
+    assert pts == [[-47.0, -20.0], [-47.1, -20.1], [-47.1, -20.1], [-47.2, -20.2]]

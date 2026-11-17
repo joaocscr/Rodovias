@@ -4,11 +4,11 @@
   "descricao": "BNDES Hub de Projetos: lista de 162 projetos (13 rodoviários)",
   "url": "https://hubdeprojetos.bndes.gov.br/cms/projetos?__locale=pt",
   "arquivo": "data/raw/pipeline/bndes/hub_projetos.json",
-  "bytes": 700413,
-  "sha256": "bf50618b7e294c68761787f8678d0447806899334d5bc85f5bdf974d784c8e9b",
+  "bytes": 696619,
+  "sha256": "c7567e5504962feaf52a5983b181fe69278fd22307010632386eb01da81ccc04",
   "periodo": "out/2026",
   "licenca": "Informação pública",
-  "acesso": "2026-10-23"
+  "acesso": "2026-11-17"
  },
  {
   "dominio": "pipeline",
@@ -26,22 +26,22 @@
   "descricao": "MT: Concessões Rodoviárias 2026 (API Plone)",
   "url": "https://www.gov.br/transportes/++api++/pt-br/assuntos/concessoes/concessoes-rodoviarias-2026",
   "arquivo": "data/raw/pipeline/mt_api_2026.json",
-  "bytes": 88593,
-  "sha256": "1954ffa4ad38795315e38a6bd6a1f1d561c4472dcd7b85395f8e72697d335dc8",
+  "bytes": 88200,
+  "sha256": "850c48df417a73cd3ed02e68ab887801b8ce41b7e109a34d648b2f611352f8b0",
   "periodo": "18/10/2026",
   "licenca": "Informação pública",
-  "acesso": "2026-10-23"
+  "acesso": "2026-11-17"
  },
  {
   "dominio": "pipeline",
   "descricao": "MT: Concessões Rodoviárias 2027 (API Plone)",
   "url": "https://www.gov.br/transportes/++api++/pt-br/assuntos/concessoes/concessoes-rodoviarias-2027",
   "arquivo": "data/raw/pipeline/mt_api_2027.json",
-  "bytes": 75054,
-  "sha256": "3a354906b175d4c823d81909ac4dddc5b8cc9d61bc849a045de1741f9d8f6aef",
+  "bytes": 73809,
+  "sha256": "3e04048a33d966841073596fa6f3ba3acadbd864dc58b7b2cba92a82e19a664d",
   "periodo": "18/10/2026",
   "licenca": "Informação pública",
-  "acesso": "2026-10-20"
+  "acesso": "2026-11-17"
  },
  {
   "dominio": "pipeline",

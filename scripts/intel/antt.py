@@ -270,9 +270,14 @@ def ckan_meta(slug):
 
 # ============================================================ fetch
 
+CADASTRO = "cadastro_pracas.csv"
+CADASTRO_RECURSO = "dados dos pracas de pedagio"   # nome do recurso no CKAN, sem acento e caixa
+
 # (pasta em data/raw/antt, slug CKAN, arquivo, descrição, período)
 ARQUIVOS = [
-    ("praca", "praca-de-pedagio", "dados-dos-pracas-de-pedagio6_2026.csv", "Cadastro de praças de pedágio", "6/2026"),
+    # o cadastro de praças troca de nome a cada versão (dados-dos-pracas-de-pedagio6_2026.csv, dados-dos-praas-de-pedgio.csv):
+    # vale o CSV mais recente do recurso "Dados dos Praças de Pedágio" (CADASTRO_RECURSO), salvo sempre com o mesmo nome
+    ("praca", "praca-de-pedagio", CADASTRO, "Cadastro de praças de pedágio", ""),
     ("volume", "volume-trafego-praca-pedagio", "volume-trafego-praca-pedagio-2024_mensal_consolidado.csv",
      "Volume de tráfego por praça (mensal consolidado)", "2024"),
     ("volume", "volume-trafego-praca-pedagio", "volume-trafego-praca-pedagio-2025_mensal_consolidado.csv",
@@ -291,7 +296,57 @@ SAT_SLUG = "volume-sat"
 DATASETS = sorted({a[1] for a in ARQUIVOS} | {SAT_SLUG})
 
 
+def _sem_acento(s):
+    import unicodedata
+    return unicodedata.normalize("NFKD", s or "").encode("ascii", "ignore").decode().lower().strip()
+
+
+def _cadastro(meta):
+    """(url, última modificação) do CSV mais recente do recurso do cadastro de praças, ou (None, None)."""
+    rs = [r for r in meta.get("resources", []) if _sem_acento(r.get("name")) == CADASTRO_RECURSO
+          and (r.get("url") or "").lower().endswith(".csv")]
+    if not rs:
+        return None, None
+    r = max(rs, key=lambda r: r.get("last_modified") or r.get("created") or "")
+    return r["url"], (r.get("last_modified") or r.get("created") or "")[:10]
+
+
+ACOMP = "acompanhamento-anual-investimentos.csv"
+
+
+def juntar_csvs(partes):
+    """Bytes de um CSV com o cabeçalho do primeiro e as linhas de todos (CSVs de mesmo cabeçalho; ValueError senão)."""
+    cab, corpo = None, []
+    for nome, dados in partes:
+        linhas = dados.replace(b"\r\n", b"\n").split(b"\n")
+        if cab is None:
+            cab = linhas[0]
+        elif linhas[0] != cab:
+            raise ValueError(f"{nome}: cabeçalho diferente dos demais")
+        corpo += [x for x in linhas[1:] if x.strip()]
+    return b"\n".join([cab] + corpo) + b"\n"
+
+
+def _juntar_acomp(man, meta, pasta, force=False):
+    """Baixa os CSVs de acompanhamento anual, um por concessão, e os junta em `pasta`/ACOMP, o arquivo único de antes."""
+    rs = [r for r in meta.get("resources", []) if (r.get("url") or "").endswith("-" + ACOMP)]
+    if not rs:
+        raise RuntimeError(f"nenhum CSV de acompanhamento anual em {meta.get('name')}")
+    partes = []
+    for r in sorted(rs, key=lambda r: r["url"]):
+        dest = pasta / "por_concessao" / r["url"].rsplit("/", 1)[-1]
+        partes.append((dest.name, fetch_url(r["url"], dest, force=force).read_bytes()))
+    junto = pasta / ACOMP
+    junto.write_bytes(juntar_csvs(partes))
+    datas = sorted((r.get("last_modified") or "")[:10] for r in rs)
+    man.add(CKAN + "acompanhamento-anual", junto, f"Acompanhamento anual de investimentos (obras): {len(rs)} CSVs, um por "
+            "concessão, juntos", f"versão de {datas[-1][8:10]}/{datas[-1][5:7]}/{datas[-1][:4]}" if datas[-1] else "",
+            LICENCA)
+
+
 def _resource_url(meta, fname):
+    if fname == CADASTRO:
+        return _cadastro(meta)[0]
     for r in meta.get("resources", []):
         u = r.get("url") or ""
         base = u.rsplit("/", 1)[-1]
@@ -313,8 +368,18 @@ def fetch(force=False):
         man.add(CKAN + slug, dest, f"Metadados CKAN: {slug}", licenca=LICENCA)
     for pasta, slug, fname, desc, periodo in ARQUIVOS:
         url = _resource_url(ckan_meta(slug), fname)
+        if url is None and fname == ACOMP:      # desde 28/10/2026, um CSV por concessão: baixa todos e junta
+            _juntar_acomp(man, ckan_meta(slug), RAW / pasta, force)
+            continue
         if url is None:
             raise RuntimeError(f"recurso {fname} não está em {slug}")
+        if fname == CADASTRO:   # versão nova do cadastro: outro endereço; baixa de novo
+            ant = next((i for i in man.items if i.get("arquivo", "").endswith("/" + CADASTRO)), None)
+            force_c = force or (ant is not None and ant.get("url") != url)
+            data = _cadastro(ckan_meta(slug))[1]
+            periodo = f"versão de {data[8:10]}/{data[5:7]}/{data[:4]}" if data else ""
+            man.add(url, fetch_url(url, RAW / pasta / fname, force=force_c), desc, periodo, LICENCA)
+            continue
         man.add(url, fetch_url(url, RAW / pasta / fname, force=force), desc, periodo, LICENCA)
     meta = ckan_meta(SAT_SLUG)
     sat_res = [r for r in meta["resources"] if (r.get("url") or "").endswith("mensal_consolidado.csv")]
@@ -514,7 +579,7 @@ def _match_names(pairs, cad_by_key):
 def build_pracas():
     import pandas as pd
     S = snv()
-    cad = pd.read_csv(RAW / "praca" / "dados-dos-pracas-de-pedagio6_2026.csv", sep=";", encoding="latin1", dtype=str)
+    cad = pd.read_csv(RAW / "praca" / CADASTRO, sep=";", encoding="latin1", dtype=str)
     cad = cad.fillna("")
     # --- linhas de saída: cada registro do cadastro, exceto os pares free flow da RIOSP (um por pórtico de entrada)
     grupos, gid_of = [], {}
@@ -780,7 +845,7 @@ def fontes():
     return [
         {"nome": "ANTT — Praças de pedágio (cadastro) e volume de tráfego por praça",
          "url": ds("volume-trafego-praca-pedagio"),
-         "periodo": "jan/2024 a ago/2026", "acesso": acesso(rp + "praca/dados-dos-pracas-de-pedagio6_2026.csv"),
+         "periodo": "jan/2024 a ago/2026", "acesso": acesso(rp + "praca/" + CADASTRO),
          "licenca": LICENCA,
          "nota": "Dados mensais consolidados. O VMD de 2025 soma os dois sentidos e divide pelos dias dos meses com "
                  "dado; leves são os veículos de passeio, pesados os comerciais (inclui ônibus), e as motos aparecem à "

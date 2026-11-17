@@ -1,6 +1,17 @@
 [
  {
   "dominio": "trafego",
+  "descricao": "Índice ABCR de fluxo de veículos pedagiados, série mensal 1999-set/2026",
+  "url": "https://melhoresrodovias.org.br/wp-content/uploads/2026/10/base_0926.xlsx",
+  "arquivo": "data/raw/trafego/abcr/base_0926.xlsx",
+  "bytes": 558163,
+  "sha256": "2cd91056ab7d09a0cea5a82372324b642953076316d18e04c24366d9a8384b62",
+  "periodo": "1999-2026-09",
+  "licenca": "Divulgação pública ABCR (citar a fonte)",
+  "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "trafego",
   "descricao": "VMDa 2023 por subtrecho de modelagem (Leves/Pesados), tabela `data`, SNV 202401A",
   "url": "https://geo.infrasa.gov.br/server/rest/services/Hosted/VMDa_2023/FeatureServer/3",
   "arquivo": "data/raw/trafego/infrasa/vmda2023_data.json",
@@ -12,14 +23,14 @@
  },
  {
   "dominio": "trafego",
-  "descricao": "Índice ABCR de fluxo de veículos pedagiados, série mensal 1999-set/2026",
-  "url": "https://melhoresrodovias.org.br/wp-content/uploads/2026/10/base_0926.xlsx",
-  "arquivo": "data/raw/trafego/abcr/base_0926.xlsx",
-  "bytes": 558163,
-  "sha256": "2cd91056ab7d09a0cea5a82372324b642953076316d18e04c24366d9a8384b62",
-  "periodo": "1999-2026-09",
+  "descricao": "Índice ABCR de fluxo de veículos pedagiados, série mensal 1999 a 2026-10",
+  "url": "https://melhoresrodovias.org.br/wp-content/uploads/2026/11/abcr_1026.xlsx",
+  "arquivo": "data/raw/trafego/abcr/abcr_1026.xlsx",
+  "bytes": 559594,
+  "sha256": "059343a9106798d561ac5132337e43e05866ac8f5ae07bb94e9b9aa5750ae9df",
+  "periodo": "1999-2026-10",
   "licenca": "Divulgação pública ABCR (citar a fonte)",
-  "acesso": "2026-10-20"
+  "acesso": "2026-11-17"
  },
  {
   "dominio": "trafego",
@@ -48,10 +59,10 @@
   "descricao": "PRF DATATRAN 2026 agrupado por ocorrência (ZIP; página: https://www.gov.br/prf/pt-br/acesso-a-informacao/dados-abertos/dados-abertos-da-prf)",
   "url": "https://drive.google.com/uc?export=download&id=1A3IirNm0AzRaSosA1IS94DOVmvKsn0Ol",
   "arquivo": "data/raw/trafego/prf/datatran2026.zip",
-  "bytes": 2501149,
-  "sha256": "edc00438a4a00a483115a14be886b7b3e8a975064f14375ee043d3d69c157333",
+  "bytes": 3142093,
+  "sha256": "1809ee0f19b4a9de48cd0cebb4ed39eda89b26133382c3e93df4aa76b725ebd1",
   "periodo": "2026-01 a 2026-08 (parcial)",
   "licenca": "CC BY-ND 3.0 (PRF, dados abertos)",
-  "acesso": "2026-10-20"
+  "acesso": "2026-11-17"
  }
 ]

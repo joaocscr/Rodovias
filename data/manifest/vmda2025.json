@@ -9,5 +9,16 @@
   "periodo": "2025",
   "licenca": "Dado público federal (DNIT); licença não declarada na fonte",
   "acesso": "2026-10-20"
+ },
+ {
+  "dominio": "vmda2025",
+  "descricao": "VMDa – Modelagem 2025 por link (Infra S.A./ONTL, camada aberta; campos usados e geometria)",
+  "url": "https://geo.infrasa.gov.br/server/rest/services/Hosted/ONTL_Rodoviario_VMDa_Modelagem_2025/FeatureServer/0",
+  "arquivo": "data/raw/trafego/vmda2025/infrasa_vmda2025.json",
+  "bytes": 624510907,
+  "sha256": "408d23c11930042ea65ed98b619821f09ec4a55afa5f49246294101f7c9d824f",
+  "periodo": "2025",
+  "licenca": "Dado público federal (DNIT); licença não declarada na fonte",
+  "acesso": "2026-11-17"
  }
 ]

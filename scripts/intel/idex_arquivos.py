@@ -9,9 +9,11 @@ irmão com as mesmas funções e o mesmo contrato de saída e passe-as a `idex.m
   Lê a aba "Detalhado", colunas `Data`, `Debênture`, `Peso no índice (%)`, `Duration` e `MID spread (Bps/NTNB)`. O peso é
   uma fração (a soma do dia é 1), apesar do "(%)" do cabeçalho. Aba ou coluna ausente: ValueError.
 - `ler_relatorio(path)` → {"mes_referencia": "AAAA-MM", "retornos": {nome: {"AAAA-MM": pct}},
-  "acumulado_ano": {nome: {"AAAA": pct}}}. Lê a página "Histórico de performance" (pymupdf): para cada ano, uma linha
+  "parciais": {nome: {"AAAA-MM": pct}}, "acumulado_ano": {nome: {"AAAA": pct}}}. Lê a página "Histórico de performance"
+  (até jul/2026) ou "Rentabilidade mensal e acumulada no ano" (a partir de nov/2026) (pymupdf): para cada ano, uma linha
   por índice ("Idex-Infra Geral", "Idex-Infra Core") com os retornos mensais a partir de janeiro e, por último, o
-  "Acum. Ano" (um ano incompleto tem menos de doze meses). `mes_referencia` é o último mês com retorno. Página ausente
+  "Acum. Ano" (um ano incompleto tem menos de doze meses). Mês marcado com "*" (em curso na data do relatório) vai para
+  `parciais`, não para `retornos`. `mes_referencia` é o último mês completo com retorno. Página ausente
   ou tabela que não se reconhece: ValueError.
 """
 import datetime as dt
@@ -24,9 +26,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 ABA = "Detalhado"
 COLUNAS = {"data": "Data", "ticker": "Debênture", "peso": "Peso no índice (%)", "duration": "Duration",
            "spread_bps": "MID spread (Bps/NTNB)"}
-PAGINA = "Histórico de performance"
+PAGINA = "Histórico de performance"          # título da tabela até o relatório de jul/2026
+PAGINAS = (PAGINA, "Rentabilidade mensal e acumulada no ano")   # o segundo, a partir do relatório de nov/2026
+CABECALHO = "acum. ano"                     # último rótulo do cabeçalho da tabela: os números vêm depois dele
 # um número ("3,30 %", "-1,85%", "0,27 % "), um nome de índice ou um ano isolado, na ordem em que aparecem no texto
-TOKEN = re.compile(r"(?P<pct>[-−–]?\d+,\d+\s*%)|(?P<nome>Idex-Infra\s+(?:Geral|Core))|(?<![\d,.])(?P<ano>20\d\d)(?![\d,%])",
+TOKEN = re.compile(r"(?P<pct>[-−–]?\d+,\d+\s*%)(?P<parcial>\s*\*)?|(?P<nome>Idex-Infra\s+(?:Geral|Core))|(?<![\d,.])(?P<ano>20\d\d)(?![\d,%])",
                    re.I)
 
 
@@ -88,7 +92,8 @@ def _pct(txt):
 
 
 def _linhas_da_tabela(texto):
-    """[(ano, nome, [valores])] do texto da página, na ordem em que aparecem."""
+    """[(ano, nome, [(valor, parcial)])] do texto da página, na ordem em que aparecem; `parcial`: o número vem com "*"
+    (mês ainda em curso na data do relatório)."""
     ano = nome = None
     linhas = []
     for m in TOKEN.finditer(texto):
@@ -102,7 +107,7 @@ def _linhas_da_tabela(texto):
         else:
             if nome is None:
                 raise ValueError("número fora de uma linha de índice na tabela")
-            linhas[-1][2].append(_pct(m["pct"]))
+            linhas[-1][2].append((_pct(m["pct"]), bool(m["parcial"])))
     return linhas
 
 
@@ -110,22 +115,27 @@ def ler_relatorio(path):
     import pymupdf
     with pymupdf.open(path) as doc:
         textos = [p.get_text() for p in doc]
-    pagina = next((t for t in textos if PAGINA.lower() in t.lower()), None)
-    if pagina is None:
-        raise ValueError(f"{path}: sem a página \"{PAGINA}\"")
-    texto = pagina[pagina.lower().index(PAGINA.lower()) + len(PAGINA):]
+    achado = next(((t, titulo) for t in textos for titulo in PAGINAS if titulo.lower() in t.lower()), None)
+    if achado is None:
+        raise ValueError(f"{path}: sem a página \"{PAGINA}\" (nem \"{PAGINAS[1]}\")")
+    pagina, titulo = achado
+    texto = pagina[pagina.lower().index(titulo.lower()) + len(titulo):]
+    if CABECALHO in texto.lower():            # pula manchete e cabeçalho: a tabela começa depois de "Acum. Ano"
+        texto = texto[texto.lower().index(CABECALHO) + len(CABECALHO):]
     linhas = _linhas_da_tabela(texto)
     if not linhas:
-        raise ValueError(f"{path}: a tabela de \"{PAGINA}\" não foi reconhecida")
-    retornos, acumulado, ultimo = {}, {}, None
+        raise ValueError(f"{path}: a tabela de \"{titulo}\" não foi reconhecida")
+    retornos, parciais, acumulado, ultimo = {}, {}, {}, None
     for ano, nome, valores in linhas:
         if len(valores) < 2 or len(valores) > 13:
             raise ValueError(f"{path}: {nome} em {ano} traz {len(valores)} números (esperado de 2 a 13: meses e acumulado)")
         if str(ano) in acumulado.get(nome, {}):
             raise ValueError(f"{path}: {nome} aparece duas vezes em {ano}")
-        meses, acum = valores[:-1], valores[-1]  # alinhados de janeiro em diante; o último número é o "Acum. Ano"
-        for i, v in enumerate(meses, start=1):
-            retornos.setdefault(nome, {})[f"{ano}-{i:02d}"] = v
+        meses, acum = valores[:-1], valores[-1][0]  # alinhados de janeiro em diante; o último número é o "Acum. Ano"
+        for i, (v, parcial) in enumerate(meses, start=1):
+            (parciais if parcial else retornos).setdefault(nome, {})[f"{ano}-{i:02d}"] = v
+            if not parcial:
+                ultimo = max(ultimo or "", f"{ano}-{i:02d}")
+        retornos.setdefault(nome, {})
         acumulado.setdefault(nome, {})[str(ano)] = acum
-        ultimo = max(ultimo or "", f"{ano}-{len(meses):02d}")
-    return {"mes_referencia": ultimo, "retornos": retornos, "acumulado_ano": acumulado}
+    return {"mes_referencia": ultimo, "retornos": retornos, "parciais": parciais, "acumulado_ano": acumulado}

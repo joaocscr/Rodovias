@@ -13,7 +13,9 @@ Gera data/intel/multimodal.json a partir de data/raw/graos/ (recon: memo graos �
   GeoPackage IBGE Logística dos Transportes 2024 (ferroviário detalhado), por nome normalizado + UF; senão pela sede
   do município homônimo.
 - exportacao: Comex Stat EXP_2025 (base bruta), kg por SH4 × UF × URF × via, SH4 de grãos e agro (memo §4).
-- fretes: CONAB Boletim Logístico set/2026 (dados de ago/2026), extraído do PDF para conab/fretes_boletim_set2026.csv.
+- fretes: CONAB Boletim Logístico mais recente (o `fetch` o descobre na página da CONAB, `CONAB_LISTA`; o boletim do mês
+  M traz os fretes do mês anterior), salvo como conab/boletim-logistico-AAAA-MM.pdf e extraído para
+  conab/fretes_boletim_AAAA-MM.csv; o build usa o boletim mais recente que estiver em disco.
   Duas falhas de texto do boletim são corrigidas na montagem (`rota_frete`): origem sem "(UF)" colada ao destino
   ("RIBEIRÃO PRETO SANTOS (SP)") e UF trocada no destino de mesmo nome da origem ("RIO VERDE (RO) - PLATAFORMA").
 
@@ -45,8 +47,9 @@ SEP = (",", ":")
 LIC_GOV = "Dados abertos do governo federal (Decreto 8.777/2016); citar a fonte"
 COMEX_BD = "https://balanca.mdic.gov.br/balanca/bd"
 GPKG_FERR = RAW / "logistica" / "detalhados" / "Fluxos_Ferroviarios" / "fluxos_ferr_od.gpkg"
-FRETES_CSV = RAW / "conab" / "fretes_boletim_set2026.csv"
-FRETES_PDF = RAW / "conab" / "boletim-setembro-2026-pdf.pdf"
+CONAB_LISTA = "https://www.gov.br/conab/pt-br/atuacao/logistica/boletim-logistico"
+MES_NOME = {"janeiro": 1, "fevereiro": 2, "marco": 3, "abril": 4, "maio": 5, "junho": 6, "julho": 7, "agosto": 8,
+            "setembro": 9, "outubro": 10, "novembro": 11, "dezembro": 12}
 SERPRO_AIA = "http://secure.globalsign.com/cacert/acserproar46ovtlsca2025.crt"
 CA_PROXY = Path("/root/.ccr/ca-bundle.crt")
 
@@ -54,7 +57,7 @@ ARQUIVOS = [
     # (url, arquivo relativo a data/raw/graos, descrição, período, comex?)
     ("https://www.gov.br/transportes/pt-br/assuntos/dados-de-transportes/bit/Base-GEO/BaseFerro.zip/@@download/file",
      "multimodal/BaseFerro.zip", "BaseFerro — malha ferroviária (shapefile)", "abr/2024", False),
-    ("https://www.gov.br/antaq/pt-br/central-de-conteudos/Instalaesporturias06052025.zip",
+    ("https://www.gov.br/antaq/pt-br/central-de-conteudos/Instalaesporturias06052025.zip/@@download/file",
      "multimodal/antaq_instalacoes.zip", "ANTAQ — instalações portuárias (shapefile)", "06/05/2025", False),
     ("https://dados.antt.gov.br/dataset/438a5184-09db-49a3-88c8-0bad418b4409/resource/"
      "d7263808-bd77-4153-9910-49e041d73b21/download/producao_origem_destino_2025.csv",
@@ -67,9 +70,7 @@ ARQUIVOS = [
      "jan–dez/2025", True),
     (f"{COMEX_BD}/tabelas/URF.csv", "comex/URF.csv", "Comex Stat — tabela de URF", "", True),
     (f"{COMEX_BD}/tabelas/VIA.csv", "comex/VIA.csv", "Comex Stat — tabela de vias", "", True),
-    ("https://www.gov.br/conab/pt-br/atuacao/logistica/boletim-logistico/boletim-logistico-setembro-2026-pdf.pdf/"
-     "@@download/file", "conab/boletim-setembro-2026-pdf.pdf", "CONAB — Boletim Logístico set/2026 (PDF)",
-     "ago/2026", False),
+    # o boletim da CONAB não está aqui: o `fetch` descobre o mais recente (`boletins_conab`)
 ]
 SH4 = {"1201": "Soja", "1005": "Milho", "2304": "Farelo de soja", "1701": "Açúcar", "4703": "Celulose",
        "5201": "Algodão", "0201": "Carne bovina fresca ou refrigerada", "0202": "Carne bovina congelada",
@@ -352,9 +353,43 @@ def qualidade_frete(atribuicao, suspeito):
     return "km_suspeito" if atribuicao == "ok" else f"{atribuicao}+km_suspeito"
 
 
+def boletins_conab(html):
+    """Boletins logísticos listados na página da CONAB, do mais antigo ao mais recente: [{ano, mes, url}]. O link de
+    download é ".../boletim-logistico-<mês>-<ano>[...]/@@download/file" (o nome do mês por extenso, sem acento)."""
+    rx = re.compile(r'href="(https://www\.gov\.br/conab/[^"]*/boletim-logistico-([a-zç]+)-(\d{4})[^"/]*/@@download/file)"')
+    achados = {}
+    for url, nome, ano in rx.findall(html):
+        mes = MES_NOME.get(norm_nome(nome).lower())
+        if mes:
+            achados.setdefault((int(ano), mes), url)
+    return [{"ano": a, "mes": m, "url": u} for (a, m), u in sorted(achados.items())]
+
+
+def arquivos_conab(ano, mes):
+    """(PDF, CSV) do boletim de `mes`/`ano`, relativos a data/raw/graos."""
+    return f"conab/boletim-logistico-{ano}-{mes:02d}.pdf", f"conab/fretes_boletim_{ano}-{mes:02d}.csv"
+
+
+def boletim_local(raw=RAW):
+    """O boletim mais recente já baixado: {ano, mes, pdf, csv, rotulo ("out/2026")} ou None."""
+    achados = []
+    for p in (Path(raw) / "conab").glob("boletim-logistico-*.pdf"):
+        m = re.fullmatch(r"boletim-logistico-(\d{4})-(\d{2})\.pdf", p.name)
+        if m:
+            achados.append((int(m.group(1)), int(m.group(2))))
+    if not achados:
+        return None
+    ano, mes = max(achados)
+    pdf, csv_ = arquivos_conab(ano, mes)
+    return {"ano": ano, "mes": mes, "pdf": Path(raw) / pdf, "csv": Path(raw) / csv_, "rotulo": f"{MESES[mes - 1]}/{ano}"}
+
+
 def build_fretes():
-    if not FRETES_CSV.exists():
-        extrair_fretes(FRETES_PDF, FRETES_CSV)
+    b = boletim_local()
+    if b is None:
+        raise FileNotFoundError("nenhum boletim da CONAB em data/raw/graos/conab/ (rode o fetch)")
+    if not b["csv"].exists():
+        extrair_fretes(b["pdf"], b["csv"])
     mun, _ = _municipios()
 
     def lugar(s):
@@ -375,7 +410,7 @@ def build_fretes():
         return k[0], (mun[k][1] if k in mun else None)
 
     linhas, meses = [], set()
-    with open(FRETES_CSV, encoding="utf-8", newline="") as f:
+    with open(b["csv"], encoding="utf-8", newline="") as f:
         for r in csv.DictReader(f):
             meses.add(r["mes3"])
             origem, destino, atrib = rota_frete(r["origem"], r["destino"], r["atribuicao_origem"], mun)
@@ -398,6 +433,15 @@ def build_fretes():
 def _acesso():
     m = Manifest("multimodal")
     return min((i["acesso"] for i in m.items), default=dt.date.today().isoformat())
+
+
+def _periodo_conab():
+    """"set/2026 (boletim de out/2026)": o mês dos fretes (o anterior ao do boletim) e o do boletim em disco."""
+    b = boletim_local()
+    if b is None:
+        return ""
+    ano, mes = (b["ano"], b["mes"] - 1) if b["mes"] > 1 else (b["ano"] - 1, 12)
+    return f"{MESES[mes - 1]}/{ano} (boletim de {b['rotulo']})"
 
 
 def fontes():
@@ -426,7 +470,7 @@ def fontes():
           "Quilos líquidos por produto (código SH4), UF de origem da mercadoria, unidade da Receita Federal (URF) "
           "de despacho e via de transporte. A URF é a unidade onde ocorreu o despacho, não o ponto de entrada "
           "rodoviário."),
-        f("CONAB — Boletim Logístico", ARQUIVOS[7][0], "ago/2026 (boletim de set/2026)",
+        f("CONAB — Boletim Logístico", CONAB_LISTA, _periodo_conab(),
           "Fretes rodoviários de grãos (R$/t) e distância (km), extraídos do PDF do boletim. Na origem "
           "aproximada, a rota foi atribuída por proximidade, porque o boletim traz a origem numa célula mesclada. "
           "Distância suspeita: a distância do boletim é menor que 0,9 vez ou maior que 3 vezes a linha reta entre "
@@ -436,13 +480,41 @@ def fontes():
     return fonte
 
 
+# parte do bloco → (função que a gera, começos dos nomes das fontes dela)
+PARTES = {
+    "ferrovias": (lambda: build_ferrovias(), ["Ministério dos Transportes / ONTL — BaseFerro"]),
+    "portos": (lambda: build_portos(), ["ANTAQ"]),
+    "siade": (lambda: build_siade(), ["ANTT — SIADE", "IBGE — Logística dos Transportes"]),
+    "exportacao": (lambda: build_exportacao(), ["MDIC — Comex Stat"]),
+    "fretes": (lambda: build_fretes(), ["CONAB"]),
+}
+
+
+def montar_partes(partes, fonte, anterior):
+    """(partes geradas, fontes, nomes das partes reaproveitadas). Parte cujo bruto falta (FileNotFoundError, ou zip
+    inválido: a fonte respondeu uma página em vez do arquivo) fica como estava no bloco `anterior`, com a fonte dela
+    também; sem bloco anterior, o erro sobe. Assim um portal fora do ar não impede as outras partes de atualizar."""
+    obj, reaproveitadas, fonte = {}, [], list(fonte)
+    for nome, (gerar, prefixos) in partes.items():
+        try:
+            obj[nome] = gerar()
+        except (FileNotFoundError, zipfile.BadZipFile) as e:
+            if nome not in (anterior or {}):
+                raise
+            print(f"AVISO: multimodal, parte {nome} sem bruto ({e}): fica como estava", file=sys.stderr)
+            obj[nome] = anterior[nome]
+            reaproveitadas.append(nome)
+            velhas = {f["nome"]: f for f in anterior.get("fonte", [])}
+            fonte = [velhas.get(f["nome"], f) if any(f["nome"].startswith(px) for px in prefixos) else f for f in fonte]
+    return obj, fonte, reaproveitadas
+
+
 def build():
-    fonte = fontes()
-    ferrovias = build_ferrovias()
-    obj = {"fonte": fonte, "tipo": "medido", "ferrovias": ferrovias, "portos": build_portos(), "siade": build_siade(),
-           "exportacao": build_exportacao(), "fretes": build_fretes()}
-    OUT.mkdir(parents=True, exist_ok=True)
     p = OUT / "multimodal.json"
+    anterior = json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
+    partes, fonte, _ = montar_partes(PARTES, fontes(), anterior)
+    obj = {"fonte": fonte, "tipo": "medido", **partes}
+    OUT.mkdir(parents=True, exist_ok=True)
     p.write_text(json.dumps(obj, ensure_ascii=False, separators=SEP), encoding="utf-8")
     sz = {k: len(json.dumps(v, ensure_ascii=False, separators=SEP).encode()) for k, v in obj.items()}
     print(f"{p.relative_to(ROOT)}: {p.stat().st_size / 1e3:.0f} KB", {k: f"{v / 1e3:.0f} KB" for k, v in sz.items()})
@@ -470,19 +542,59 @@ def fetch(force=False):
     for url, rel, desc, periodo, comex in ARQUIVOS:
         dest = RAW / rel
         extra = () if (dest.exists() and not force) or not comex else ("--cacert", str(_cacert_serpro()))
-        baixar(url, dest, extra=extra, force=force)
+        try:
+            baixar(url, dest, extra=extra, force=force)
+        except (RuntimeError, OSError, subprocess.CalledProcessError) as e:
+            print(f"AVISO: {url} não baixou ({e}): a parte que depende dele fica como estava", file=sys.stderr)
+            continue
+        if dest.suffix == ".zip" and not zipfile.is_zipfile(dest):   # o gov.br às vezes devolve a página, não o arquivo
+            dest.unlink()
+            print(f"AVISO: {url} não devolveu um zip: a parte que depende dele fica como estava", file=sys.stderr)
+            continue
         m.add(url, dest, desc, periodo=periodo, licenca=LIC_GOV)
-    if force or not GPKG_FERR.exists():
+    fluxos = RAW / "logistica" / "detalhados" / "Fluxos_Ferroviarios.zip"
+    if (force or not GPKG_FERR.exists()) and fluxos.exists():
         with zipfile.ZipFile(RAW / "logistica" / "detalhados" / "Fluxos_Ferroviarios.zip") as z:
             (n,) = [n for n in z.namelist() if n.endswith(".gpkg")]
             GPKG_FERR.parent.mkdir(parents=True, exist_ok=True)
             GPKG_FERR.write_bytes(z.read(n))
-    if force or not FRETES_CSV.exists():
-        extrair_fretes(FRETES_PDF, FRETES_CSV)
-    m.add(ARQUIVOS[7][0], FRETES_CSV, "CONAB — fretes extraídos do Boletim Logístico set/2026 (derivado do PDF)",
-          periodo="ago/2026", licenca=LIC_GOV)
+    _fetch_conab(m, force)
     m.save()
     return m
+
+
+def _fetch_conab(m, force=False):
+    """Descobre na página da CONAB o boletim logístico mais recente, baixa o PDF (se ainda não está em disco) e extrai os
+    fretes para o CSV. Página fora do ar ou resposta que não é PDF: fica o boletim anterior, com aviso."""
+    lista = RAW / "conab" / "lista_boletins.html"
+    try:
+        baixar(CONAB_LISTA, lista, force=True)
+        boletins = boletins_conab(lista.read_text(encoding="utf-8", errors="replace"))
+    except Exception as e:  # noqa: BLE001 — qualquer falha da página deixa o boletim anterior
+        print(f"AVISO: CONAB, lista de boletins indisponível ({e}): fica o boletim anterior", file=sys.stderr)
+        boletins = []
+    if boletins:
+        b = boletins[-1]
+        pdf, csv_ = (RAW / x for x in arquivos_conab(b["ano"], b["mes"]))
+        try:
+            baixar(b["url"], pdf, force=force)
+        except RuntimeError as e:
+            print(f"AVISO: CONAB, boletim {b['url']} não baixou ({e}): fica o boletim anterior", file=sys.stderr)
+        if not pdf.exists():
+            pass
+        elif pdf.read_bytes()[:4] != b"%PDF":
+            pdf.unlink()
+            print(f"AVISO: CONAB, {b['url']} não devolveu um PDF: fica o boletim anterior", file=sys.stderr)
+        else:
+            rot = f"{MESES[b['mes'] - 1]}/{b['ano']}"
+            m.add(b["url"], pdf, f"CONAB — Boletim Logístico {rot} (PDF)", licenca=LIC_GOV)
+    loc = boletim_local()
+    if loc is None:
+        return
+    if force or not loc["csv"].exists():
+        extrair_fretes(loc["pdf"], loc["csv"])
+    m.add(CONAB_LISTA, loc["csv"], f"CONAB — fretes extraídos do Boletim Logístico {loc['rotulo']} (derivado do PDF)",
+          periodo=_periodo_conab().split(" (")[0], licenca=LIC_GOV)
 
 
 # ---------- extrator CONAB (do protótipo graos_scripts/conab_fretes.py) ----------

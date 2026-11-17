@@ -46,8 +46,9 @@ PDF_ROADSHOW = ROOT / "data" / "raw" / "roadshow.pdf"
 # curva das NTN-B baixada por debentures; idex lê os arquivos do IDEX-Infra salvos pelo usuário (data/raw/idex/)
 ORDEM = ("trafego", "antt", "carga", "agro", "multimodal", "pipeline", "debentures", "ida", "idex", "estaduais",
          "vmda2025", "rotas")
-# o zip do VMDa 2025 vem do Drive do usuário e os arquivos do IDEX-Infra também: não há o que baixar de novo
-SO_DO_USUARIO = ("vmda2025", "idex")
+# os arquivos do IDEX-Infra vêm do usuário: não há o que baixar de novo (o VMDa 2025 vem da camada aberta da Infra S.A.,
+# com o zip do Drive do usuário como alternativa)
+SO_DO_USUARIO = ("idex",)
 RENOVAVEIS = tuple(d for d in ORDEM if d not in SO_DO_USUARIO)
 PASSO_HTML = "build.py (HTML)"
 
@@ -96,8 +97,8 @@ def _rel_raiz(p, raiz):
 
 def passos_dominios(dominios, baixar, importar=importlib.import_module, renovar=(), manifest_dir=MANIFESTO,
                     raiz=ROOT):
-    """[(nome, função)] dos domínios pedidos, sempre na ordem de ORDEM. Com `baixar`, `fetch` (no vmda2025,
-    `registrar`, que só grava no manifesto o zip fornecido pelo usuário) antes do `build`; os domínios de `renovar`
+    """[(nome, função)] dos domínios pedidos, sempre na ordem de ORDEM. Com `baixar`, `fetch` antes do `build` (no
+    vmda2025, se a Infra S.A. não responder, `registrar` grava no manifesto o zip do Drive do usuário); os de `renovar`
     usam `fetch(force=True)` e guardam os brutos do manifesto (`manifest_dir`; caminhos relativos a `raiz`) até o
     `build` passar: se o download ou o build falham, os brutos anteriores voltam (o manifesto volta em `executar`) e
     o detalhe do passo diz quais."""
@@ -121,12 +122,20 @@ def passos_dominios(dominios, baixar, importar=importlib.import_module, renovar=
     def passo(d):
         def rodar():
             m = importar(f"intel.{d}")
-            if d == "vmda2025":
-                if not Path(m.ZIP).exists():
-                    raise Pular(f"falta {_rel(m.ZIP)} (shapefile do Google Drive do usuário; ver README, "
-                                "\"Atualizar os dados\"); vmda2025.json ficou como estava")
+            if d == "vmda2025" and d not in renovar:
+                erro = None
                 if baixar:
-                    m.registrar()
+                    try:
+                        m.fetch()
+                    except Exception as e:  # noqa: BLE001 — servidor fora do ar: tenta o zip do Drive
+                        erro = e
+                if not Path(m.JSON_INFRASA).exists():
+                    if not Path(m.ZIP).exists():
+                        motivo = f" ({erro})" if erro else " (rode com --baixar)"
+                        raise Pular(f"a camada da Infra S.A. não baixou{motivo} e falta {_rel(m.ZIP)} (shapefile do "
+                                    "Google Drive do usuário, a alternativa); vmda2025.json ficou como estava")
+                    if baixar:
+                        m.registrar()
             elif d == "debentures" and not m.planilhas():
                 raise Pular(f"faltam as planilhas de telas e negócios em {_rel(m.PASTA)}/ (arquivos do usuário; ver "
                             "README, \"Debêntures\"); debentures.json ficou como estava")
@@ -281,10 +290,11 @@ SEM_NOVIDADE = "renovado: nenhum arquivo mudou (a fonte não publicou dado novo 
 
 def atualizar(dominios=ORDEM, baixar=False, html=True, hoje=None, intel_dir=INTEL, saida=SAIDA, renovar=(),
               manifest_dir=MANIFESTO, importar=importlib.import_module, validar=validar_camada, construir=construir_html,
-              fontes=fontes_bloco, anterior=versao_anterior, log=print, indices_dir=INDICES):
+              fontes=fontes_bloco, anterior=versao_anterior, log=print, indices_dir=INDICES, sentinelas=None):
     """Roda a atualização e escreve o relatório em `saida`; devolve o código de saída (0, ou 1 se a validação ou o
     HTML falharem). `renovar`: domínios baixados de novo (fetch com force). As funções injetáveis existem para os
-    testes."""
+    testes. `sentinelas(intel, hoje, rede)`: itens de scripts/sentinelas.py para o topo do relatório (None: sem essas
+    seções; o `main` passa `sentinelas.verificar`)."""
     hoje = hoje or dt.date.today()
     renovar = set(renovar)
     antes = anterior(intel_dir)
@@ -329,7 +339,19 @@ def atualizar(dominios=ORDEM, baixar=False, html=True, hoje=None, intel_dir=INTE
                        + ([f"--renovar {','.join(d for d in ORDEM if d in renovar)}"] if renovar else [])
                        + ([f"--dominios {','.join(d for d in ORDEM if d in pedidos)}"] if pedidos != set(ORDEM) else [])
                        + ([] if html else ["--sem-html"]))
-    Path(saida).write_text(curadoria.relatorio(hoje, passos, diff, itens, opcoes, erros, sem_novidade), encoding="utf-8")
+    avisos = None
+    if sentinelas is not None:
+        try:
+            avisos = sentinelas(depois, hoje, rede=baixar)
+        except Exception as e:  # noqa: BLE001 — as sentinelas nunca derrubam a atualização
+            avisos = [{"grupo": "sem_verificacao", "fonte": "sentinelas",
+                       "situacao": f"falharam ({type(e).__name__}: {e})", "acao": ""}]
+        for s in avisos:
+            if s["grupo"] in ("usuario", "git", "novidade"):
+                log(f"  {'precisa de você' if s['grupo'] != 'novidade' else 'novidade na fonte'}: {s['fonte']} — "
+                    f"{s['situacao']}")
+    Path(saida).write_text(curadoria.relatorio(hoje, passos, diff, itens, opcoes, erros, sem_novidade, avisos),
+                           encoding="utf-8")
 
     conta = {e: sum(p["estado"] == e for p in passos) for e in ("ok", "pulado", "falhou")}
     mudou = [d["bloco"] for d in diff if (d["registros_antes"], d["kb_antes"]) != (d["registros_depois"], d["kb_depois"])]
@@ -348,7 +370,7 @@ def main(argv=None):
     ap.add_argument("--baixar", action="store_true", help="baixa antes as fontes públicas (fetch de cada domínio)")
     ap.add_argument("--renovar", nargs="?", const="", metavar="DOMINIOS",
                     help="baixa de novo, mesmo o que já existe em data/raw/, os domínios listados (vírgula) ou, sem "
-                         f"lista, todos os pedidos; não vale para vmda2025 (arquivo do usuário). Entre: {','.join(RENOVAVEIS)}")
+                         f"lista, todos os pedidos; não vale para idex (arquivos do usuário). Entre: {','.join(RENOVAVEIS)}")
     ap.add_argument("--dominios", help=f"lista separada por vírgula, entre: {','.join(ORDEM)} (padrão: todos)")
     ap.add_argument("--sem-html", action="store_true", help="não gera o mapa-rodovias.html")
     args = ap.parse_args(argv)
@@ -362,9 +384,6 @@ def main(argv=None):
     renovar = ()
     if args.renovar is not None:
         renovar = lista(args.renovar) or [d for d in dominios if d in RENOVAVEIS]
-        if "vmda2025" in renovar:
-            ap.error("vmda2025 vem do Google Drive do usuário: troque o zip em data/raw/trafego/vmda2025/ e rode sem "
-                     "--renovar")
         if "idex" in renovar:
             ap.error("idex vem de arquivos do usuário: salve a planilha e o relatório novos em data/raw/idex/ e rode sem "
                      "--renovar")
@@ -374,7 +393,9 @@ def main(argv=None):
         fora = [d for d in renovar if d not in dominios]
         if fora:
             ap.error(f"--renovar {', '.join(fora)}: domínio fora de --dominios")
-    return atualizar(dominios, baixar=args.baixar, html=not args.sem_html, renovar=renovar)
+    import sentinelas
+    return atualizar(dominios, baixar=args.baixar, html=not args.sem_html, renovar=renovar,
+                     sentinelas=lambda intel, hoje, rede: sentinelas.verificar(intel, hoje, rede=rede))
 
 
 if __name__ == "__main__":

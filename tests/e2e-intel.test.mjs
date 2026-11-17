@@ -2946,7 +2946,10 @@ test('Debêntures: seção de índices logo abaixo do cenário de juros, com o n
     // cada interrupção da linha = um trecho a mais no desenho (M); o aviso diz os dias
     const trechos = await page.$$eval('#chart-d-ind-ida path.line', ps => ps.map(p => (p.getAttribute('d').match(/M/g) || []).length));
     assert.deepEqual(trechos, cob.quebras.map(q => q + 1));
-    if (cob.lac.length) assert.ok((await page.textContent('#deb-ida-lacunas')).includes(cob.lac.map(d => brData(d)).join(', ')), 'o aviso diz os dias sem ponto');
+    if (cob.lac.length) {   // até 5 dias, a lista das datas; mais que isso, quantos dias úteis
+      const esperado = cob.lac.length <= 5 ? cob.lac.map(d => brData(d)).join(', ') : `em ${cob.lac.length} dias úteis`;
+      assert.ok((await page.textContent('#deb-ida-lacunas')).includes(esperado), 'o aviso diz os dias sem ponto');
+    }
     else assert.equal(await page.locator('#deb-ida-lacunas').count(), 0);
   }
   assert.equal(await page.textContent('#chart-d-ind-idex-ret text.ylabel'), '% acumulado');
