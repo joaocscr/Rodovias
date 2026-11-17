@@ -1,6 +1,6 @@
 # Handoff · Rodovias do Brasil · Centro de Inteligência
 
-Documento para retomar o projeto numa conversa nova. Estado em 23/10/2026: `main` em `4d88be8`. A verificação dos leilões, o fechamento do projeto e os ajustes seguintes (abas Debêntures e Glossário, fichas de grupo e consórcio, "Sobre este painel", aba Fontes derivada dos blocos, clareza das abas) estão no branch `claude/confident-brown-k72wi2`, no PR [joaocscr/Rodovias#4](https://github.com/joaocscr/Rodovias/pull/4), aberto e ainda sem merge (o merge só sai quando o usuário pede).
+Documento para retomar o projeto numa conversa nova. Estado em 17/11/2026: `main` em `a75ce78` (PR #5). A atualização de 17/11 (planilhas das corretoras com tela de 16/11 e negócios e intenções de 01/10 a 13/11, emissores novos classificados, Selic pedida por janela de datas, Pesquisa de Estoques do 1º semestre de 2026) está no branch `claude/wizardly-maxwell-472sba`, que também incorpora a atualização de 30/10 do branch `claude/awesome-edison-e7gc88` (nunca levada ao `main`): dela vêm a curva das NTN-B e o IDA de 26 a 29/10, que a ANBIMA já tirou do ar. **Lição:** os históricos versionados (`data/indices/*.json`) só guardam os dias que algum build viu; um branch de atualização sem merge leva esses dias com ele. Dê merge (ou junte o branch anterior) antes de atualizar de novo.
 
 **Para começar uma sessão nova:** abra o repositório `joaocscr/Rodovias` em claude.ai/code e mande como primeira mensagem algo como *"Leia `docs/HANDOFF.md` e o `README.md`. Quero continuar com …"*.
 

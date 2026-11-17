@@ -20,13 +20,13 @@ Registros: itens das coleções principais de cada bloco (valores preenchidos); 
 
 | Bloco | Registros antes | Registros depois | KB antes | KB depois | Mudou |
 |---|---:|---:|---:|---:|---|
-| agro | 5.571 | 5.571 | 210,5 | 210,6 | sim (+56 bytes) |
+| agro | 5.571 | 5.571 | 210,6 | 210,6 | não |
 | antt | 1.938 | 1.938 | 399,2 | 399,2 | não |
 | carga | 4.312 | 4.312 | 141,3 | 141,3 | não |
-| debentures | 262 | 262 | 128,0 | 128,0 | não |
+| debentures | 262 | 262 | 128,0 | 128,1 | sim (+27 bytes) |
 | estaduais | 16.238 | 16.238 | 2.949,8 | 2.949,8 | não |
 | fontes | 57 | 57 | 31,2 | 31,2 | não |
-| ida | 103 | 103 | 13,7 | 13,7 | não |
+| ida | 103 | 103 | 13,7 | 15,2 | sim (+1,5 KB) |
 | idex | 116 | 116 | 9,8 | 9,8 | não |
 | multimodal | 3.188 | 3.188 | 413,9 | 413,9 | não |
 | municipios | 5.571 | 5.571 | 1.687,6 | 1.687,6 | não |
@@ -78,7 +78,7 @@ Registros: itens das coleções principais de cada bloco (valores preenchidos); 
 
 ### Debêntures sem série pública ou sem curva das NTN-B (indicador ou spread "—") (2)
 
-- **Curva das NTN-B (taxa indicativa da ANBIMA)** — sem arquivo da ANBIMA em 15/10/2026, 26/10/2026, 27/10/2026, 28/10/2026, 29/10/2026, 30/10/2026, 03/11/2026, 04/11/2026, 05/11/2026, 06/11/2026 (feriado ou dia ainda não publicado): o spread dos negócios e intenções desses dias fica "—"; rode `python scripts/atualizar.py --baixar --dominios debentures` quando a ANBIMA publicar
+- **Curva das NTN-B (taxa indicativa da ANBIMA)** — sem arquivo da ANBIMA em 15/10/2026, 30/10/2026, 03/11/2026, 04/11/2026, 05/11/2026, 06/11/2026 (feriado ou dia ainda não publicado): o spread dos negócios e intenções desses dias fica "—"; rode `python scripts/atualizar.py --baixar --dominios debentures` quando a ANBIMA publicar
 - **Curva das NTN-B, dias anteriores ao primeiro arquivo (sem ação)** — sem arquivo da ANBIMA em 01/10/2026, 02/10/2026, 05/10/2026, 06/10/2026, 07/10/2026, 08/10/2026, 09/10/2026, 13/10/2026: são anteriores a 14/10/2026, o primeiro dia com curva, e o site da ANBIMA só guarda os arquivos recentes, então não voltam a ser publicados; o spread desses dias fica "—" de forma permanente e não há o que baixar
 
 ### Taxas de debêntures fora do intervalo plausível (fora das médias) (9)
