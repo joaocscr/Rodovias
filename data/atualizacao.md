@@ -1,15 +1,17 @@
 # Atualização dos dados — 17/11/2026
 
-Gerado por `python scripts/atualizar.py` (--baixar, --dominios pipeline, --sem-html). Diferenças em relação à versão de `data/intel/` no último commit do git.
+Gerado por `python scripts/atualizar.py` (sem --baixar, --dominios agro,debentures,ida). Diferenças em relação à versão de `data/intel/` no último commit do git.
 
 ## Passos
 
 | Passo | Resultado | Detalhe |
 |---|---|---|
-| pipeline | ok |  |
+| agro | ok |  |
+| debentures | ok |  |
+| ida | ok |  |
 | fontes_bloco | ok |  |
 | validação da verificação | ok |  |
-| build.py (HTML) | pulado | --sem-html |
+| build.py (HTML) | ok |  |
 | RoadShow (PDF) | pulado | data/raw/roadshow.pdf ausente: os testes que conferem o PDF ficam pulados; os dados do RoadShow vêm de data/roadshow/*.json e não mudam com este comando |
 
 ## O que mudou por bloco
@@ -18,13 +20,13 @@ Registros: itens das coleções principais de cada bloco (valores preenchidos); 
 
 | Bloco | Registros antes | Registros depois | KB antes | KB depois | Mudou |
 |---|---:|---:|---:|---:|---|
-| agro | 5.571 | 5.571 | 210,5 | 210,5 | não |
+| agro | 5.571 | 5.571 | 210,5 | 210,6 | sim (+56 bytes) |
 | antt | 1.938 | 1.938 | 399,2 | 399,2 | não |
 | carga | 4.312 | 4.312 | 141,3 | 141,3 | não |
-| debentures | 236 | 262 | 111,4 | 128,0 | sim (+16,6 KB) |
+| debentures | 262 | 262 | 128,0 | 128,0 | não |
 | estaduais | 16.238 | 16.238 | 2.949,8 | 2.949,8 | não |
 | fontes | 57 | 57 | 31,2 | 31,2 | não |
-| ida | 99 | 103 | 11,5 | 13,7 | sim (+2,2 KB) |
+| ida | 103 | 103 | 13,7 | 13,7 | não |
 | idex | 116 | 116 | 9,8 | 9,8 | não |
 | multimodal | 3.188 | 3.188 | 413,9 | 413,9 | não |
 | municipios | 5.571 | 5.571 | 1.687,6 | 1.687,6 | não |

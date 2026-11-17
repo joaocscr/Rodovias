@@ -1,6 +1,6 @@
 {
  "arquivos": 299,
- "bytes": 1352923672,
+ "bytes": 1353564616,
  "itens": [
   {
    "dominio": "agro",
@@ -3279,11 +3279,11 @@
    "descricao": "PRF DATATRAN 2026 agrupado por ocorrência (ZIP; página: https://www.gov.br/prf/pt-br/acesso-a-informacao/dados-abertos/dados-abertos-da-prf)",
    "url": "https://drive.google.com/uc?export=download&id=1A3IirNm0AzRaSosA1IS94DOVmvKsn0Ol",
    "arquivo": "data/raw/trafego/prf/datatran2026.zip",
-   "bytes": 2501149,
-   "sha256": "edc00438a4a00a483115a14be886b7b3e8a975064f14375ee043d3d69c157333",
+   "bytes": 3142093,
+   "sha256": "1809ee0f19b4a9de48cd0cebb4ed39eda89b26133382c3e93df4aa76b725ebd1",
    "periodo": "2026-01 a 2026-08 (parcial)",
    "licenca": "CC BY-ND 3.0 (PRF, dados abertos)",
-   "acesso": "2026-10-20"
+   "acesso": "2026-11-17"
   },
   {
    "dominio": "vmda2025",
