@@ -1,8 +1,9 @@
-"""VMDa 2025 (DNIT, "VMDa – Modelagem 2025", camada VGeo fornecida pelo usuário): volume médio diário anual
+"""VMDa 2025 (DNIT, "VMDa – Modelagem 2025"; camada aberta da Infra S.A., baixada pelo `fetch`, ou o shapefile VGeo do
+Drive do usuário como alternativa): volume médio diário anual
 MODELADO por link da rede vetorizada, total e por sentido (sem leves/pesados), para os físicos do SNV e para as
 linhas da malha estadual (data/intel/estaduais.json, `malha`).
 
-Uso: python scripts/intel/vmda2025.py [registrar|build|all]
+Uso: python scripts/intel/vmda2025.py [fetch|registrar|build|all]
 
 Regras (spec docs/superpowers/specs/2026-10-20-v3.1-rotas-paleta-vmda2025-design.md, contrato no plano):
 - Federal, por código: cada trecho do SNV recebe a média, ponderada pela `extensao`, dos links com o mesmo
@@ -33,6 +34,12 @@ from intel.fontes import RAW, ROOT, Manifest  # noqa: E402
 from intel.snvbase import decode_line, snv  # noqa: E402
 
 DRIVE_URL = "https://drive.google.com/file/d/1gnXpMWMLs4uZ9mWZf2SxlNe6R8LcdFha/view"
+# A mesma camada publicada pela Infra S.A. (Observatório Nacional de Transporte e Logística), aberta: o `fetch` a baixa
+# sem depender do Drive. `servicos_vmda` acha no servidor o ano mais recente publicado (para avisar quando sair outro).
+INFRASA = "https://geo.infrasa.gov.br/server/rest/services/Hosted"
+CAMADA = f"{INFRASA}/ONTL_Rodoviario_VMDa_Modelagem_2025/FeatureServer/0"
+CAMPOS = ("codigo_snv", "jurisdicao", "tipo_link", "extensao", "vmda_total", "vmda_cresc", "vmda_decre", "classifica")
+JSON_INFRASA = RAW / "trafego" / "vmda2025" / "infrasa_vmda2025.json"
 DIR = RAW / "trafego" / "vmda2025"
 ZIP = DIR / "vgeo_vmda2025.zip"  # arquivo do Drive do usuário
 PASTA = DIR / "VMDa - Modelagem 2025"
@@ -99,17 +106,43 @@ def find_shp():
     return SHP
 
 
-def load_links(shp=None):
-    """Links não conectores, com atributos e geometria em EPSG:5880 (m). Lê o shapefile em fluxo."""
+def _do_shapefile(shp):
+    """(atributos, pontos) de cada link do shapefile do Drive, em fluxo."""
     import shapefile
+    r = shapefile.Reader(str(shp), encoding="utf-8")
+    for sr in r.iterShapeRecords():
+        yield sr.record.as_dict(), sr.shape.points
+
+
+def _do_infrasa(path):
+    """(atributos, pontos) de cada link baixado da camada da Infra S.A. (as partes da linha, em sequência)."""
+    for f in json.loads(Path(path).read_text(encoding="utf-8"))["features"]:
+        a = dict(f["a"])
+        for k in ("vmda_cresc", "vmda_decre"):   # a camada aberta grava 0 onde o shapefile não tem valor (nunca 0)
+            if not a.get(k):
+                a[k] = None
+        yield a, [pt for parte in f["p"] for pt in parte]
+
+
+def origem():
+    """De onde vêm os links: ("infrasa", caminho) se a camada da Infra S.A. foi baixada; senão ("drive", shapefile)."""
+    if JSON_INFRASA.exists():
+        return "infrasa", JSON_INFRASA
+    return "drive", find_shp()
+
+
+def load_links(shp=None):
+    """Links não conectores, com atributos e geometria em EPSG:5880 (m): da camada da Infra S.A. ou do shapefile."""
     import shapely
     from pyproj import Transformer
 
-    r = shapefile.Reader(str(shp or find_shp()), encoding="utf-8")
+    if shp is None:
+        tipo_origem, caminho = origem()
+    else:
+        tipo_origem, caminho = "drive", shp
+    fonte = _do_infrasa(caminho) if tipo_origem == "infrasa" else _do_shapefile(caminho)
     cod, jur, tipo, ext, t, c, d, ns, partes, ids = [], [], [], [], [], [], [], [], [], []
-    for sr in r.iterShapeRecords():
-        a = sr.record.as_dict()
-        pts = sr.shape.points
+    for a, pts in fonte:
         if a["tipo_link"] == "Conector" or len(pts) < 2:
             continue
         ids.append(np.full(len(pts), len(cod)))
@@ -205,6 +238,55 @@ def por_estadual(lk, s):
     return casar(lk, cand, linhas_malha(s))
 
 
+def _pedir(url, tentativas=4):
+    import subprocess
+    import time
+    for k in range(tentativas):
+        r = subprocess.run(["curl", "-sS", "-A", "Mozilla/5.0 (X11; Linux x86_64) rodovias-intel", "-m", "180", url],
+                           capture_output=True)
+        if r.returncode == 0:
+            try:
+                d = json.loads(r.stdout)
+                if "error" not in d:
+                    return d
+            except ValueError:
+                pass
+        time.sleep(2 ** (k + 1))
+    raise RuntimeError(f"falha ao consultar {url}")
+
+
+def fetch(force=False, pagina=2000):
+    """Baixa da Infra S.A. os links da modelagem 2025 (só os campos usados e a geometria em WGS84) para JSON_INFRASA."""
+    import urllib.parse
+    if JSON_INFRASA.exists() and not force:
+        return JSON_INFRASA
+    total = _pedir(f"{CAMADA}/query?where=1%3D1&returnCountOnly=true&f=json")["count"]
+    feats = []
+    while len(feats) < total:
+        q = {"where": "1=1", "outFields": ",".join(CAMPOS), "outSR": 4326, "orderByFields": "objectid",
+             "resultOffset": len(feats), "resultRecordCount": pagina, "f": "json"}
+        lote = _pedir(f"{CAMADA}/query?" + urllib.parse.urlencode(q)).get("features") or []
+        if not lote:
+            break
+        feats += [{"a": {k: f["attributes"].get(k) for k in CAMPOS}, "p": f["geometry"]["paths"]} for f in lote]
+    if len(feats) != total:
+        raise RuntimeError(f"Infra S.A.: {len(feats)} de {total} links baixados")
+    JSON_INFRASA.parent.mkdir(parents=True, exist_ok=True)
+    JSON_INFRASA.write_text(json.dumps({"camada": CAMADA, "features": feats}, separators=(",", ":")), encoding="utf-8")
+    m = Manifest("vmda2025")
+    m.add(CAMADA, JSON_INFRASA, "VMDa – Modelagem 2025 por link (Infra S.A./ONTL, camada aberta; campos usados e "
+                                "geometria)", periodo="2025", licenca=LICENCA)
+    m.save()
+    return JSON_INFRASA
+
+
+def servicos_vmda():
+    """Anos da modelagem do VMDa publicados no servidor da Infra S.A. (nomes ONTL_Rodoviario_VMDa_Modelagem_AAAA)."""
+    import re
+    nomes = [s["name"] for s in _pedir(f"{INFRASA}?f=json").get("services", [])]
+    return sorted({int(m.group(1)) for n in nomes for m in [re.search(r"VMDa_Modelagem_(\d{4})$", n)] if m})
+
+
 # ============================== bloco ==============================
 def registrar():
     """O arquivo vem do Drive do usuário (sem download aqui): registra o zip no manifesto."""
@@ -215,14 +297,18 @@ def registrar():
 
 
 def _fonte():
+    infrasa = origem()[0] == "infrasa"
+    url = CAMADA if infrasa else DRIVE_URL
     acesso = dt.date.today().isoformat()
     for i in Manifest("vmda2025").items:
-        if i["url"] == DRIVE_URL:
+        if i["url"] == url:
             acesso = i["acesso"]
+    de_onde = ("Modelagem do DNIT publicada em camada aberta pela Infra S.A. (Observatório Nacional de Transporte e "
+               "Logística). " if infrasa else "Camada VGeo/DNIT fornecida pelo usuário. ")
     return {
         "nome": "DNIT — VMDa 2025 (volume médio diário anual modelado, total e por sentido)",
-        "url": DRIVE_URL, "periodo": "2025", "acesso": acesso, "licenca": LICENCA, "tipo": "modelado",
-        "nota": ("Camada VGeo/DNIT fornecida pelo usuário. Estimativa modelada por trecho da rede, não é contagem; "
+        "url": url, "periodo": "2025", "acesso": acesso, "licenca": LICENCA, "tipo": "modelado",
+        "nota": (de_onde + "Estimativa modelada por trecho da rede, não é contagem; "
                  "traz só o total de veículos por dia e os dois sentidos, sem separar leves e pesados. Cada trecho "
                  "federal recebeu a média dos trechos do modelo com o mesmo código do SNV, ponderada pela extensão; "
                  "onde há trechos coincidentes vale o de maior volume total. Sem código correspondente, vale a "
@@ -258,7 +344,9 @@ def build(write=True):
 
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "all"
-    if cmd in ("registrar", "all"):
+    if cmd in ("fetch", "all"):
+        fetch()
+    if cmd == "registrar":
         registrar()
     if cmd in ("build", "all"):
         build()

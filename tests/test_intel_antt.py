@@ -11,7 +11,7 @@ from intel import antt  # noqa: E402
 
 OUT = ROOT / "data" / "intel" / "antt.json"
 RAW = ROOT / "data" / "raw" / "antt"
-N_CAD = 277  # registros do cadastro de praças (versão 6/2026)
+N_CAD = 289  # registros do cadastro de praças (versão de 03/11/2026)
 
 
 @pytest.fixture(scope="module")
@@ -260,3 +260,26 @@ def test_manifesto_registra_brutos_existentes():
     assert "data/raw/antt/praca/dados-dos-pracas-de-pedagio6_2026.csv" in arqs
     assert "data/raw/antt/capas/lista.html" in arqs
     assert all(i["url"].startswith("https://") and i["sha256"] for i in m)
+
+
+def test_csvs_de_acompanhamento_por_concessao_viram_um_so():
+    """Desde 28/10/2026 a ANTT publica o acompanhamento anual em um CSV por concessão: o fetch os junta no arquivo
+    único de antes (mesmo cabeçalho), e cabeçalho diferente é erro, não mistura."""
+    a = ("a.csv", b"concessionaria;id\r\nVIA SUL;1\r\nVIA SUL;2\r\n")
+    b = ("b.csv", b"concessionaria;id\nWAY 262;3\n\n")
+    assert antt.juntar_csvs([a, b]) == b"concessionaria;id\nVIA SUL;1\nVIA SUL;2\nWAY 262;3\n"
+    with pytest.raises(ValueError, match="c.csv"):
+        antt.juntar_csvs([a, ("c.csv", b"outro;cabecalho\nx;y\n")])
+
+
+def test_cadastro_de_pracas_pelo_recurso_mais_recente():
+    meta = {"resources": [
+        {"name": "Dados dos Praças de Pedágio", "url": "https://x/old/dados-dos-pracas-de-pedagio6_2026.csv",
+         "last_modified": "2026-07-28T10:00:00"},
+        {"name": "Dados dos Praças de Pedágio", "url": "https://x/new/dados-dos-praas-de-pedgio.csv",
+         "last_modified": "2026-11-03T18:07:51"},
+        {"name": "Dados dos Praças de Pedágio", "url": "https://x/new/dados-dos-praas-de-pedgio.json",
+         "last_modified": "2026-11-03T18:08:03"},
+        {"name": "Dicionário de Dados - Dados dos Praças de Pedágio", "url": "https://x/dic.pdf"}]}
+    assert antt._cadastro(meta) == ("https://x/new/dados-dos-praas-de-pedgio.csv", "2026-11-03")
+    assert antt._resource_url(meta, antt.CADASTRO) == "https://x/new/dados-dos-praas-de-pedgio.csv"

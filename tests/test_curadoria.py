@@ -249,3 +249,23 @@ def test_relatorio_lista_fontes_renovadas_sem_dado_novo():
     assert "## Fontes renovadas sem dado novo" in md
     assert "- antt" in md and "fonte não publicou dado novo ou o endereço mudou" in md
     assert "Fontes renovadas" not in curadoria.relatorio(HOJE, [], [], [])
+
+
+def test_relatorio_comeca_pelo_que_precisa_do_usuario():
+    passos = [{"passo": "antt", "estado": "pulado", "detalhe": "falta o bruto"},
+              {"passo": "RoadShow (PDF)", "estado": "pulado", "detalhe": "data/raw/roadshow.pdf ausente"},
+              {"passo": "build.py (HTML)", "estado": "pulado", "detalhe": "--sem-html"},
+              {"passo": "debentures", "estado": "ok", "detalhe": ""}]
+    sent = [{"grupo": "usuario", "fonte": "IDEX-Infra", "situacao": "planilha até 16/11/2026", "acao": "Salve no Drive."},
+            {"grupo": "git", "fonte": "claude/x", "situacao": "1 commit(s) fora do main", "acao": "Junte."},
+            {"grupo": "sem_verificacao", "fonte": "SNV (DNIT)", "situacao": "não consegui conferir", "acao": ""},
+            {"grupo": "novidade", "fonte": "VMDa", "situacao": "há 2026", "acao": "Crie o bloco."}]
+    md = curadoria.relatorio(dt.date(2026, 11, 17), passos, [], [], sentinelas=sent)
+    topo = md.split("## Passos")[0]
+    assert topo.index("## Precisa de você") < topo.index("## Não atualizou nesta rodada") < topo.index("## Novidades")
+    assert "- **IDEX-Infra** — planilha até 16/11/2026. Salve no Drive." in topo and "**claude/x**" in topo
+    assert "- **antt** (pulado) — falta o bruto" in topo and "**SNV (DNIT)** — não consegui conferir" in topo
+    assert "RoadShow (PDF)" not in topo and "--sem-html" not in topo
+    assert "- **VMDa** — há 2026. Crie o bloco." in topo
+    sem = curadoria.relatorio(dt.date(2026, 11, 17), passos, [], [])
+    assert "## Precisa de você" not in sem                               # sem sentinelas: relatório de antes

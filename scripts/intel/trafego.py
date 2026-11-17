@@ -15,6 +15,7 @@ Regras de junção com o SNV congelado (data/base/snv.json):
 """
 import datetime as dt
 import json
+import re
 import sys
 import urllib.parse
 import zipfile
@@ -29,8 +30,12 @@ OUT = ROOT / "data" / "intel" / "trafego.json"
 
 VMDA_LAYER = "https://geo.infrasa.gov.br/server/rest/services/Hosted/VMDa_2023/FeatureServer/3"
 VMDA_FILE = RAW / "infrasa" / "vmda2023_data.json"
-ABCR_URL = "https://melhoresrodovias.org.br/wp-content/uploads/2026/10/base_0926.xlsx"
-ABCR_FILE = RAW / "abcr" / "base_0926.xlsx"
+# A ABCR publica a planilha do índice todo mês com nome que muda (base_0926.xlsx, abcr_1026.xlsx): o `fetch` acha a mais
+# recente na lista de arquivos do site (API do WordPress) e o build usa a mais recente em disco.
+ABCR_MIDIA = "https://melhoresrodovias.org.br/wp-json/wp/v2/media?per_page=50&orderby=date&_fields=date,source_url"
+ABCR_PAGINA = "https://melhoresrodovias.org.br/indice-abcr/"
+ABCR_PASTA = RAW / "abcr"
+ABCR_NOME = re.compile(r"(?:base|abcr)_(\d{2})(\d{2})\.xlsx$", re.I)
 PRF_PAGINA = "https://www.gov.br/prf/pt-br/acesso-a-informacao/dados-abertos/dados-abertos-da-prf"
 PRF_IDS = {  # DATATRAN agrupado por ocorrência (Google Drive, ZIP com um CSV)
     2024: "14lB0vqMFkaZj8HZ44b0njYgxs9nAN8KO",
@@ -39,6 +44,7 @@ PRF_IDS = {  # DATATRAN agrupado por ocorrência (Google Drive, ZIP com um CSV)
 }
 ANOS = [2024, 2025]
 ABCR_MESES = 120
+MESES_BR = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
 PRF_KM_MAX_COORD = 5000.0  # m: coordenada deve cair a até 5 km do físico achado por BR+UF+km
 PRF_SNAP_M = 500.0
 PRF_KM_TOL = 2.0
@@ -104,9 +110,7 @@ def fetch(force=False):
     fetch_vmda(force=force)
     mf.add(VMDA_LAYER, VMDA_FILE, "VMDa 2023 por subtrecho de modelagem (Leves/Pesados), tabela `data`, SNV 202401A",
            "2023", "Dados abertos Infra S.A.")
-    baixar(ABCR_URL, ABCR_FILE, force=force)
-    mf.add(ABCR_URL, ABCR_FILE, "Índice ABCR de fluxo de veículos pedagiados, série mensal 1999-set/2026", "1999-2026-09",
-           "Divulgação pública ABCR (citar a fonte)")
+    _fetch_abcr(mf, force)
     for ano in PRF_IDS:
         z = baixar(prf_url(ano), prf_zip(ano), force=force)
         if force or not prf_csv(ano).exists():
@@ -297,10 +301,59 @@ def build_acidentes(anos=ANOS):
 
 
 # ============================== ABCR ==============================
+def abcr_publicadas(midia):
+    """Planilhas do índice na lista de arquivos do site (JSON da API do WordPress), da mais antiga à mais recente:
+    [{ano, mes, url}], pelo mês e ano do nome do arquivo (MMAA)."""
+    achados = {}
+    for item in midia or []:
+        url = str(item.get("source_url") or "")
+        m = ABCR_NOME.search(url.rsplit("/", 1)[-1])
+        if m:
+            achados.setdefault((2000 + int(m.group(2)), int(m.group(1))), url)
+    return [{"ano": a, "mes": ms, "url": u} for (a, ms), u in sorted(achados.items())]
+
+
+def abcr_local(pasta=None):
+    """A planilha do índice mais recente em disco (pelo MMAA do nome), ou None."""
+    achados = []
+    for p in Path(pasta or ABCR_PASTA).glob("*.xlsx"):
+        m = ABCR_NOME.search(p.name)
+        if m:
+            achados.append(((int(m.group(2)), int(m.group(1))), p))
+    return max(achados)[1] if achados else None
+
+
+def _fetch_abcr(mf, force=False):
+    """Baixa a planilha mais recente do índice ABCR. Lista indisponível: fica a planilha que já está em disco, com aviso."""
+    lista = ABCR_PASTA / "midia.json"
+    try:
+        baixar(ABCR_MIDIA, lista, force=True)
+        publicadas = abcr_publicadas(json.loads(lista.read_text(encoding="utf-8")))
+    except Exception as e:  # noqa: BLE001 — site fora do ar ou resposta inesperada: fica a planilha anterior
+        print(f"AVISO: ABCR, lista de arquivos indisponível ({e}): fica a planilha anterior", file=sys.stderr)
+        publicadas = []
+    if publicadas:
+        ult = publicadas[-1]
+        dest = ABCR_PASTA / ult["url"].rsplit("/", 1)[-1]
+        baixar(ult["url"], dest, force=force)
+        mes = f"{ult['ano']}-{ult['mes']:02d}"
+        mf.add(ult["url"], dest, f"Índice ABCR de fluxo de veículos pedagiados, série mensal 1999 a {mes}",
+               f"1999-{mes}", "Divulgação pública ABCR (citar a fonte)")
+
+
+def _url_abcr(path):
+    """URL de onde veio a planilha em disco (do manifesto); sem registro, a página do índice."""
+    rel = str(Path(path).relative_to(ROOT)) if path else ""
+    return next((i["url"] for i in Manifest("trafego").items if i.get("arquivo") == rel), ABCR_PAGINA)
+
+
 def build_abcr(meses=ABCR_MESES):
     """Brasil, série "(C) Original" (índice 1999=100), colunas B-D (leves, pesados, total), últimos `meses` meses."""
     import openpyxl
-    ws = openpyxl.load_workbook(ABCR_FILE, data_only=True, read_only=True)["(C) Original"]
+    arquivo = abcr_local()
+    if arquivo is None:
+        raise FileNotFoundError(f"nenhuma planilha do índice ABCR em {ABCR_PASTA} (rode o fetch)")
+    ws = openpyxl.load_workbook(arquivo, data_only=True, read_only=True)["(C) Original"]
     linhas = [r for r in ws.iter_rows(min_row=4, max_col=4, values_only=True)
               if isinstance(r[0], dt.datetime) and all(isinstance(v, (int, float)) for v in r[1:4])]
     linhas = sorted(linhas, key=lambda r: r[0])[-meses:]
@@ -318,7 +371,14 @@ def _acesso(url):
     return dt.date.today().isoformat()
 
 
-def fontes():
+def _mes_br(aaaamm):
+    a, m = aaaamm.split("-")
+    return f"{MESES_BR[int(m) - 1]}/{a}"
+
+
+def fontes(abcr=None):
+    abcr_url = _url_abcr(abcr_local())
+    abcr_per = f"{_mes_br(abcr['meses'][0])} a {_mes_br(abcr['meses'][-1])}" if abcr and abcr["meses"] else ""
     return [
         {"nome": "Infra S.A. / DNIT — VMDa 2023 (volume médio diário anual modelado, Leves e Pesados)",
          "url": VMDA_LAYER, "periodo": "2023 (SNV 202401A)", "acesso": _acesso(VMDA_LAYER),
@@ -332,15 +392,16 @@ def fontes():
          "nota": "Soma dos acidentes de 2024 e 2025; 2026, ainda parcial, não entra. Cada ocorrência foi ligada ao "
                  "trecho federal pela rodovia, UF e km quando a coordenada está a até 5 km do ponto; senão, ao trecho "
                  "mais próximo, até 500 m. Cerca de 1% das ocorrências não encontrou trecho e ficou de fora."},
-        {"nome": "ABCR — Índice ABCR de fluxo de veículos pedagiados (série original, Brasil)", "url": ABCR_URL,
-         "periodo": "out/2016 a set/2026", "acesso": _acesso(ABCR_URL), "licenca": "Divulgação pública ABCR (citar a fonte)",
+        {"nome": "ABCR — Índice ABCR de fluxo de veículos pedagiados (série original, Brasil)", "url": abcr_url,
+         "periodo": abcr_per, "acesso": _acesso(abcr_url), "licenca": "Divulgação pública ABCR (citar a fonte)",
          "tipo": "medido", "nota": "Número-índice com base 1999 = 100 em praças de pedágio; mede variação, não volume. "
                                    "Séries de leves, pesados e total."},
     ]
 
 
 def build(write=True):
-    d = {"fonte": fontes(), "vmda": build_vmda(), "acidentes": build_acidentes(), "abcr": build_abcr()}
+    abcr = build_abcr()
+    d = {"fonte": fontes(abcr), "vmda": build_vmda(), "acidentes": build_acidentes(), "abcr": abcr}
     if write:
         OUT.parent.mkdir(parents=True, exist_ok=True)
         OUT.write_text(json.dumps(d, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")

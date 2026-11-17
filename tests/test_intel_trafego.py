@@ -74,15 +74,33 @@ def test_acidentes_somas(d):
         assert all(isinstance(v, int) and v >= 0 for v in a[k])  # zero é dado, nunca null
 
 
-def test_abcr_120_meses_ate_2026_09(d):
+def test_abcr_120_meses_ate_2026_10(d):
     b = d["abcr"]
     assert len(b["meses"]) == 120
-    assert b["meses"][0] == "2016-10" and b["meses"][-1] == "2026-09"
+    assert b["meses"][0] == "2016-11" and b["meses"][-1] == "2026-10"
     assert b["meses"] == sorted(set(b["meses"]))
     for k in ("leves", "pesados", "total"):
         assert len(b[k]) == 120
         assert all(isinstance(v, float) and round(v, 1) == v for v in b[k])
-    assert b["leves"][-1] == 168.6 and b["pesados"][-1] == 185.8 and b["total"][-1] == 172.0
+    assert b["leves"][-1] == 178.5 and b["pesados"][-1] == 196.4 and b["total"][-1] == 182.1   # abcr_1026.xlsx, out/2026
+    abcr = next(f for f in d["fonte"] if f["nome"].startswith("ABCR"))
+    assert abcr["periodo"] == "nov/2016 a out/2026"
+
+
+def test_abcr_descobre_a_planilha_mais_recente(tmp_path):
+    """O nome da planilha muda (base_0926.xlsx, abcr_1026.xlsx): a mais recente sai da lista de arquivos do site (API do
+    WordPress) pelo mês e ano do nome, e o build usa a mais recente em disco."""
+    lista = [{"date": "2026-11-10T10:37:30", "source_url": "https://x.org/wp-content/uploads/2026/11/abcr_1026.xlsx"},
+             {"date": "2026-11-03T19:43:38", "source_url": "https://x.org/wp-content/uploads/2026/11/captura.png"},
+             {"date": "2026-10-09T09:51:10", "source_url": "https://x.org/wp-content/uploads/2026/10/base_0926.xlsx"},
+             {"date": "2025-12-09T09:51:10", "source_url": "https://x.org/wp-content/uploads/2025/12/base_1125.xlsx"}]
+    achados = trafego.abcr_publicadas(lista)
+    assert [(a["ano"], a["mes"]) for a in achados] == [(2025, 11), (2026, 9), (2026, 10)]
+    assert achados[-1]["url"].endswith("abcr_1026.xlsx")
+    assert trafego.abcr_local(tmp_path) is None
+    for n in ("base_0926.xlsx", "abcr_1026.xlsx", "base_1125.xlsx", "outra.xlsx"):
+        (tmp_path / n).write_bytes(b"x")
+    assert trafego.abcr_local(tmp_path) == tmp_path / "abcr_1026.xlsx"
 
 
 def test_fonte_com_tipo(d):

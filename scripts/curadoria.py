@@ -45,8 +45,8 @@ ACESSO_CURADO = {
     "base": "revise a fonte e atualize ACESSO e BASE em scripts/intel/fontes_bloco.py",
     "idex": "os arquivos vêm do usuário: salve a planilha de dados e o relatório mensal novos do IDEX-Infra em data/raw/idex/ e "
             "rode `python scripts/atualizar.py --dominios idex`",
-    "vmda2025": "o arquivo vem do Google Drive do usuário: troque o zip em data/raw/trafego/vmda2025/ por uma versão nova "
-                "e rode `python scripts/atualizar.py --baixar --dominios vmda2025`",
+    "vmda2025": "a camada vem da Infra S.A. (o zip do Google Drive do usuário é a alternativa): rode "
+                "`python scripts/atualizar.py --renovar vmda2025`; um ano novo da modelagem é um bloco novo (README)",
 }
 # fonte de um bloco que o usuário fornece (não se renova por download): o que fazer quando o acesso passa de um ano
 ACESSO_CURADO_FONTE_DO_USUARIO = ("a data é a de quando a planilha das corretoras foi vista pela primeira vez: exporte planilhas "
@@ -436,14 +436,41 @@ def _mudou(d):
     return f"sim ({sinal}{_n(abs(delta))} bytes)" if abs(delta) < 1000 else f"sim ({sinal}{_n(abs(delta) / 1e3, 1)} KB)"
 
 
-def relatorio(hoje, passos, diff, itens_curadoria, opcoes="", erros=(), sem_novidade=()):
+# passos que aparecem como "pulado" por escolha, não por falta de dado
+PULOS_ESPERADOS = ("RoadShow (PDF)",)
+
+
+def _secoes_do_usuario(passos, sentinelas):
+    """As três seções do topo: o que só o usuário resolve, o que não atualizou e as edições novas das fontes."""
+    linhas = []
+    usuario = [s for s in sentinelas if s["grupo"] in ("usuario", "git")]
+    linhas += ["## Precisa de você", ""]
+    linhas += [f"- **{_md(s['fonte'])}** — {_md(s['situacao'])}. {_md(s['acao'])}" for s in usuario] or ["Nada."]
+    falhas = [p for p in passos if p["estado"] in ("pulado", "falhou") and p["passo"] not in PULOS_ESPERADOS
+              and p.get("detalhe") != "--sem-html"]
+    sem = [s for s in sentinelas if s["grupo"] == "sem_verificacao"]
+    linhas += ["", "## Não atualizou nesta rodada", ""]
+    linhas += [f"- **{_md(p['passo'])}** ({p['estado']}) — {_md(_curto(p.get('detalhe') or ''))}" for p in falhas]
+    linhas += [f"- **{_md(s['fonte'])}** — {_md(s['situacao'])}" for s in sem]
+    if not falhas and not sem:
+        linhas.append("Nada: todos os domínios pedidos rodaram.")
+    novas = [s for s in sentinelas if s["grupo"] == "novidade"]
+    linhas += ["", "## Novidades nas fontes (pedem ajuste no código)", ""]
+    linhas += [f"- **{_md(s['fonte'])}** — {_md(s['situacao'])}. {_md(s['acao'])}" for s in novas] or ["Nenhuma."]
+    return linhas + [""]
+
+
+def relatorio(hoje, passos, diff, itens_curadoria, opcoes="", erros=(), sem_novidade=(), sentinelas=None):
     """Markdown de data/atualizacao.md. `passos`: [{passo, estado, detalhe}]; `diff`: saída de diff_blocos;
     `itens_curadoria`: saída de itens (None quando não pôde ser calculada); `erros`: da validação da verificação;
-    `sem_novidade`: domínios renovados (--renovar) cujos arquivos brutos vieram iguais."""
+    `sem_novidade`: domínios renovados (--renovar) cujos arquivos brutos vieram iguais; `sentinelas`: itens de
+    scripts/sentinelas.py (None: as seções do topo não são escritas)."""
     linhas = [f"# Atualização dos dados — {hoje.strftime('%d/%m/%Y')}", "",
               f"Gerado por `python scripts/atualizar.py`{f' ({opcoes})' if opcoes else ''}. Diferenças em relação à "
-              "versão de `data/intel/` no último commit do git.", "",
-              "## Passos", "", "| Passo | Resultado | Detalhe |", "|---|---|---|"]
+              "versão de `data/intel/` no último commit do git.", ""]
+    if sentinelas is not None:
+        linhas += _secoes_do_usuario(passos, sentinelas)
+    linhas += ["## Passos", "", "| Passo | Resultado | Detalhe |", "|---|---|---|"]
     linhas += [f"| {_md(p['passo'])} | {p['estado']} | {_md(_curto(p.get('detalhe') or ''))} |" for p in passos]
     if erros:
         linhas += ["", "## Erros da camada de verificação", "",

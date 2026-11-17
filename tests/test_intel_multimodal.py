@@ -201,13 +201,13 @@ def test_qualidade_frete():
 
 def test_fretes(mm):
     fr = mm["fretes"]
-    assert fr["mes"] == "ago/2026"
+    assert fr["mes"] == "set/2026"   # boletim de out/2026
     assert fr["campos"] == ["origem", "uf_o", "destino", "uf_d", "km", "rs_t", "qualidade"]
     ok = [r for r in fr["linhas"] if r[4] and r[5] is not None]
     assert len(ok) >= 100
     assert all(r[6] in ("ok", "aprox", "km_suspeito", "aprox+km_suspeito") for r in fr["linhas"])
     sorriso_santos = [r for r in fr["linhas"] if r[0] == "Sorriso" and r[2] == "Santos"]
-    assert sorriso_santos and sorriso_santos[0][4] == 1961 and sorriso_santos[0][5] == 490.0
+    assert sorriso_santos and sorriso_santos[0][4] == 1961 and sorriso_santos[0][5] == 500.0   # boletim de out/2026, tabela 8
     assert sorriso_santos[0][6] == "ok"
     # MS: as 17 rotas para os portos (PR, SP, RS) têm km 4 a 5 vezes menor que a distância real na fonte.
     ms = [r for r in fr["linhas"] if r[1] == "MS" and r[3] in ("PR", "SP", "RS")]
@@ -224,20 +224,21 @@ def test_fretes(mm):
             assert not multimodal.nome_colado(base(nome), uf, mun), (nome, uf)
 
     # Só a qualidade muda: km e R$/t continuam os da fonte.
-    assert sum(1 for r in fr["linhas"] if "km_suspeito" in r[6]) == 25
+    assert sum(1 for r in fr["linhas"] if "km_suspeito" in r[6]) == 22
 
 
-@pytest.mark.skipif(not multimodal.FRETES_CSV.exists(), reason="sem o CSV de fretes extraído do boletim")
+@pytest.mark.skipif(not (multimodal.boletim_local() and multimodal.boletim_local()["csv"].exists()),
+                    reason="sem o CSV de fretes extraído do boletim")
 def test_fretes_nome_colado_vira_origem_e_destino(mm):
     """Cada linha do boletim cujo destino é a junção de dois municípios (origem sem "(UF)" colada, ex.: "RIBEIRÃO PRETO
     SANTOS (SP)") sai como origem = 1º município, destino = 2º, com o km e o R$/t da linha e a origem como conferida."""
     import csv
     mun, _ = multimodal._municipios()
     linhas = {tuple(r[:6]): r[6] for r in mm["fretes"]["linhas"]}
-    with open(multimodal.FRETES_CSV, encoding="utf-8", newline="") as f:
+    with open(multimodal.boletim_local()["csv"], encoding="utf-8", newline="") as f:
         colados = [r for r in csv.DictReader(f) if (lambda n, u: u and multimodal.nome_colado(
             multimodal.norm_nome(n.split(" - ")[0]), u, mun))(*multimodal.split_uf(r["destino"]))]
-    assert colados  # o boletim de set/2026 tem ao menos um (Ribeirão Preto → Santos)
+    assert colados  # os boletins de set e out/2026 têm ao menos um (Ribeirão Preto → Santos)
     for r in colados:
         o, d, atrib = multimodal.rota_frete(r["origem"], r["destino"], r["atribuicao_origem"], mun)
         (no, uo), (nd, ud) = multimodal.split_uf(o), multimodal.split_uf(d)
@@ -250,3 +251,58 @@ def test_manifesto_multimodal():
     m = json.loads((ROOT / "data" / "manifest" / "multimodal.json").read_text(encoding="utf-8"))
     assert all(i["url"].startswith("http") and i["sha256"] for i in m)
     assert any(i["url"].endswith("BaseFerro.zip/@@download/file") for i in m)
+
+
+# ---------- CONAB: boletim mais recente descoberto na página ----------
+
+_LISTA_CONAB = """
+<a href="https://www.gov.br/conab/pt-br/atuacao/logistica/boletim-logistico/boletim-logistico-agosto-2026.pdf/@@download/file">x</a>
+<a href="https://www.gov.br/conab/pt-br/atuacao/logistica/boletim-logistico/boletim-logistico-outubro-2026.pdf/@@download/file">x</a>
+<a href="https://www.gov.br/conab/pt-br/atuacao/logistica/boletim-logistico/boletim-logistico-outubro-2026.pdf/view">x</a>
+<a href="https://www.gov.br/conab/pt-br/atuacao/logistica/boletim-logistico/boletim-logistico-setembro-2026-pdf.pdf/@@download/file">x</a>
+<a href="https://www.gov.br/conab/pt-br/atuacao/logistica/boletim-logistico/boletim-logistico-marco-2026.pdf/@@download/file">x</a>
+<a href="https://www.gov.br/conab/pt-br/atuacao/logistica/boletim-logistico/boletim-logistico-dezembro-2025.pdf/@@download/file">x</a>
+"""
+
+
+def test_boletins_conab_lidos_da_pagina():
+    bs = multimodal.boletins_conab(_LISTA_CONAB)
+    assert [(b["ano"], b["mes"]) for b in bs] == [(2025, 12), (2026, 3), (2026, 8), (2026, 9), (2026, 10)]
+    ult = bs[-1]
+    assert ult["url"].endswith("boletim-logistico-outubro-2026.pdf/@@download/file")
+    assert multimodal.arquivos_conab(2026, 10) == ("conab/boletim-logistico-2026-10.pdf", "conab/fretes_boletim_2026-10.csv")
+    assert multimodal.boletins_conab("<html>nada</html>") == []
+
+
+def test_boletim_local_mais_recente(tmp_path):
+    (tmp_path / "conab").mkdir()
+    assert multimodal.boletim_local(tmp_path) is None
+    for n in ("boletim-logistico-2026-09.pdf", "boletim-logistico-2026-10.pdf", "boletim-logistico-2025-12.pdf"):
+        (tmp_path / "conab" / n).write_bytes(b"%PDF-1.4")
+    b = multimodal.boletim_local(tmp_path)
+    assert (b["ano"], b["mes"]) == (2026, 10)
+    assert b["pdf"] == tmp_path / "conab" / "boletim-logistico-2026-10.pdf"
+    assert b["csv"] == tmp_path / "conab" / "fretes_boletim_2026-10.csv"
+    assert b["rotulo"] == "out/2026"
+
+
+def test_parte_sem_bruto_fica_como_estava(tmp_path, capsys):
+    """Sem o bruto de uma parte (ex.: SIADE com o portal da ANTT fora do ar), a parte e a fonte dela vêm do bloco
+    anterior; as outras partes são geradas de novo."""
+    anterior = {"fonte": [{"nome": "ANTT — SIADE, produção origem-destino", "periodo": "2025"},
+                          {"nome": "CONAB — Boletim Logístico", "periodo": "velho"}],
+                "siade": [{"velho": 1}], "fretes": {"mes": "velho"}}
+
+    def falha():
+        raise FileNotFoundError("data/raw/graos/antt/x.csv")
+    partes = {"siade": (falha, ["ANTT — SIADE"]), "fretes": (lambda: {"mes": "novo"}, ["CONAB"])}
+    fontes_novas = [{"nome": "ANTT — SIADE, produção origem-destino", "periodo": "2026"},
+                    {"nome": "CONAB — Boletim Logístico", "periodo": "novo"}]
+    obj, fonte, reaproveitadas = multimodal.montar_partes(partes, fontes_novas, anterior)
+    assert obj == {"siade": [{"velho": 1}], "fretes": {"mes": "novo"}}
+    assert fonte == [{"nome": "ANTT — SIADE, produção origem-destino", "periodo": "2025"},
+                     {"nome": "CONAB — Boletim Logístico", "periodo": "novo"}]
+    assert reaproveitadas == ["siade"]
+    assert "siade" in capsys.readouterr().err
+    with pytest.raises(FileNotFoundError):              # sem bloco anterior não há o que reaproveitar
+        multimodal.montar_partes(partes, fontes_novas, {})

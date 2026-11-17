@@ -130,7 +130,8 @@ def reconciliar(relatorio):
     out = []
     for nome, anos in relatorio["acumulado_ano"].items():
         for ano, acum in sorted(anos.items()):
-            meses = [v for m, v in sorted(relatorio["retornos"][nome].items()) if m.startswith(ano)]
+            todos = {**relatorio["retornos"].get(nome, {}), **(relatorio.get("parciais") or {}).get(nome, {})}
+            meses = [v for m, v in sorted(todos.items()) if m.startswith(ano)]   # o mês parcial entra no acumulado
             produto = _produto(meses)
             if abs(produto - acum) > TOLERANCIA_PP + 1e-9:
                 out.append({"nome": nome, "ano": ano, "produto": round(produto, 2), "acumulado": acum})

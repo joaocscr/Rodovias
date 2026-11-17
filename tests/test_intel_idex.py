@@ -129,6 +129,38 @@ def test_ler_relatorio_sem_a_pagina_levanta(tmp_path):
         ia.ler_relatorio(p)
 
 
+def _pdf_texto(path, linhas):
+    doc = pymupdf.open()
+    pg = doc.new_page(width=595, height=1200)
+    for i, l in enumerate(linhas):
+        pg.insert_text((30, 30 + 14 * i), l, fontsize=9)
+    doc.save(path)
+    return path
+
+
+def test_ler_relatorio_layout_de_novembro_2026(tmp_path):
+    """Layout novo (a partir de nov/2026): a tabela "Rentabilidade mensal e acumulada no ano", com uma manchete antes
+    (que traz um número e o nome do índice) e o mês parcial marcado com "*". O mês parcial fica fora dos retornos
+    mensais, mas entra na conferência do acumulado do ano; o mês de referência é o último mês completo."""
+    p = _pdf_texto(tmp_path / "rel.pdf", [
+        "IDEX ANALYTICS 11", "IDEX-Infra Geral rende 1,00% no ano até 13/11/2026",
+        "Rentabilidade mensal e acumulada no ano", "Fonte: IDEX Analytics - nov/2026",
+        "ÍNDICE JAN FEV MAR ABR MAI JUN JUL AGO SET OUT NOV DEZ ACUM. ANO", "2026",
+        "IDEX-Infra Geral 0,50% 0,30% -0,20%* 0,60%*",
+        "IDEX-Infra Core 0,40% 0,10% 0,50%",
+        "2025",
+        "IDEX-Infra Geral " + "0,10% " * 12 + "1,21%",
+        "IDEX-Infra Core " + "0,10% " * 12 + "1,21%",
+        "* Mar/26: de 01/03/2026 a 13/03/2026"])
+    r = ia.ler_relatorio(p)
+    assert r["mes_referencia"] == "2026-02"
+    assert r["retornos"][GERAL]["2026-02"] == 0.3 and "2026-03" not in r["retornos"][GERAL]
+    assert r["parciais"][GERAL] == {"2026-03": -0.2}
+    assert r["acumulado_ano"][GERAL]["2026"] == 0.6 and r["acumulado_ano"][CORE]["2026"] == 0.5
+    assert len(r["retornos"][CORE]) == 14
+    assert idex.reconciliar(r) == []          # 1,005 × 1,003 × 0,998 − 1 = 0,60%: o mês parcial entra na conta
+
+
 # ---------- agregados ----------
 
 def test_varias_planilhas_juntam_por_dia_e_a_de_ultimo_dia_mais_recente_dita_os_papeis(pasta, universo, tmp_path):

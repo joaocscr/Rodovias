@@ -3682,7 +3682,7 @@
    "Sinop/MT",
    "Miritituba/PA"
   ],
-  "estado": "agendado2026",
+  "estado": "programa",
   "ano_programa": 2026,
   "tipo": "otimizacao",
   "estruturador": "Otimização",
@@ -3704,7 +3704,7 @@
   "participantes": null,
   "participantes_lista": null,
   "desagio": null,
-  "status_texto": "Leilão agendado para 12/11/2026 (p109, p117). Otimização contratual do contrato de concessão da BR-163/MT/PA (Via Brasil); na p33, \"Edital publicado\".",
+  "status_texto": "Leilão realizado em 12/11/2026: a página do projeto no site do Ministério dos Transportes marca o lote como \"Leiloado\" (atualizada em 13/11/2026). Vencedor e deságio aguardam a ata da sessão na página do processo competitivo da ANTT. Otimização contratual do contrato de concessão da BR-163/MT/PA (Via Brasil); leilão previsto no RoadShow (p109, p117).",
   "atualizado_em": "2026-07-17",
   "ficha": {
    "trecho_inicio": "Sinop/MT",

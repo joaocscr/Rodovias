@@ -15,7 +15,7 @@ import atualizar  # noqa: E402
 HOJE = dt.date(2026, 10, 21)
 
 
-def _modulos(chamadas, tmp_path, falha=None, sem_bruto=None, zip_existe=True, renovam=None):
+def _modulos(chamadas, tmp_path, falha=None, sem_bruto=None, zip_existe=True, renovam=None, infrasa_falha=False):
     """Módulo simulado por domínio: fetch/registrar/build anotam a chamada; `falha` levanta RuntimeError no build,
     `sem_bruto` levanta FileNotFoundError (bruto ausente); `renovam`: {domínio: função chamada no fetch}."""
     renovam = renovam or {}
@@ -35,8 +35,16 @@ def _modulos(chamadas, tmp_path, falha=None, sem_bruto=None, zip_existe=True, re
             if d in renovam:
                 renovam[d]()
         m = types.SimpleNamespace(build=build, fetch=fetch)
-        if d == "vmda2025":
-            m = types.SimpleNamespace(build=build, ZIP=zip_, registrar=lambda: chamadas.append("vmda2025.registrar"))
+        if d == "vmda2025":   # baixa da Infra S.A.; o zip do Drive é a alternativa quando o download falha
+            json_ = tmp_path / "infrasa_vmda2025.json"
+
+            def fetch_vmda(force=False):
+                chamadas.append("vmda2025.fetch" + ("(force)" if force else ""))
+                if infrasa_falha:
+                    raise RuntimeError("Infra S.A. fora do ar")
+                json_.write_text("{}")
+            m = types.SimpleNamespace(build=build, ZIP=zip_, JSON_INFRASA=json_, fetch=fetch_vmda,
+                                      registrar=lambda: chamadas.append("vmda2025.registrar"))
         if d == "debentures":  # com planilha na pasta de entrada
             m = types.SimpleNamespace(build=build, fetch=fetch, PASTA=tmp_path, planilhas=lambda: [tmp_path / "a.xlsx"])
         if d == "idex":  # com arquivos na pasta de entrada
@@ -66,18 +74,34 @@ def test_baixar_chama_fetch_antes_do_build(tmp_path):
     _roda(passos, tmp_path)
     esperado = []
     for d in atualizar.ORDEM:
-        esperado += [f"{d}.{'registrar' if d == 'vmda2025' else 'fetch'}", f"{d}.build"]
+        esperado += [f"{d}.fetch", f"{d}.build"]
     assert chamadas == esperado
 
 
-def test_vmda2025_sem_zip_pula_com_aviso(tmp_path):
+def test_vmda2025_sem_infrasa_e_sem_zip_pula_com_aviso(tmp_path):
     chamadas = []
     passos = atualizar.passos_dominios(["vmda2025", "rotas"], baixar=True,
-                                       importar=_modulos(chamadas, tmp_path, zip_existe=False))
+                                       importar=_modulos(chamadas, tmp_path, zip_existe=False, infrasa_falha=True))
     res = _roda(passos, tmp_path)
     assert [r["estado"] for r in res] == ["pulado", "ok"]
-    assert "vgeo_vmda2025.zip" in res[0]["detalhe"]
-    assert chamadas == ["rotas.fetch", "rotas.build"]
+    assert "Infra S.A." in res[0]["detalhe"] and "vgeo_vmda2025.zip" in res[0]["detalhe"]
+    assert chamadas == ["vmda2025.fetch", "rotas.fetch", "rotas.build"]
+
+
+def test_vmda2025_infrasa_fora_do_ar_usa_o_zip_do_drive(tmp_path):
+    chamadas = []
+    passos = atualizar.passos_dominios(["vmda2025"], baixar=True,
+                                       importar=_modulos(chamadas, tmp_path, infrasa_falha=True))
+    res = _roda(passos, tmp_path)
+    assert [r["estado"] for r in res] == ["ok"]
+    assert chamadas == ["vmda2025.fetch", "vmda2025.registrar", "vmda2025.build"]
+
+
+def test_vmda2025_sem_baixar_e_sem_bruto_pula(tmp_path):
+    chamadas = []
+    passos = atualizar.passos_dominios(["vmda2025"], baixar=False, importar=_modulos(chamadas, tmp_path, zip_existe=False))
+    res = _roda(passos, tmp_path)
+    assert [r["estado"] for r in res] == ["pulado"] and chamadas == []
 
 
 def test_debentures_sem_planilhas_pula_sem_baixar_as_series(tmp_path):
@@ -299,7 +323,7 @@ def test_html_que_falha_por_arquivo_ausente_nao_e_pulado(tmp_path):
     assert any(x.startswith("ERRO: o HTML não foi gerado: arquivo ausente: vendor/leaflet/leaflet.js") for x in linhas)
 
 
-@pytest.mark.parametrize("args", [["--renovar", "vmda2025"], ["--dominios", "antt", "--renovar", "agro"],
+@pytest.mark.parametrize("args", [["--renovar", "idex"], ["--dominios", "antt", "--renovar", "agro"],
                                   ["--renovar", "xyz"]])
 def test_renovar_invalido_e_erro_de_uso(args):
     with pytest.raises(SystemExit) as e:

@@ -23,6 +23,7 @@ OUT_MANIFEST = INTEL / "manifest.json"
 GERADOS = {"fontes", "manifest"}
 SEM_TIPO = "—"
 ACESSO = "2026-10-20"
+ROADSHOW_VERSAO = 40   # versão do PDF do RoadShow extraído (v40, edição de 14/10/2026); scripts/sentinelas.py a compara com o site
 
 BASE = [
     {"bloco": "snv", "nome": "SNV 202607A, Sistema Nacional de Viação (DNIT)",

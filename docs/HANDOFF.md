@@ -2,6 +2,14 @@
 
 Documento para retomar o projeto numa conversa nova. Estado em 17/11/2026: `main` em `a75ce78` (PR #5). A atualização de 17/11 (planilhas das corretoras com tela de 16/11 e negócios e intenções de 01/10 a 13/11, emissores novos classificados, Selic pedida por janela de datas, Pesquisa de Estoques do 1º semestre de 2026) está no branch `claude/wizardly-maxwell-472sba`, que também incorpora a atualização de 30/10 do branch `claude/awesome-edison-e7gc88` (nunca levada ao `main`): dela vêm a curva das NTN-B e o IDA de 26 a 29/10, que a ANBIMA já tirou do ar. **Lição:** os históricos versionados (`data/indices/*.json`) só guardam os dias que algum build viu; um branch de atualização sem merge leva esses dias com ele. Dê merge (ou junte o branch anterior) antes de atualizar de novo.
 
+**Atualização de 17/11/2026 (segunda rodada), o que mudou no método:**
+- `CLAUDE.md` (raiz) traz o roteiro de "atualize": git (branches sem merge), insumos do Drive, `atualizar.py --baixar`, sentinelas, curadoria, testes, PR, resposta com o HTML e a lista do que depende do usuário.
+- `scripts/sentinelas.py`, chamado pelo `atualizar.py`, escreve no topo de `data/atualizacao.md` as seções "Precisa de você", "Não atualizou nesta rodada" e "Novidades nas fontes" (testes em `tests/test_sentinelas.py`).
+- Fontes que mudavam de nome a cada edição agora se descobrem sozinhas: ABCR (lista de arquivos do WordPress), boletim da CONAB (página de boletins), cadastro de praças da ANTT (recurso mais recente do CKAN). O acompanhamento anual da ANTT virou um CSV por concessão e é juntado no arquivo único. A URL da ANTAQ ganhou `/@@download/file`.
+- O VMDa 2025 vem da camada aberta da Infra S.A. (igual ao shapefile do Drive, conferido); o Drive fica como alternativa.
+- O multimodal reaproveita do bloco anterior a parte cujo bruto falta (`montar_partes`), em vez de deixar o domínio inteiro parado.
+- O relatório do IDEX-Infra mudou de layout em nov/2026 ("Rentabilidade mensal e acumulada no ano", mês parcial com "*"); a pendência do acumulado de 2026 sumiu.
+
 **Para começar uma sessão nova:** abra o repositório `joaocscr/Rodovias` em claude.ai/code e mande como primeira mensagem algo como *"Leia `docs/HANDOFF.md` e o `README.md`. Quero continuar com …"*.
 
 ## 1. Onde estamos
