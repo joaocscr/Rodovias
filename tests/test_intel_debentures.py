@@ -504,7 +504,7 @@ def test_selic_publicada_para_dias_futuros_vale_a_de_hoje(tmp_path):
     shutil.copytree(PUBLICO, pub)
     serie = json.loads((pub / "sgs_432.json").read_text(encoding="utf-8"))
     (pub / "sgs_432.json").write_text(json.dumps(serie + [{"data": "05/11/2026", "valor": "13.00"}]), encoding="utf-8")
-    m = deb.montar(FIX, pub, EMISSORES, hoje="2026-10-22")["macro"]
+    m = deb.montar(FIX, pub, EMISSORES, hoje="2026-10-22", manifesto=_Manifesto())["macro"]   # sem download registrado
     assert m["selic"] == {"valor": 14.25, "data": "2026-10-02"}
 
 
@@ -553,6 +553,24 @@ def test_serie_publica_nao_vale_depois_do_download(tmp_path):
         assert b["macro"]["selic"] == {"valor": 14.25, "data": "2026-10-02"}
         sgs = next(f for f in b["fonte"] if f["nome"].startswith("Banco Central do Brasil — Sistema"))
         assert sgs["acesso"] == "2026-10-22"
+
+
+def test_selic_e_pedida_numa_janela_que_termina_no_dia_do_download(tmp_path):
+    """Os "últimos 20" valores da Selic meta podem ser todos posteriores ao download (o Banco Central publica a meta até a
+    próxima reunião do Copom, que pode estar a mais de 20 dias): a Selic é pedida por janela de datas que termina no dia
+    do download, e o manifesto (gravado pelo arquivo, com a URL do dia) dá o dia do download."""
+    url = deb.url_serie("selic", dt.date(2026, 11, 17))
+    assert "bcdata.sgs.432/dados?formato=json" in url and "dataFinal=17/11/2026" in url and "dataInicial=" in url
+    assert deb.url_serie("cdi", dt.date(2026, 11, 17)) == deb.SGS.format(*deb.SERIES["cdi"][:2])
+    pub = tmp_path / "publico"
+    shutil.copytree(PUBLICO, pub)
+    (pub / "sgs_432.json").write_text(json.dumps([{"data": "14/11/2026", "valor": "13.75"},
+                                                  {"data": "17/11/2026", "valor": "13.75"}]), encoding="utf-8")
+    man = _Manifesto([{"url": url, "arquivo": "data/raw/debentures/publico/sgs_432.json", "acesso": "2026-11-17",
+                       "baixado": "2026-11-17", "sha256": "x"}])
+    b = deb.montar(FIX, pub, EMISSORES, hoje="2026-12-01", manifesto=man)
+    assert b["macro"]["selic"] == {"valor": 13.75, "data": "2026-11-17"}
+    assert next(f for f in b["fonte"] if f["nome"].startswith("Banco Central do Brasil — Sistema"))["acesso"] == "2026-11-17"
 
 
 def test_taxa_implausivel_sai_das_medias_e_vai_para_curadoria():
@@ -762,7 +780,7 @@ def test_bloco_confere_com_as_planilhas_do_usuario():
     if not deb.planilhas(deb.PASTA) or not BLOCO.exists():
         pytest.skip("planilhas do usuário ausentes em data/raw/debentures/")
     gravado = json.loads(BLOCO.read_text(encoding="utf-8"))
-    novo = deb.montar()
+    novo = deb.montar(historico=anb.HISTORICO)   # como o build: a curva versionada cobre os dias que a ANBIMA já tirou do ar
     assert novo["secundario"] == gravado["secundario"], "dado mudou: rode python scripts/atualizar.py --dominios debentures"
     assert novo["emissoes"] == gravado["emissoes"]
     # volume e spread conferidos com uma conta direta sobre as linhas da planilha
@@ -776,7 +794,7 @@ def test_bloco_confere_com_as_planilhas_do_usuario():
     total = sum(r["volume"] for r in gravado["secundario"]["negocios"]["por_dia"])
     assert total == pytest.approx(sum(n["volume"] or 0 for n in neg), abs=0.05)
     assert sum(r["n"] for r in gravado["secundario"]["negocios"]["por_dia"]) == len(neg)
-    curvas = anb.curvas(None, deb.PUBLICO / anb.SUBPASTA)
+    curvas = anb.curvas(None, deb.PUBLICO / anb.SUBPASTA, anb.HISTORICO)
     ult = {u["ticker"]: u for u in gravado["secundario"]["ultimo_por_ticker"] if u["origem"] == "negocio"}
     for u in ult.values():
         esperado = deb.spread(u["taxa"], u["vencimento"], deb.curva_ntnb(u["data"], curvas), u["indexador"])

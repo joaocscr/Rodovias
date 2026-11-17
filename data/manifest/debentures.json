@@ -2,14 +2,14 @@
  {
   "dominio": "debentures",
   "descricao": "Banco Central, SGS série 432 (Selic meta)",
-  "url": "https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados/ultimos/20?formato=json",
+  "url": "https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados?formato=json&dataInicial=18/09/2026&dataFinal=17/11/2026",
   "arquivo": "data/raw/debentures/publico/sgs_432.json",
-  "bytes": 761,
-  "sha256": "b0d0d8b8c8c95eb255c4fdd3a44cc9ebcbb1401efa6257e46bfeb65aa1dc58dc",
+  "bytes": 2319,
+  "sha256": "9aca90023c03e50dcbe2e3e14c48a42146220e37c3233bc5ffbc83c8ccacb95e",
   "periodo": "",
   "licenca": "Dados abertos do Banco Central do Brasil",
-  "acesso": "2026-10-22",
-  "baixado": "2026-10-26"
+  "acesso": "2026-11-17",
+  "baixado": "2026-11-17"
  },
  {
   "dominio": "debentures",
@@ -17,11 +17,11 @@
   "url": "https://api.bcb.gov.br/dados/serie/bcdata.sgs.12/dados/ultimos/20?formato=json",
   "arquivo": "data/raw/debentures/publico/sgs_12.json",
   "bytes": 821,
-  "sha256": "58083f46d05d224b61f9d23eb0e6066cdfa9abc369705a3c8612d9e8ceabb96f",
+  "sha256": "ef1498dc1cb54ea5656874352958963ab078a65995d2add1b2d16e57eec618ed",
   "periodo": "",
   "licenca": "Dados abertos do Banco Central do Brasil",
-  "acesso": "2026-10-26",
-  "baixado": "2026-10-26"
+  "acesso": "2026-11-17",
+  "baixado": "2026-11-17"
  },
  {
   "dominio": "debentures",
@@ -29,11 +29,11 @@
   "url": "https://api.bcb.gov.br/dados/serie/bcdata.sgs.13522/dados/ultimos/12?formato=json",
   "arquivo": "data/raw/debentures/publico/sgs_13522.json",
   "bytes": 445,
-  "sha256": "3c37d2fb6a74994be8f265a804cf9fa0b1dcf1659ccd61ede9d2260e87cd1fbd",
+  "sha256": "17ffe721a46b2acd36c3022eb0e19924aac98645b3b6746bb34086b807343438",
   "periodo": "",
   "licenca": "Dados abertos do Banco Central do Brasil",
-  "acesso": "2026-10-26",
-  "baixado": "2026-10-26"
+  "acesso": "2026-11-17",
+  "baixado": "2026-11-17"
  },
  {
   "dominio": "debentures",
@@ -41,45 +41,45 @@
   "url": "https://olinda.bcb.gov.br/olinda/servico/Expectativas/versao/v1/odata/ExpectativasMercadoInflacao12Meses?%24top=20&%24filter=Indicador%20eq%20'IPCA'%20and%20Suavizada%20eq%20'S'%20and%20baseCalculo%20eq%200&%24orderby=Data%20desc&%24format=json",
   "arquivo": "data/raw/debentures/publico/focus_ipca12m.json",
   "bytes": 3829,
-  "sha256": "ee78f638bd009d9f9edcddef0e3dcebde49d94d1412ff16020c1bdbc6fb0fb39",
+  "sha256": "8868d0e5e4e11d6784addd0c2a10bebdb00fc3a047156158bb7edf26f16f4773",
   "periodo": "",
   "licenca": "Dados abertos do Banco Central do Brasil",
-  "acesso": "2026-10-26",
-  "baixado": "2026-10-26"
+  "acesso": "2026-11-17",
+  "baixado": "2026-11-17"
  },
  {
   "dominio": "debentures",
   "descricao": "ANBIMA, cadastro de debêntures (SND): características das debêntures públicas",
   "url": "https://www.debentures.com.br/exploreosnd/consultaadados/emissoesdedebentures/caracteristicas_e.asp?tip_deb=publicas&op_exc=False",
   "arquivo": "data/raw/debentures/publico/snd_caracteristicas.txt",
-  "bytes": 2873866,
-  "sha256": "aa113460ae5a009b1cbf8c2af65e28510cacd1746107022f0b44905868773616",
+  "bytes": 2886649,
+  "sha256": "21a26a332dd0437aa357a8095e49b8e78a86529e498c41d95ced4b44484af054",
   "periodo": "",
   "licenca": "Consulta pública do SND (debentures.com.br, ANBIMA); a página não declara licença de reuso",
-  "acesso": "2026-10-26",
-  "baixado": "2026-10-26"
+  "acesso": "2026-11-17",
+  "baixado": "2026-11-17"
  },
  {
   "dominio": "debentures",
   "descricao": "Planilha de debêntures das corretoras, fornecida ao projeto",
   "url": "",
-  "arquivo": "data/raw/debentures/tela.xlsx",
-  "bytes": 233516,
-  "sha256": "69c99913e89034328a5a57531ffaffc7b8e8399e7d8fb050e20fd1007163c10e",
+  "arquivo": "data/raw/debentures/Tela_XP_e_BTG_-_Deb_Isentas_16.11.xlsx",
+  "bytes": 248565,
+  "sha256": "1c1320ddf522b7fe2e00ec6eb217ad53973bfa6de533885fc767440fefb7a837",
   "periodo": "",
   "licenca": "Dados de corretora, fornecidos ao projeto; uso restrito",
-  "acesso": "2026-10-23"
+  "acesso": "2026-11-17"
  },
  {
   "dominio": "debentures",
   "descricao": "Planilha de debêntures das corretoras, fornecida ao projeto",
   "url": "",
-  "arquivo": "data/raw/debentures/trades.xlsx",
-  "bytes": 400189,
-  "sha256": "03a2abdd2c9bb3f43446bda664ab5ed941f1603f08683d0609ee0cd275d5be5b",
+  "arquivo": "data/raw/debentures/TradesDeMercado_01.10_-_13.11.xlsx",
+  "bytes": 759240,
+  "sha256": "810674e938eea3385317ae1b9269cceffa2c12fe24879ec5d8adf7fca174bdbe",
   "periodo": "",
   "licenca": "Dados de corretora, fornecidos ao projeto; uso restrito",
-  "acesso": "2026-10-23"
+  "acesso": "2026-11-17"
  },
  {
   "dominio": "debentures",
@@ -157,5 +157,71 @@
   "periodo": "23/10/2026",
   "licenca": "Consulta pública do site da ANBIMA; a página não declara licença de reuso",
   "acesso": "2026-10-26"
+ },
+ {
+  "dominio": "debentures",
+  "descricao": "ANBIMA, taxas indicativas dos títulos públicos de 09/11/2026 (NTN-B)",
+  "url": "https://www.anbima.com.br/informacoes/merc-sec/arqs/ms261109.txt",
+  "arquivo": "data/raw/debentures/publico/anbima_ms/ms261109.txt",
+  "bytes": 6686,
+  "sha256": "34f995704ea35feedc6f323d5aee6b4df92c8747dbb027662cb465eaac4770a9",
+  "periodo": "09/11/2026",
+  "licenca": "Consulta pública do site da ANBIMA; a página não declara licença de reuso",
+  "acesso": "2026-11-17"
+ },
+ {
+  "dominio": "debentures",
+  "descricao": "ANBIMA, taxas indicativas dos títulos públicos de 10/11/2026 (NTN-B)",
+  "url": "https://www.anbima.com.br/informacoes/merc-sec/arqs/ms261110.txt",
+  "arquivo": "data/raw/debentures/publico/anbima_ms/ms261110.txt",
+  "bytes": 6673,
+  "sha256": "c1f522da5a47939b1205075694e6aa2495027a79a15e5f0d82654610d3770fb0",
+  "periodo": "10/11/2026",
+  "licenca": "Consulta pública do site da ANBIMA; a página não declara licença de reuso",
+  "acesso": "2026-11-17"
+ },
+ {
+  "dominio": "debentures",
+  "descricao": "ANBIMA, taxas indicativas dos títulos públicos de 11/11/2026 (NTN-B)",
+  "url": "https://www.anbima.com.br/informacoes/merc-sec/arqs/ms261111.txt",
+  "arquivo": "data/raw/debentures/publico/anbima_ms/ms261111.txt",
+  "bytes": 6620,
+  "sha256": "c01a29f3a34d7d3cadf1271f97236845fb1a6e53325720bda38ecaec6efb8346",
+  "periodo": "11/11/2026",
+  "licenca": "Consulta pública do site da ANBIMA; a página não declara licença de reuso",
+  "acesso": "2026-11-17"
+ },
+ {
+  "dominio": "debentures",
+  "descricao": "ANBIMA, taxas indicativas dos títulos públicos de 12/11/2026 (NTN-B)",
+  "url": "https://www.anbima.com.br/informacoes/merc-sec/arqs/ms261112.txt",
+  "arquivo": "data/raw/debentures/publico/anbima_ms/ms261112.txt",
+  "bytes": 6675,
+  "sha256": "bba4834e7f1153064e514484ef49b6d4736ae1aaec463809000ccd76a38e2de8",
+  "periodo": "12/11/2026",
+  "licenca": "Consulta pública do site da ANBIMA; a página não declara licença de reuso",
+  "acesso": "2026-11-17"
+ },
+ {
+  "dominio": "debentures",
+  "descricao": "ANBIMA, taxas indicativas dos títulos públicos de 13/11/2026 (NTN-B)",
+  "url": "https://www.anbima.com.br/informacoes/merc-sec/arqs/ms261113.txt",
+  "arquivo": "data/raw/debentures/publico/anbima_ms/ms261113.txt",
+  "bytes": 6654,
+  "sha256": "41b7fb69ab4abd831e3e8f89c90b2fe9849eb882533ac86dae517a8f658a1547",
+  "periodo": "13/11/2026",
+  "licenca": "Consulta pública do site da ANBIMA; a página não declara licença de reuso",
+  "acesso": "2026-11-17"
+ },
+ {
+  "dominio": "debentures",
+  "descricao": "ANBIMA, taxas indicativas dos títulos públicos de 16/11/2026 (NTN-B)",
+  "url": "https://www.anbima.com.br/informacoes/merc-sec/arqs/ms261116.txt",
+  "arquivo": "data/raw/debentures/publico/anbima_ms/ms261116.txt",
+  "bytes": 6672,
+  "sha256": "219eee54b717ef8f4b8a86a823cb8c10040178f6f92667f2d0be70373900660b",
+  "periodo": "16/11/2026",
+  "licenca": "Consulta pública do site da ANBIMA; a página não declara licença de reuso",
+  "acesso": "2026-11-17"
  }
 ]

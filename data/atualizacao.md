@@ -1,26 +1,16 @@
-# Atualização dos dados — 26/10/2026
+# Atualização dos dados — 17/11/2026
 
-Gerado por `python scripts/atualizar.py` (sem --baixar). Diferenças em relação à versão de `data/intel/` no último commit do git.
+Gerado por `python scripts/atualizar.py` (--baixar, --dominios pipeline, --sem-html). Diferenças em relação à versão de `data/intel/` no último commit do git.
 
 ## Passos
 
 | Passo | Resultado | Detalhe |
 |---|---|---|
-| trafego | ok |  |
-| antt | ok |  |
-| carga | ok |  |
-| agro | pulado | arquivo ausente: data/raw/graos/malha/ibge_municipios.json (baixe com `--baixar`) |
-| multimodal | ok |  |
 | pipeline | ok |  |
-| debentures | ok |  |
-| ida | ok |  |
-| idex | ok |  |
-| estaduais | ok |  |
-| vmda2025 | pulado | falta data/raw/trafego/vmda2025/vgeo_vmda2025.zip (shapefile do Google Drive do usuário; ver README, "Atualizar os dados"); vmda2025.json ficou como estava |
-| rotas | ok |  |
 | fontes_bloco | ok |  |
 | validação da verificação | ok |  |
-| build.py (HTML) | ok |  |
+| build.py (HTML) | pulado | --sem-html |
+| RoadShow (PDF) | pulado | data/raw/roadshow.pdf ausente: os testes que conferem o PDF ficam pulados; os dados do RoadShow vêm de data/roadshow/*.json e não mudam com este comando |
 
 ## O que mudou por bloco
 
@@ -31,10 +21,10 @@ Registros: itens das coleções principais de cada bloco (valores preenchidos); 
 | agro | 5.571 | 5.571 | 210,5 | 210,5 | não |
 | antt | 1.938 | 1.938 | 399,2 | 399,2 | não |
 | carga | 4.312 | 4.312 | 141,3 | 141,3 | não |
-| debentures | 236 | 236 | 111,4 | 111,4 | sim (+32 bytes) |
+| debentures | 236 | 262 | 111,4 | 128,0 | sim (+16,6 KB) |
 | estaduais | 16.238 | 16.238 | 2.949,8 | 2.949,8 | não |
-| fontes | 57 | 57 | 31,2 | 31,2 | sim (+5 bytes) |
-| ida | 99 | 99 | 11,5 | 11,5 | não |
+| fontes | 57 | 57 | 31,2 | 31,2 | não |
+| ida | 99 | 103 | 11,5 | 13,7 | sim (+2,2 KB) |
 | idex | 116 | 116 | 9,8 | 9,8 | não |
 | multimodal | 3.188 | 3.188 | 413,9 | 413,9 | não |
 | municipios | 5.571 | 5.571 | 1.687,6 | 1.687,6 | não |
@@ -45,11 +35,20 @@ Registros: itens das coleções principais de cada bloco (valores preenchidos); 
 
 ## Curadoria manual
 
-22 itens. Cada um diz o arquivo a editar; depois rode de novo o comando.
+31 itens. Cada um diz o arquivo a editar; depois rode de novo o comando.
 
-### Pipeline com data passada ainda como previsto (1)
+### Pipeline com data passada ainda como previsto (2)
 
+- **BR-163/230/MT/PA - Otimização Arco Norte (Via Brasil) (fed-arco-norte)** — a data prevista (12/11/2026) já passou e o status ainda é "Leilão agendado": atualize status em data/intel/pipeline.csv; data em data/roadshow/verificacao.json (ou entidades.json)
 - **MG Lote 10 - Noroeste (mg-lote10-noroeste)** — a data prevista (20/03/2026) já passou e o status ainda é "Edital publicado": atualize status e data em data/intel/pipeline.csv
+
+### Leilão realizado sem resultado na camada de verificação (1)
+
+- **Rota Arco Norte (rota-arco-norte)** — leilão em 12/11/2026, a entrada em data/roadshow/verificacao.json tem só a data do edital: acrescente o resultado (data do leilão, vencedor, deságio, assinatura) com as fontes (receita em docs/HANDOFF.md §2)
+
+### Concessão ainda como a leiloar, com leilão já passado (1)
+
+- **Rota Arco Norte (rota-arco-norte)** — estado "Leilão agendado 2026", mas o leilão foi em 12/11/2026: atualize o `estado` (e `status_texto`) da concessão em data/roadshow/entidades.json e o status em data/intel/pipeline.csv, e rode `python scripts/atualizar.py`
 
 ### Itens do pipeline sem fonte oficial (13)
 
@@ -75,18 +74,21 @@ Registros: itens das coleções principais de cada bloco (valores preenchidos); 
 
 - **Consórcio Via dos Sertões (BR-116/PR/SP - Otimização Régis Bittencourt, 2026)** — o nome está na lista de proponentes do leilão, mas a ata oficial não o traz (provável erro de entrada): confira a fonte e corrija o proponente em data/roadshow/mercado.json, ou tire a marca fora_da_ata de data/roadshow/consorcios.json
 
-### Emissores de debêntures sem classificação (1)
-
-- **APOLLO 17** — aparece em intenções XP, tela XP (1 papel) e ficou fora da página: classifique-o em data/debentures/emissores.json (subsetor e grupo, numa entrada nova ou como grafia em `nomes` de um emissor que já existe) ou, se não for de transporte, ponha o nome em `fora_do_universo`; depois rode `python scripts/atualizar.py --dominios debentures`
-
 ### Debêntures sem série pública ou sem curva das NTN-B (indicador ou spread "—") (2)
 
-- **Curva das NTN-B (taxa indicativa da ANBIMA)** — sem arquivo da ANBIMA em 15/10/2026 (feriado ou dia ainda não publicado): o spread dos negócios e intenções desses dias fica "—"; rode `python scripts/atualizar.py --baixar --dominios debentures` quando a ANBIMA publicar
+- **Curva das NTN-B (taxa indicativa da ANBIMA)** — sem arquivo da ANBIMA em 15/10/2026, 26/10/2026, 27/10/2026, 28/10/2026, 29/10/2026, 30/10/2026, 03/11/2026, 04/11/2026, 05/11/2026, 06/11/2026 (feriado ou dia ainda não publicado): o spread dos negócios e intenções desses dias fica "—"; rode `python scripts/atualizar.py --baixar --dominios debentures` quando a ANBIMA publicar
 - **Curva das NTN-B, dias anteriores ao primeiro arquivo (sem ação)** — sem arquivo da ANBIMA em 01/10/2026, 02/10/2026, 05/10/2026, 06/10/2026, 07/10/2026, 08/10/2026, 09/10/2026, 13/10/2026: são anteriores a 14/10/2026, o primeiro dia com curva, e o site da ANBIMA só guarda os arquivos recentes, então não voltam a ser publicados; o spread desses dias fica "—" de forma permanente e não há o que baixar
 
-### Taxas de debêntures fora do intervalo plausível (fora das médias) (2)
+### Taxas de debêntures fora do intervalo plausível (fora das médias) (9)
 
 - **COMT11 (negócios BTG)** — taxa de 60,00% (IPCA+) em 2 linha(s) da planilha, provável erro de digitação: ficou fora da taxa média e do spread, mas conta no volume e no número; confira com a corretora e, se for o caso, corrija a planilha em data/raw/debentures/ e rode de novo
+- **ENTV12 (negócios BTG)** — taxa de 65,00% (IPCA+) em 3 linha(s) da planilha, provável erro de digitação: ficou fora da taxa média e do spread, mas conta no volume e no número; confira com a corretora e, se for o caso, corrija a planilha em data/raw/debentures/ e rode de novo
+- **ENTV13 (negócios BTG)** — taxa de 125,00% (IPCA+) em 1 linha(s) da planilha, provável erro de digitação: ficou fora da taxa média e do spread, mas conta no volume e no número; confira com a corretora e, se for o caso, corrija a planilha em data/raw/debentures/ e rode de novo
+- **ENTV13 (negócios BTG)** — taxa de 130,00% (IPCA+) em 1 linha(s) da planilha, provável erro de digitação: ficou fora da taxa média e do spread, mas conta no volume e no número; confira com a corretora e, se for o caso, corrija a planilha em data/raw/debentures/ e rode de novo
+- **HARG11 (negócios BTG)** — taxa de 110,00% (IPCA+) em 2 linha(s) da planilha, provável erro de digitação: ficou fora da taxa média e do spread, mas conta no volume e no número; confira com a corretora e, se for o caso, corrija a planilha em data/raw/debentures/ e rode de novo
+- **MGPRA0 (negócios BTG)** — taxa de 140,00% (IPCA+) em 1 linha(s) da planilha, provável erro de digitação: ficou fora da taxa média e do spread, mas conta no volume e no número; confira com a corretora e, se for o caso, corrija a planilha em data/raw/debentures/ e rode de novo
+- **MGPRA0 (negócios BTG)** — taxa de 160,00% (IPCA+) em 2 linha(s) da planilha, provável erro de digitação: ficou fora da taxa média e do spread, mas conta no volume e no número; confira com a corretora e, se for o caso, corrija a planilha em data/raw/debentures/ e rode de novo
+- **STBP35 (negócios BTG)** — taxa de 75,00% (IPCA+) em 1 linha(s) da planilha, provável erro de digitação: ficou fora da taxa média e do spread, mas conta no volume e no número; confira com a corretora e, se for o caso, corrija a planilha em data/raw/debentures/ e rode de novo
 - **VBRR11 (intenções XP)** — taxa de 1.067,00% (IPCA+) em 1 linha(s) da planilha, provável erro de digitação: ficou fora da taxa média e do spread, mas conta no volume e no número; confira com a corretora e, se for o caso, corrija a planilha em data/raw/debentures/ e rode de novo
 
 ### Retornos mensais do IDEX-Infra que não fecham com o acumulado do ano impresso (1)

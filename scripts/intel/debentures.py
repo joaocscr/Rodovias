@@ -76,6 +76,22 @@ SERIES = {  # chave → (código SGS, quantos valores, arquivo)
     "cdi": (12, 20, "sgs_12.json"),
     "ipca12m": (13522, 12, "sgs_13522.json"),
 }
+# A Selic meta vem publicada até a próxima reunião do Copom, que pode estar a mais de 20 dias: os "últimos 20" valores
+# podem ser todos futuros. Por isso ela é pedida numa janela de datas que termina no dia do download.
+SGS_JANELA = ("https://api.bcb.gov.br/dados/serie/bcdata.sgs.{}/dados?formato=json"
+              "&dataInicial={:%d/%m/%Y}&dataFinal={:%d/%m/%Y}")
+JANELA_DIAS = {"selic": 60}
+
+
+def url_serie(chave, dia):
+    """URL do SGS para baixar a série `chave` no dia `dia` (date): janela de datas até `dia` para as de JANELA_DIAS,
+    "últimos n" para as demais."""
+    cod, n, _ = SERIES[chave]
+    if chave in JANELA_DIAS:
+        return SGS_JANELA.format(cod, dia - dt.timedelta(days=JANELA_DIAS[chave]), dia)
+    return SGS.format(cod, n)
+
+
 FOCUS_URL = ("https://olinda.bcb.gov.br/olinda/servico/Expectativas/versao/v1/odata/ExpectativasMercadoInflacao12Meses"
              "?%24top=20&%24filter=Indicador%20eq%20'IPCA'%20and%20Suavizada%20eq%20'S'%20and%20baseCalculo%20eq%200"
              "&%24orderby=Data%20desc&%24format=json")
@@ -337,9 +353,11 @@ def _ler_json(path):
         return None
 
 
-def _baixado(manifesto, urls):
-    """Dia do último download dos arquivos de `urls` (o mais recente entre eles), ou None se o manifesto não os traz."""
-    datas = [i.get("baixado") or i["acesso"] for i in manifesto.items if i.get("url") in urls and i.get("acesso")]
+def _baixado(manifesto, urls, arquivos=()):
+    """Dia do último download dos arquivos de `urls` ou de nome em `arquivos` (o mais recente entre eles), ou None se o
+    manifesto não os traz. O nome do arquivo vale para a série pedida por janela de datas, cuja URL muda a cada dia."""
+    datas = [i.get("baixado") or i["acesso"] for i in manifesto.items
+             if (i.get("url") in urls or Path(i.get("arquivo") or "").name in arquivos) and i.get("acesso")]
     return max(datas) if datas else None
 
 
@@ -352,7 +370,7 @@ def _macro(publico, hoje, manifesto, historico=None):
     macro, ausentes = {}, []
     for chave, (cod, n, arq) in SERIES.items():
         dados = _ler_json(publico / arq)
-        limite = _baixado(manifesto, {SGS.format(cod, n)}) or hoje
+        limite = _baixado(manifesto, {SGS.format(cod, n)}, {arq}) or hoje
         validos = [d for d in dados if (para_data(d.get("data")) or "9") <= limite] if isinstance(dados, list) else []
         ult = validos[-1] if validos else None
         if not ult:
@@ -462,9 +480,10 @@ def _fontes(telas, mov, macro, curvas, dias_usados, manifesto, acesso_corretora,
     sgs = [k for k in SERIES if macro.get(k)]
     if sgs:
         urls = {SGS.format(SERIES[k][0], SERIES[k][1]) for k in sgs}
+        arqs = {SERIES[k][2] for k in sgs}
         datas = {k: macro[k]["data"] for k in sgs}
         out.append({"nome": "Banco Central do Brasil — Sistema Gerenciador de Séries Temporais (Selic, CDI e IPCA)",
-                    "url": "https://www3.bcb.gov.br/sgspub/", "acesso": _baixado(manifesto, urls) or hoje,
+                    "url": "https://www3.bcb.gov.br/sgspub/", "acesso": _baixado(manifesto, urls, arqs) or hoje,
                     "periodo": "; ".join(f"{ROTULO_SERIE[k].split(' (')[0]}: {_br(d)}" for k, d in datas.items()),
                     "licenca": "Dados abertos do Banco Central do Brasil", "tipo": "medido",
                     "nota": "Último valor publicado da Selic meta (série 432), do CDI (série 12, taxa diária anualizada "
@@ -672,8 +691,8 @@ def fetch(force=False):  # noqa: ARG001 — `force` existe pela interface comum;
     ANBIMA baixa só os dias que faltam (`_fetch_curva`); sem a curva, o spread fica "—"."""
     m = Manifest("debentures")
     bcb = "Dados abertos do Banco Central do Brasil"
-    alvos = [(SGS.format(c, n), arq, f"Banco Central, SGS série {c} ({ROTULO_SERIE[k].split(' (')[0]})", 5, bcb, _valida_sgs)
-             for k, (c, n, arq) in SERIES.items()]
+    alvos = [(url_serie(k, dt.date.today()), arq, f"Banco Central, SGS série {c} ({ROTULO_SERIE[k].split(' (')[0]})", 5,
+              bcb, _valida_sgs) for k, (c, n, arq) in SERIES.items()]
     alvos += [(FOCUS_URL, FOCUS, "Banco Central, expectativas de mercado (Focus): IPCA 12 meses", 5, bcb, _valida_focus)]
     falhas = []
     for url, arq, descricao, tentativas, licenca, validar in alvos:
