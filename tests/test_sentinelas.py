@@ -94,10 +94,13 @@ def test_branch_de_atualizacao_sem_merge():
         if a[:2] == ("branch", "-r"):
             return "  origin/claude/awesome-edison-e7gc88\n  origin/claude/wizardly-maxwell-472sba\n  origin/outra\n"
         if a[0] == "rev-list":
-            return "1\n"
+            return "0\n" if a[2].startswith("HEAD..") and juntado else "1\n"
         return ""
+    juntado = False
     (it,) = S.branches_sem_merge(git, atual="claude/wizardly-maxwell-472sba")
     assert it["grupo"] == "git" and it["fonte"] == "claude/awesome-edison-e7gc88" and "1 commit" in it["situacao"]
+    juntado = True                                     # já junto ao branch atual: vai no mesmo PR, não é pendência
+    assert S.branches_sem_merge(git, atual="claude/wizardly-maxwell-472sba") == []
 
 
 def test_valores_do_codigo_lidos_dos_scripts():

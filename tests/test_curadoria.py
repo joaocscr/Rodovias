@@ -241,7 +241,7 @@ def test_fonte_antiga_curada_aponta_o_lugar_da_data():
                                  {"bloco": "vmda2025", "nome": "VMDa", "url": "https://v", "acesso": "2025-01-01"}]
     m = {i["item"]: i["motivo"] for i in curadoria.itens(conc, intel, verif, hoje=HOJE)}
     assert "--renovar agro" in m["Malha (municipios)"]
-    assert "Google Drive" in m["VMDa (vmda2025)"] and "--renovar" not in m["VMDa (vmda2025)"]
+    assert "Infra S.A." in m["VMDa (vmda2025)"] and "--renovar vmda2025" in m["VMDa (vmda2025)"]
 
 
 def test_relatorio_lista_fontes_renovadas_sem_dado_novo():

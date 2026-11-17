@@ -111,7 +111,8 @@ def test_estaduais_com_verificado_booleano_e_fonte_url(blk):
     # só notícia => não verificado; página oficial => verificado
     por_id = {i["id"]: i for i in est}
     assert por_id["rs-bloco-1"]["verificado"] is True
-    assert por_id["mg-lote10-noroeste"]["verificado"] is False
+    assert por_id["mg-quadrilatero"]["verificado"] is False
+    assert por_id["mg-lote10-noroeste"]["verificado"] is True     # revogação na Agência Minas (13/02/2026)
 
 
 def test_polo_goiania_presente(blk):

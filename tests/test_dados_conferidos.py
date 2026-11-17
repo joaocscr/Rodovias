@@ -159,5 +159,5 @@ def test_fretes_com_distancia_suspeita():
     f = _json(INTEL / "multimodal.json")["fretes"]
     sus = [l for l in f["linhas"] if "km_suspeito" in l[6]]
     i_uf = f["campos"].index("uf_o")
-    assert (len(sus), sum(1 for l in sus if l[i_uf] == "MS")) == (25, 17), \
+    assert (len(sus), sum(1 for l in sus if l[i_uf] == "MS")) == (22, 17), \
         "dado mudou: revise as rotas de frete com distância suspeita (boletim da CONAB, scripts/intel/multimodal.py)"

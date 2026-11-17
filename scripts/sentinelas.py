@@ -213,13 +213,15 @@ def rotas_nova(pedir, data_no_codigo):
 # ---------- 3. git ----------
 
 def branches_sem_merge(git=None, atual=None):
-    """Branches remotas de atualização (claude/*) com commits fora de origin/main, exceto a atual."""
+    """Branches remotas de atualização (claude/*) com commits que nem origin/main nem o branch atual têm."""
     git = git or (lambda *a: subprocess.run(["git", *a], cwd=ROOT, capture_output=True, text=True).stdout)
     atual = atual or git("rev-parse", "--abbrev-ref", "HEAD").strip()
     out = []
     for b in git("branch", "-r", "--no-merged", "origin/main").split():
         b = b.strip()
         if not b.startswith("origin/claude/") or b == f"origin/{atual}":
+            continue
+        if git("rev-list", "--count", f"HEAD..{b}").strip() == "0":   # já junto a este branch: vai no mesmo PR
             continue
         n = git("rev-list", "--count", f"origin/main..{b}").strip()
         out.append(item("git", b.removeprefix("origin/"), f"{n} commit(s) fora do main",

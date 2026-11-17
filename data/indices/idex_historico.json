@@ -20,5 +20,21 @@
  {"data":"2026-10-19","spread_medio_bps":118.09,"duration_media":5.32,"n_papeis":538},
  {"data":"2026-10-20","spread_medio_bps":121.23,"duration_media":5.32,"n_papeis":538},
  {"data":"2026-10-21","spread_medio_bps":112.12,"duration_media":5.32,"n_papeis":538},
- {"data":"2026-10-22","spread_medio_bps":114.73,"duration_media":5.32,"n_papeis":538}
+ {"data":"2026-10-22","spread_medio_bps":114.73,"duration_media":5.32,"n_papeis":538},
+ {"data":"2026-10-23","spread_medio_bps":109.22,"duration_media":5.33,"n_papeis":538},
+ {"data":"2026-10-26","spread_medio_bps":109.22,"duration_media":5.22,"n_papeis":538},
+ {"data":"2026-10-27","spread_medio_bps":97.72,"duration_media":5.24,"n_papeis":538},
+ {"data":"2026-10-28","spread_medio_bps":81.77,"duration_media":5.25,"n_papeis":538},
+ {"data":"2026-10-29","spread_medio_bps":83.07,"duration_media":5.24,"n_papeis":538},
+ {"data":"2026-10-30","spread_medio_bps":76.73,"duration_media":5.24,"n_papeis":538},
+ {"data":"2026-11-03","spread_medio_bps":87.85,"duration_media":5.22,"n_papeis":538},
+ {"data":"2026-11-04","spread_medio_bps":90.4,"duration_media":5.22,"n_papeis":538},
+ {"data":"2026-11-05","spread_medio_bps":102.17,"duration_media":5.21,"n_papeis":538},
+ {"data":"2026-11-06","spread_medio_bps":105.6,"duration_media":5.21,"n_papeis":538},
+ {"data":"2026-11-09","spread_medio_bps":105.58,"duration_media":5.21,"n_papeis":538},
+ {"data":"2026-11-10","spread_medio_bps":105.07,"duration_media":5.21,"n_papeis":538},
+ {"data":"2026-11-11","spread_medio_bps":117.1,"duration_media":5.2,"n_papeis":538},
+ {"data":"2026-11-12","spread_medio_bps":112.73,"duration_media":5.19,"n_papeis":538},
+ {"data":"2026-11-13","spread_medio_bps":115.56,"duration_media":5.19,"n_papeis":538},
+ {"data":"2026-11-16","spread_medio_bps":109.71,"duration_media":5.22,"n_papeis":470}
 ]}

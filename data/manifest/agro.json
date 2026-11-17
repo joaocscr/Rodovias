@@ -81,21 +81,21 @@
   "descricao": "Pesquisa de Estoques tabela 5459 por município: estabelecimentos e capacidade útil (t)",
   "url": "https://apisidra.ibge.gov.br/values/t/5459/n6/all/v/152,153/p/last/c166/all/c11278/39324",
   "arquivo": "data/raw/graos/sidra/est5459_last.json",
-  "bytes": 4080271,
-  "sha256": "51f66f33406011e795e68fed3718477d2a8ff6758c7eb8b27cffc495aeb79722",
-  "periodo": "2º semestre 2025",
+  "bytes": 4107076,
+  "sha256": "d5225f8c081372f7ae429037eb3185de760f2b06ee092fd7ef54e9c35fb6f3cd",
+  "periodo": "1º semestre 2026",
   "licenca": "Dados abertos IBGE: uso livre com citação da fonte",
-  "acesso": "2026-10-20"
+  "acesso": "2026-11-17"
  },
  {
   "dominio": "agro",
   "descricao": "Pesquisa de Estoques tabela 5459, Brasil e UF",
   "url": "https://apisidra.ibge.gov.br/values/t/5459/n1/all/n3/all/v/152,153/p/last/c166/114630/c11278/39324",
   "arquivo": "data/raw/graos/sidra/est5459_n1n3.json",
-  "bytes": 20955,
-  "sha256": "1fa5762e09881719e1392ad5d3ee1e289aa2bc2dd717953264804127553f06f9",
-  "periodo": "2º semestre 2025",
+  "bytes": 20954,
+  "sha256": "448e176e63848ec6822ae370172ef0f8627dcd04fd43b0618afe22a32e39a784",
+  "periodo": "1º semestre 2026",
   "licenca": "Dados abertos IBGE: uso livre com citação da fonte",
-  "acesso": "2026-10-20"
+  "acesso": "2026-11-17"
  }
 ]

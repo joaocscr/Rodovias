@@ -12,6 +12,17 @@
  },
  {
   "dominio": "idex",
+  "descricao": "Planilha de dados do IDEX-Infra, fornecida ao projeto",
+  "url": "",
+  "arquivo": "data/raw/idex/idex_infra_geral_datafile_2026-11.xlsx",
+  "bytes": 894442,
+  "sha256": "044f1e019ead8930980f7207bd6a7664a2740a4cf1ede1009743869e30666875",
+  "periodo": "19/10/2026 a 16/11/2026",
+  "licenca": "Dados da IDEX Analytics fornecidos ao projeto; os termos de uso pedem autorização para reproduzir os índices",
+  "acesso": "2026-11-17"
+ },
+ {
+  "dominio": "idex",
   "descricao": "Relatório mensal do IDEX-Infra, fornecido ao projeto",
   "url": "",
   "arquivo": "data/raw/idex/idex-infra-relatorio-mensal-2026-07.pdf",
@@ -20,5 +31,16 @@
   "periodo": "01/2024 a 06/2026",
   "licenca": "Dados da IDEX Analytics fornecidos ao projeto; os termos de uso pedem autorização para reproduzir os índices",
   "acesso": "2026-10-23"
+ },
+ {
+  "dominio": "idex",
+  "descricao": "Relatório mensal do IDEX-Infra, fornecido ao projeto",
+  "url": "",
+  "arquivo": "data/raw/idex/idex-infra-relatorio-mensal-2026-11.pdf",
+  "bytes": 502319,
+  "sha256": "554164576d9aec6b72fa1237848a28cc038f4e0c6c51fa3a3788f0589aefdd6b",
+  "periodo": "01/2024 a 10/2026",
+  "licenca": "Dados da IDEX Analytics fornecidos ao projeto; os termos de uso pedem autorização para reproduzir os índices",
+  "acesso": "2026-11-17"
  }
 ]

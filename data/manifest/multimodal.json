@@ -1,6 +1,28 @@
 [
  {
   "dominio": "multimodal",
+  "descricao": "CONAB — Boletim Logístico set/2026 (PDF)",
+  "url": "https://www.gov.br/conab/pt-br/atuacao/logistica/boletim-logistico/boletim-logistico-setembro-2026-pdf.pdf/@@download/file",
+  "arquivo": "data/raw/graos/conab/boletim-setembro-2026-pdf.pdf",
+  "bytes": 2104944,
+  "sha256": "566ba9c1f046518befdf8cfff7caa9b0c5e0641b30818325bdf279f89109bf8c",
+  "periodo": "ago/2026",
+  "licenca": "Dados abertos do governo federal (Decreto 8.777/2016); citar a fonte",
+  "acesso": "2026-10-21"
+ },
+ {
+  "dominio": "multimodal",
+  "descricao": "CONAB — fretes extraídos do Boletim Logístico set/2026 (derivado do PDF)",
+  "url": "https://www.gov.br/conab/pt-br/atuacao/logistica/boletim-logistico/boletim-logistico-setembro-2026-pdf.pdf/@@download/file",
+  "arquivo": "data/raw/graos/conab/fretes_boletim_set2026.csv",
+  "bytes": 17587,
+  "sha256": "c0b02999b77cd482b950f424aff438f6cae4e4120c326cd5807e73e4140980da",
+  "periodo": "ago/2026",
+  "licenca": "Dados abertos do governo federal (Decreto 8.777/2016); citar a fonte",
+  "acesso": "2026-10-21"
+ },
+ {
+  "dominio": "multimodal",
   "descricao": "BaseFerro — malha ferroviária (shapefile)",
   "url": "https://www.gov.br/transportes/pt-br/assuntos/dados-de-transportes/bit/Base-GEO/BaseFerro.zip/@@download/file",
   "arquivo": "data/raw/graos/multimodal/BaseFerro.zip",
@@ -13,7 +35,7 @@
  {
   "dominio": "multimodal",
   "descricao": "ANTAQ — instalações portuárias (shapefile)",
-  "url": "https://www.gov.br/antaq/pt-br/central-de-conteudos/Instalaesporturias06052025.zip",
+  "url": "https://www.gov.br/antaq/pt-br/central-de-conteudos/Instalaesporturias06052025.zip/@@download/file",
   "arquivo": "data/raw/graos/multimodal/antaq_instalacoes.zip",
   "bytes": 518623,
   "sha256": "79e28332bdd031388a6f2305e4f1e2e741c057a64a63724ea4278f78a040fb63",
@@ -78,24 +100,24 @@
  },
  {
   "dominio": "multimodal",
-  "descricao": "CONAB — Boletim Logístico set/2026 (PDF)",
-  "url": "https://www.gov.br/conab/pt-br/atuacao/logistica/boletim-logistico/boletim-logistico-setembro-2026-pdf.pdf/@@download/file",
-  "arquivo": "data/raw/graos/conab/boletim-setembro-2026-pdf.pdf",
-  "bytes": 2104944,
-  "sha256": "566ba9c1f046518befdf8cfff7caa9b0c5e0641b30818325bdf279f89109bf8c",
-  "periodo": "ago/2026",
+  "descricao": "CONAB — Boletim Logístico out/2026 (PDF)",
+  "url": "https://www.gov.br/conab/pt-br/atuacao/logistica/boletim-logistico/boletim-logistico-outubro-2026.pdf/@@download/file",
+  "arquivo": "data/raw/graos/conab/boletim-logistico-2026-10.pdf",
+  "bytes": 2331706,
+  "sha256": "5d9d5a9dbe4052b3de8ae2b24403000adcd20410a9a2c7161267e2379786d640",
+  "periodo": "",
   "licenca": "Dados abertos do governo federal (Decreto 8.777/2016); citar a fonte",
-  "acesso": "2026-10-21"
+  "acesso": "2026-11-17"
  },
  {
   "dominio": "multimodal",
-  "descricao": "CONAB — fretes extraídos do Boletim Logístico set/2026 (derivado do PDF)",
-  "url": "https://www.gov.br/conab/pt-br/atuacao/logistica/boletim-logistico/boletim-logistico-setembro-2026-pdf.pdf/@@download/file",
-  "arquivo": "data/raw/graos/conab/fretes_boletim_set2026.csv",
-  "bytes": 17587,
-  "sha256": "c0b02999b77cd482b950f424aff438f6cae4e4120c326cd5807e73e4140980da",
-  "periodo": "ago/2026",
+  "descricao": "CONAB — fretes extraídos do Boletim Logístico out/2026 (derivado do PDF)",
+  "url": "https://www.gov.br/conab/pt-br/atuacao/logistica/boletim-logistico",
+  "arquivo": "data/raw/graos/conab/fretes_boletim_2026-10.csv",
+  "bytes": 15531,
+  "sha256": "77ae2f10ed0cd3eced334a813bba8522da6cbcc4569bab833fc584b546d05fdd",
+  "periodo": "set/2026",
   "licenca": "Dados abertos do governo federal (Decreto 8.777/2016); citar a fonte",
-  "acesso": "2026-10-21"
+  "acesso": "2026-11-17"
  }
 ]
